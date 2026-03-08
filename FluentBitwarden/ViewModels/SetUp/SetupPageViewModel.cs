@@ -1,8 +1,8 @@
 using BitwaredApi.Abstractions;
-using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Models.Auth;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
 
@@ -16,25 +16,18 @@ public partial class SetupPageViewModel : ObservableObject
         TwoFactor,
     }
 
-    private readonly IAuthService _authService;
-    private readonly IVaultService _vaultService;
-    private readonly IEnvironmentConfig _environmentConfig;
     private readonly INavigationService _navigationService;
     private readonly PasswordSignInStepViewModel _passwordStepViewModel;
     private readonly TwoFactorStepViewModel _twoFactorStepViewModel;
+    private readonly PageOperationState _operationState = new();
 
     [ObservableProperty]
-    public partial bool HasError { get; set; }
-
-    [ObservableProperty]
-    public partial string ErrorMessage { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial bool IsBusy { get; set; }
-
-    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentStepViewModel))]
     public partial SetupStep CurrentStep { get; set; } = SetupStep.PasswordSignIn;
 
+    public bool HasError => _operationState.HasError;
+    public string ErrorMessage => _operationState.ErrorMessage;
+    public bool IsBusy => _operationState.IsBusy;
 
     public object? CurrentStepViewModel => CurrentStep switch
     {
@@ -44,160 +37,46 @@ public partial class SetupPageViewModel : ObservableObject
 
     public SetupPageViewModel(
         IAuthService authService,
-        IVaultService vaultService,
         IEnvironmentConfig environmentConfig,
         INavigationService navigationService)
     {
-        _authService = authService;
-        _vaultService = vaultService;
-        _environmentConfig = environmentConfig;
         _navigationService = navigationService;
+        _operationState.PropertyChanged += OnOperationStatePropertyChanged;
 
-        _passwordStepViewModel = new PasswordSignInStepViewModel(this);
-        _twoFactorStepViewModel = new TwoFactorStepViewModel(this);
+        _passwordStepViewModel = new PasswordSignInStepViewModel(this, authService, environmentConfig);
+        _twoFactorStepViewModel = new TwoFactorStepViewModel(this, authService);
     }
 
-    partial void OnCurrentStepChanged(SetupStep value)
-    {
-        OnPropertyChanged(nameof(CurrentStepViewModel));
-    }
-
-    [RelayCommand]
-    private void PasskeySignIn()
-    {
-        ShowError("Passkey sign-in is not implemented in this build.");
-    }
-
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    private async Task PasswordSignInAsync()
-    {
-        ClearError();
-        PasswordSignInStepViewModel passwordStep = _passwordStepViewModel;
-
-        if (passwordStep.SelectedEnvironment is null)
-        {
-            ShowError("Select a Bitwarden environment.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(passwordStep.Email))
-        {
-            ShowError("Enter your Bitwarden email address.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(passwordStep.MasterPassword))
-        {
-            ShowError("Enter your master password.");
-            return;
-        }
-
-        _environmentConfig.Set(passwordStep.SelectedEnvironment.Environment);
-        IsBusy = true;
-
-        try
-        {
-            await _authService.SignInWithPasswordAsync(passwordStep.Email.Trim(), passwordStep.MasterPassword);
-            ResetTwoFactorState();
-            await _vaultService.SyncAsync();
-            _navigationService.Navigate(typeof(VaultPage), clearBackStack: true);
-        }
-        catch (TwoFactorRequiredException ex)
-        {
-            EnterTwoFactorStep(ex.Challenge);
-        }
-        catch (InvalidCredentialsException ex)
-        {
-            ShowError(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex.Message);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    private async Task ContinueTwoFactorAsync()
-    {
-        ClearError();
-        TwoFactorStepViewModel twoFactorStep = _twoFactorStepViewModel;
-
-        if (twoFactorStep.SelectedProvider is null)
-        {
-            ShowError("Select a two-factor provider.");
-            return;
-        }
-
-        if (!twoFactorStep.SelectedProvider.IsSupported)
-        {
-            ShowError("This provider requires an interactive Bitwarden flow that is not implemented in this build.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(twoFactorStep.Code))
-        {
-            ShowError("Enter the verification code.");
-            return;
-        }
-
-        IsBusy = true;
-
-        try
-        {
-            await _authService.ContinueTwoFactorAsync(
-                twoFactorStep.Code.Trim(),
-                twoFactorStep.SelectedProvider.Provider,
-                twoFactorStep.RememberThisDevice);
-            ResetTwoFactorState();
-            await _vaultService.SyncAsync();
-            _navigationService.Navigate(typeof(VaultPage), clearBackStack: true);
-        }
-        catch (InvalidCredentialsException ex)
-        {
-            ShowError(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex.Message);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    private void BackFromTwoFactor()
-    {
-        ClearError();
-        ResetTwoFactorState();
-    }
-
-    private void EnterTwoFactorStep(TwoFactorChallenge challenge)
+    public void EnterTwoFactorStep(TwoFactorChallenge challenge)
     {
         _twoFactorStepViewModel.LoadChallenge(challenge);
         CurrentStep = SetupStep.TwoFactor;
     }
 
-    private void ResetTwoFactorState()
+    public void ResetToPasswordStep()
     {
         _twoFactorStepViewModel.Reset();
         CurrentStep = SetupStep.PasswordSignIn;
     }
 
-    private void ClearError()
+    public Task CompleteAuthenticatedSessionAsync()
     {
-        HasError = false;
-        ErrorMessage = string.Empty;
+        _navigationService.Navigate<VaultPage>(clearBackStack: true);
+        return Task.CompletedTask;
     }
 
-    private void ShowError(string message)
-    {
-        HasError = true;
-        ErrorMessage = message;
-    }
+    public Task RunBusyAsync(Func<Task> operation)
+        => _operationState.RunBusyAsync(operation);
+
+    public void ClearStatus()
+        => _operationState.ClearStatus();
+
+    public void ShowError(string message)
+        => _operationState.ShowError(message);
+
+    public void ShowError(Exception exception)
+        => _operationState.ShowError(exception);
+
+    private void OnOperationStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        => OnPropertyChanged(e.PropertyName);
 }

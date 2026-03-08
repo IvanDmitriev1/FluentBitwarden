@@ -24,6 +24,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0"
@@ -42,16 +43,21 @@
                           VerticalAlignment="Center" />
 
             <Button Grid.Column="2"
+                    Content="Settings"
+                    Command="{x:Bind ViewModel.OpenSettingsCommand, Mode=OneWay}"
+                    VerticalAlignment="Center" />
+
+            <Button Grid.Column="3"
                     Content="Lock"
                     Command="{x:Bind ViewModel.LockCommand, Mode=OneWay}"
                     VerticalAlignment="Center" />
 
-            <Button Grid.Column="3"
+            <Button Grid.Column="4"
                     Content="Refresh"
                     Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}"
                     VerticalAlignment="Center" />
 
-            <Button Grid.Column="4"
+            <Button Grid.Column="5"
                     Content="Log out"
                     Command="{x:Bind ViewModel.LogoutCommand, Mode=OneWay}"
                     VerticalAlignment="Center" />

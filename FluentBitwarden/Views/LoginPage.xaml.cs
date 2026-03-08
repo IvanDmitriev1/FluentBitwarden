@@ -11,5 +11,5 @@ public sealed partial class LoginPage : CorePage
         InitializeComponent();
     }
 
-    public LoginPageViewModel ViewModel { get; }
+    internal LoginPageViewModel ViewModel { get; }
 }

@@ -1,14 +1,13 @@
 using System.Collections.ObjectModel;
-using BitwaredApi.Abstractions;
 using BitwaredApi.Models.Vault;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions;
-using FluentBitwarden.Security;
+using FluentBitwarden.Abstractions.UnlockServices;
+using FluentBitwarden.Models.Navigation;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
-using LoginPage = FluentBitwarden.Views.LoginPage;
-using SetupPage = FluentBitwarden.Views.SetUp.SetupPage;
+using FluentBitwarden.Views.SetUp;
 
 namespace FluentBitwarden.ViewModels;
 
@@ -24,9 +23,12 @@ public partial class VaultPageViewModel(
     IVaultService vaultService,
     IBitwaredClient client,
     INavigationService navigationService,
-    ILocalUnlockService localUnlockService)
+    ILocalVaultUnlocker localVaultUnlocker,
+    IUnlockSettingsPromptService unlockSettingsPromptService)
     : ObservableObject, IPageLifecycleAware
 {
+    private bool _shouldRecommendUnlockSettings;
+
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
@@ -40,24 +42,21 @@ public partial class VaultPageViewModel(
 
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        var session = await client.Auth.GetStoredSessionAsync(cancellationToken);
-        if (session is null)
-        {
-            navigationService.Navigate(typeof(SetupPage), clearBackStack: true);
-            return;
-        }
-
-        if (session.IsLocked)
-        {
-            navigationService.Navigate(typeof(LoginPage), clearBackStack: true);
-            return;
-        }
-
         await RefreshAsync();
+
+        if (_shouldRecommendUnlockSettings)
+        {
+            _shouldRecommendUnlockSettings = false;
+
+            bool openSettings = await unlockSettingsPromptService.ShowUnlockSettingsPromptAsync(cancellationToken);
+            if (openSettings)
+            {
+                navigationService.Navigate<SettingsPage>(clearBackStack: true);
+            }
+        }
     }
 
-    public Task OnUnloadingAsync(CancellationToken cancellationToken)
-        => Task.CompletedTask;
+    public Task OnUnloadingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task RefreshAsync()
@@ -67,19 +66,6 @@ public partial class VaultPageViewModel(
 
         try
         {
-            var session = await client.Auth.GetStoredSessionAsync();
-            if (session is null)
-            {
-                navigationService.Navigate(typeof(SetupPage), clearBackStack: true);
-                return;
-            }
-
-            if (session.IsLocked)
-            {
-                navigationService.Navigate(typeof(LoginPage), clearBackStack: true);
-                return;
-            }
-
             IReadOnlyList<DecryptedCipher> ciphers = await vaultService.ListCiphersAsync();
 
             Ciphers.Clear();
@@ -108,16 +94,24 @@ public partial class VaultPageViewModel(
     private async Task LockAsync()
     {
         await client.LockAsync();
-        navigationService.Navigate(typeof(LoginPage), clearBackStack: true);
+        await localVaultUnlocker.LockAsync();
+        navigationService.Navigate<LoginPage>(clearBackStack: true);
     }
 
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task LogoutAsync()
     {
         await client.LogoutAsync();
-        await localUnlockService.ClearAsync();
-        navigationService.Navigate(typeof(SetupPage), clearBackStack: true);
+        await localVaultUnlocker.ClearAsync();
+        navigationService.Navigate<SetupPage>(clearBackStack: true);
     }
+
+    [RelayCommand]
+    private void OpenSettings()
+        => navigationService.Navigate<SettingsPage>();
+
+    public void SetNavigationContext(VaultNavigationContext? context)
+        => _shouldRecommendUnlockSettings = context?.ShowUnlockSettingsRecommendation == true;
 
     private void ClearError()
     {

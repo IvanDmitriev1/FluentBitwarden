@@ -3,19 +3,39 @@
     x:Class="FluentBitwarden.Views.LoginPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:attached="using:FluentBitwarden.Views.AttachedProperties"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:attached="using:FluentBitwarden.Views.AttachedProperties"
     xmlns:ui="using:FluentBitwarden.Ui.Controls"
+    xmlns:viewModels="using:FluentBitwarden.ViewModels"
     mc:Ignorable="d">
 
     <Grid HorizontalAlignment="Center"
           VerticalAlignment="Center"
-          MaxWidth="560"
           MinWidth="320"
           Margin="24">
-        <Border CornerRadius="16"
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="Your vault is locked"
+                       TextAlignment="Center"
+                       Style="{StaticResource TitleLargeTextBlockStyle}" />
+            <TextBlock Text="{x:Bind ViewModel.SessionDisplay.Email, Mode=OneWay}"
+                       TextAlignment="Center"
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       Opacity="0.8" />
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                CornerRadius="16"
                 Padding="28"
+                Margin="0, 20, 0, 0"
                 BorderThickness="1"
                 BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
             <Border.Background>
@@ -24,54 +44,53 @@
             </Border.Background>
 
             <StackPanel Spacing="18">
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Unlock vault"
-                               FontSize="30"
-                               FontWeight="SemiBold" />
-                    <TextBlock Text="{x:Bind ViewModel.Email, Mode=OneWay}"
-                               Opacity="0.8" />
-                    <TextBlock Text="{x:Bind ViewModel.EnvironmentLabel, Mode=OneWay}"
-                               Opacity="0.6" />
-                </StackPanel>
+                <controls:Segmented ItemsSource="{x:Bind ViewModel.UnlockMethods, Mode=OneWay}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedUnlockMethod, Mode=TwoWay}"
+                                    Visibility="{x:Bind ViewModel.HasUnlockMethodSelector, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                                    HorizontalAlignment="Center">
+                    <controls:Segmented.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:LoginUnlockMethodItem">
+                            <TextBlock Text="{x:Bind Title, Mode=OneWay}" />
+                        </DataTemplate>
+                    </controls:Segmented.ItemTemplate>
+                </controls:Segmented>
 
                 <StackPanel Spacing="12"
-                            Visibility="{x:Bind ViewModel.CanUnlockWithMasterPassword, Converter={StaticResource BoolToVis}, Mode=OneWay}">
-                    <PasswordBox Header="Master password"
+                            Visibility="{x:Bind ViewModel.HasSelectedUnlockMethod, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                            >
+                    <TextBlock Text="{x:Bind ViewModel.CurrentUnlockMethod.Title, Mode=OneWay}"
+                               FontSize="22"
+                               HorizontalAlignment="Center"
+                               FontWeight="SemiBold" />
+
+                    <TextBlock Text="{x:Bind ViewModel.CurrentUnlockMethod.Description, Mode=OneWay}"
+                               Visibility="{x:Bind ViewModel.CurrentUnlockMethod.HasDescription, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                               Opacity="0.75"
+                               TextWrapping="WrapWholeWords"
+                               HorizontalAlignment="Center"/>
+
+                    <PasswordBox Header="{x:Bind ViewModel.CurrentUnlockMethod.SecretInputHeader, Mode=OneWay}"
+                                 Visibility="{x:Bind ViewModel.CurrentUnlockMethod.HasSecretInput, Converter={StaticResource BoolToVis}, Mode=OneWay}"
                                  attached:PasswordBoxBinding.BindPassword="True"
-                                 attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.MasterPassword, Mode=TwoWay}" />
+                                 attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.CurrentUnlockMethod.SecretInput, Mode=TwoWay}" />
 
                     <Button Style="{StaticResource AccentButtonStyle}"
-                            Content="Unlock with master password"
-                            Command="{x:Bind ViewModel.UnlockWithMasterPasswordCommand, Mode=OneWay}" />
+                            Content="{x:Bind ViewModel.CurrentUnlockMethod.UnlockActionText, Mode=OneWay}"
+                            Command="{x:Bind ViewModel.CurrentUnlockMethod.UnlockCommand, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.CurrentUnlockMethod.HasUnlockAction, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                            HorizontalAlignment="Stretch"/>
                 </StackPanel>
-
-                <Button Content="Unlock with Windows Hello"
-                        Visibility="{x:Bind ViewModel.CanUnlockWithWindowsHello, Converter={StaticResource BoolToVis}, Mode=OneWay}"
-                        Command="{x:Bind ViewModel.UnlockWithWindowsHelloCommand, Mode=OneWay}" />
-
-                <StackPanel Spacing="12"
-                            Visibility="{x:Bind ViewModel.CanUnlockWithPin, Converter={StaticResource BoolToVis}, Mode=OneWay}">
-                    <PasswordBox Header="App PIN"
-                                 attached:PasswordBoxBinding.BindPassword="True"
-                                 attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.Pin, Mode=TwoWay}" />
-
-                    <Button Content="Unlock with PIN"
-                            Command="{x:Bind ViewModel.UnlockWithPinCommand, Mode=OneWay}" />
-                </StackPanel>
-
-                <InfoBar IsOpen="{x:Bind ViewModel.HasNoUnlockOptions, Mode=OneWay}"
-                         Severity="Warning"
-                         Title="No local unlock methods"
-                         Message="This saved session has no enrolled local unlock methods. Use another account to sign in again." />
 
                 <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
                               Width="28"
                               Height="28"
+                              Visibility="{x:Bind ViewModel.IsBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}"
                               HorizontalAlignment="Center" />
 
                 <InfoBar IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
                          Severity="Error"
                          Title="Unlock failed"
+                         Visibility="Collapsed"
                          Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
 
                 <Button Content="Use another account"

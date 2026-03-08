@@ -13,10 +13,13 @@
                   x:DataType="setUp:PasswordSignInStepViewModel">
         <StackPanel Spacing="18">
             <StackPanel Spacing="6">
-                <TextBlock Text="Sign in" FontSize="30" FontWeight="SemiBold" />
+                <TextBlock Text="Sign in"
+                           Style="{StaticResource TitleLargeTextBlockStyle}" 
+                           HorizontalAlignment="Center"/>
                 <TextBlock Text="{x:Bind ServerHintText, Mode=OneWay}"
                            Opacity="0.75"
-                           TextWrapping="WrapWholeWords" />
+                           TextWrapping="WrapWholeWords"
+                           HorizontalAlignment="Center"/>
             </StackPanel>
 
             <controls:Segmented
@@ -35,7 +38,7 @@
 
             <StackPanel Spacing="12">
                 <Button Content="Sign in with passkey"
-                        Command="{x:Bind ParentViewModel.PasskeySignInCommand, Mode=OneWay}"
+                        Command="{x:Bind PasskeySignInCommand, Mode=OneWay}"
                         HorizontalAlignment="Stretch" />
 
                 <TextBlock Text="or" HorizontalAlignment="Center" Opacity="0.55" />
@@ -50,7 +53,7 @@
 
                 <Button Style="{StaticResource AccentButtonStyle}"
                         Content="Sign in"
-                        Command="{x:Bind ParentViewModel.PasswordSignInCommand, Mode=OneWay}"
+                        Command="{x:Bind PasswordSignInCommand, Mode=OneWay}"
                         HorizontalAlignment="Stretch" />
             </StackPanel>
         </StackPanel>
@@ -96,10 +99,10 @@
 
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <Button Content="Back"
-                        Command="{x:Bind ParentViewModel.BackFromTwoFactorCommand, Mode=OneWay}" />
+                        Command="{x:Bind BackFromTwoFactorCommand, Mode=OneWay}" />
                 <Button Style="{StaticResource AccentButtonStyle}"
                         Content="Continue"
-                        Command="{x:Bind ParentViewModel.ContinueTwoFactorCommand, Mode=OneWay}" />
+                        Command="{x:Bind ContinueTwoFactorCommand, Mode=OneWay}" />
             </StackPanel>
         </StackPanel>
     </DataTemplate>

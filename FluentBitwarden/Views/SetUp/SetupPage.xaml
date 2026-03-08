@@ -40,11 +40,13 @@
                 <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
                               Width="28"
                               Height="28"
+                              Visibility="{x:Bind ViewModel.IsBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}"
                               HorizontalAlignment="Center" />
 
                 <InfoBar IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
                          Severity="Error"
                          Title="Authentication failed"
+                         Visibility="Collapsed"
                          Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
             </StackPanel>
         </Border>

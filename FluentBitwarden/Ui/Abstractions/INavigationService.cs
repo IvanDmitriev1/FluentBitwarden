@@ -1,3 +1,4 @@
+using FluentBitwarden.Ui.Controls;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Abstractions;
@@ -6,7 +7,7 @@ public interface INavigationService
 {
     void Initialize(Frame frame);
 
-    bool Navigate(Type pageType, object? parameter = null, bool clearBackStack = false);
+    void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : CorePage;
 
     bool CanGoBack { get; }
 

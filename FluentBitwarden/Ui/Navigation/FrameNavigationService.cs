@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using FluentBitwarden.Ui.Abstractions;
+using FluentBitwarden.Ui.Controls;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Navigation;
@@ -6,37 +8,24 @@ namespace FluentBitwarden.Ui.Navigation;
 public sealed class FrameNavigationService : INavigationService
 {
     private Frame? _frame;
-
     public bool CanGoBack => _frame?.CanGoBack == true;
 
     public void Initialize(Frame frame)
     {
-        ArgumentNullException.ThrowIfNull(frame);
         _frame = frame;
     }
 
-    public bool Navigate(Type pageType, object? parameter = null, bool clearBackStack = false)
+    public void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : CorePage
     {
-        ArgumentNullException.ThrowIfNull(pageType);
-
-        if (!typeof(Page).IsAssignableFrom(pageType))
-        {
-            throw new ArgumentException("Navigation target must derive from Page.", nameof(pageType));
-        }
-
-        if (_frame is null)
-        {
-            throw new InvalidOperationException("Navigation frame has not been initialized.");
-        }
-
-        var navigated = _frame.Navigate(pageType, parameter);
+        ArgumentNullException.ThrowIfNull(_frame);
+        var navigated = _frame.Navigate(typeof(T), parameter);
 
         if (navigated && clearBackStack)
         {
             _frame.BackStack.Clear();
         }
 
-        return navigated;
+        Debug.Assert(navigated, "Navigation failed.");
     }
 
     public bool GoBack()

@@ -1,12 +1,11 @@
-using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text.Json;
-using BitwaredApi.Abstractions;
 using BitwaredApi.Abstractions.Exceptions;
-using BitwaredApi.Models.Session;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Core.Abstractions;
+using FluentBitwarden.Models.Session;
 
-namespace FluentBitwarden.Security;
+namespace FluentBitwarden.Services;
 
 public sealed class DpapiSessionStore(IAppPaths paths) : ISessionStore
 {

@@ -1,5 +1,6 @@
 using BitwaredApi;
-using FluentBitwarden.Extentions;
+using FluentBitwarden.Abstractions;
+using FluentBitwarden.Extensions;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Ui.Extensions;
 using FluentBitwarden.Ui.Navigation;
@@ -25,16 +26,13 @@ public partial class App : Application, IXamlMetadataServiceProvider
             .ConfigureServices((ctx, services) =>
             {
                 services.AddBitwaredPlatformServices();
-
-                services.AddBitwaredApi(options =>
-                {
-                    options.Environment = BitwardenEnvironment.UnitedStates;
-                });
+                services.AddBitwaredCoreServices(BitwardenEnvironment.UnitedStates);
+                services.AddBitwaredWorkflowServices();
 
                 services.AddSingleton<MainWindow>();
                 services.AddSingleton<INavigationService, FrameNavigationService>();
-
                 services.AddView<LoginPage, LoginPageViewModel>();
+                services.AddView<SettingsPage, SettingsPageViewModel>();
                 services.AddView<SetupPage, SetupPageViewModel>();
                 services.AddView<VaultPage, VaultPageViewModel>();
             })
@@ -48,11 +46,30 @@ public partial class App : Application, IXamlMetadataServiceProvider
         InitializeComponent();
     }
 
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         _mainWindow ??= Host.Services.GetRequiredService<MainWindow>();
         _mainWindow.Activate();
 
-        Host.Services.GetRequiredService<INavigationService>().Navigate(typeof(LoginPage));
+        var navigationService = Host.Services.GetRequiredService<INavigationService>();
+        var authService = Host.Services.GetRequiredService<IAuthService>();
+
+        try
+        {
+            var session = await authService.GetStoredSessionAsync();
+
+            if (session is not null)
+            {
+                navigationService.Navigate<LoginPage>(clearBackStack: true);
+            }
+            else
+            {
+                navigationService.Navigate<SetupPage>(clearBackStack: true);
+            }
+        }
+        catch
+        {
+            navigationService.Navigate<SetupPage>(clearBackStack: true);
+        }
     }
 }

@@ -1,6 +1,9 @@
 using System.Text.Json;
+using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Models.Auth;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Abstractions;
 
 namespace FluentBitwarden.ViewModels.SetUp;
 
@@ -13,11 +16,15 @@ public sealed record TwoFactorProviderOptionModel(
 public partial class TwoFactorStepViewModel : ObservableObject
 {
     private const string DefaultPrompt = "Complete the Bitwarden two-factor challenge to continue.";
+    private readonly IAuthService _authService;
 
-    public TwoFactorStepViewModel(SetupPageViewModel parentViewModel)
+    public TwoFactorStepViewModel(
+        SetupPageViewModel parentViewModel,
+        IAuthService authService)
     {
         ArgumentNullException.ThrowIfNull(parentViewModel);
         ParentViewModel = parentViewModel;
+        _authService = authService;
     }
 
     public SetupPageViewModel ParentViewModel { get; }
@@ -72,28 +79,74 @@ public partial class TwoFactorStepViewModel : ObservableObject
         RememberThisDevice = true;
     }
 
-    public static bool IsSupported(TwoFactorProviderType provider)
-        => provider is TwoFactorProviderType.Authenticator
+    [RelayCommand]
+    private void BackFromTwoFactor()
+    {
+        ParentViewModel.ClearStatus();
+        ParentViewModel.ResetToPasswordStep();
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task ContinueTwoFactorAsync()
+    {
+        ParentViewModel.ClearStatus();
+
+        if (SelectedProvider is null)
+        {
+            ParentViewModel.ShowError("Select a two-factor provider.");
+            return;
+        }
+
+        if (!SelectedProvider.IsSupported)
+        {
+            ParentViewModel.ShowError("This provider requires an interactive Bitwarden flow that is not implemented in this build.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Code))
+        {
+            ParentViewModel.ShowError("Enter the verification code.");
+            return;
+        }
+
+        try
+        {
+            await ParentViewModel.RunBusyAsync(async () =>
+            {
+                await _authService.ContinueTwoFactorAsync(
+                    Code.Trim(),
+                    SelectedProvider.Provider,
+                    RememberThisDevice);
+                await ParentViewModel.CompleteAuthenticatedSessionAsync();
+            });
+        }
+        catch (Exception ex)
+        {
+            ParentViewModel.ShowError(ex);
+        }
+    }
+
+    public static bool IsSupported(TwoFactorProviderType provider) =>
+        provider is TwoFactorProviderType.Authenticator
             or TwoFactorProviderType.Email
             or TwoFactorProviderType.RecoveryCode;
 
-    private static string GetTitle(TwoFactorProviderType provider)
-        => provider switch
-        {
-            TwoFactorProviderType.Authenticator => "Authenticator app",
-            TwoFactorProviderType.Email => "Email code",
-            TwoFactorProviderType.Duo => "Duo",
-            TwoFactorProviderType.Yubikey => "YubiKey",
-            TwoFactorProviderType.U2f => "U2F",
-            TwoFactorProviderType.WebAuthn => "WebAuthn",
-            TwoFactorProviderType.RecoveryCode => "Recovery code",
-            _ => provider.ToString(),
-        };
+    private static string GetTitle(TwoFactorProviderType provider) => provider switch
+    {
+        TwoFactorProviderType.Authenticator => "Authenticator app",
+        TwoFactorProviderType.Email => "Email code",
+        TwoFactorProviderType.Duo => "Duo",
+        TwoFactorProviderType.Yubikey => "YubiKey",
+        TwoFactorProviderType.U2f => "U2F",
+        TwoFactorProviderType.WebAuthn => "WebAuthn",
+        TwoFactorProviderType.RecoveryCode => "Recovery code",
+        _ => provider.ToString(),
+    };
 
     private static string BuildSubtitle(TwoFactorProviderOption provider)
     {
         if (provider.Provider == TwoFactorProviderType.Email
-            && TryGetMetadataDisplayValue(provider, out string? emailHint)
+            && TryGetMetadataDisplayValue(provider, out var emailHint)
             && !string.IsNullOrWhiteSpace(emailHint))
         {
             return emailHint;

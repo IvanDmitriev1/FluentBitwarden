@@ -1,9 +1,9 @@
 using System.Text.Json;
-using BitwaredApi.Abstractions;
 using BitwaredApi.Models.Auth;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Core.Abstractions;
 
-namespace FluentBitwarden.Security;
+namespace FluentBitwarden.Services;
 
 public sealed class LocalDeviceInfoProvider(IAppPaths paths) : IDeviceInfoProvider
 {

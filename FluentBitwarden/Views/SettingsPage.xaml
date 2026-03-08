@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:CorePage
+    x:Class="FluentBitwarden.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:attached="using:FluentBitwarden.Views.AttachedProperties"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:FluentBitwarden.Ui.Controls"
+    xmlns:viewModels="using:FluentBitwarden.ViewModels"
+    mc:Ignorable="d">
+
+    <Grid Margin="24"
+          RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0"
+                        Spacing="4">
+                <TextBlock Text="Unlock settings"
+                           FontSize="30"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="{x:Bind ViewModel.SessionDisplay.Email, Mode=OneWay}"
+                           Opacity="0.75" />
+            </StackPanel>
+
+            <ProgressRing Grid.Column="1"
+                          Width="28"
+                          Height="28"
+                          IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                          VerticalAlignment="Center" />
+
+            <Button Grid.Column="2"
+                    Content="Back"
+                    Command="{x:Bind ViewModel.BackCommand, Mode=OneWay}"
+                    VerticalAlignment="Center" />
+        </Grid>
+
+        <InfoBar Grid.Row="1"
+                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                 Severity="Error"
+                 Title="Settings update failed"
+                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
+
+        <StackPanel Grid.Row="2"
+                    Spacing="16">
+            <Border Padding="20"
+                    CornerRadius="12"
+                    BorderThickness="1"
+                    BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Windows Hello"
+                               FontSize="20"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Bind ViewModel.WindowsHelloStatusText, Mode=OneWay}"
+                               Opacity="0.8" />
+
+                    <Button Content="Enable Windows Hello"
+                            Command="{x:Bind ViewModel.EnableWindowsHelloCommand, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.CanEnableWindowsHello, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+
+                    <Button Content="Disable Windows Hello"
+                            Command="{x:Bind ViewModel.DisableWindowsHelloCommand, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.IsWindowsHelloConfigured, Converter={StaticResource BoolToVis}, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="20"
+                    CornerRadius="12"
+                    BorderThickness="1"
+                    BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="PIN"
+                               FontSize="20"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Bind ViewModel.PinStatusText, Mode=OneWay}"
+                               Opacity="0.8" />
+
+                    <StackPanel Spacing="12"
+                                Visibility="{x:Bind ViewModel.CanEnablePin, Converter={StaticResource BoolToVis}, Mode=OneWay}">
+                        <PasswordBox Header="New PIN"
+                                     attached:PasswordBoxBinding.BindPassword="True"
+                                     attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.Pin, Mode=TwoWay}" />
+
+                        <PasswordBox Header="Confirm PIN"
+                                     attached:PasswordBoxBinding.BindPassword="True"
+                                     attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.ConfirmPin, Mode=TwoWay}" />
+
+                        <Button Content="Enable PIN"
+                                Command="{x:Bind ViewModel.EnablePinCommand, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+
+                    <Button Content="Disable PIN"
+                            Command="{x:Bind ViewModel.DisablePinCommand, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.IsPinConfigured, Converter={StaticResource BoolToVis}, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</ui:CorePage>

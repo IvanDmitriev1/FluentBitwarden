@@ -1,6 +1,6 @@
-using BitwaredApi.Abstractions;
 using BitwaredApi.Models.Vault;
 using Dapper;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Core.Abstractions;
 using Microsoft.Data.Sqlite;
 using SQLitePCL;
