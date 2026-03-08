@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:CorePage
+    x:Class="FluentBitwarden.Views.SetupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:FluentBitwarden.Ui.Controls"
+    xmlns:viewModels="using:FluentBitwarden.ViewModels"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    mc:Ignorable="d">
+
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          MaxWidth="560"
+          MinWidth="320"
+          Margin="24">
+
+        <!-- “Card” surface -->
+        <Border CornerRadius="16"
+            Padding="28"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+            <Border.Background>
+                <SolidColorBrush Color="{ThemeResource CardBackgroundFillColorDefault}"
+                             Opacity="0.92"/>
+            </Border.Background>
+
+            <StackPanel Spacing="18">
+
+                <!-- Title -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Sign in" FontSize="30" FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Bind ViewModel.ServerHintText, Mode=OneWay}"
+                           Opacity="0.75"
+                           TextWrapping="WrapWholeWords" />
+                </StackPanel>
+
+                <controls:Segmented
+                ItemsSource="{x:Bind ViewModel.Environments, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedEnvironment, Mode=TwoWay}"
+                HorizontalAlignment="Stretch">
+                    <controls:Segmented.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:SetupEnvironmentOption">
+                            <StackPanel Padding="10,6" Spacing="2">
+                                <TextBlock Text="{x:Bind Title, Mode=OneWay}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{x:Bind Subtitle, Mode=OneWay}" Opacity="0.65" FontSize="12"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </controls:Segmented.ItemTemplate>
+                </controls:Segmented>
+
+                <!-- Auth method group -->
+                <StackPanel Spacing="12">
+                    <Button Content="Sign in with passkey"
+                        Command="{x:Bind ViewModel.PasskeySignInCommand, Mode=OneWay}"
+                        HorizontalAlignment="Stretch"/>
+
+                    <TextBlock Text="or" HorizontalAlignment="Center" Opacity="0.55"/>
+
+                    <TextBox Header="Email"
+                         Text="{x:Bind ViewModel.Email, Mode=TwoWay}"
+                         PlaceholderText="name@example.com" />
+
+                    <PasswordBox x:Name="Pwd"
+                             Header="Master password"
+                             PasswordChanged="Pwd_OnPasswordChanged"/>
+
+                    <Button 
+                        Style="{StaticResource AccentButtonStyle}"
+                        Content="Sign in"
+                        Command="{x:Bind ViewModel.PasswordSignInCommand, Mode=OneWay}"
+                        HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <InfoBar IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                     Severity="Error"
+                     Title="Sign-in failed"
+                     Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</ui:CorePage>

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FluentBitwarden (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "FluentBitwarden (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
