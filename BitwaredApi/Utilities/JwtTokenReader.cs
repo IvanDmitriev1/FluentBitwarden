@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace BitwaredApi.Utilities;
 
-internal static class JwtTokenReader
+public static class JwtTokenReader
 {
     public static string? GetClaim(string token, string claimType)
     {

@@ -11,20 +11,6 @@ public sealed record TokenResponseModel(
     KdfConfigModel? Kdf,
     UserDecryptionOptionsModel? UserDecryptionOptions);
 
-public sealed record AuthSession(
-    string AccountId,
-    string Email,
-    DateTimeOffset AccessTokenExpiresAt,
-    BitwardenEnvironment Environment,
-    bool HasUserKey);
-
-public sealed record PendingDeviceLogin(
-    string RequestId,
-    string AccessCode,
-    string FingerprintPhrase,
-    DateTimeOffset Expires,
-    string Email);
-
 public sealed record AuthRequestCreateResponse(
     string Id,
     string AccessCode,

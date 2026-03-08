@@ -6,9 +6,9 @@ using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Models.Auth;
 using BitwaredApi.Utilities;
 
-namespace BitwaredApi.Http;
+namespace BitwaredApi.Services;
 
-public sealed class IdentityClient(HttpClient httpClient, IClock clock, IEnvironmentConfig environmentConfig)
+internal sealed class IdentityClient(HttpClient httpClient, IClock clock, IEnvironmentConfig environmentConfig) : IIdentityClient
 {
     public async ValueTask<PreloginResponseModel> PreloginAsync(string email, CancellationToken cancellationToken = default)
     {
@@ -194,6 +194,9 @@ public sealed class IdentityClient(HttpClient httpClient, IClock clock, IEnviron
                     }
 
                     throw new TokenEndpointException(
+                        error,
+                        description,
+                        false,
                         new TwoFactorChallenge(
                             providers,
                             true,
@@ -317,8 +320,4 @@ public sealed class IdentityClient(HttpClient httpClient, IClock clock, IEnviron
     private Uri BuildUri(string relativePath)
         => new(environmentConfig.Current.IdentityBase, relativePath);
 
-    internal sealed class TokenEndpointException(TwoFactorChallenge challenge) : Exception
-    {
-        public TwoFactorChallenge Challenge { get; } = challenge;
-    }
 }

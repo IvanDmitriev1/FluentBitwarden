@@ -2,7 +2,7 @@ using BitwaredApi.Abstractions;
 
 namespace BitwaredApi.Services;
 
-public sealed class SystemClock : IClock
+internal sealed class SystemClock : IClock
 {
     public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
 

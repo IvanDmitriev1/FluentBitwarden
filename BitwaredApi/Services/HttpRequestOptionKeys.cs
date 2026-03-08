@@ -1,6 +1,6 @@
-namespace BitwaredApi.Http;
+namespace BitwaredApi.Services;
 
-internal static class HttpRequestOptionKeys
+public static class HttpRequestOptionKeys
 {
     public static readonly HttpRequestOptionsKey<bool> SkipAuthorization = new("Bitwared.SkipAuthorization");
 }

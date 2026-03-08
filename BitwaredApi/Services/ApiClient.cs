@@ -5,22 +5,13 @@ using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Models.Auth;
 using BitwaredApi.Utilities;
 
-namespace BitwaredApi.Http;
+namespace BitwaredApi.Services;
 
-public sealed class ApiClient
+internal sealed class ApiClient(HttpClient httpClient, IEnvironmentConfig environmentConfig) : IApiClient
 {
-    private readonly HttpClient _httpClient;
-    private readonly IEnvironmentConfig _environmentConfig;
-
-    public ApiClient(HttpClient httpClient, IEnvironmentConfig environmentConfig)
-    {
-        _httpClient = httpClient;
-        _environmentConfig = environmentConfig;
-    }
-
     public async ValueTask<JsonDocument> GetSyncAsync(CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await _httpClient.GetAsync(BuildUri("/sync"), cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await httpClient.GetAsync(BuildUri("/sync"), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         return await JsonDocument.ParseAsync(
             await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
@@ -29,7 +20,7 @@ public sealed class ApiClient
 
     public async ValueTask<DateTimeOffset?> GetRevisionDateAsync(CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await _httpClient.GetAsync(BuildUri("/accounts/revision-date"), cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await httpClient.GetAsync(BuildUri("/accounts/revision-date"), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
 
         string text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
@@ -63,7 +54,7 @@ public sealed class ApiClient
         request.Options.Set(HttpRequestOptionKeys.SkipAuthorization, true);
         request.Headers.TryAddWithoutValidation("Device-Identifier", deviceIdentifier);
 
-        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
 
         using JsonDocument document = await JsonDocument.ParseAsync(
@@ -90,7 +81,7 @@ public sealed class ApiClient
         HttpRequestMessage request = new(HttpMethod.Get, BuildUri($"/auth-requests/{requestId}/response?code={Uri.EscapeDataString(accessCode)}"));
         request.Options.Set(HttpRequestOptionKeys.SkipAuthorization, true);
 
-        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -140,5 +131,5 @@ public sealed class ApiClient
     }
 
     private Uri BuildUri(string relativePath)
-        => new(_environmentConfig.Current.ApiBase, relativePath);
+        => new(environmentConfig.Current.ApiBase, relativePath);
 }

@@ -2,15 +2,10 @@ using BitwaredApi.Abstractions;
 
 namespace BitwaredApi.Services;
 
-public sealed class EnvironmentConfig : IEnvironmentConfig
+internal sealed class EnvironmentConfig(BitwardenEnvironment environment) : IEnvironmentConfig
 {
-    private readonly object _gate = new();
-    private BitwardenEnvironment _current;
-
-    public EnvironmentConfig(BitwardenEnvironment environment)
-    {
-        _current = environment;
-    }
+    private readonly Lock _gate = new();
+    private BitwardenEnvironment _current = environment;
 
     public BitwardenEnvironment Current
     {
@@ -25,8 +20,6 @@ public sealed class EnvironmentConfig : IEnvironmentConfig
 
     public void Set(BitwardenEnvironment env)
     {
-        ArgumentNullException.ThrowIfNull(env);
-
         lock (_gate)
         {
             _current = env;
