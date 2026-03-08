@@ -62,7 +62,6 @@
     <PackageReference Include="WinUIEx" Version="2.9.0" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Core\Models\" />
     <Folder Include="Security\" />
     <Folder Include="Views\SetUp\" />
   </ItemGroup>

@@ -43,6 +43,22 @@ public sealed class AuthService : IAuthService
         _clock = clock;
     }
 
+    public async ValueTask<StoredSessionInfo?> GetStoredSessionAsync(CancellationToken cancellationToken = default)
+    {
+        SessionState? state = await _sessionCoordinator.GetStoredStateAsync(cancellationToken).ConfigureAwait(false);
+        if (state is null)
+        {
+            return null;
+        }
+
+        return new StoredSessionInfo(
+            state.AccountId,
+            state.Email,
+            new BitwardenEnvironment(new Uri(state.ApiBase), new Uri(state.IdentityBase)),
+            !_sessionCoordinator.HasUnlockedUserKey,
+            !string.IsNullOrWhiteSpace(state.MasterKeyEncryptedUserKey) && state.KdfConfig is not null);
+    }
+
     public ValueTask<PreloginResponseModel> PreloginAsync(string email, CancellationToken cancellationToken = default)
         => _identityClient.PreloginAsync(email, cancellationToken);
 
@@ -121,6 +137,74 @@ public sealed class AuthService : IAuthService
             cancellationToken).ConfigureAwait(false);
         ClearPendingPasswordLogin();
         return session;
+    }
+
+    public async ValueTask<AuthSession> UnlockWithMasterPasswordAsync(
+        string masterPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(masterPassword))
+        {
+            throw new InvalidCredentialsException("Enter your master password.");
+        }
+
+        SessionState state = await _sessionCoordinator.GetStoredStateAsync(cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("No persisted Bitwarden session is available.");
+
+        if (state.KdfConfig is null || string.IsNullOrWhiteSpace(state.MasterKeyEncryptedUserKey))
+        {
+            throw new InvalidOperationException("This saved session cannot be unlocked with the master password.");
+        }
+
+        MasterPasswordAuth auth = _cryptoService.DeriveMasterPasswordAuth(
+            state.Email,
+            masterPassword,
+            state.KdfConfig,
+            state.MasterPasswordSalt);
+
+        byte[]? userKey = null;
+
+        try
+        {
+            try
+            {
+                userKey = _cryptoService.DecryptUserKey(
+                    new EncString(state.MasterKeyEncryptedUserKey),
+                    auth.StretchedMasterKey);
+            }
+            catch (Exception ex) when (ex is CryptographicException or FormatException or InvalidOperationException)
+            {
+                throw new InvalidCredentialsException("The supplied master password is incorrect.", ex);
+            }
+
+            await _sessionCoordinator.RestoreUserKeyAsync(userKey, cancellationToken).ConfigureAwait(false);
+            return CreateStoredAuthSession(state, true);
+        }
+        finally
+        {
+            _cryptoService.ZeroMemory(userKey);
+            _cryptoService.ZeroMemory(auth.MasterKey);
+            _cryptoService.ZeroMemory(auth.StretchedMasterKey);
+        }
+    }
+
+    public async ValueTask<AuthSession> UnlockWithUserKeyAsync(
+        byte[] userKey,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userKey);
+
+        SessionState state = await _sessionCoordinator.GetStoredStateAsync(cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("No persisted Bitwarden session is available.");
+
+        await _sessionCoordinator.RestoreUserKeyAsync(userKey, cancellationToken).ConfigureAwait(false);
+        return CreateStoredAuthSession(state, true);
+    }
+
+    public async ValueTask<byte[]?> ExportUserKeyAsync(CancellationToken cancellationToken = default)
+    {
+        await _sessionCoordinator.GetStoredStateAsync(cancellationToken).ConfigureAwait(false);
+        return _sessionCoordinator.GetUserKeyCopy();
     }
 
     public ValueTask<string> EnsureAccessTokenAsync(CancellationToken cancellationToken = default)
@@ -280,6 +364,10 @@ public sealed class AuthService : IAuthService
         {
             userKey = deviceLoginUserKey.ToArray();
         }
+        else if (auth is not null && string.IsNullOrWhiteSpace(masterKeyEncryptedUserKey))
+        {
+            throw new ServerVersionMismatchException("Identity response did not include the encrypted user key required for master-password unlock.");
+        }
         else if (auth is not null && !string.IsNullOrWhiteSpace(masterKeyEncryptedUserKey))
         {
             userKey = _cryptoService.DecryptUserKey(new EncString(masterKeyEncryptedUserKey), auth.StretchedMasterKey);
@@ -403,6 +491,14 @@ public sealed class AuthService : IAuthService
 
         return builder.ToString();
     }
+
+    private static AuthSession CreateStoredAuthSession(SessionState state, bool hasUserKey)
+        => new(
+            state.AccountId,
+            state.Email,
+            state.AccessTokenExpiresAt,
+            new BitwardenEnvironment(new Uri(state.ApiBase), new Uri(state.IdentityBase)),
+            hasUserKey);
 
     private sealed record PendingPasswordLogin(
         string Email,

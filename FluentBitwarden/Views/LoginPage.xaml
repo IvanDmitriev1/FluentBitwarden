@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:CorePage
+    x:Class="FluentBitwarden.Views.LoginPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:attached="using:FluentBitwarden.Views.AttachedProperties"
+    xmlns:ui="using:FluentBitwarden.Ui.Controls"
+    mc:Ignorable="d">
+
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          MaxWidth="560"
+          MinWidth="320"
+          Margin="24">
+        <Border CornerRadius="16"
+                Padding="28"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+            <Border.Background>
+                <SolidColorBrush Color="{ThemeResource CardBackgroundFillColorDefault}"
+                                 Opacity="0.92" />
+            </Border.Background>
+
+            <StackPanel Spacing="18">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Unlock vault"
+                               FontSize="30"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Bind ViewModel.Email, Mode=OneWay}"
+                               Opacity="0.8" />
+                    <TextBlock Text="{x:Bind ViewModel.EnvironmentLabel, Mode=OneWay}"
+                               Opacity="0.6" />
+                </StackPanel>
+
+                <StackPanel Spacing="12"
+                            Visibility="{x:Bind ViewModel.CanUnlockWithMasterPassword, Converter={StaticResource BoolToVis}, Mode=OneWay}">
+                    <PasswordBox Header="Master password"
+                                 attached:PasswordBoxBinding.BindPassword="True"
+                                 attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.MasterPassword, Mode=TwoWay}" />
+
+                    <Button Style="{StaticResource AccentButtonStyle}"
+                            Content="Unlock with master password"
+                            Command="{x:Bind ViewModel.UnlockWithMasterPasswordCommand, Mode=OneWay}" />
+                </StackPanel>
+
+                <Button Content="Unlock with Windows Hello"
+                        Visibility="{x:Bind ViewModel.CanUnlockWithWindowsHello, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.UnlockWithWindowsHelloCommand, Mode=OneWay}" />
+
+                <StackPanel Spacing="12"
+                            Visibility="{x:Bind ViewModel.CanUnlockWithPin, Converter={StaticResource BoolToVis}, Mode=OneWay}">
+                    <PasswordBox Header="App PIN"
+                                 attached:PasswordBoxBinding.BindPassword="True"
+                                 attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.Pin, Mode=TwoWay}" />
+
+                    <Button Content="Unlock with PIN"
+                            Command="{x:Bind ViewModel.UnlockWithPinCommand, Mode=OneWay}" />
+                </StackPanel>
+
+                <InfoBar IsOpen="{x:Bind ViewModel.HasNoUnlockOptions, Mode=OneWay}"
+                         Severity="Warning"
+                         Title="No local unlock methods"
+                         Message="This saved session has no enrolled local unlock methods. Use another account to sign in again." />
+
+                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                              Width="28"
+                              Height="28"
+                              HorizontalAlignment="Center" />
+
+                <InfoBar IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                         Severity="Error"
+                         Title="Unlock failed"
+                         Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
+
+                <Button Content="Use another account"
+                        Command="{x:Bind ViewModel.UseAnotherAccountCommand, Mode=OneWay}"
+                        HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</ui:CorePage>

@@ -8,7 +8,8 @@ public interface ICryptoService
     MasterPasswordAuth DeriveMasterPasswordAuth(
         string email,
         string masterPassword,
-        KdfConfigModel kdfConfig);
+        KdfConfigModel kdfConfig,
+        string? kdfSalt = null);
 
     byte[] DecryptUserKey(EncString encryptedUserKey, byte[] stretchedMasterKey);
 

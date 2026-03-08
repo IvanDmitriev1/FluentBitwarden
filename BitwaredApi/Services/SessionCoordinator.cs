@@ -44,6 +44,8 @@ public sealed class SessionCoordinator
         return _state;
     }
 
+    public bool HasUnlockedUserKey => _userKey is not null;
+
     public async ValueTask<string> EnsureAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         await EnsureLoadedAsync(cancellationToken).ConfigureAwait(false);
@@ -114,6 +116,24 @@ public sealed class SessionCoordinator
         ReplaceUserKey(userKey);
 
         await _sessionStore.SaveAsync(state, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask RestoreUserKeyAsync(
+        byte[] userKey,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userKey);
+
+        await EnsureLoadedAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_state is null)
+        {
+            throw new InvalidOperationException("No persisted Bitwarden session is available.");
+        }
+
+        _environmentConfig.Set(new BitwardenEnvironment(new Uri(_state.ApiBase), new Uri(_state.IdentityBase)));
+        _accessToken = null;
+        ReplaceUserKey(userKey);
     }
 
     public byte[]? GetUserKeyCopy()

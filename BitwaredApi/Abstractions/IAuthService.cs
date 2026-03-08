@@ -1,9 +1,12 @@
 using BitwaredApi.Models.Auth;
+using BitwaredApi.Models.Session;
 
 namespace BitwaredApi.Abstractions;
 
 public interface IAuthService
 {
+    ValueTask<StoredSessionInfo?> GetStoredSessionAsync(CancellationToken cancellationToken = default);
+
     ValueTask<PreloginResponseModel> PreloginAsync(string email, CancellationToken cancellationToken = default);
 
     ValueTask<AuthSession> SignInWithPasswordAsync(
@@ -16,6 +19,16 @@ public interface IAuthService
         TwoFactorProviderType provider,
         bool remember,
         CancellationToken cancellationToken = default);
+
+    ValueTask<AuthSession> UnlockWithMasterPasswordAsync(
+        string masterPassword,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<AuthSession> UnlockWithUserKeyAsync(
+        byte[] userKey,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<byte[]?> ExportUserKeyAsync(CancellationToken cancellationToken = default);
 
     ValueTask<string> EnsureAccessTokenAsync(CancellationToken cancellationToken = default);
 

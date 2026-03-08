@@ -16,17 +16,15 @@ public sealed class AppPaths : IAppPaths
 
         VaultDbFilePath = Path.Combine(AppDataRoot, "vault.db");
         SessionFilePath = Path.Combine(AppDataRoot, "session.bin");
+        UnlockStateFilePath = Path.Combine(AppDataRoot, "unlock.bin");
         ConfigFilePath = Path.Combine(AppDataRoot, "config.json");
     }
 
     public bool IsPackaged { get; }
-
     public string AppDataRoot { get; }
-
     public string VaultDbFilePath { get; }
-
     public string SessionFilePath { get; }
-
+    public string UnlockStateFilePath { get; }
     public string ConfigFilePath { get; }
 
     private string ResolveRoot()
@@ -37,7 +35,7 @@ public sealed class AppPaths : IAppPaths
         }
 
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(localAppData, "PC", "FluentBitwarden");
+        return Path.Combine(localAppData, "FluentBitwarden");
     }
 
     private static bool DetectPackaged()
@@ -55,7 +53,7 @@ public sealed class AppPaths : IAppPaths
         if (result == AppModelErrorNoPackage)
         {
             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(localAppData, "PC", "FluentBitwarden");
+            return Path.Combine(localAppData, "FluentBitwarden");
         }
 
         StringBuilder builder = new(length);

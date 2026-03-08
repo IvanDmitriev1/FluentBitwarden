@@ -3,8 +3,11 @@ using BitwaredApi.Abstractions;
 using BitwaredApi.Models.Vault;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Abstractions;
+using FluentBitwarden.Security;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
+using LoginPage = FluentBitwarden.Views.LoginPage;
 using SetupPage = FluentBitwarden.Views.SetUp.SetupPage;
 
 namespace FluentBitwarden.ViewModels;
@@ -20,7 +23,8 @@ public sealed record VaultCipherRow(
 public partial class VaultPageViewModel(
     IVaultService vaultService,
     IBitwaredClient client,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    ILocalUnlockService localUnlockService)
     : ObservableObject, IPageLifecycleAware
 {
     [ObservableProperty]
@@ -34,8 +38,23 @@ public partial class VaultPageViewModel(
 
     public ObservableCollection<VaultCipherRow> Ciphers { get; } = [];
 
-    public Task OnLoadingAsync(CancellationToken cancellationToken)
-        => RefreshAsync();
+    public async Task OnLoadingAsync(CancellationToken cancellationToken)
+    {
+        var session = await client.Auth.GetStoredSessionAsync(cancellationToken);
+        if (session is null)
+        {
+            navigationService.Navigate(typeof(SetupPage), clearBackStack: true);
+            return;
+        }
+
+        if (session.IsLocked)
+        {
+            navigationService.Navigate(typeof(LoginPage), clearBackStack: true);
+            return;
+        }
+
+        await RefreshAsync();
+    }
 
     public Task OnUnloadingAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
@@ -48,6 +67,19 @@ public partial class VaultPageViewModel(
 
         try
         {
+            var session = await client.Auth.GetStoredSessionAsync();
+            if (session is null)
+            {
+                navigationService.Navigate(typeof(SetupPage), clearBackStack: true);
+                return;
+            }
+
+            if (session.IsLocked)
+            {
+                navigationService.Navigate(typeof(LoginPage), clearBackStack: true);
+                return;
+            }
+
             IReadOnlyList<DecryptedCipher> ciphers = await vaultService.ListCiphersAsync();
 
             Ciphers.Clear();
@@ -73,9 +105,17 @@ public partial class VaultPageViewModel(
     }
 
     [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task LockAsync()
+    {
+        await client.LockAsync();
+        navigationService.Navigate(typeof(LoginPage), clearBackStack: true);
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task LogoutAsync()
     {
         await client.LogoutAsync();
+        await localUnlockService.ClearAsync();
         navigationService.Navigate(typeof(SetupPage), clearBackStack: true);
     }
 

@@ -9,18 +9,21 @@ namespace BitwaredApi.Crypto.Enc;
 
 public sealed class CryptoService : ICryptoService
 {
-    public MasterPasswordAuth DeriveMasterPasswordAuth(string email, string masterPassword, KdfConfigModel kdfConfig)
+    public MasterPasswordAuth DeriveMasterPasswordAuth(string email, string masterPassword, KdfConfigModel kdfConfig, string? kdfSalt = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         ArgumentException.ThrowIfNullOrWhiteSpace(masterPassword);
 
         string normalizedEmail = NormalizeEmail(email);
+        string normalizedSalt = string.IsNullOrWhiteSpace(kdfSalt)
+            ? normalizedEmail
+            : NormalizeEmail(kdfSalt);
         byte[] masterKey = kdfConfig.Type switch
         {
-            KdfType.Pbkdf2Sha256 => Pbkdf2Kdf.Derive(masterPassword, normalizedEmail, kdfConfig.Iterations, 32),
+            KdfType.Pbkdf2Sha256 => Pbkdf2Kdf.Derive(masterPassword, normalizedSalt, kdfConfig.Iterations, 32),
             KdfType.Argon2id => Argon2idKdf.Derive(
                 masterPassword,
-                normalizedEmail,
+                normalizedSalt,
                 kdfConfig.Iterations,
                 kdfConfig.Memory ?? 64,
                 kdfConfig.Parallelism ?? 4,

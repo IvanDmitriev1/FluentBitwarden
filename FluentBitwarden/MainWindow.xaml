@@ -37,7 +37,7 @@
             </TitleBar.Content>
         </TitleBar>
 
-        <Frame Grid.Row="1" x:Name="ContentFrame"/>
+        <Frame Grid.Row="1"  x:Name="ContentFrame"/>
     </Grid>
 
 </winUiEx:WindowEx>

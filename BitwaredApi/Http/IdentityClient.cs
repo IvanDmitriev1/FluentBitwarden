@@ -83,50 +83,51 @@ public sealed class IdentityClient(HttpClient httpClient, IClock clock, IEnviron
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
             JsonElement root = document.RootElement;
-            int expiresIn = root.TryGetProperty("expires_in", out JsonElement expiresProp)
+            int expiresIn = TryGetTokenSuccessProperty(root, out JsonElement expiresProp, "expires_in", "ExpiresIn")
                 ? expiresProp.GetInt32()
                 : 900;
 
             KdfConfigModel? kdf = null;
-            if (root.TryGetProperty("kdf", out JsonElement kdfTypeProp) && kdfTypeProp.ValueKind == JsonValueKind.Number)
+            if (TryGetTokenSuccessProperty(root, out JsonElement kdfTypeProp, "kdf", "Kdf") && kdfTypeProp.ValueKind == JsonValueKind.Number)
             {
                 kdf = new KdfConfigModel(
                     (KdfType)kdfTypeProp.GetInt32(),
-                    root.TryGetProperty("kdfIterations", out JsonElement iterProp) ? iterProp.GetInt32() : 0,
-                    root.TryGetProperty("kdfMemory", out JsonElement memProp) && memProp.ValueKind != JsonValueKind.Null ? memProp.GetInt32() : null,
-                    root.TryGetProperty("kdfParallelism", out JsonElement parProp) && parProp.ValueKind != JsonValueKind.Null ? parProp.GetInt32() : null);
+                    TryGetTokenSuccessProperty(root, out JsonElement iterProp, "kdfIterations", "KdfIterations") ? iterProp.GetInt32() : 0,
+                    TryGetTokenSuccessProperty(root, out JsonElement memProp, "kdfMemory", "KdfMemory") && memProp.ValueKind != JsonValueKind.Null ? memProp.GetInt32() : null,
+                    TryGetTokenSuccessProperty(root, out JsonElement parProp, "kdfParallelism", "KdfParallelism") && parProp.ValueKind != JsonValueKind.Null ? parProp.GetInt32() : null);
             }
 
             UserDecryptionOptionsModel? decryptionOptions = null;
-            if (root.TryGetProperty("userDecryptionOptions", out JsonElement userDec) && userDec.ValueKind == JsonValueKind.Object)
+            if (TryGetTokenSuccessProperty(root, out JsonElement userDec, "userDecryptionOptions", "UserDecryptionOptions") && userDec.ValueKind == JsonValueKind.Object)
             {
                 MasterPasswordUnlockModel? unlock = null;
-                if (userDec.TryGetProperty("masterPasswordUnlock", out JsonElement mpUnlock) && mpUnlock.ValueKind == JsonValueKind.Object)
+                if (TryGetTokenSuccessProperty(userDec, out JsonElement mpUnlock, "masterPasswordUnlock", "MasterPasswordUnlock") && mpUnlock.ValueKind == JsonValueKind.Object)
                 {
-                    JsonElement kdfElement = mpUnlock.GetProperty("kdf");
+                    JsonElement kdfElement = GetRequiredTokenSuccessProperty(mpUnlock, "kdf", "Kdf");
                     unlock = new MasterPasswordUnlockModel(
-                        mpUnlock.GetProperty("salt").GetString() ?? string.Empty,
+                        GetRequiredTokenSuccessString(mpUnlock, "salt", "Salt") ?? string.Empty,
                         new KdfConfigModel(
-                            (KdfType)kdfElement.GetProperty("kdfType").GetInt32(),
-                            kdfElement.GetProperty("iterations").GetInt32(),
-                            kdfElement.TryGetProperty("memory", out JsonElement memory) && memory.ValueKind != JsonValueKind.Null ? memory.GetInt32() : null,
-                            kdfElement.TryGetProperty("parallelism", out JsonElement parallelism) && parallelism.ValueKind != JsonValueKind.Null ? parallelism.GetInt32() : null),
-                        mpUnlock.GetProperty("masterKeyEncryptedUserKey").GetString() ?? string.Empty);
+                            (KdfType)GetRequiredTokenSuccessProperty(kdfElement, "kdfType", "KdfType").GetInt32(),
+                            GetRequiredTokenSuccessProperty(kdfElement, "iterations", "Iterations").GetInt32(),
+                            TryGetTokenSuccessProperty(kdfElement, out JsonElement memory, "memory", "Memory") && memory.ValueKind != JsonValueKind.Null ? memory.GetInt32() : null,
+                            TryGetTokenSuccessProperty(kdfElement, out JsonElement parallelism, "parallelism", "Parallelism") && parallelism.ValueKind != JsonValueKind.Null ? parallelism.GetInt32() : null),
+                        GetRequiredTokenSuccessString(mpUnlock, "masterKeyEncryptedUserKey", "MasterKeyEncryptedUserKey") ?? string.Empty);
                 }
 
                 decryptionOptions = new UserDecryptionOptionsModel(
-                    userDec.TryGetProperty("hasMasterPassword", out JsonElement hasMp) && hasMp.GetBoolean(),
+                    TryGetTokenSuccessProperty(userDec, out JsonElement hasMp, "hasMasterPassword", "HasMasterPassword") && hasMp.GetBoolean(),
                     unlock);
             }
 
             return new TokenResponseModel(
-                root.GetProperty("access_token").GetString() ?? throw new ServerVersionMismatchException("Identity token response did not include access_token."),
-                root.GetProperty("token_type").GetString() ?? "Bearer",
+                GetRequiredTokenSuccessProperty(root, "access_token", "AccessToken").GetString()
+                    ?? throw new ServerVersionMismatchException("Identity token response did not include access_token."),
+                GetOptionalTokenSuccessString(root, "token_type", "TokenType") ?? "Bearer",
                 clock.UtcNow.AddSeconds(expiresIn),
-                root.TryGetProperty("refresh_token", out JsonElement refreshProp) ? refreshProp.GetString() : null,
-                root.TryGetProperty("key", out JsonElement keyProp) ? keyProp.GetString() : null,
-                root.TryGetProperty("privateKey", out JsonElement privateKeyProp) ? privateKeyProp.GetString() : null,
-                root.TryGetProperty("twoFactorToken", out JsonElement twoFactorTokenProp) ? twoFactorTokenProp.GetString() : null,
+                GetOptionalTokenSuccessString(root, "refresh_token", "RefreshToken"),
+                GetOptionalTokenSuccessString(root, "key", "Key"),
+                GetOptionalTokenSuccessString(root, "privateKey", "PrivateKey"),
+                GetOptionalTokenSuccessString(root, "twoFactorToken", "TwoFactorToken"),
                 kdf,
                 decryptionOptions);
         }
@@ -224,6 +225,64 @@ public sealed class IdentityClient(HttpClient httpClient, IClock clock, IEnviron
     }
 
     private static bool TryGetTokenErrorProperty(JsonElement root, string propertyName, out JsonElement value)
+    {
+        if (root.TryGetProperty(propertyName, out value))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            value = default;
+            return false;
+        }
+
+        string lowerFirst = char.ToLowerInvariant(propertyName[0]) + propertyName[1..];
+        if (!string.Equals(lowerFirst, propertyName, StringComparison.Ordinal)
+            && root.TryGetProperty(lowerFirst, out value))
+        {
+            return true;
+        }
+
+        string lower = propertyName.ToLowerInvariant();
+        if (!string.Equals(lower, propertyName, StringComparison.Ordinal)
+            && !string.Equals(lower, lowerFirst, StringComparison.Ordinal)
+            && root.TryGetProperty(lower, out value))
+        {
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static JsonElement GetRequiredTokenSuccessProperty(JsonElement root, params string[] propertyNames)
+        => TryGetTokenSuccessProperty(root, out JsonElement value, propertyNames)
+            ? value
+            : throw new ServerVersionMismatchException($"Token response did not include required property '{propertyNames[0]}'.");
+
+    private static string? GetOptionalTokenSuccessString(JsonElement root, params string[] propertyNames)
+        => TryGetTokenSuccessProperty(root, out JsonElement value, propertyNames) ? value.GetString() : null;
+
+    private static string GetRequiredTokenSuccessString(JsonElement root, params string[] propertyNames)
+        => GetOptionalTokenSuccessString(root, propertyNames)
+            ?? throw new ServerVersionMismatchException($"Token response did not include required string property '{propertyNames[0]}'.");
+
+    private static bool TryGetTokenSuccessProperty(JsonElement root, out JsonElement value, params string[] propertyNames)
+    {
+        foreach (string propertyName in propertyNames)
+        {
+            if (TryGetTokenSuccessProperty(root, propertyName, out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryGetTokenSuccessProperty(JsonElement root, string propertyName, out JsonElement value)
     {
         if (root.TryGetProperty(propertyName, out value))
         {

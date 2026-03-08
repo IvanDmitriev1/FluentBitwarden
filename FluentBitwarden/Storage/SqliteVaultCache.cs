@@ -230,8 +230,9 @@ public sealed class SqliteVaultCache : IVaultCache
 
         await using SqliteConnection connection = CreateConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return (await connection.QueryAsync<EncryptedCipherRecord>(
+        IReadOnlyList<EncryptedCipherRow> rows = (await connection.QueryAsync<EncryptedCipherRow>(
             new CommandDefinition(sql, new { AccountId = accountId }, cancellationToken: cancellationToken)).ConfigureAwait(false)).AsList();
+        return rows.Select(MapCipherRow).ToList();
     }
 
     public async ValueTask<EncryptedCipherRecord?> GetCipherAsync(
@@ -258,8 +259,9 @@ public sealed class SqliteVaultCache : IVaultCache
 
         await using SqliteConnection connection = CreateConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return await connection.QuerySingleOrDefaultAsync<EncryptedCipherRecord>(
+        EncryptedCipherRow? row = await connection.QuerySingleOrDefaultAsync<EncryptedCipherRow>(
             new CommandDefinition(sql, new { AccountId = accountId, Id = id }, cancellationToken: cancellationToken)).ConfigureAwait(false);
+        return row is null ? null : MapCipherRow(row);
     }
 
     public async ValueTask<VaultSyncStateRecord?> GetSyncStateAsync(
@@ -276,8 +278,9 @@ public sealed class SqliteVaultCache : IVaultCache
 
         await using SqliteConnection connection = CreateConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        return await connection.QuerySingleOrDefaultAsync<VaultSyncStateRecord>(
+        VaultSyncStateRow? row = await connection.QuerySingleOrDefaultAsync<VaultSyncStateRow>(
             new CommandDefinition(sql, new { AccountId = accountId }, cancellationToken: cancellationToken)).ConfigureAwait(false);
+        return row is null ? null : MapSyncStateRow(row);
     }
 
     public async ValueTask ClearAccountAsync(string accountId, CancellationToken cancellationToken = default)
@@ -303,4 +306,63 @@ public sealed class SqliteVaultCache : IVaultCache
             DataSource = _paths.VaultDbFilePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
         }.ToString());
+
+    private static EncryptedCipherRecord MapCipherRow(EncryptedCipherRow row)
+        => new(
+            row.AccountId,
+            row.Id,
+            checked((int)row.Type),
+            row.OrganizationId,
+            row.FolderId,
+            row.CollectionIdsJson,
+            ParseNullableDate(row.RevisionDate, nameof(EncryptedCipherRow.RevisionDate)),
+            row.EncryptedJson,
+            ParseRequiredDate(row.UpdatedUtc, nameof(EncryptedCipherRow.UpdatedUtc)));
+
+    private static VaultSyncStateRecord MapSyncStateRow(VaultSyncStateRow row)
+        => new(
+            row.AccountId,
+            ParseNullableDate(row.RevisionDate, nameof(VaultSyncStateRow.RevisionDate)),
+            ParseRequiredDate(row.LastSyncUtc, nameof(VaultSyncStateRow.LastSyncUtc)));
+
+    private static DateTimeOffset? ParseNullableDate(string? value, string columnName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (DateTimeOffset.TryParse(value, out DateTimeOffset parsed))
+        {
+            return parsed;
+        }
+
+        throw new InvalidOperationException($"Stored SQLite value '{columnName}' could not be parsed as DateTimeOffset.");
+    }
+
+    private static DateTimeOffset ParseRequiredDate(string value, string columnName)
+    {
+        if (DateTimeOffset.TryParse(value, out DateTimeOffset parsed))
+        {
+            return parsed;
+        }
+
+        throw new InvalidOperationException($"Stored SQLite value '{columnName}' could not be parsed as DateTimeOffset.");
+    }
+
+    private sealed record EncryptedCipherRow(
+        string AccountId,
+        string Id,
+        long Type,
+        string? OrganizationId,
+        string? FolderId,
+        string CollectionIdsJson,
+        string? RevisionDate,
+        string EncryptedJson,
+        string UpdatedUtc);
+
+    private sealed record VaultSyncStateRow(
+        string AccountId,
+        string? RevisionDate,
+        string LastSyncUtc);
 }

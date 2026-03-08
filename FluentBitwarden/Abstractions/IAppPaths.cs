@@ -6,5 +6,6 @@ public interface IAppPaths
     string AppDataRoot { get; }
     string VaultDbFilePath { get; }
     string SessionFilePath { get; }
+    string UnlockStateFilePath { get; }
     string ConfigFilePath { get; }
 }

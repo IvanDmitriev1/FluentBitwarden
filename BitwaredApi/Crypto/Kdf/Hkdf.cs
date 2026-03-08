@@ -16,7 +16,7 @@ internal static class Hkdf
     {
         byte[] output = new byte[outputLength];
         HkdfBytesGenerator generator = new(new Sha256Digest());
-        generator.Init(new HkdfParameters(inputKeyMaterial.ToArray(), null, info.ToArray()));
+        generator.Init(HkdfParameters.SkipExtractParameters(inputKeyMaterial.ToArray(), info.ToArray()));
         generator.GenerateBytes(output, 0, output.Length);
         return output;
     }
