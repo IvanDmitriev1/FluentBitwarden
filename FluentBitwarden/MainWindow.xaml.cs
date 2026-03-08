@@ -1,6 +1,7 @@
 using Microsoft.UI.Windowing;
 using FluentBitwarden.Views;
 using FluentBitwarden.Ui.Abstractions;
+using SetupPage = FluentBitwarden.Views.SetUp.SetupPage;
 
 namespace FluentBitwarden;
 

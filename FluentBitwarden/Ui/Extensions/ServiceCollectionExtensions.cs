@@ -8,7 +8,7 @@ namespace FluentBitwarden.Ui.Extensions;
 internal static class ServiceCollectionExtensions
 {
     public static void AddView<TPage, TView>(this IServiceCollection services)
-        where TPage : Page
+        where TPage : class
         where TView : ObservableObject
     {
         services.AddTransient<TPage>();

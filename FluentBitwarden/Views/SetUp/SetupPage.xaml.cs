@@ -1,8 +1,7 @@
 using FluentBitwarden.Ui.Controls;
-using FluentBitwarden.ViewModels;
-using Microsoft.UI.Xaml;
+using FluentBitwarden.ViewModels.SetUp;
 
-namespace FluentBitwarden.Views;
+namespace FluentBitwarden.Views.SetUp;
 
 public sealed partial class SetupPage : CorePage
 {
@@ -13,9 +12,4 @@ public sealed partial class SetupPage : CorePage
     }
 
     public SetupPageViewModel ViewModel { get; }
-
-    private void Pwd_OnPasswordChanged(object sender, RoutedEventArgs e)
-    {
-        ViewModel.MasterPassword = Pwd.Password;
-    }
 }

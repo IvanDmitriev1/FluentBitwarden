@@ -14,12 +14,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="MainWindow.xaml" />
-    <None Remove="Views\SetupPage.xaml" />
-    <None Remove="Views\VaultPage.xaml" />
-  </ItemGroup>
-
+  
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -33,7 +28,6 @@
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
-
   <!--
     Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
     Tools extension to be activated for this project even if the Windows App SDK Nuget
@@ -42,30 +36,35 @@
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
   </ItemGroup>
+
   <ItemGroup>
+	  <ProjectReference Include="..\BitwaredApi\BitwaredApi.csproj" />
+  </ItemGroup>
+
+	<ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Helpers" Version="8.2.251219" />
     <PackageReference Include="Dapper" Version="2.1.72" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.3" />
+    <PackageReference Include="DependencyPropertyGenerator" Version="1.5.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
-    <PackageReference Include="SQLitePCLRaw.bundle_zetetic" Version="2.1.11" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
     <PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
     <PackageReference Include="WinUIEx" Version="2.9.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Core\Models\" />
     <Folder Include="Security\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\SetupPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Folder Include="Views\SetUp\" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\VaultPage.xaml">
@@ -77,6 +76,7 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
+
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
     Explorer "Package and Publish" context menu entry to be enabled for this project even if

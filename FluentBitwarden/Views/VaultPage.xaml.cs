@@ -1,14 +1,15 @@
-using Microsoft.UI.Xaml.Controls;
+using FluentBitwarden.Ui.Controls;
+using FluentBitwarden.ViewModels;
 
 namespace FluentBitwarden.Views;
 
-/// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
-/// </summary>
-public sealed partial class VaultPage : Page
+public sealed partial class VaultPage : CorePage
 {
-    public VaultPage()
+    public VaultPage(VaultPageViewModel viewModel) : base(viewModel)
     {
+        ViewModel = viewModel;
         InitializeComponent();
     }
+
+    public VaultPageViewModel ViewModel { get; }
 }
