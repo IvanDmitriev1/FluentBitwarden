@@ -14,7 +14,6 @@
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
-  
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -43,6 +42,7 @@
 
 	<ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
@@ -58,6 +58,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
     <PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
     <PackageReference Include="WinUIEx" Version="2.9.0" />

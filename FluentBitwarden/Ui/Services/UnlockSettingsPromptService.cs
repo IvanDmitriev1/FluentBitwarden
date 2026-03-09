@@ -2,7 +2,7 @@ using FluentBitwarden.Ui.Abstractions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace FluentBitwarden.Ui.Dialogs;
+namespace FluentBitwarden.Ui.Services;
 
 internal sealed class UnlockSettingsPromptService(MainWindow mainWindow)
     : IUnlockSettingsPromptService

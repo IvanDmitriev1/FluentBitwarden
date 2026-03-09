@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentBitwarden.Ui.Controls">
+
+    <Style TargetType="controls:NotificationHost">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:NotificationHost">
+                    <InfoBar x:Name="PART_InfoBar"
+                             Title="{TemplateBinding NotificationTitle}"
+                             Message="{TemplateBinding NotificationMessage}"
+                             Severity="{TemplateBinding NotificationSeverity}"
+                             IsOpen="{TemplateBinding IsOpen}"
+                             MaxWidth="200"
+                             IsClosable="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

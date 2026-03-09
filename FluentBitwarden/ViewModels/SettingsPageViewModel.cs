@@ -3,21 +3,23 @@ using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Abstractions.UnlockServices;
 using FluentBitwarden.Models.Session;
-using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.SetUp;
-using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using FluentBitwarden.Ui.Abstractions;
+using FluentBitwarden.Ui.Controls;
 
 namespace FluentBitwarden.ViewModels;
 
-public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAware
+public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycleAware
 {
     private readonly IAuthService _authService;
     private readonly IWindowsHelloUnlockService _windowsHelloUnlockService;
     private readonly IPinUnlockService _pinUnlockService;
     private readonly INavigationService _navigationService;
-    private readonly PageOperationState _operationState = new();
     private StoredSessionInfo? _session;
+    private ValidatableProperty? _pinValidation;
+    private ValidatableProperty? _confirmPinValidation;
 
     public SettingsPageViewModel(
         IAuthService authService,
@@ -29,12 +31,16 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         _windowsHelloUnlockService = windowsHelloUnlockService;
         _pinUnlockService = pinUnlockService;
         _navigationService = navigationService;
-        _operationState.PropertyChanged += OnOperationStatePropertyChanged;
     }
 
-    public bool IsBusy => _operationState.IsBusy;
-    public bool HasError => _operationState.HasError;
-    public string ErrorMessage => _operationState.ErrorMessage;
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasError { get; set; }
+
+    [ObservableProperty]
+    public partial string ErrorMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial LoginSessionDisplay SessionDisplay { get; set; } = LoginSessionDisplay.Empty;
@@ -52,10 +58,18 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
     public partial bool CanEnablePin { get; set; }
 
     [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Required(ErrorMessage = "Enter your new PIN.")]
     public partial string Pin { get; set; } = string.Empty;
 
     [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Required(ErrorMessage = "Confirm your new PIN.")]
+    [CustomValidation(typeof(SettingsPageViewModel), nameof(ValidateConfirmPin))]
     public partial string ConfirmPin { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool ShowValidationErrors { get; set; }
 
     public string WindowsHelloStatusText => IsWindowsHelloConfigured
         ? "Windows Hello is enabled for vault unlock."
@@ -67,9 +81,15 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         ? "PIN unlock is enabled."
         : "Set an app PIN to unlock the vault faster.";
 
+    public ValidatableProperty PinValidation
+        => _pinValidation ??= ValidatableProperty.Create(this, static viewModel => viewModel.Pin);
+
+    public ValidatableProperty ConfirmPinValidation
+        => _confirmPinValidation ??= ValidatableProperty.Create(this, static viewModel => viewModel.ConfirmPin);
+
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        _operationState.Reset();
+        ResetStatus();
 
         StoredSessionInfo? session = await _authService.GetStoredSessionAsync(cancellationToken);
         if (session is null)
@@ -94,8 +114,7 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
 
     public Task OnUnloadingAsync(CancellationToken cancellationToken)
     {
-        Pin = string.Empty;
-        ConfirmPin = string.Empty;
+        ResetPinEntryState();
         return Task.CompletedTask;
     }
 
@@ -112,11 +131,11 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
     private async Task EnableWindowsHelloAsync()
     {
         StoredSessionInfo session = RequireSession();
-        _operationState.ClearStatus();
+        ClearStatus();
 
         try
         {
-            await _operationState.RunBusyAsync(async () =>
+            await RunBusyAsync(async () =>
             {
                 await _windowsHelloUnlockService.SetupAsync(session);
                 await RefreshAsync();
@@ -124,7 +143,7 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         }
         catch (Exception ex)
         {
-            _operationState.ShowError(ex);
+            ShowError(ex);
         }
     }
 
@@ -132,11 +151,11 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
     private async Task DisableWindowsHelloAsync()
     {
         StoredSessionInfo session = RequireSession();
-        _operationState.ClearStatus();
+        ClearStatus();
 
         try
         {
-            await _operationState.RunBusyAsync(async () =>
+            await RunBusyAsync(async () =>
             {
                 await _windowsHelloUnlockService.DisableAsync(session);
                 await RefreshAsync();
@@ -144,7 +163,7 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         }
         catch (Exception ex)
         {
-            _operationState.ShowError(ex);
+            ShowError(ex);
         }
     }
 
@@ -152,17 +171,10 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
     private async Task EnablePinAsync()
     {
         StoredSessionInfo session = RequireSession();
-        _operationState.ClearStatus();
+        ClearStatus();
 
-        if (string.IsNullOrWhiteSpace(Pin) || string.IsNullOrWhiteSpace(ConfirmPin))
+        if (!TryValidateForSubmit())
         {
-            _operationState.ShowError("Enter and confirm your new PIN.");
-            return;
-        }
-
-        if (!string.Equals(Pin, ConfirmPin, StringComparison.Ordinal))
-        {
-            _operationState.ShowError("PIN confirmation does not match.");
             return;
         }
 
@@ -170,17 +182,16 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         {
             string normalizedPin = Pin.Trim();
 
-            await _operationState.RunBusyAsync(async () =>
+            await RunBusyAsync(async () =>
             {
                 await _pinUnlockService.SetupAsync(session, normalizedPin);
-                Pin = string.Empty;
-                ConfirmPin = string.Empty;
+                ResetPinEntryState();
                 await RefreshAsync();
             });
         }
         catch (Exception ex)
         {
-            _operationState.ShowError(ex);
+            ShowError(ex);
         }
     }
 
@@ -188,21 +199,20 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
     private async Task DisablePinAsync()
     {
         StoredSessionInfo session = RequireSession();
-        _operationState.ClearStatus();
+        ClearStatus();
 
         try
         {
-            await _operationState.RunBusyAsync(async () =>
+            await RunBusyAsync(async () =>
             {
                 await _pinUnlockService.DisableAsync(session);
-                Pin = string.Empty;
-                ConfirmPin = string.Empty;
+                ResetPinEntryState();
                 await RefreshAsync();
             });
         }
         catch (Exception ex)
         {
-            _operationState.ShowError(ex);
+            ShowError(ex);
         }
     }
 
@@ -219,8 +229,30 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         IsPinConfigured = pinConfigured;
         CanEnablePin = !pinConfigured;
 
+        if (!CanEnablePin)
+        {
+            ResetPinEntryState();
+        }
+
         OnPropertyChanged(nameof(WindowsHelloStatusText));
         OnPropertyChanged(nameof(PinStatusText));
+    }
+
+    partial void OnPinChanged(string value)
+        => ValidateProperty(ConfirmPin, nameof(ConfirmPin));
+
+    public static ValidationResult? ValidateConfirmPin(string? confirmPin, ValidationContext context)
+    {
+        SettingsPageViewModel viewModel = (SettingsPageViewModel)context.ObjectInstance;
+
+        if (string.IsNullOrWhiteSpace(viewModel.Pin) || string.IsNullOrWhiteSpace(confirmPin))
+        {
+            return ValidationResult.Success;
+        }
+
+        return string.Equals(viewModel.Pin, confirmPin, StringComparison.Ordinal)
+            ? ValidationResult.Success
+            : new ValidationResult("PIN confirmation does not match.");
     }
 
     private StoredSessionInfo RequireSession()
@@ -243,6 +275,59 @@ public partial class SettingsPageViewModel : ObservableObject, IPageLifecycleAwa
         return host;
     }
 
-    private void OnOperationStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
-        => OnPropertyChanged(e.PropertyName);
+    private async Task RunBusyAsync(Func<Task> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        IsBusy = true;
+
+        try
+        {
+            await operation();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void ClearStatus()
+    {
+        HasError = false;
+        ErrorMessage = string.Empty;
+    }
+
+    private void ShowError(Exception exception)
+        => ShowError(AuthErrorMessageFormatter.Format(exception));
+
+    private void ShowError(string message)
+    {
+        HasError = true;
+        ErrorMessage = message;
+    }
+
+    private void ResetPinEntryState()
+    {
+        Pin = string.Empty;
+        ConfirmPin = string.Empty;
+        ResetValidation();
+    }
+
+    private void ResetStatus()
+    {
+        IsBusy = false;
+        ClearStatus();
+    }
+
+    public bool TryValidateForSubmit()
+    {
+        ShowValidationErrors = true;
+        ValidateAllProperties();
+        return !HasErrors;
+    }
+
+    public void ResetValidation()
+    {
+        ShowValidationErrors = false;
+    }
 }

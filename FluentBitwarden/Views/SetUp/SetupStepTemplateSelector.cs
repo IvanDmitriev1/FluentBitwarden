@@ -6,14 +6,16 @@ namespace FluentBitwarden.Views.SetUp;
 
 public sealed class SetupStepTemplateSelector : DataTemplateSelector
 {
+    public DataTemplate? EmailSignInTemplate { get; set; }
     public DataTemplate? PasswordSignInTemplate { get; set; }
     public DataTemplate? TwoFactorTemplate { get; set; }
 
     protected override DataTemplate? SelectTemplateCore(object item)
         => item switch
         {
-            PasswordSignInStepViewModel => PasswordSignInTemplate,
-            TwoFactorStepViewModel => TwoFactorTemplate,
+            EmailSignInStepState => EmailSignInTemplate,
+            PasswordSignInStepState => PasswordSignInTemplate,
+            TwoFactorStepState => TwoFactorTemplate,
             _ => base.SelectTemplateCore(item),
         };
 

@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentBitwarden.Ui.Abstractions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -16,8 +14,6 @@ public abstract class CorePage : Page
 
     protected CorePage(object viewModel)
     {
-        ArgumentNullException.ThrowIfNull(viewModel);
-
         DataContext = viewModel;
         _lifecycleAware = viewModel as IPageLifecycleAware;
 

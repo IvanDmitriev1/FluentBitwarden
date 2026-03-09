@@ -6,7 +6,6 @@ using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Crypto.Enc;
 using BitwaredApi.Models.Auth;
 using BitwaredApi.Models.Vault;
-using BitwaredApi.Services;
 using BitwaredApi.Utilities;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Exceptions;
@@ -46,15 +45,21 @@ public sealed class AuthService(
             !string.IsNullOrWhiteSpace(state.MasterKeyEncryptedUserKey) && state.KdfConfig is not null);
     }
 
-    public ValueTask<PreloginResponseModel> PreloginAsync(string email, CancellationToken cancellationToken = default)
-        => identityClient.PreloginAsync(email, cancellationToken);
-
     public async ValueTask<AuthSession> SignInWithPasswordAsync(
         string email,
         string masterPassword,
         CancellationToken cancellationToken = default)
     {
         PreloginResponseModel prelogin = await identityClient.PreloginAsync(email, cancellationToken).ConfigureAwait(false);
+        return await SignInWithPasswordAsync(email, masterPassword, prelogin, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<AuthSession> SignInWithPasswordAsync(
+        string email,
+        string masterPassword,
+        PreloginResponseModel prelogin,
+        CancellationToken cancellationToken = default)
+    {
         MasterPasswordAuth auth = cryptoService.DeriveMasterPasswordAuth(email, masterPassword, prelogin.Kdf);
 
         try
@@ -306,6 +311,11 @@ public sealed class AuthService(
         ClearPendingPasswordLogin();
         ClearAllPendingDeviceRequests();
         await sessionCoordinator.ClearAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public void CancelPendingAuthFlow()
+    {
+        ClearPendingPasswordLogin();
     }
 
     private async ValueTask<AuthSession> CompletePasswordAuthAsync(

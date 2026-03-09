@@ -6,9 +6,8 @@ using FluentBitwarden.Core.Abstractions;
 using FluentBitwarden.Services;
 using FluentBitwarden.Services.UnlockServices;
 using FluentBitwarden.Storage;
-using FluentBitwarden.Ui;
 using FluentBitwarden.Ui.Abstractions;
-using FluentBitwarden.Ui.Dialogs;
+using FluentBitwarden.Ui.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Extensions;

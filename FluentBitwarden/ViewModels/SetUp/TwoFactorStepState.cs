@@ -1,9 +1,10 @@
-using System.Text.Json;
-using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Models.Auth;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Abstractions;
+using FluentBitwarden.Ui.Controls;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace FluentBitwarden.ViewModels.SetUp;
 
@@ -13,26 +14,18 @@ public sealed record TwoFactorProviderOptionModel(
     string Subtitle,
     bool IsSupported);
 
-public partial class TwoFactorStepViewModel : ObservableObject
+public partial class TwoFactorStepState(SetupPageViewModel parentViewModel) : ObservableValidator
 {
     private const string DefaultPrompt = "Complete the Bitwarden two-factor challenge to continue.";
-    private readonly IAuthService _authService;
 
-    public TwoFactorStepViewModel(
-        SetupPageViewModel parentViewModel,
-        IAuthService authService)
-    {
-        ArgumentNullException.ThrowIfNull(parentViewModel);
-        ParentViewModel = parentViewModel;
-        _authService = authService;
-    }
-
-    public SetupPageViewModel ParentViewModel { get; }
+    public SetupPageViewModel ParentViewModel { get; } = parentViewModel;
 
     [ObservableProperty]
     public partial TwoFactorProviderOptionModel? SelectedProvider { get; set; }
 
     [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Required(ErrorMessage = "Enter the verification code.")]
     public partial string Code { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -42,6 +35,7 @@ public partial class TwoFactorStepViewModel : ObservableObject
     public partial string PromptText { get; set; } = DefaultPrompt;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEmailHint))]
     public partial string EmailHint { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -49,32 +43,24 @@ public partial class TwoFactorStepViewModel : ObservableObject
 
     public bool HasEmailHint => !string.IsNullOrWhiteSpace(EmailHint);
 
-    partial void OnEmailHintChanged(string value)
-        => OnPropertyChanged(nameof(HasEmailHint));
+    public ValidatableProperty CodeValidation
+        => field ??= ValidatableProperty.Create(this, static state => state.Code);
 
-    public void LoadChallenge(TwoFactorChallenge challenge)
+    public void Load(TwoFactorChallenge challenge)
     {
         Providers = challenge.Providers
-            .Select(provider => new TwoFactorProviderOptionModel(
+            .Select(static provider => new TwoFactorProviderOptionModel(
                 provider.Provider,
                 GetTitle(provider.Provider),
                 BuildSubtitle(provider),
                 IsSupported(provider.Provider)))
             .ToArray();
 
-        SelectedProvider = Providers.FirstOrDefault(provider => provider.IsSupported) ?? Providers.FirstOrDefault();
+        SelectedProvider = Providers.First(provider => provider.IsSupported);
+        Debug.Assert(SelectedProvider != null, "No supported two-factor provider found.");
+
         PromptText = DefaultPrompt;
         EmailHint = challenge.Email ?? string.Empty;
-        Code = string.Empty;
-        RememberThisDevice = true;
-    }
-
-    public void Reset()
-    {
-        SelectedProvider = null;
-        Providers = [];
-        PromptText = DefaultPrompt;
-        EmailHint = string.Empty;
         Code = string.Empty;
         RememberThisDevice = true;
     }
@@ -82,54 +68,19 @@ public partial class TwoFactorStepViewModel : ObservableObject
     [RelayCommand]
     private void BackFromTwoFactor()
     {
-        ParentViewModel.ClearStatus();
-        ParentViewModel.ResetToPasswordStep();
-    }
-
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    private async Task ContinueTwoFactorAsync()
-    {
-        ParentViewModel.ClearStatus();
-
-        if (SelectedProvider is null)
-        {
-            ParentViewModel.ShowError("Select a two-factor provider.");
-            return;
-        }
-
-        if (!SelectedProvider.IsSupported)
-        {
-            ParentViewModel.ShowError("This provider requires an interactive Bitwarden flow that is not implemented in this build.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(Code))
-        {
-            ParentViewModel.ShowError("Enter the verification code.");
-            return;
-        }
-
-        try
-        {
-            await ParentViewModel.RunBusyAsync(async () =>
-            {
-                await _authService.ContinueTwoFactorAsync(
-                    Code.Trim(),
-                    SelectedProvider.Provider,
-                    RememberThisDevice);
-                await ParentViewModel.CompleteAuthenticatedSessionAsync();
-            });
-        }
-        catch (Exception ex)
-        {
-            ParentViewModel.ShowError(ex);
-        }
+        ParentViewModel.CurrentStep = SetupPageViewModel.SetupStep.PasswordSignIn;
     }
 
     public static bool IsSupported(TwoFactorProviderType provider) =>
         provider is TwoFactorProviderType.Authenticator
             or TwoFactorProviderType.Email
             or TwoFactorProviderType.RecoveryCode;
+
+    public bool TryValidateForSubmit()
+    {
+        ValidateAllProperties();
+        return !HasErrors;
+    }
 
     private static string GetTitle(TwoFactorProviderType provider) => provider switch
     {
@@ -146,7 +97,7 @@ public partial class TwoFactorStepViewModel : ObservableObject
     private static string BuildSubtitle(TwoFactorProviderOption provider)
     {
         if (provider.Provider == TwoFactorProviderType.Email
-            && TryGetMetadataDisplayValue(provider, out var emailHint)
+            && TryGetMetadataDisplayValue(provider, out string? emailHint)
             && !string.IsNullOrWhiteSpace(emailHint))
         {
             return emailHint;

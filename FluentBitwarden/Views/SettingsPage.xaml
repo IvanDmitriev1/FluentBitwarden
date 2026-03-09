@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ui:CorePage
+<controls:CorePage
     x:Class="FluentBitwarden.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:attached="using:FluentBitwarden.Views.AttachedProperties"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ui="using:FluentBitwarden.Ui.Controls"
-    xmlns:viewModels="using:FluentBitwarden.ViewModels"
+    xmlns:attachedProperties="using:FluentBitwarden.Ui.AttachedProperties"
+    xmlns:controls="using:FluentBitwarden.Ui.Controls"
     mc:Ignorable="d">
 
     <Grid Margin="24"
@@ -47,12 +46,6 @@
                     VerticalAlignment="Center" />
         </Grid>
 
-        <InfoBar Grid.Row="1"
-                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
-                 Severity="Error"
-                 Title="Settings update failed"
-                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
-
         <StackPanel Grid.Row="2"
                     Spacing="16">
             <Border Padding="20"
@@ -90,13 +83,17 @@
 
                     <StackPanel Spacing="12"
                                 Visibility="{x:Bind ViewModel.CanEnablePin, Converter={StaticResource BoolToVis}, Mode=OneWay}">
-                        <PasswordBox Header="New PIN"
-                                     attached:PasswordBoxBinding.BindPassword="True"
-                                     attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.Pin, Mode=TwoWay}" />
+                        <controls:ValidatedField Property="{x:Bind ViewModel.PinValidation, Mode=OneWay}">
+                            <PasswordBox Header="New PIN"
+                                         attachedProperties:PasswordBoxBinding.BindPassword="True"
+                                         attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.Pin, Mode=TwoWay}" />
+                        </controls:ValidatedField>
 
-                        <PasswordBox Header="Confirm PIN"
-                                     attached:PasswordBoxBinding.BindPassword="True"
-                                     attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.ConfirmPin, Mode=TwoWay}" />
+                        <controls:ValidatedField Property="{x:Bind ViewModel.ConfirmPinValidation, Mode=OneWay}">
+                            <PasswordBox Header="Confirm PIN"
+                                         attachedProperties:PasswordBoxBinding.BindPassword="True"
+                                         attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.ConfirmPin, Mode=TwoWay}" />
+                        </controls:ValidatedField>
 
                         <Button Content="Enable PIN"
                                 Command="{x:Bind ViewModel.EnablePinCommand, Mode=OneWay}"
@@ -110,4 +107,4 @@
             </Border>
         </StackPanel>
     </Grid>
-</ui:CorePage>
+</controls:CorePage>

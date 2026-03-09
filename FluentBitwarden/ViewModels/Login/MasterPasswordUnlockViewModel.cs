@@ -41,9 +41,8 @@ internal partial class MasterPasswordUnlockViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        if (string.IsNullOrWhiteSpace(Method.SecretInput))
+        if (!Method.TryValidateForSubmit())
         {
-            ParentViewModel.ShowError("Enter your master password.");
             return Task.CompletedTask;
         }
 

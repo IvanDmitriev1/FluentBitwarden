@@ -8,8 +8,6 @@ public interface IAuthService
 {
     ValueTask<StoredSessionInfo?> GetStoredSessionAsync(CancellationToken cancellationToken = default);
 
-    ValueTask<PreloginResponseModel> PreloginAsync(string email, CancellationToken cancellationToken = default);
-
     ValueTask<AuthSession> SignInWithPasswordAsync(
         string email,
         string masterPassword,
@@ -44,4 +42,6 @@ public interface IAuthService
     ValueTask LockAsync(CancellationToken cancellationToken = default);
 
     ValueTask LogoutAsync(CancellationToken cancellationToken = default);
+
+    void CancelPendingAuthFlow();
 }

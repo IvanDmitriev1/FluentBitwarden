@@ -3,7 +3,7 @@ using DependencyPropertyGenerator;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace FluentBitwarden.Views.AttachedProperties;
+namespace FluentBitwarden.Ui.AttachedProperties;
 
 [AttachedDependencyProperty<bool, PasswordBox>("BindPassword")]
 [AttachedDependencyProperty<string, PasswordBox>(
@@ -46,7 +46,7 @@ public static partial class PasswordBoxBinding
 
         BindingState state = GetState(passwordBox);
         state.IsUpdating = true;
-        SetBoundPassword(passwordBox, passwordBox.Password);
+        PasswordBoxBinding.SetBoundPassword(passwordBox, passwordBox.Password);
         state.IsUpdating = false;
     }
 

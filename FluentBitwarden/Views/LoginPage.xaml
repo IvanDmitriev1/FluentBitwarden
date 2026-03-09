@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ui:CorePage
+<controls1:CorePage
     x:Class="FluentBitwarden.Views.LoginPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:attached="using:FluentBitwarden.Views.AttachedProperties"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ui="using:FluentBitwarden.Ui.Controls"
     xmlns:viewModels="using:FluentBitwarden.ViewModels"
+    xmlns:attachedProperties="using:FluentBitwarden.Ui.AttachedProperties"
+    xmlns:controls1="using:FluentBitwarden.Ui.Controls"
     mc:Ignorable="d">
 
     <Grid HorizontalAlignment="Center"
@@ -69,10 +69,12 @@
                                TextWrapping="WrapWholeWords"
                                HorizontalAlignment="Center"/>
 
-                    <PasswordBox Header="{x:Bind ViewModel.CurrentUnlockMethod.SecretInputHeader, Mode=OneWay}"
-                                 Visibility="{x:Bind ViewModel.CurrentUnlockMethod.HasSecretInput, Converter={StaticResource BoolToVis}, Mode=OneWay}"
-                                 attached:PasswordBoxBinding.BindPassword="True"
-                                 attached:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.CurrentUnlockMethod.SecretInput, Mode=TwoWay}" />
+                    <controls1:ValidatedField Property="{x:Bind ViewModel.CurrentUnlockMethod.SecretInputValidation, Mode=OneWay}"
+                                              Visibility="{x:Bind ViewModel.CurrentUnlockMethod.HasSecretInput, Converter={StaticResource BoolToVis}, Mode=OneWay}">
+                        <PasswordBox Header="{x:Bind ViewModel.CurrentUnlockMethod.SecretInputHeader, Mode=OneWay}"
+                                     attachedProperties:PasswordBoxBinding.BindPassword="True"
+                                     attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind ViewModel.CurrentUnlockMethod.SecretInput, Mode=TwoWay}" />
+                    </controls1:ValidatedField>
 
                     <Button Style="{StaticResource AccentButtonStyle}"
                             Content="{x:Bind ViewModel.CurrentUnlockMethod.UnlockActionText, Mode=OneWay}"
@@ -87,16 +89,10 @@
                               Visibility="{x:Bind ViewModel.IsBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}"
                               HorizontalAlignment="Center" />
 
-                <InfoBar IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
-                         Severity="Error"
-                         Title="Unlock failed"
-                         Visibility="Collapsed"
-                         Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" />
-
                 <Button Content="Use another account"
                         Command="{x:Bind ViewModel.UseAnotherAccountCommand, Mode=OneWay}"
                         HorizontalAlignment="Stretch" />
             </StackPanel>
         </Border>
     </Grid>
-</ui:CorePage>
+</controls1:CorePage>

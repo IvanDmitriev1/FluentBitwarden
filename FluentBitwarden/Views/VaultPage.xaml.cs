@@ -1,5 +1,5 @@
-using FluentBitwarden.Ui.Controls;
 using FluentBitwarden.Models.Navigation;
+using FluentBitwarden.Ui.Controls;
 using FluentBitwarden.ViewModels;
 using Microsoft.UI.Xaml.Navigation;
 

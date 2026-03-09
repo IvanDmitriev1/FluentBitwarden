@@ -1,6 +1,6 @@
 using FluentBitwarden.Ui.Abstractions;
 
-namespace FluentBitwarden.Ui;
+namespace FluentBitwarden.Ui.Services;
 
 public sealed class WindowHandleProvider : IWindowHandleProvider
 {

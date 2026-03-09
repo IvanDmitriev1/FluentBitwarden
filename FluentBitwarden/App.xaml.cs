@@ -1,9 +1,8 @@
 using BitwaredApi;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Extensions;
+using FluentBitwarden.Ui;
 using FluentBitwarden.Ui.Abstractions;
-using FluentBitwarden.Ui.Extensions;
-using FluentBitwarden.Ui.Navigation;
 using FluentBitwarden.ViewModels;
 using FluentBitwarden.ViewModels.SetUp;
 using FluentBitwarden.Views;
@@ -28,9 +27,9 @@ public partial class App : Application, IXamlMetadataServiceProvider
                 services.AddBitwaredPlatformServices();
                 services.AddBitwaredCoreServices(BitwardenEnvironment.UnitedStates);
                 services.AddBitwaredWorkflowServices();
+                services.AddUiServices();
 
-                services.AddSingleton<MainWindow>();
-                services.AddSingleton<INavigationService, FrameNavigationService>();
+                services.AddTransient<MainWindow>();
                 services.AddView<LoginPage, LoginPageViewModel>();
                 services.AddView<SettingsPage, SettingsPageViewModel>();
                 services.AddView<SetupPage, SetupPageViewModel>();

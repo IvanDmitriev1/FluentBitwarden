@@ -42,9 +42,8 @@ internal partial class PinUnlockViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        if (string.IsNullOrWhiteSpace(Method.SecretInput))
+        if (!Method.TryValidateForSubmit())
         {
-            ParentViewModel.ShowError("Enter your app PIN.");
             return Task.CompletedTask;
         }
 

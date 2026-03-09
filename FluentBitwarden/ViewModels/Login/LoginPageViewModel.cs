@@ -3,12 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Models;
 using FluentBitwarden.Models.Session;
-using System.ComponentModel;
 using FluentBitwarden.Models.Navigation;
-using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.SetUp;
 using FluentBitwarden.Abstractions.UnlockServices;
+using FluentBitwarden.Ui.Abstractions;
 
 namespace FluentBitwarden.ViewModels;
 
@@ -16,7 +15,6 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
 {
     private StoredSessionInfo? _session;
     private bool _hasAttemptedWindowsHelloAutoPrompt;
-    private readonly PageOperationState _operationState = new();
     private readonly IAuthService _authService;
     private readonly ILocalVaultUnlocker _localVaultUnlocker;
     private readonly IWindowsHelloUnlockService _windowsHelloUnlockService;
@@ -39,7 +37,6 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         _windowsHelloUnlockService = windowsHelloUnlockService;
         _pinUnlockService = pinUnlockService;
         _navigationService = navigationService;
-        _operationState.PropertyChanged += OnOperationStatePropertyChanged;
 
         _masterPasswordUnlock = new MasterPasswordUnlockViewModel(this, masterPasswordUnlockService);
         _windowsHelloUnlock = new WindowsHelloUnlockViewModel(this, windowsHelloUnlockService);
@@ -58,9 +55,14 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
     [NotifyPropertyChangedFor(nameof(HasUnlockMethodSelector))]
     public partial LoginUnlockMethodItem[] UnlockMethods { get; set; } = [];
 
-    public bool IsBusy => _operationState.IsBusy;
-    public bool HasError => _operationState.HasError;
-    public string ErrorMessage => _operationState.ErrorMessage;
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasError { get; set; }
+
+    [ObservableProperty]
+    public partial string ErrorMessage { get; set; } = string.Empty;
 
     public bool HasInitializedLocalVaultUnlocker { get; private set; }
 
@@ -102,7 +104,7 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
     {
         _hasAttemptedWindowsHelloAutoPrompt = false;
         ResetUnlockInputs();
-        _operationState.Reset();
+        ResetStatus();
         return Task.CompletedTask;
     }
 
@@ -130,17 +132,31 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
     public StoredSessionInfo RequireSession()
         => _session ?? throw new InvalidOperationException("No stored Bitwarden session is available.");
 
-    public Task RunBusyAsync(Func<Task> operation)
-        => _operationState.RunBusyAsync(operation);
+    public async Task RunBusyAsync(Func<Task> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
 
-    public void ClearStatus()
-        => _operationState.ClearStatus();
+        IsBusy = true;
+
+        try
+        {
+            await operation();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public void ClearStatus() => ResetStatus();
 
     public void ShowError(string message)
-        => _operationState.ShowError(message);
+    {
+        HasError = true;
+        ErrorMessage = message;
+    }
 
-    public void ShowError(Exception exception)
-        => _operationState.ShowError(exception);
+    public void ShowError(Exception exception) => ShowError(AuthErrorMessageFormatter.Format(exception));
 
     public Task CompleteUnlockAsync(bool recommendUnlockSetup = false)
     {
@@ -217,7 +233,7 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
 
     private void ResetPageState()
     {
-        _operationState.Reset();
+        ResetStatus();
         ResetUnlockInputs();
         SessionDisplay = LoginSessionDisplay.Empty;
         UnlockMethods = [];
@@ -256,6 +272,10 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         return host;
     }
 
-    private void OnOperationStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
-        => OnPropertyChanged(e.PropertyName);
+    private void ResetStatus()
+    {
+        IsBusy = false;
+        HasError = false;
+        ErrorMessage = string.Empty;
+    }
 }
