@@ -6,7 +6,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winUiEx="using:WinUIEx"
-    xmlns:appmodel="using:Windows.ApplicationModel"
     xmlns:notifications="using:FluentBitwarden.Ui.Notifications"
     xmlns:controls="using:FluentBitwarden.Ui.Controls"
     mc:Ignorable="d"
@@ -27,7 +26,7 @@
         <TitleBar x:Name="AppTitleBar"
                   Grid.Row="0"
                   Height="48"
-                  Title="{x:Bind appmodel:AppInfo.Current.DisplayInfo.DisplayName}">
+                  Title="FluentBitwarden">
             <TitleBar.Content>
                 <!--<AutoSuggestBox MinWidth="300"
                                 MaxWidth="600"

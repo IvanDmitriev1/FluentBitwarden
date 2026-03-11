@@ -5,7 +5,6 @@ using FluentBitwarden.Views;
 using FluentBitwarden.Views.Setup;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.ApplicationModel;
 using WinUIEx;
 
 namespace FluentBitwarden;
@@ -28,9 +27,7 @@ public sealed partial class StartupSplashScreen : SplashScreen
         IsAlwaysOnTop = true;
     }
 
-    public string AppDisplayName => OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041)
-        ? AppInfo.Current.DisplayInfo.DisplayName
-        : "FluentBitwarden";
+    public string AppDisplayName => "FluentBitwarden";
 
     protected override async Task OnLoading()
     {
