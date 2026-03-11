@@ -37,7 +37,7 @@
 
             <StackPanel Spacing="12">
                 <Button Content="Sign in with passkey"
-                        Command="{x:Bind ParentViewModel.PasskeySignInCommand, Mode=OneWay}"
+                        Command="{x:Bind PasskeySignInCommand, Mode=OneWay}"
                         HorizontalAlignment="Stretch" />
 
                 <TextBlock Text="or" HorizontalAlignment="Center" Opacity="0.55" />
@@ -79,7 +79,7 @@
                     <Button Style="{ThemeResource AccentButtonStyle}"
                             Content="Log in with master password"
                             HorizontalAlignment="Stretch"
-                            Command="{x:Bind ParentViewModel.SignInWithPasswordCommand, Mode=OneWay}" />
+                            Command="{x:Bind SignInWithPasswordCommand, Mode=OneWay}" />
 
                     <Button Content="Back"
                             HorizontalAlignment="Stretch"
@@ -133,7 +133,7 @@
                 <Button Style="{ThemeResource AccentButtonStyle}"
                         HorizontalAlignment="Stretch"
                         Content="Continue"
-                        Command="{x:Bind ParentViewModel.ContinueTwoFactorCommand, Mode=OneWay}" />
+                        Command="{x:Bind ContinueTwoFactorCommand, Mode=OneWay}" />
                 <Button Content="Back"
                         HorizontalAlignment="Stretch"
                         Command="{x:Bind BackFromTwoFactorCommand, Mode=OneWay}" />

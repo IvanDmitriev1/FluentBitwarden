@@ -1,6 +1,8 @@
 using BitwaredApi;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Extensions;
+using FluentBitwarden.Models.Vault;
+using FluentBitwarden.Services;
 using FluentBitwarden.Ui;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.ViewModels;
@@ -10,7 +12,6 @@ using FluentBitwarden.Views.Setup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
-using System.Text;
 using WinUI.DependencyInjection;
 
 namespace FluentBitwarden;
@@ -46,34 +47,43 @@ public partial class App : Application, IXamlMetadataServiceProvider
         InitializeComponent();
     }
 
-    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        _mainWindow ??= Host.Services.GetRequiredService<MainWindow>();
-        _mainWindow.Activate();
+        if (_mainWindow is not null)
+        {
+            _mainWindow.Activate();
+            return;
+        }
 
-        var navigationService = Host.Services.GetRequiredService<INavigationService>();
         var vaultService = Host.Services.GetRequiredService<IVaultService>();
+        var navigationService = Host.Services.GetRequiredService<INavigationService>();
 
-        try
-        {
-            var state = await vaultService.GetStateAsync();
+        _mainWindow = Host.Services.GetRequiredService<MainWindow>();
+        var splashScreen = new StartupSplashScreen(
+            _mainWindow,
+            Host.Services.GetRequiredService<ILocalDeviceInfoProvider>());
 
-            if (!state.HasStoredSession)
-            {
-                navigationService.Navigate<SetupPage>(clearBackStack: true);
-            }
-            else if (state.IsLocked)
-            {
-                navigationService.Navigate<LoginPage>(clearBackStack: true);
-            }
-            else
-            {
-                navigationService.Navigate<VaultPage>(clearBackStack: true);
-            }
-        }
-        catch
+        splashScreen.Completed += async (sender, window) =>
         {
-            navigationService.Navigate<SetupPage>(clearBackStack: true);
-        }
+            VaultSessionState state = await vaultService.GetSessionStateAsync().ConfigureAwait(true);
+
+            switch (state)
+            {
+                case VaultSessionState.NoSession:
+                    navigationService.Navigate<SetupPage>(clearBackStack: true);
+                    break;
+
+                case VaultSessionState.Locked:
+                    navigationService.Navigate<LoginPage>(clearBackStack: true);
+                    break;
+
+                case VaultSessionState.Unlocked:
+                    navigationService.Navigate<VaultPage>(clearBackStack: true);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unsupported vault session state.");
+            }
+        };
     }
 }

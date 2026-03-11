@@ -10,7 +10,7 @@ namespace FluentBitwarden.Services;
 
 internal sealed class SessionManager(
     ISessionStore sessionStore,
-    LocalDeviceInfoProvider deviceInfoProvider,
+    ILocalDeviceInfoProvider deviceInfoProvider,
     ISessionRefreshWorkflow sessionRefreshWorkflow,
     ILocalVaultKeyManager localVaultKeyManager)
     : ISessionManager
@@ -179,7 +179,7 @@ internal sealed class SessionManager(
                 return _accessToken!;
             }
 
-            BitwardenDeviceInfo deviceInfo = await deviceInfoProvider.GetDeviceInfoAsync(cancellationToken).ConfigureAwait(false);
+            BitwardenDeviceInfo deviceInfo = deviceInfoProvider.DeviceInfo;
             SessionRefreshOutcome refreshOutcome = await sessionRefreshWorkflow
                 .RefreshAsync(new SessionRefreshRequest(persistedState, deviceInfo), cancellationToken)
                 .ConfigureAwait(false);

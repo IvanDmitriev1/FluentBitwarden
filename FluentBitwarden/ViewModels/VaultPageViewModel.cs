@@ -111,7 +111,7 @@ public partial class VaultPageViewModel(
         }
         catch (Exception ex)
         {
-            ShowError(AuthErrorMessageFormatter.Format(ex));
+            ShowError(ex.Message);
         }
         finally
         {

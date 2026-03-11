@@ -8,8 +8,6 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="ms-appx:///Ui/Themes/ValidatedField.xaml" />
-                <ResourceDictionary Source="ms-appx:///Ui/Themes/NotificationHost.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>

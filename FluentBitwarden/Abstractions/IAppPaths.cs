@@ -26,11 +26,6 @@ public interface IAppPaths
     string SessionFilePath { get; }
 
     /// <summary>
-    /// Gets the path to the persisted local unlock state file.
-    /// </summary>
-    string UnlockStateFilePath { get; }
-
-    /// <summary>
     /// Gets the path to the app configuration file.
     /// </summary>
     string ConfigFilePath { get; }

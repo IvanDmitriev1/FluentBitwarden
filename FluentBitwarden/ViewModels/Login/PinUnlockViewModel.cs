@@ -67,7 +67,7 @@ internal partial class PinUnlockViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ParentViewModel.ShowError(ex);
+            ParentViewModel.ShowError(ex.Message);
         }
     }
 

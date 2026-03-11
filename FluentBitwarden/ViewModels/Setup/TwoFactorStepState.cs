@@ -1,9 +1,10 @@
+using BitwaredApi;
+using BitwaredApi.Abstractions;
 using BitwaredApi.Models.Auth;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Ui.Controls;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Text.Json;
 
 namespace FluentBitwarden.ViewModels.Setup;
@@ -14,11 +15,21 @@ public sealed record TwoFactorProviderOptionModel(
     string Subtitle,
     bool IsSupported);
 
-public partial class TwoFactorStepState(SetupPageViewModel parentViewModel) : ObservableValidator
+public partial class TwoFactorStepState : ObservableValidator, IDisposable
 {
     private const string DefaultPrompt = "Complete the Bitwarden two-factor challenge to continue.";
 
-    public SetupPageViewModel ParentViewModel { get; } = parentViewModel;
+    private readonly SetupPageViewModel _shell;
+    private readonly IAuthenticationWorkflow _authenticationWorkflow;
+    private PasswordSignInOutcome.TwoFactorRequired? _twoFactor;
+
+    internal TwoFactorStepState(
+        SetupPageViewModel shell,
+        IAuthenticationWorkflow authenticationWorkflow)
+    {
+        _shell = shell;
+        _authenticationWorkflow = authenticationWorkflow;
+    }
 
     [ObservableProperty]
     public partial TwoFactorProviderOptionModel? SelectedProvider { get; set; }
@@ -46,9 +57,17 @@ public partial class TwoFactorStepState(SetupPageViewModel parentViewModel) : Ob
     public ValidatableProperty CodeValidation
         => field ??= ValidatableProperty.Create(this, static state => state.Code);
 
-    public void Load(TwoFactorChallenge challenge)
+    public void Begin(PasswordSignInOutcome.TwoFactorRequired outcome)
     {
-        Providers = challenge.Providers
+        if (ReferenceEquals(_twoFactor, outcome))
+        {
+            return;
+        }
+
+        Clear();
+        _twoFactor = outcome;
+
+        Providers = _twoFactor.Challenge.Providers
             .Select(static provider => new TwoFactorProviderOptionModel(
                 provider.Provider,
                 GetTitle(provider.Provider),
@@ -56,19 +75,101 @@ public partial class TwoFactorStepState(SetupPageViewModel parentViewModel) : Ob
                 IsSupported(provider.Provider)))
             .ToArray();
 
-        SelectedProvider = Providers.First(provider => provider.IsSupported);
-        Debug.Assert(SelectedProvider != null, "No supported two-factor provider found.");
+        SelectedProvider = Providers.FirstOrDefault(provider => provider.IsSupported);
+        if (SelectedProvider is null)
+        {
+            _shell.ShowError(
+                "None of the available two-factor providers are supported in this build. Please use a different device or contact support for assistance.");
+            return;
+        }
 
         PromptText = DefaultPrompt;
-        EmailHint = challenge.Email ?? string.Empty;
+        EmailHint = _twoFactor.Challenge.Email ?? string.Empty;
+    }
+
+    public void Clear()
+    {
+        _twoFactor?.Continuation.Dispose();
+        _twoFactor = null;
+        Providers = [];
+        SelectedProvider = null;
         Code = string.Empty;
         RememberThisDevice = true;
+        PromptText = DefaultPrompt;
+        EmailHint = string.Empty;
+        ClearErrors();
     }
+
+    public void Dispose() => Clear();
+
 
     [RelayCommand]
     private void BackFromTwoFactor()
     {
-        ParentViewModel.CurrentStep = SetupPageViewModel.SetupStep.PasswordSignIn;
+        _shell.ShowPasswordStep();
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task ContinueTwoFactorAsync()
+    {
+        if (!TryValidateForSubmit())
+        {
+            return;
+        }
+
+        if (_twoFactor is null)
+        {
+            Clear();
+            _shell.ShowError("The two-factor session has expired. Sign in again.");
+            _shell.ShowPasswordStep();
+            return;
+        }
+
+        BitwardenClientContext context = _shell.FlowContext.ClientContext;
+
+        TwoFactorProviderOptionModel selectedProvider = SelectedProvider
+            ?? throw new InvalidOperationException("No two-factor provider is selected.");
+
+        try
+        {
+            _shell.IsBusy = true;
+
+            AuthenticationOutcome authenticationOutcome = await _authenticationWorkflow
+                .ContinueTwoFactorAsync(
+                    new TwoFactorSignInRequest(
+                        context,
+                        _twoFactor.Continuation,
+                        Code.Trim(),
+                        selectedProvider.Provider,
+                        RememberThisDevice))
+                .ConfigureAwait(true);
+
+            switch (authenticationOutcome)
+            {
+                case AuthenticationOutcome.Success success:
+                    await _shell.CompleteAuthenticatedSessionAsync(success.Authentication).ConfigureAwait(true);
+                    break;
+
+                case AuthenticationOutcome.InvalidCredentials invalidCredentials:
+                    _shell.ShowError(invalidCredentials.Message);
+                    break;
+
+                case AuthenticationOutcome.DeviceVerificationRequired deviceVerificationRequired:
+                    _shell.ShowError(deviceVerificationRequired.Message);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unsupported two-factor authentication outcome.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _shell.ShowError(ex);
+        }
+        finally
+        {
+            _shell.IsBusy = false;
+        }
     }
 
     public static bool IsSupported(TwoFactorProviderType provider) =>

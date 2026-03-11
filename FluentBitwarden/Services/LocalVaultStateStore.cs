@@ -1,33 +1,27 @@
 using FluentBitwarden.Abstractions.UnlockServices;
-using FluentBitwarden.Core.Abstractions;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Models.Vault;
-using FluentBitwarden.Services.Storage;
 
 namespace FluentBitwarden.Services;
 
-internal sealed class LocalVaultStateStore(IAppPaths paths) : ILocalVaultStateStore
+internal sealed class LocalVaultStateStore(IAppSettingsStore appSettingsStore) : ILocalVaultStateStore
 {
-    private readonly ProtectedJsonFileStore<LocalVaultState> _store = new(paths.UnlockStateFilePath);
-
     public async ValueTask<LocalVaultState?> GetForAccountAsync(
         string accountId,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(accountId);
+        LocalVaultState? state = await appSettingsStore
+            .GetLocalVaultStateAsync(accountId, cancellationToken)
+            .ConfigureAwait(false);
 
-        LocalVaultState? state = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
-        if (state is null)
+        if (state?.Payload is not null)
         {
-            return null;
+            return state;
         }
 
-        if (!string.Equals(state.AccountId, accountId, StringComparison.Ordinal) || state.Payload is null)
-        {
-            await _store.ClearAsync(cancellationToken).ConfigureAwait(false);
-            return null;
-        }
-
-        return state;
+        await appSettingsStore.ClearLocalVaultStateAsync(accountId, cancellationToken).ConfigureAwait(false);
+        return null;
     }
 
     public async ValueTask<LocalVaultState> RequireForAccountAsync(
@@ -39,10 +33,10 @@ internal sealed class LocalVaultStateStore(IAppPaths paths) : ILocalVaultStateSt
     public ValueTask SaveAsync(
         LocalVaultState state,
         CancellationToken cancellationToken = default)
-        => _store.SaveAsync(state, cancellationToken);
+        => appSettingsStore.SaveLocalVaultStateAsync(state, cancellationToken);
 
     public ValueTask ClearAsync(CancellationToken cancellationToken = default)
-        => _store.ClearAsync(cancellationToken);
+        => appSettingsStore.ClearAllLocalVaultStatesAsync(cancellationToken);
 
     public async ValueTask<bool> HasWindowsHelloEnrollmentAsync(
         string accountId,

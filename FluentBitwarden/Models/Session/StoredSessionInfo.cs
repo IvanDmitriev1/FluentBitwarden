@@ -2,7 +2,7 @@ using BitwaredApi;
 
 namespace FluentBitwarden.Models.Session;
 
-internal sealed record StoredSessionInfo(
+public sealed record StoredSessionInfo(
     string AccountId,
     string Email,
     BitwardenEnvironment Environment,

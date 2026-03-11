@@ -15,15 +15,16 @@ namespace FluentBitwarden.ViewModels;
 
 public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
 {
-    private StoredSessionInfo? _session;
-    private VaultState? _vaultState;
-    private bool _hasAttemptedWindowsHelloAutoPrompt;
     private readonly IVaultService _vaultService;
-    private readonly ISessionManager _sessionManager;
+    private readonly ILocalUnlockStatusService _localUnlockStatusService;
     private readonly INavigationService _navigationService;
     private readonly MasterPasswordUnlockViewModel _masterPasswordUnlock;
     private readonly WindowsHelloUnlockViewModel _windowsHelloUnlock;
     private readonly PinUnlockViewModel _pinUnlock;
+
+    private StoredSessionInfo? _session;
+    private LocalUnlockStatus _unlockStatus = LocalUnlockStatus.Empty;
+    private bool _hasAttemptedWindowsHelloAutoPrompt;
 
     public LoginPageViewModel(
         IVaultService vaultService,
@@ -31,7 +32,7 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         INavigationService navigationService)
     {
         _vaultService = vaultService;
-        _sessionManager = serviceProvider.GetRequiredService<ISessionManager>();
+        _localUnlockStatusService = serviceProvider.GetRequiredService<ILocalUnlockStatusService>();
         _navigationService = navigationService;
 
         _masterPasswordUnlock = new MasterPasswordUnlockViewModel(this, vaultService);
@@ -71,37 +72,37 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
     {
         ResetPageState();
 
-        VaultState state = await _vaultService.GetStateAsync(cancellationToken).ConfigureAwait(true);
-        if (!state.HasStoredSession)
+        VaultSessionState state = await _vaultService.GetSessionStateAsync(cancellationToken).ConfigureAwait(true);
+        switch (state)
         {
-            _navigationService.Navigate<SetupPage>(clearBackStack: true);
-            return;
+            case VaultSessionState.NoSession:
+                _navigationService.Navigate<SetupPage>(clearBackStack: true);
+                return;
+
+            case VaultSessionState.Unlocked:
+                _navigationService.Navigate<VaultPage>(clearBackStack: true);
+                return;
+
+            case VaultSessionState.Locked locked:
+                _session = locked.Session;
+                break;
+
+            default:
+                throw new InvalidOperationException("Unsupported vault session state.");
         }
 
-        if (!state.IsLocked)
-        {
-            _navigationService.Navigate<VaultPage>(clearBackStack: true);
-            return;
-        }
-
-        _session = await _sessionManager.GetStoredSessionAsync(cancellationToken).ConfigureAwait(true);
-        if (_session is null)
-        {
-            _navigationService.Navigate<SetupPage>(clearBackStack: true);
-            return;
-        }
-
-        _vaultState = state;
+        StoredSessionInfo session = RequireSession();
+        _unlockStatus = await _localUnlockStatusService.GetAsync(session, cancellationToken).ConfigureAwait(true);
         SessionDisplay = new LoginSessionDisplay(
-            state.Email ?? string.Empty,
-            DescribeEnvironment(state));
+            session.Email,
+            DescribeEnvironment(session));
 
-        HasInitializedLocalUnlock = state.HasLocalUnlockData;
+        HasInitializedLocalUnlock = _unlockStatus.HasLocalVaultData;
         RefreshUnlockMethods(selectPreferredMethod: true);
 
         if (!_hasAttemptedWindowsHelloAutoPrompt
             && SelectedUnlockMethod?.Method == LoginUnlockMethod.WindowsHello
-            && state.CanUseWindowsHello)
+            && _unlockStatus.WindowsHello == UnlockMethodStatus.Configured)
         {
             _hasAttemptedWindowsHelloAutoPrompt = true;
             await _windowsHelloUnlock.TryAutoUnlockAsync(cancellationToken).ConfigureAwait(true);
@@ -132,12 +133,9 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            ShowError(ex.Message);
         }
     }
-
-    public VaultState RequireState()
-        => _vaultState ?? throw new InvalidOperationException("No stored Bitwarden session is available.");
 
     internal StoredSessionInfo RequireSession()
         => _session ?? throw new InvalidOperationException("No stored Bitwarden session is available.");
@@ -165,8 +163,6 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         HasError = true;
         ErrorMessage = message;
     }
-
-    public void ShowError(Exception exception) => ShowError(AuthErrorMessageFormatter.Format(exception));
 
     internal async Task HandleUnlockOutcomeAsync(
         VaultUnlockOutcome outcome,
@@ -205,14 +201,14 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
 
     private void RefreshUnlockMethods(bool selectPreferredMethod)
     {
-        if (_vaultState is null)
+        if (_session is null)
         {
             UnlockMethods = [];
             SelectedUnlockMethod = null;
             return;
         }
 
-        LoginUnlockCapabilities capabilities = LoadUnlockCapabilities(_vaultState);
+        LoginUnlockCapabilities capabilities = LoadUnlockCapabilities(_session, _unlockStatus);
         ApplyCapabilities(capabilities);
 
         LoginUnlockMethod? previousSelection = SelectedUnlockMethod?.Method;
@@ -232,11 +228,13 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
             : unlockMethods.FirstOrDefault(option => option.Method == selectedMethod.Value);
     }
 
-    private static LoginUnlockCapabilities LoadUnlockCapabilities(VaultState state)
+    private static LoginUnlockCapabilities LoadUnlockCapabilities(
+        StoredSessionInfo session,
+        LocalUnlockStatus unlockStatus)
         => new(
-            state.IsWindowsHelloConfigured && state.CanUseWindowsHello,
-            state.IsPinConfigured,
-            state.CanUnlockWithMasterPassword);
+            unlockStatus.WindowsHello == UnlockMethodStatus.Configured,
+            unlockStatus.Pin == UnlockMethodStatus.Configured,
+            session.CanUnlockWithMasterPassword);
 
     private void ApplyCapabilities(LoginUnlockCapabilities capabilities)
     {
@@ -267,7 +265,7 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         UnlockMethods = [];
         SelectedUnlockMethod = null;
         _session = null;
-        _vaultState = null;
+        _unlockStatus = LocalUnlockStatus.Empty;
         HasInitializedLocalUnlock = false;
     }
 
@@ -284,9 +282,9 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         _pinUnlock.Reset();
     }
 
-    private static string DescribeEnvironment(VaultState state)
+    private static string DescribeEnvironment(StoredSessionInfo session)
     {
-        string host = state.Environment?.ApiBase.Host ?? string.Empty;
+        string host = session.Environment.ApiBase.Host;
 
         if (host.Contains("bitwarden.eu", StringComparison.OrdinalIgnoreCase))
         {

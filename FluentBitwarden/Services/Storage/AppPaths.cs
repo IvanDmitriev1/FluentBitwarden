@@ -16,7 +16,6 @@ public sealed class AppPaths : IAppPaths
 
         VaultDbFilePath = Path.Combine(AppDataRoot, "vault.db");
         SessionFilePath = Path.Combine(AppDataRoot, "session.bin");
-        UnlockStateFilePath = Path.Combine(AppDataRoot, "unlock.bin");
         ConfigFilePath = Path.Combine(AppDataRoot, "config.json");
     }
 
@@ -24,7 +23,6 @@ public sealed class AppPaths : IAppPaths
     public string AppDataRoot { get; }
     public string VaultDbFilePath { get; }
     public string SessionFilePath { get; }
-    public string UnlockStateFilePath { get; }
     public string ConfigFilePath { get; }
 
     private string ResolveRoot()

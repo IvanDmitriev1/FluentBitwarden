@@ -1,18 +1,27 @@
+using BitwaredApi;
+using BitwaredApi.Abstractions;
+using BitwaredApi.Models.Auth;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Abstractions;
 using FluentBitwarden.Ui.Controls;
 using System.ComponentModel.DataAnnotations;
-using static FluentBitwarden.ViewModels.Setup.SetupPageViewModel;
 
 namespace FluentBitwarden.ViewModels.Setup;
 
-public partial class PasswordSignInStepState(SetupPageViewModel parentViewModel) : ObservableValidator
+public partial class PasswordSignInStepState : ObservableValidator
 {
-    public SetupPageViewModel ParentViewModel { get; } = parentViewModel;
+    private readonly SetupPageViewModel _shell;
+    private readonly IAuthenticationWorkflow _authenticationWorkflow;
 
-    [ObservableProperty]
-    public partial string Email { get; private set; } = string.Empty;
+    internal PasswordSignInStepState(
+        SetupPageViewModel shell,
+        IAuthenticationWorkflow authenticationWorkflow)
+    {
+        _shell = shell;
+        _authenticationWorkflow = authenticationWorkflow;
+    }
+
+    public string Email => _shell.FlowContext.Email;
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
@@ -27,20 +36,75 @@ public partial class PasswordSignInStepState(SetupPageViewModel parentViewModel)
     public ValidatableProperty MasterPasswordValidation
         => field ??= ValidatableProperty.Create(this, static state => state.MasterPassword);
 
-
-    public void Load(string email)
+    public void OnActivated()
     {
-        Email = email;
+        OnPropertyChanged(nameof(Email));
         MasterPassword = string.Empty;
         HasInvalidCredentials = false;
-
         ClearErrors();
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task SignInWithPasswordAsync()
+    {
+        ValidateAllProperties();
+        if (HasErrors)
+        {
+            return;
+        }
+
+        BitwardenClientContext context = _shell.FlowContext.ClientContext;
+
+        HasInvalidCredentials = false;
+
+        try
+        {
+            _shell.IsBusy = true;
+
+            PasswordSignInOutcome signInOutcome = await _authenticationWorkflow
+                .SignInWithPasswordAsync(
+                    new PasswordSignInRequest(
+                        context,
+                        Email,
+                        MasterPassword))
+                .ConfigureAwait(true);
+
+            switch (signInOutcome)
+            {
+                case PasswordSignInOutcome.Success success:
+                    await _shell.CompleteAuthenticatedSessionAsync(success.Authentication).ConfigureAwait(true);
+                    break;
+
+                case PasswordSignInOutcome.TwoFactorRequired twoFactorRequired:
+                    _shell.ShowTwoFactorSignIn(twoFactorRequired);
+                    break;
+
+                case PasswordSignInOutcome.InvalidCredentials:
+                    HasInvalidCredentials = true;
+                    break;
+
+                case PasswordSignInOutcome.DeviceVerificationRequired deviceVerificationRequired:
+                    _shell.ShowError(deviceVerificationRequired.Message);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unsupported password sign-in outcome.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _shell.ShowError(ex);
+        }
+        finally
+        {
+            _shell.IsBusy = false;
+        }
     }
 
     [RelayCommand]
     private void BackToEmail()
     {
-        ParentViewModel.CurrentStep = SetupStep.EmailSignIn;
+        _shell.ShowEmailStep();
     }
 
     partial void OnHasInvalidCredentialsChanged(bool value)
@@ -50,11 +114,10 @@ public partial class PasswordSignInStepState(SetupPageViewModel parentViewModel)
 
     public static ValidationResult? ValidateMasterPassword(string name, ValidationContext context)
     {
-        var instance = (PasswordSignInStepState)context.ObjectInstance;
+        PasswordSignInStepState instance = (PasswordSignInStepState)context.ObjectInstance;
 
         return !instance.HasInvalidCredentials
             ? ValidationResult.Success
             : new ValidationResult("Invalid master password");
     }
-
 }

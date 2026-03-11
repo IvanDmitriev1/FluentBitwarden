@@ -10,9 +10,9 @@ namespace FluentBitwarden.Abstractions;
 public interface IVaultService
 {
     /// <summary>
-    /// Gets the current vault state for the active account.
-    /// </summary>
-    ValueTask<VaultState> GetStateAsync(CancellationToken cancellationToken = default);
+     /// Gets the current vault state for the active account.
+     /// </summary>
+    ValueTask<VaultSessionState> GetSessionStateAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adopts a successful authentication result into the active vault session.

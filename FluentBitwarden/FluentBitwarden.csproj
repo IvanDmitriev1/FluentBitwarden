@@ -65,9 +65,17 @@
   </ItemGroup>
 
   <ItemGroup>
-	  
+	  <Page Update="Views\**\*.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+	  </Page>
 
 	  <Page Update="MainWindow.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	  <Page Update="StartupSplashScreen.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	  <Page Update="Themes\Generic.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 	  </Page>
   </ItemGroup>

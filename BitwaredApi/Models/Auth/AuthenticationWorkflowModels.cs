@@ -44,9 +44,7 @@ public sealed record AuthenticationSuccess(
 
 public abstract record PasswordSignInOutcome
 {
-    private PasswordSignInOutcome()
-    {
-    }
+    private PasswordSignInOutcome() { }
 
     public sealed record Success(AuthenticationSuccess Authentication) : PasswordSignInOutcome;
 
@@ -55,35 +53,25 @@ public abstract record PasswordSignInOutcome
         PasswordSignInContinuation Continuation) : PasswordSignInOutcome;
 
     public sealed record InvalidCredentials(string Message) : PasswordSignInOutcome;
-
     public sealed record DeviceVerificationRequired(string Message) : PasswordSignInOutcome;
 }
 
 public abstract record AuthenticationOutcome
 {
-    private AuthenticationOutcome()
-    {
-    }
+    private AuthenticationOutcome() { }
 
     public sealed record Success(AuthenticationSuccess Authentication) : AuthenticationOutcome;
-
     public sealed record InvalidCredentials(string Message) : AuthenticationOutcome;
-
     public sealed record DeviceVerificationRequired(string Message) : AuthenticationOutcome;
 }
 
 public abstract record DeviceApprovalOutcome
 {
-    private DeviceApprovalOutcome()
-    {
-    }
+    private DeviceApprovalOutcome() {}
 
     public sealed record Pending : DeviceApprovalOutcome;
-
     public sealed record Approved(AuthenticationSuccess Authentication) : DeviceApprovalOutcome;
-
     public sealed record Denied(string Message) : DeviceApprovalOutcome;
-
     public sealed record Expired(string Message) : DeviceApprovalOutcome;
 }
 
@@ -97,9 +85,7 @@ public sealed class PasswordSignInContinuation : IDisposable
     }
 
     internal string Email { get; }
-
     internal KdfConfigModel Kdf { get; }
-
     internal MasterPasswordAuth Auth { get; }
 
     private bool _disposed;
@@ -128,9 +114,7 @@ public sealed class DeviceSignInContinuation : IDisposable
     }
 
     internal string Email { get; }
-
     internal string AccessCode { get; }
-
     internal byte[] PrivateKeyPkcs8 { get; }
 
     private bool _disposed;

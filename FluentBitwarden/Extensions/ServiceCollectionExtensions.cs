@@ -17,10 +17,11 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBitwaredPlatformServices(this IServiceCollection services)
     {
         services.AddSingleton<IAppPaths, AppPaths>();
+        services.AddSingleton<IAppSettingsStore, AppSettingsStore>();
         services.AddSingleton<WindowHandleProvider>();
         services.AddSingleton<IWindowHandleProvider>(sp => sp.GetRequiredService<WindowHandleProvider>());
         services.AddSingleton<IUnlockSettingsPromptService, UnlockSettingsPromptService>();
-        services.AddSingleton<LocalDeviceInfoProvider>();
+        services.AddSingleton<ILocalDeviceInfoProvider, LocalDeviceInfoProvider>();
         services.AddSingleton<ISessionStore, SessionStore>();
         services.AddSingleton<IVaultCache, SqliteVaultCache>();
         services.AddLocalUnlockServices();
@@ -41,6 +42,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<WindowsHelloVerificationPrompt>();
         services.AddSingleton<ILocalVaultStateStore, LocalVaultStateStore>();
+        services.AddSingleton<ILocalUnlockStatusService, LocalUnlockStatusService>();
         services.AddSingleton<ILocalVaultKeyManager, LocalVaultKeyManager>();
         services.AddSingleton<IMasterPasswordUnlockService, MasterPasswordUnlockService>();
         services.AddSingleton<IWindowsHelloUnlockService, WindowsHelloUnlockService>();

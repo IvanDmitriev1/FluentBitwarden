@@ -14,9 +14,7 @@ namespace FluentBitwarden.Services;
 internal sealed class VaultService(
     IVaultCache vaultCache,
     ISessionManager sessionManager,
-    ILocalVaultKeyManager localVaultKeyManager,
     IMasterPasswordUnlockService masterPasswordUnlockService,
-    IWindowsHelloUnlockService windowsHelloUnlockService,
     IPinUnlockService pinUnlockService,
     IVaultDataService vaultDataService)
     : IVaultService
@@ -26,48 +24,10 @@ internal sealed class VaultService(
     private const string NoCachedDataMessage = "No cached vault data is available yet.";
     private const string EmptySecretMessage = "Enter your PIN or master password.";
 
-    public async ValueTask<VaultState> GetStateAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<VaultSessionState> GetSessionStateAsync(CancellationToken cancellationToken = default)
     {
         StoredSessionInfo? session = await sessionManager.GetStoredSessionAsync(cancellationToken).ConfigureAwait(false);
-        if (session is null)
-        {
-            return VaultState.Empty;
-        }
-
-        await vaultCache.InitializeAsync(cancellationToken).ConfigureAwait(false);
-
-        VaultSyncStateRecord? syncState = await vaultCache
-            .GetSyncStateAsync(session.AccountId, cancellationToken)
-            .ConfigureAwait(false);
-
-        bool hasLocalUnlockData = await localVaultKeyManager
-            .IsInitializedAsync(session.AccountId, cancellationToken)
-            .ConfigureAwait(false);
-
-        bool isPinConfigured = hasLocalUnlockData
-            && await pinUnlockService.IsConfiguredAsync(session, cancellationToken).ConfigureAwait(false);
-
-        bool canUseWindowsHello = await windowsHelloUnlockService
-            .CanSetupAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        bool isWindowsHelloConfigured = hasLocalUnlockData
-            && await windowsHelloUnlockService.IsConfiguredAsync(session, cancellationToken).ConfigureAwait(false);
-
-        return new VaultState(
-            true,
-            session.AccountId,
-            session.Email,
-            session.Environment,
-            session.IsLocked,
-            syncState is not null,
-            syncState?.LastSyncUtc,
-            syncState?.RevisionDate,
-            hasLocalUnlockData,
-            session.CanUnlockWithMasterPassword,
-            isPinConfigured,
-            isWindowsHelloConfigured,
-            canUseWindowsHello);
+        return VaultSessionStateFactory.Create(session);
     }
 
     public ValueTask AdoptAuthenticationAsync(

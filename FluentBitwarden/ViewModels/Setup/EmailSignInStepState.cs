@@ -1,5 +1,4 @@
 using BitwaredApi;
-using BitwaredApi.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Ui.Controls;
@@ -11,9 +10,11 @@ public sealed record SetupEnvironmentOption(string Title, string Subtitle, Bitwa
 
 public partial class EmailSignInStepState : ObservableValidator
 {
-    public EmailSignInStepState(SetupPageViewModel parentViewModel)
+    private readonly SetupPageViewModel _shell;
+
+    internal EmailSignInStepState(SetupPageViewModel shell)
     {
-        ParentViewModel = parentViewModel;
+        _shell = shell;
 
         Environments =
         [
@@ -23,8 +24,6 @@ public partial class EmailSignInStepState : ObservableValidator
 
         SelectedEnvironment = Environments[0];
     }
-
-    public SetupPageViewModel ParentViewModel { get; }
 
     [ObservableProperty]
     public partial SetupEnvironmentOption SelectedEnvironment { get; set; }
@@ -40,14 +39,35 @@ public partial class EmailSignInStepState : ObservableValidator
     public ValidatableProperty EmailValidation
         => field ??= ValidatableProperty.Create(this, static state => state.Email);
 
+    public void OnActivated()
+    {
+        if (!string.IsNullOrWhiteSpace(_shell.FlowContext.Email))
+        {
+            Email = _shell.FlowContext.Email;
+        }
+
+        SelectedEnvironment = Array.Find(
+            Environments,
+            option => option.Environment == _shell.FlowContext.ClientContext.Environment) ?? Environments[0];
+    }
+
+    [RelayCommand]
+    private void PasskeySignIn()
+    {
+    }
 
     [RelayCommand]
     private void Continue()
     {
         ValidateAllProperties();
         if (HasErrors)
+        {
             return;
+        }
 
-        ParentViewModel.CurrentStep = SetupPageViewModel.SetupStep.PasswordSignIn;
+        Email = Email.Trim();
+        _shell.FlowContext.Email = Email;
+        _shell.FlowContext.ChangeEnvironment(SelectedEnvironment.Environment);
+        _shell.ShowPasswordStep();
     }
 }

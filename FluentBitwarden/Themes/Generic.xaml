@@ -23,4 +23,20 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style TargetType="controls:NotificationHost">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:NotificationHost">
+                    <InfoBar x:Name="PART_InfoBar"
+                             Title="{TemplateBinding NotificationTitle}"
+                             Message="{TemplateBinding NotificationMessage}"
+                             Severity="{TemplateBinding NotificationSeverity}"
+                             IsOpen="{TemplateBinding IsOpen}"
+                             MaxWidth="400"
+                             IsClosable="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

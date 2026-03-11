@@ -16,12 +16,11 @@ namespace FluentBitwarden.ViewModels;
 public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycleAware
 {
     private readonly IVaultService _vaultService;
-    private readonly ISessionManager _sessionManager;
+    private readonly ILocalUnlockStatusService _localUnlockStatusService;
     private readonly IWindowsHelloUnlockService _windowsHelloUnlockService;
     private readonly IPinUnlockService _pinUnlockService;
     private readonly INavigationService _navigationService;
     private StoredSessionInfo? _session;
-    private VaultState? _vaultState;
     private ValidatableProperty? _pinValidation;
     private ValidatableProperty? _confirmPinValidation;
 
@@ -31,7 +30,7 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         INavigationService navigationService)
     {
         _vaultService = vaultService;
-        _sessionManager = serviceProvider.GetRequiredService<ISessionManager>();
+        _localUnlockStatusService = serviceProvider.GetRequiredService<ILocalUnlockStatusService>();
         _windowsHelloUnlockService = serviceProvider.GetRequiredService<IWindowsHelloUnlockService>();
         _pinUnlockService = serviceProvider.GetRequiredService<IPinUnlockService>();
         _navigationService = navigationService;
@@ -103,30 +102,29 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
     {
         ResetStatus();
 
-        VaultState state = await _vaultService.GetStateAsync(cancellationToken).ConfigureAwait(true);
-        if (!state.HasStoredSession)
+        VaultSessionState state = await _vaultService.GetSessionStateAsync(cancellationToken).ConfigureAwait(true);
+        switch (state)
         {
-            _navigationService.Navigate<SetupPage>(clearBackStack: true);
-            return;
+            case VaultSessionState.NoSession:
+                _navigationService.Navigate<SetupPage>(clearBackStack: true);
+                return;
+
+            case VaultSessionState.Locked:
+                _navigationService.Navigate<LoginPage>(clearBackStack: true);
+                return;
+
+            case VaultSessionState.Unlocked unlocked:
+                _session = unlocked.Session;
+                break;
+
+            default:
+                throw new InvalidOperationException("Unsupported vault session state.");
         }
 
-        if (state.IsLocked)
-        {
-            _navigationService.Navigate<LoginPage>(clearBackStack: true);
-            return;
-        }
-
-        _session = await _sessionManager.GetStoredSessionAsync(cancellationToken).ConfigureAwait(true);
-        if (_session is null)
-        {
-            _navigationService.Navigate<SetupPage>(clearBackStack: true);
-            return;
-        }
-
-        _vaultState = state;
+        StoredSessionInfo session = RequireSession();
         SessionDisplay = new LoginSessionDisplay(
-            state.Email ?? string.Empty,
-            DescribeEnvironment(state));
+            session.Email,
+            DescribeEnvironment(session));
 
         await RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
@@ -165,7 +163,7 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            ShowError(ex.Message);
         }
     }
 
@@ -188,7 +186,7 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            ShowError(ex.Message);
         }
     }
 
@@ -218,7 +216,7 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            ShowError(ex.Message);
         }
     }
 
@@ -241,20 +239,21 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            ShowError(ex.Message);
         }
     }
 
     private async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        VaultState state = await _vaultService.GetStateAsync(cancellationToken).ConfigureAwait(true);
-        _vaultState = state;
+        LocalUnlockStatus status = await _localUnlockStatusService
+            .GetAsync(RequireSession(), cancellationToken)
+            .ConfigureAwait(true);
 
-        HasLocalUnlockData = state.HasLocalUnlockData;
-        IsWindowsHelloConfigured = state.IsWindowsHelloConfigured;
-        CanEnableWindowsHello = state.HasLocalUnlockData && state.CanUseWindowsHello && !state.IsWindowsHelloConfigured;
-        IsPinConfigured = state.IsPinConfigured;
-        CanEnablePin = state.HasLocalUnlockData && !state.IsPinConfigured;
+        HasLocalUnlockData = status.HasLocalVaultData;
+        IsWindowsHelloConfigured = status.WindowsHello == UnlockMethodStatus.Configured;
+        CanEnableWindowsHello = status.WindowsHello == UnlockMethodStatus.Available;
+        IsPinConfigured = status.Pin == UnlockMethodStatus.Configured;
+        CanEnablePin = status.Pin == UnlockMethodStatus.Available;
 
         if (!CanEnablePin)
         {
@@ -313,9 +312,9 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
             : new ValidationResult("PIN confirmation does not match.");
     }
 
-    private static string DescribeEnvironment(VaultState state)
+    private static string DescribeEnvironment(StoredSessionInfo session)
     {
-        string host = state.Environment?.ApiBase.Host ?? string.Empty;
+        string host = session.Environment.ApiBase.Host;
 
         if (host.Contains("bitwarden.eu", StringComparison.OrdinalIgnoreCase))
         {
@@ -354,9 +353,6 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         HasError = false;
         ErrorMessage = string.Empty;
     }
-
-    private void ShowError(Exception exception)
-        => ShowError(AuthErrorMessageFormatter.Format(exception));
 
     private void ShowError(string message)
     {

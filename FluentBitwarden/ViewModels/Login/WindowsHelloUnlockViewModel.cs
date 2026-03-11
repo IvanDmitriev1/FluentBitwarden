@@ -66,7 +66,7 @@ internal partial class WindowsHelloUnlockViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ParentViewModel.ShowError(ex);
+            ParentViewModel.ShowError(ex.Message);
         }
     }
 

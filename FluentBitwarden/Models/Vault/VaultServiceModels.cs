@@ -1,37 +1,15 @@
-using BitwaredApi;
 using BitwaredApi.Models.Vault;
+using FluentBitwarden.Models.Session;
 
 namespace FluentBitwarden.Models.Vault;
 
-public sealed record VaultState(
-    bool HasStoredSession,
-    string? AccountId,
-    string? Email,
-    BitwardenEnvironment? Environment,
-    bool IsLocked,
-    bool HasCachedData,
-    DateTimeOffset? LastSyncUtc,
-    DateTimeOffset? RevisionDate,
-    bool HasLocalUnlockData,
-    bool CanUnlockWithMasterPassword,
-    bool IsPinConfigured,
-    bool IsWindowsHelloConfigured,
-    bool CanUseWindowsHello)
+public abstract record VaultSessionState
 {
-    public static VaultState Empty { get; } = new(
-        false,
-        null,
-        null,
-        null,
-        true,
-        false,
-        null,
-        null,
-        false,
-        false,
-        false,
-        false,
-        false);
+    private VaultSessionState() { }
+
+    public sealed record NoSession : VaultSessionState;
+    public sealed record Locked(StoredSessionInfo Session) : VaultSessionState;
+    public sealed record Unlocked(StoredSessionInfo Session) : VaultSessionState;
 }
 
 public abstract record VaultUnlockOutcome
@@ -72,4 +50,22 @@ internal abstract record VaultConfigurationOutcome
     public sealed record InvalidInput(string Message) : VaultConfigurationOutcome;
     public sealed record Unavailable(string Message) : VaultConfigurationOutcome;
     public sealed record Cancelled(string Message) : VaultConfigurationOutcome;
+}
+
+internal enum UnlockMethodStatus
+{
+    Unavailable = 0,
+    Available = 1,
+    Configured = 2,
+}
+
+internal sealed record LocalUnlockStatus(
+    bool HasLocalVaultData,
+    UnlockMethodStatus WindowsHello,
+    UnlockMethodStatus Pin)
+{
+    public static LocalUnlockStatus Empty { get; } = new(
+        false,
+        UnlockMethodStatus.Unavailable,
+        UnlockMethodStatus.Unavailable);
 }
