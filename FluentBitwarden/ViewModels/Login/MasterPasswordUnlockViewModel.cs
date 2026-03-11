@@ -1,20 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Abstractions.UnlockServices;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Models;
+using FluentBitwarden.Models.Vault;
 
 namespace FluentBitwarden.ViewModels;
 
 internal partial class MasterPasswordUnlockViewModel : ObservableObject
 {
-    private readonly IMasterPasswordUnlockService _masterPasswordUnlockService;
+    private readonly IVaultService _vaultService;
 
     public MasterPasswordUnlockViewModel(
         LoginPageViewModel parentViewModel,
-        IMasterPasswordUnlockService masterPasswordUnlockService)
+        IVaultService vaultService)
     {
         ParentViewModel = parentViewModel;
-        _masterPasswordUnlockService = masterPasswordUnlockService;
+        _vaultService = vaultService;
         Method = new LoginUnlockMethodItem(
             LoginUnlockMethod.MasterPassword,
             "Unlock with master password",
@@ -51,16 +52,18 @@ internal partial class MasterPasswordUnlockViewModel : ObservableObject
 
     private async Task UnlockCoreAsync(string masterPassword, CancellationToken cancellationToken)
     {
-        bool wasInitialized = ParentViewModel.HasInitializedLocalVaultUnlocker;
+        bool wasInitialized = ParentViewModel.HasInitializedLocalUnlock;
 
         try
         {
             await ParentViewModel.RunBusyAsync(async () =>
             {
-                await _masterPasswordUnlockService.UnlockAsync(ParentViewModel.RequireSession(), masterPassword, cancellationToken);
+                VaultUnlockOutcome outcome = await _vaultService
+                    .UnlockAsync(masterPassword, cancellationToken)
+                    .ConfigureAwait(true);
 
-                await ParentViewModel.CompleteUnlockAsync(recommendUnlockSetup: !wasInitialized);
-            });
+                await ParentViewModel.HandleUnlockOutcomeAsync(outcome, recommendUnlockSetup: !wasInitialized).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

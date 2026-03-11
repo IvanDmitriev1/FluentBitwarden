@@ -3,11 +3,11 @@ using BitwaredApi.Models.Vault;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions;
-using FluentBitwarden.Abstractions.UnlockServices;
 using FluentBitwarden.Models.Navigation;
+using FluentBitwarden.Models.Vault;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
-using FluentBitwarden.Views.SetUp;
+using FluentBitwarden.Views.Setup;
 
 namespace FluentBitwarden.ViewModels;
 
@@ -21,9 +21,7 @@ public sealed record VaultCipherRow(
 
 public partial class VaultPageViewModel(
     IVaultService vaultService,
-    IBitwaredClient client,
     INavigationService navigationService,
-    ILocalVaultUnlocker localVaultUnlocker,
     IUnlockSettingsPromptService unlockSettingsPromptService)
     : ObservableObject, IPageLifecycleAware
 {
@@ -42,13 +40,13 @@ public partial class VaultPageViewModel(
 
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        await RefreshAsync();
+        await RefreshAsync().ConfigureAwait(true);
 
         if (_shouldRecommendUnlockSettings)
         {
             _shouldRecommendUnlockSettings = false;
 
-            bool openSettings = await unlockSettingsPromptService.ShowUnlockSettingsPromptAsync(cancellationToken);
+            bool openSettings = await unlockSettingsPromptService.ShowUnlockSettingsPromptAsync(cancellationToken).ConfigureAwait(true);
             if (openSettings)
             {
                 navigationService.Navigate<SettingsPage>(clearBackStack: true);
@@ -66,23 +64,54 @@ public partial class VaultPageViewModel(
 
         try
         {
-            IReadOnlyList<DecryptedCipher> ciphers = await vaultService.ListCiphersAsync();
-
-            Ciphers.Clear();
-            foreach (DecryptedCipher cipher in ciphers)
+            VaultSyncOutcome syncOutcome = await vaultService.SyncAsync().ConfigureAwait(true);
+            switch (syncOutcome)
             {
-                Ciphers.Add(new VaultCipherRow(
-                    cipher.Id,
-                    cipher.Name ?? "(unable to decrypt)",
-                    cipher.Username ?? string.Empty,
-                    cipher.Password ?? string.Empty,
-                    string.Join(", ", cipher.Uris),
-                    cipher.HasDecryptionError));
+                case VaultSyncOutcome.Success:
+                case VaultSyncOutcome.Offline:
+                    break;
+
+                case VaultSyncOutcome.Locked:
+                    navigationService.Navigate<LoginPage>(clearBackStack: true);
+                    return;
+
+                case VaultSyncOutcome.Unavailable:
+                    navigationService.Navigate<SetupPage>(clearBackStack: true);
+                    return;
+
+                default:
+                    throw new InvalidOperationException("Unsupported vault sync outcome.");
+            }
+
+            VaultReadOutcome<IReadOnlyList<DecryptedCipher>> readOutcome = await vaultService.ListCiphersAsync().ConfigureAwait(true);
+            switch (readOutcome)
+            {
+                case VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Success success:
+                    PopulateCiphers(success.Value);
+                    break;
+
+                case VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Locked locked:
+                    ShowError(locked.Message);
+                    navigationService.Navigate<LoginPage>(clearBackStack: true);
+                    break;
+
+                case VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.NoCachedData noCachedData:
+                    Ciphers.Clear();
+                    ShowError(noCachedData.Message);
+                    break;
+
+                case VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Unavailable unavailable:
+                    ShowError(unavailable.Message);
+                    navigationService.Navigate<SetupPage>(clearBackStack: true);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unsupported vault read outcome.");
             }
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(AuthErrorMessageFormatter.Format(ex));
         }
         finally
         {
@@ -93,16 +122,14 @@ public partial class VaultPageViewModel(
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task LockAsync()
     {
-        await client.LockAsync();
-        await localVaultUnlocker.LockAsync();
+        await vaultService.LockAsync().ConfigureAwait(true);
         navigationService.Navigate<LoginPage>(clearBackStack: true);
     }
 
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task LogoutAsync()
     {
-        await client.LogoutAsync();
-        await localVaultUnlocker.ClearAsync();
+        await vaultService.LogoutAsync().ConfigureAwait(true);
         navigationService.Navigate<SetupPage>(clearBackStack: true);
     }
 
@@ -112,6 +139,22 @@ public partial class VaultPageViewModel(
 
     public void SetNavigationContext(VaultNavigationContext? context)
         => _shouldRecommendUnlockSettings = context?.ShowUnlockSettingsRecommendation == true;
+
+    private void PopulateCiphers(IReadOnlyList<DecryptedCipher> ciphers)
+    {
+        Ciphers.Clear();
+
+        foreach (DecryptedCipher cipher in ciphers)
+        {
+            Ciphers.Add(new VaultCipherRow(
+                cipher.Id,
+                cipher.Name ?? "(unable to decrypt)",
+                cipher.Username ?? string.Empty,
+                cipher.Password ?? string.Empty,
+                string.Join(", ", cipher.Uris),
+                cipher.HasDecryptionError));
+        }
+    }
 
     private void ClearError()
     {

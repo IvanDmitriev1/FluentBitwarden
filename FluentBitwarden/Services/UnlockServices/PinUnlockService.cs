@@ -1,16 +1,15 @@
 using System.Security.Cryptography;
-using BitwaredApi.Abstractions.Exceptions;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Abstractions.UnlockServices;
-using FluentBitwarden.Models.Auth;
 using FluentBitwarden.Models.Session;
 using FluentBitwarden.Models.Vault;
 
 namespace FluentBitwarden.Services.UnlockServices;
 
 internal sealed class PinUnlockService(
-    ILocalVaultUnlocker localVaultUnlocker,
-    LocalVaultUnlockStateRepository stateRepository,
-    LocalVaultSessionUnlocker sessionUnlocker)
+    ILocalVaultKeyManager localVaultKeyManager,
+    ILocalVaultStateStore stateStore,
+    ISessionManager sessionManager)
     : IPinUnlockService
 {
     private const int PinMinLength = 6;
@@ -22,28 +21,30 @@ internal sealed class PinUnlockService(
     public ValueTask<bool> IsConfiguredAsync(
         StoredSessionInfo session,
         CancellationToken cancellationToken = default)
-        => stateRepository.HasPinEnrollmentAsync(session.AccountId, cancellationToken);
+        => stateStore.HasPinEnrollmentAsync(session.AccountId, cancellationToken);
 
-    public async ValueTask SetupAsync(
+    public async ValueTask<VaultConfigurationOutcome> SetupAsync(
         StoredSessionInfo session,
         string pin,
         CancellationToken cancellationToken = default)
     {
-        byte[]? localVaultKey = localVaultUnlocker.GetUnlockedLocalVaultKeyCopy();
-        if (localVaultKey is null)
+        if (!TryValidatePin(pin, out string? validationError))
         {
-            throw new InvalidOperationException("Unlock the local vault before setting up PIN unlock.");
+            return new VaultConfigurationOutcome.InvalidInput(validationError!);
         }
+
+        byte[] localVaultKey = localVaultKeyManager.GetUnlockedLocalVaultKeyCopy();
 
         try
         {
-            LocalVaultUnlockerState state = await stateRepository.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
-            LocalVaultUnlockerState updatedState = state with
+            LocalVaultState state = await stateStore.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
+            LocalVaultState updatedState = state with
             {
                 Pin = ProtectLocalVaultKey(pin.Trim(), localVaultKey),
             };
 
-            await stateRepository.SaveAsync(updatedState, cancellationToken).ConfigureAwait(false);
+            await stateStore.SaveAsync(updatedState, cancellationToken).ConfigureAwait(false);
+            return new VaultConfigurationOutcome.Success();
         }
         finally
         {
@@ -51,20 +52,21 @@ internal sealed class PinUnlockService(
         }
     }
 
-    public async ValueTask DisableAsync(
+    public async ValueTask<VaultConfigurationOutcome> DisableAsync(
         StoredSessionInfo session,
         CancellationToken cancellationToken = default)
     {
-        LocalVaultUnlockerState state = await stateRepository.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
+        LocalVaultState state = await stateStore.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
         if (state.Pin is null)
         {
-            return;
+            return new VaultConfigurationOutcome.Success();
         }
 
-        await stateRepository.SaveAsync(state with { Pin = null }, cancellationToken).ConfigureAwait(false);
+        await stateStore.SaveAsync(state with { Pin = null }, cancellationToken).ConfigureAwait(false);
+        return new VaultConfigurationOutcome.Success();
     }
 
-    public async ValueTask<AuthSession> UnlockAsync(
+    public async ValueTask<SessionUnlockOutcome> UnlockAsync(
         StoredSessionInfo session,
         string pin,
         CancellationToken cancellationToken = default)
@@ -72,19 +74,29 @@ internal sealed class PinUnlockService(
         ArgumentNullException.ThrowIfNull(session);
         ArgumentException.ThrowIfNullOrWhiteSpace(pin);
 
-        LocalVaultUnlockerState state = await stateRepository.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
+        LocalVaultState state = await stateStore.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
         PinLocalVaultKeyState pinState = state.Pin
             ?? throw new InvalidOperationException("PIN unlock is not enrolled for this session.");
 
         byte[]? localVaultKey = null;
+        byte[]? userKey = null;
 
         try
         {
-            localVaultKey = UnprotectLocalVaultKey(pinState, pin.Trim());
-            return await sessionUnlocker.UnlockAsync(session.AccountId, localVaultKey, cancellationToken).ConfigureAwait(false);
+            if (!TryUnprotectLocalVaultKey(pinState, pin.Trim(), out localVaultKey))
+            {
+                return new SessionUnlockOutcome.InvalidCredentials("The supplied PIN is incorrect.");
+            }
+
+            byte[] unlockedLocalVaultKey = localVaultKey
+                ?? throw new InvalidOperationException("Local vault key is not available.");
+
+            userKey = await localVaultKeyManager.DecryptUserKeyAsync(session.AccountId, unlockedLocalVaultKey, cancellationToken).ConfigureAwait(false);
+            return await sessionManager.UnlockWithUserKeyAsync(userKey, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
+            CryptographicOperations.ZeroMemory(userKey);
             if (localVaultKey is not null)
             {
                 CryptographicOperations.ZeroMemory(localVaultKey);
@@ -94,8 +106,6 @@ internal sealed class PinUnlockService(
 
     private PinLocalVaultKeyState ProtectLocalVaultKey(string pin, byte[] localVaultKey)
     {
-        ValidatePin(pin);
-
         byte[] salt = RandomNumberGenerator.GetBytes(16);
         byte[] nonce = RandomNumberGenerator.GetBytes(AesNonceLength);
         byte[] derivedKey = Rfc2898DeriveBytes.Pbkdf2(pin, salt, PinIterations, HashAlgorithmName.SHA256, 32);
@@ -124,16 +134,17 @@ internal sealed class PinUnlockService(
         }
     }
 
-    private byte[] UnprotectLocalVaultKey(PinLocalVaultKeyState state, string pin)
+    private bool TryUnprotectLocalVaultKey(
+        PinLocalVaultKeyState state,
+        string pin,
+        out byte[]? localVaultKey)
     {
-        ValidatePin(pin);
-
         byte[] salt = Convert.FromBase64String(state.Salt);
         byte[] nonce = Convert.FromBase64String(state.Nonce);
         byte[] cipher = Convert.FromBase64String(state.Ciphertext);
         byte[] tag = Convert.FromBase64String(state.Tag);
         byte[] derivedKey = Rfc2898DeriveBytes.Pbkdf2(pin, salt, state.Iterations, HashAlgorithmName.SHA256, 32);
-        byte[] localVaultKey = new byte[cipher.Length];
+        localVaultKey = new byte[cipher.Length];
 
         try
         {
@@ -141,18 +152,14 @@ internal sealed class PinUnlockService(
             {
                 using AesGcm aes = new(derivedKey, AesTagLength);
                 aes.Decrypt(nonce, cipher, tag, localVaultKey);
+                return true;
             }
-            catch (CryptographicException ex)
+            catch (CryptographicException)
             {
-                throw new InvalidCredentialsException("The supplied PIN is incorrect.", ex);
+                CryptographicOperations.ZeroMemory(localVaultKey);
+                localVaultKey = null;
+                return false;
             }
-
-            return localVaultKey;
-        }
-        catch
-        {
-            CryptographicOperations.ZeroMemory(localVaultKey);
-            throw;
         }
         finally
         {
@@ -164,11 +171,15 @@ internal sealed class PinUnlockService(
         }
     }
 
-    private static void ValidatePin(string pin)
+    private static bool TryValidatePin(string pin, out string? errorMessage)
     {
         if (pin.Length < PinMinLength || pin.Length > PinMaxLength || pin.Any(ch => !char.IsDigit(ch)))
         {
-            throw new InvalidOperationException($"PIN must be {PinMinLength}-{PinMaxLength} digits.");
+            errorMessage = $"PIN must be {PinMinLength}-{PinMaxLength} digits.";
+            return false;
         }
+
+        errorMessage = null;
+        return true;
     }
 }

@@ -1,92 +1,128 @@
 using System.Security.Cryptography;
 using BitwaredApi.Abstractions;
-using BitwaredApi.Abstractions.Exceptions;
+using BitwaredApi.Models.Auth;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Abstractions.UnlockServices;
-using FluentBitwarden.Models.Auth;
 using FluentBitwarden.Models.Session;
 using FluentBitwarden.Models.Vault;
 
 namespace FluentBitwarden.Services.UnlockServices;
 
 internal sealed class MasterPasswordUnlockService(
-    IAuthService authService,
-    ILocalVaultUnlocker localVaultUnlocker,
-    LocalVaultUnlockStateRepository stateRepository,
-    LocalVaultSessionUnlocker sessionUnlocker,
-    SessionCoordinator sessionCoordinator,
-    ICryptoService cryptoService) : IMasterPasswordUnlockService
+    ISessionManager sessionManager,
+    ILocalVaultKeyManager localVaultKeyManager,
+    ILocalVaultStateStore stateStore,
+    IMasterPasswordUnlockWorkflow masterPasswordUnlockWorkflow) : IMasterPasswordUnlockService
 {
     private const int AesNonceLength = 12;
     private const int AesTagLength = 16;
 
-    public async ValueTask<AuthSession> UnlockAsync(
+    public async ValueTask<SessionUnlockOutcome> UnlockAsync(
         StoredSessionInfo session,
         string masterPassword,
         CancellationToken cancellationToken = default)
     {
-        bool isInitialized = await localVaultUnlocker.IsInitializedAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
-        if (!isInitialized)
+        bool isInitialized = await localVaultKeyManager.IsInitializedAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
+        PersistableSession sessionState = await RequireStoredSessionStateAsync(session, cancellationToken).ConfigureAwait(false);
+
+        MasterPasswordUnlockOutcome workflowOutcome = await masterPasswordUnlockWorkflow
+            .UnlockAsync(new MasterPasswordUnlockRequest(sessionState, masterPassword), cancellationToken)
+            .ConfigureAwait(false);
+
+        if (workflowOutcome is MasterPasswordUnlockOutcome.InvalidCredentials invalidCredentials)
         {
-            AuthSession authSession = await authService.UnlockWithMasterPasswordAsync(masterPassword, cancellationToken).ConfigureAwait(false);
-            byte[]? userKey = await authService.ExportUserKeyAsync(cancellationToken).ConfigureAwait(false);
-
-            if (userKey is null || userKey.Length == 0)
-            {
-                throw new InvalidOperationException("The unlocked Bitwarden session did not expose a user key.");
-            }
-
-            try
-            {
-                await localVaultUnlocker.InitializeAsync(session.AccountId, userKey, cancellationToken).ConfigureAwait(false);
-                await ConfigureMasterPasswordUnlockAsync(session, masterPassword, cancellationToken).ConfigureAwait(false);
-                return authSession;
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(userKey);
-            }
+            return new SessionUnlockOutcome.InvalidCredentials(invalidCredentials.Message);
         }
 
-        LocalVaultUnlockerState state = await stateRepository.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
-        MasterPasswordLocalVaultKeyState masterPasswordState = state.MasterPassword
-            ?? throw new InvalidOperationException("Master password local unlock is not configured for this session.");
-        SessionState sessionStateForUnlock = await RequireStoredSessionStateAsync(session, cancellationToken).ConfigureAwait(false);
+        if (workflowOutcome is not MasterPasswordUnlockOutcome.Success success)
+        {
+            throw new InvalidOperationException("Unsupported master-password unlock outcome.");
+        }
 
-        byte[]? localVaultKey = null;
+        byte[]? workflowUserKey = success.UserKey;
+        byte[]? protectionKey = success.LocalVaultProtectionKey;
 
         try
         {
-            localVaultKey = UnprotectLocalVaultKey(sessionStateForUnlock, masterPassword, masterPasswordState);
-            return await sessionUnlocker.UnlockAsync(session.AccountId, localVaultKey, cancellationToken).ConfigureAwait(false);
+            if (!isInitialized)
+            {
+                SessionUnlockOutcome unlockOutcome = await sessionManager
+                    .UnlockWithUserKeyAsync(workflowUserKey, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (unlockOutcome is not SessionUnlockOutcome.Success)
+                {
+                    return unlockOutcome;
+                }
+
+                await localVaultKeyManager.InitializeAsync(session.AccountId, workflowUserKey, cancellationToken).ConfigureAwait(false);
+                await ConfigureMasterPasswordUnlockAsync(session, protectionKey, cancellationToken).ConfigureAwait(false);
+                return unlockOutcome;
+            }
+
+            LocalVaultState state = await stateStore.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
+            MasterPasswordLocalVaultKeyState masterPasswordState = state.MasterPassword
+                ?? throw new InvalidOperationException("Master password local unlock is not configured for this session.");
+
+            byte[]? localVaultKey = null;
+            byte[]? userKey = null;
+
+            try
+            {
+                if (!TryUnprotectLocalVaultKey(protectionKey, masterPasswordState, out localVaultKey))
+                {
+                    return new SessionUnlockOutcome.InvalidCredentials("The supplied master password is incorrect.");
+                }
+
+                byte[] unlockedLocalVaultKey = localVaultKey
+                    ?? throw new InvalidOperationException("Local vault key is not available.");
+
+                userKey = await localVaultKeyManager.DecryptUserKeyAsync(session.AccountId, unlockedLocalVaultKey, cancellationToken).ConfigureAwait(false);
+                return await sessionManager.UnlockWithUserKeyAsync(userKey, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (userKey is not null)
+                {
+                    CryptographicOperations.ZeroMemory(userKey);
+                }
+
+                if (localVaultKey is not null)
+                {
+                    CryptographicOperations.ZeroMemory(localVaultKey);
+                }
+            }
         }
         finally
         {
-            if (localVaultKey is not null)
+            if (workflowUserKey is not null)
             {
-                CryptographicOperations.ZeroMemory(localVaultKey);
+                CryptographicOperations.ZeroMemory(workflowUserKey);
+            }
+
+            if (protectionKey is not null)
+            {
+                CryptographicOperations.ZeroMemory(protectionKey);
             }
         }
     }
 
     private async ValueTask ConfigureMasterPasswordUnlockAsync(
         StoredSessionInfo session,
-        string masterPassword,
+        byte[] protectionKey,
         CancellationToken cancellationToken)
     {
-        byte[] localVaultKey = localVaultUnlocker.GetUnlockedLocalVaultKeyCopy();
+        byte[] localVaultKey = localVaultKeyManager.GetUnlockedLocalVaultKeyCopy();
 
         try
         {
-            SessionState sessionState = await RequireStoredSessionStateAsync(session, cancellationToken).ConfigureAwait(false);
-            LocalVaultUnlockerState state = await stateRepository.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
-
-            LocalVaultUnlockerState updatedState = state with
+            LocalVaultState state = await stateStore.RequireForAccountAsync(session.AccountId, cancellationToken).ConfigureAwait(false);
+            LocalVaultState updatedState = state with
             {
-                MasterPassword = ProtectLocalVaultKey(sessionState, masterPassword, localVaultKey),
+                MasterPassword = ProtectLocalVaultKey(protectionKey, localVaultKey),
             };
 
-            await stateRepository.SaveAsync(updatedState, cancellationToken).ConfigureAwait(false);
+            await stateStore.SaveAsync(updatedState, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -94,12 +130,12 @@ internal sealed class MasterPasswordUnlockService(
         }
     }
 
-    private async ValueTask<SessionState> RequireStoredSessionStateAsync(
+    private async ValueTask<PersistableSession> RequireStoredSessionStateAsync(
         StoredSessionInfo session,
         CancellationToken cancellationToken)
     {
-        SessionState? state = await sessionCoordinator.GetStoredStateAsync(cancellationToken).ConfigureAwait(false);
-        if (state is null || !string.Equals(state.AccountId, session.AccountId, StringComparison.Ordinal))
+        PersistableSession state = await sessionManager.RequirePersistedSessionAsync(cancellationToken).ConfigureAwait(false);
+        if (!string.Equals(state.AccountId, session.AccountId, StringComparison.Ordinal))
         {
             throw new InvalidOperationException("No persisted Bitwarden session state is available for this account.");
         }
@@ -107,19 +143,17 @@ internal sealed class MasterPasswordUnlockService(
         return state;
     }
 
-    private MasterPasswordLocalVaultKeyState ProtectLocalVaultKey(
-        SessionState sessionState,
-        string masterPassword,
+    private static MasterPasswordLocalVaultKeyState ProtectLocalVaultKey(
+        byte[] protectionKey,
         byte[] localVaultKey)
     {
-        byte[] derivedKey = DeriveProtectionKey(sessionState, masterPassword);
         byte[] nonce = RandomNumberGenerator.GetBytes(AesNonceLength);
         byte[] cipher = new byte[localVaultKey.Length];
         byte[] tag = new byte[AesTagLength];
 
         try
         {
-            using AesGcm aes = new(derivedKey, AesTagLength);
+            using AesGcm aes = new(protectionKey, AesTagLength);
             aes.Encrypt(nonce, localVaultKey, cipher, tag);
 
             return new MasterPasswordLocalVaultKeyState(
@@ -129,73 +163,42 @@ internal sealed class MasterPasswordUnlockService(
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(derivedKey);
             CryptographicOperations.ZeroMemory(nonce);
             CryptographicOperations.ZeroMemory(cipher);
             CryptographicOperations.ZeroMemory(tag);
         }
     }
 
-    private byte[] UnprotectLocalVaultKey(
-        SessionState sessionState,
-        string masterPassword,
-        MasterPasswordLocalVaultKeyState state)
+    private static bool TryUnprotectLocalVaultKey(
+        byte[] protectionKey,
+        MasterPasswordLocalVaultKeyState state,
+        out byte[]? localVaultKey)
     {
-        byte[] derivedKey = DeriveProtectionKey(sessionState, masterPassword);
         byte[] nonce = Convert.FromBase64String(state.Nonce);
         byte[] cipher = Convert.FromBase64String(state.Ciphertext);
         byte[] tag = Convert.FromBase64String(state.Tag);
-        byte[] localVaultKey = new byte[cipher.Length];
+        localVaultKey = new byte[cipher.Length];
 
         try
         {
             try
             {
-                using AesGcm aes = new(derivedKey, AesTagLength);
+                using AesGcm aes = new(protectionKey, AesTagLength);
                 aes.Decrypt(nonce, cipher, tag, localVaultKey);
+                return true;
             }
-            catch (CryptographicException ex)
+            catch (CryptographicException)
             {
-                throw new InvalidCredentialsException("The supplied master password is incorrect.", ex);
+                CryptographicOperations.ZeroMemory(localVaultKey);
+                localVaultKey = null;
+                return false;
             }
-
-            return localVaultKey;
-        }
-        catch
-        {
-            CryptographicOperations.ZeroMemory(localVaultKey);
-            throw;
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(derivedKey);
             CryptographicOperations.ZeroMemory(nonce);
             CryptographicOperations.ZeroMemory(cipher);
             CryptographicOperations.ZeroMemory(tag);
-        }
-    }
-
-    private byte[] DeriveProtectionKey(SessionState sessionState, string masterPassword)
-    {
-        if (sessionState.KdfConfig is null)
-        {
-            throw new InvalidOperationException("This saved session cannot derive a master-password local unlock key.");
-        }
-
-        var auth = cryptoService.DeriveMasterPasswordAuth(
-            sessionState.Email,
-            masterPassword,
-            sessionState.KdfConfig,
-            sessionState.MasterPasswordSalt);
-
-        try
-        {
-            return SHA256.HashData(auth.StretchedMasterKey);
-        }
-        finally
-        {
-            cryptoService.ZeroMemory(auth.MasterKey);
-            cryptoService.ZeroMemory(auth.StretchedMasterKey);
         }
     }
 }

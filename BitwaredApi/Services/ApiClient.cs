@@ -2,34 +2,72 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using BitwaredApi.Abstractions;
 using BitwaredApi.Abstractions.Exceptions;
+using BitwaredApi.Extensions;
 using BitwaredApi.Models.Auth;
-using BitwaredApi.Utilities;
+using BitwaredApi.Utils;
 
 namespace BitwaredApi.Services;
 
-internal sealed class ApiClient(HttpClient httpClient, IEnvironmentConfig environmentConfig) : IApiClient
+internal sealed class ApiClient(HttpClient httpClient) : IApiClient
 {
-    public async ValueTask<JsonDocument> GetSyncAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<HttpResponseMessage> CreateSyncResponseAsync(
+        BitwardenEnvironment environment,
+        string accessToken,
+        CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await httpClient.GetAsync(BuildUri("/sync"), cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
-        return await JsonDocument.ParseAsync(
-            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        try
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, environment.ApiBase.AppendRelativePath("/sync"));
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+
+            try
+            {
+                await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
+                return response;
+            }
+            catch
+            {
+                response.Dispose();
+                throw;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new NetworkUnavailableException(innerException: ex);
+        }
     }
 
-    public async ValueTask<DateTimeOffset?> GetRevisionDateAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<DateTimeOffset?> GetRevisionDateAsync(
+        BitwardenEnvironment environment,
+        string accessToken,
+        CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await httpClient.GetAsync(BuildUri("/accounts/revision-date"), cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, environment.ApiBase.AppendRelativePath("/accounts/revision-date"));
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
-        string text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return DateTimeOffset.TryParse(text.Trim('"'), out DateTimeOffset parsed)
-            ? parsed
-            : null;
+            using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
+            await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
+
+            string text = await response.Content.ReadAsStringAsync(cancellationToken);
+            return DateTimeOffset.TryParse(text.Trim('"'), out DateTimeOffset parsed)
+                ? parsed
+                : null;
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new NetworkUnavailableException(innerException: ex);
+        }
     }
 
     public async ValueTask<AuthRequestCreateResponse> CreateAuthRequestAsync(
+        BitwardenEnvironment environment,
         string email,
         string deviceIdentifier,
         string publicKey,
@@ -37,99 +75,72 @@ internal sealed class ApiClient(HttpClient httpClient, IEnvironmentConfig enviro
         string accessCode,
         CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new(HttpMethod.Post, BuildUri("/auth-requests/"))
+        try
         {
-            Content = JsonContent.Create(
-                new
-                {
-                    email,
-                    deviceIdentifier,
-                    publicKey,
-                    type = (int)requestType,
-                    accessCode,
-                },
-                options: JsonDefaults.SerializerOptions),
-        };
+            HttpRequestMessage request = new(HttpMethod.Post, environment.ApiBase.AppendRelativePath("/auth-requests/"))
+            {
+                Content = JsonContent.Create(
+                    new
+                    {
+                        email,
+                        deviceIdentifier,
+                        publicKey,
+                        type = (int)requestType,
+                        accessCode,
+                    },
+                    options: JsonDefaults.SerializerOptions),
+            };
 
-        request.Options.Set(HttpRequestOptionKeys.SkipAuthorization, true);
-        request.Headers.TryAddWithoutValidation("Device-Identifier", deviceIdentifier);
+            request.Headers.TryAddWithoutValidation("Device-Identifier", deviceIdentifier);
 
-        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
+            using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
+            await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
 
-        using JsonDocument document = await JsonDocument.ParseAsync(
-            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+            using JsonDocument document = await JsonDocument.ParseAsync(
+                await response.Content.ReadAsStreamAsync(cancellationToken),
+                cancellationToken: cancellationToken);
 
-        JsonElement root = document.RootElement;
-        DateTimeOffset created = root.TryGetProperty("creationDate", out JsonElement creationDate)
-            && DateTimeOffset.TryParse(creationDate.GetString(), out DateTimeOffset parsed)
-            ? parsed
-            : DateTimeOffset.UtcNow;
-
-        return new AuthRequestCreateResponse(
-            root.GetProperty("id").GetString() ?? throw new ServerVersionMismatchException("Auth request response did not include an Id."),
-            accessCode,
-            created.AddMinutes(15));
+            return ApiAuthRequestResponseParser.ParseCreateResponse(
+                document.RootElement,
+                accessCode,
+                DateTimeOffset.UtcNow);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new NetworkUnavailableException(innerException: ex);
+        }
     }
 
-    public async ValueTask<AuthRequestStatusResponse> GetAuthResponseAsync(
+    public async ValueTask<AuthRequestPollOutcome> GetAuthResponseAsync(
+        BitwardenEnvironment environment,
         string requestId,
         string accessCode,
         CancellationToken cancellationToken = default)
     {
-        HttpRequestMessage request = new(HttpMethod.Get, BuildUri($"/auth-requests/{requestId}/response?code={Uri.EscapeDataString(accessCode)}"));
-        request.Options.Set(HttpRequestOptionKeys.SkipAuthorization, true);
-
-        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        try
         {
-            throw new DeviceApprovalPendingException("The auth request no longer exists on the server.");
+            HttpRequestMessage request = new(
+                HttpMethod.Get,
+                environment.ApiBase.AppendRelativePath($"/auth-requests/{requestId}/response?code={Uri.EscapeDataString(accessCode)}"));
+
+            using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return new AuthRequestPollOutcome.Expired("The auth request no longer exists on the server.");
+            }
+
+            await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
+
+            using JsonDocument document = await JsonDocument.ParseAsync(
+                await response.Content.ReadAsStreamAsync(cancellationToken),
+                cancellationToken: cancellationToken);
+
+            return ApiAuthRequestResponseParser.ParsePollOutcome(document.RootElement, DateTimeOffset.UtcNow);
         }
-
-        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
-
-        using JsonDocument document = await JsonDocument.ParseAsync(
-            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        JsonElement root = document.RootElement;
-        bool answered = root.TryGetProperty("requestApproved", out JsonElement approvedProp) && approvedProp.ValueKind != JsonValueKind.Null;
-        bool approved = answered && approvedProp.GetBoolean();
-        DateTimeOffset? responseDate = root.TryGetProperty("responseDate", out JsonElement responseDateProp)
-            && DateTimeOffset.TryParse(responseDateProp.GetString(), out DateTimeOffset parsedResponseDate)
-            ? parsedResponseDate
-            : null;
-        DateTimeOffset creationDate = root.TryGetProperty("creationDate", out JsonElement creationDateProp)
-            && DateTimeOffset.TryParse(creationDateProp.GetString(), out DateTimeOffset parsedCreationDate)
-            ? parsedCreationDate
-            : DateTimeOffset.UtcNow;
-
-        bool expired = creationDate.AddMinutes(15) <= DateTimeOffset.UtcNow;
-
-        return new AuthRequestStatusResponse(
-            approved,
-            answered,
-            expired,
-            root.TryGetProperty("key", out JsonElement keyProp) ? keyProp.GetString() : null,
-            responseDate,
-            root.TryGetProperty("requestDeviceIdentifier", out JsonElement deviceProp) ? deviceProp.GetString() : null,
-            root.TryGetProperty("requestIpAddress", out JsonElement ipProp) ? ipProp.GetString() : null,
-            root.TryGetProperty("requestCountryName", out JsonElement countryProp) ? countryProp.GetString() : null);
-    }
-
-    private static async ValueTask EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
-    {
-        if (response.IsSuccessStatusCode)
+        catch (HttpRequestException ex)
         {
-            return;
+            throw new NetworkUnavailableException(innerException: ex);
         }
-
-        string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        throw new ServerVersionMismatchException($"API endpoint returned {(int)response.StatusCode}: {body}");
     }
-
-    private Uri BuildUri(string relativePath)
-        => new(environmentConfig.Current.ApiBase, relativePath);
 }

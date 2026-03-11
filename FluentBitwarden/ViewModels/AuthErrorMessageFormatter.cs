@@ -1,5 +1,3 @@
-using BitwaredApi.Abstractions.Exceptions;
-
 namespace FluentBitwarden.ViewModels;
 
 internal static class AuthErrorMessageFormatter
@@ -10,7 +8,6 @@ internal static class AuthErrorMessageFormatter
 
         return exception switch
         {
-            InvalidCredentialsException => exception.Message,
             InvalidOperationException => exception.Message,
             _ when !string.IsNullOrWhiteSpace(exception.Message) => exception.Message,
             _ => "Something went wrong. Try again.",

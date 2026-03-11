@@ -13,7 +13,7 @@
 
     <Grid HorizontalAlignment="Center"
           VerticalAlignment="Center"
-          MinWidth="320"
+          MinWidth="470"
           Margin="24">
 
         <Grid.RowDefinitions>

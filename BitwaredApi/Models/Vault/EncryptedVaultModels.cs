@@ -11,7 +11,10 @@ public sealed record VaultAccountRecord(
 public sealed record VaultSyncStateRecord(
     string AccountId,
     DateTimeOffset? RevisionDate,
-    DateTimeOffset LastSyncUtc);
+    DateTimeOffset LastSyncUtc,
+    int CipherCount,
+    int FolderCount,
+    int CollectionCount);
 
 public sealed record EncryptedCipherRecord(
     string AccountId,
@@ -21,21 +24,21 @@ public sealed record EncryptedCipherRecord(
     string? FolderId,
     string CollectionIdsJson,
     DateTimeOffset? RevisionDate,
-    string EncryptedJson,
+    byte[] EncryptedPayload,
     DateTimeOffset UpdatedUtc);
 
 public sealed record EncryptedFolderRecord(
     string AccountId,
     string Id,
     DateTimeOffset? RevisionDate,
-    string EncryptedJson,
+    byte[] EncryptedPayload,
     DateTimeOffset UpdatedUtc);
 
 public sealed record EncryptedCollectionRecord(
     string AccountId,
     string Id,
     DateTimeOffset? RevisionDate,
-    string EncryptedJson,
+    byte[] EncryptedPayload,
     DateTimeOffset UpdatedUtc);
 
 public sealed record EncryptedSyncSnapshot(

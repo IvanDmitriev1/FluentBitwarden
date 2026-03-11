@@ -3,7 +3,7 @@ using BitwaredApi.Models.Vault;
 
 namespace BitwaredApi.Abstractions;
 
-public interface ICryptoService
+internal interface ICryptoService
 {
     MasterPasswordAuth DeriveMasterPasswordAuth(
         string email,

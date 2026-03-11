@@ -63,18 +63,13 @@
     <PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
     <PackageReference Include="WinUIEx" Version="2.9.0" />
   </ItemGroup>
+
   <ItemGroup>
-    <Folder Include="Views\SetUp\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\VaultPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+	  
+
+	  <Page Update="MainWindow.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+	  </Page>
   </ItemGroup>
 
   <!--

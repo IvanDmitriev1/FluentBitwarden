@@ -1,62 +1,51 @@
 using System.Text.Json;
+using BitwaredApi;
 using BitwaredApi.Models.Auth;
-using FluentBitwarden.Abstractions;
 using FluentBitwarden.Core.Abstractions;
 
 namespace FluentBitwarden.Services;
 
-public sealed class LocalDeviceInfoProvider(IAppPaths paths) : IDeviceInfoProvider
+internal sealed class LocalDeviceInfoProvider(IAppPaths paths)
 {
     private sealed record DeviceConfig(string DeviceIdentifier);
 
-    private readonly SemaphoreSlim _gate = new(1, 1);
-    private string? _deviceIdentifier;
+    public string DeviceName { get; } = $"{Environment.MachineName} (FluentBitwarden)";
 
-    public DeviceType DeviceType => DeviceType.WindowsDesktop;
+    public async ValueTask<BitwardenDeviceInfo> GetDeviceInfoAsync(CancellationToken cancellationToken = default)
+        => new(
+            DeviceType.WindowsDesktop,
+            DeviceName,
+            await _deviceIdentifier.Value.WaitAsync(cancellationToken).ConfigureAwait(false));
 
-    public string DeviceName => $"{Environment.MachineName} (FluentBitwarden)";
+    public async ValueTask<BitwardenClientContext> GetClientContextAsync(
+        BitwardenEnvironment environment,
+        CancellationToken cancellationToken = default)
+        => new(
+            environment,
+            await GetDeviceInfoAsync(cancellationToken).ConfigureAwait(false));
 
-    public async ValueTask<string> GetDeviceIdentifierAsync(CancellationToken cancellationToken = default)
+    private readonly Lazy<Task<string>> _deviceIdentifier = new(
+        () => LoadOrCreateAsync(paths),
+        LazyThreadSafetyMode.ExecutionAndPublication);
+
+    private static async Task<string> LoadOrCreateAsync(IAppPaths paths)
     {
-        if (!string.IsNullOrWhiteSpace(_deviceIdentifier))
+        Directory.CreateDirectory(Path.GetDirectoryName(paths.ConfigFilePath)!);
+
+        if (File.Exists(paths.ConfigFilePath))
         {
-            return _deviceIdentifier;
+            await using var stream = File.OpenRead(paths.ConfigFilePath);
+            DeviceConfig? config = await JsonSerializer
+                .DeserializeAsync<DeviceConfig>(stream).ConfigureAwait(false);
+
+            if (Guid.TryParse(config?.DeviceIdentifier, out Guid existing))
+                return existing.ToString("D");
         }
 
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        string newId = Guid.NewGuid().ToString("D");
+        await using FileStream output = File.Create(paths.ConfigFilePath);
+        await JsonSerializer.SerializeAsync(output, new DeviceConfig(newId)).ConfigureAwait(false);
 
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(_deviceIdentifier))
-            {
-                return _deviceIdentifier;
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(paths.ConfigFilePath)!);
-
-            if (File.Exists(paths.ConfigFilePath))
-            {
-                await using FileStream stream = File.OpenRead(paths.ConfigFilePath);
-                DeviceConfig? config = await JsonSerializer.DeserializeAsync<DeviceConfig>(
-                    stream,
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                if (Guid.TryParse(config?.DeviceIdentifier, out Guid existing))
-                {
-                    _deviceIdentifier = existing.ToString("D");
-                    return _deviceIdentifier;
-                }
-            }
-
-            _deviceIdentifier = Guid.NewGuid().ToString("D");
-
-            await using FileStream output = File.Create(paths.ConfigFilePath);
-            await JsonSerializer.SerializeAsync(output, new DeviceConfig(_deviceIdentifier), cancellationToken: cancellationToken).ConfigureAwait(false);
-            return _deviceIdentifier;
-        }
-        finally
-        {
-            _gate.Release();
-        }
+        return newId;
     }
 }

@@ -5,25 +5,25 @@ using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
 
+[assembly: Fody.ConfigureAwait(false)]
+
 namespace BitwaredApi;
 
 public static class BitwaredApiServiceCollectionExtensions
 {
-    public static IServiceCollection AddBitwaredCoreServices(
-        this IServiceCollection services,
-        BitwardenEnvironment defaultEnvironment)
+    public static IServiceCollection AddBitwaredCoreServices(this IServiceCollection services)
     {
-        services.AddSingleton<IEnvironmentConfig>(_ => new EnvironmentConfig(defaultEnvironment));
-        services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ICryptoService, CryptoService>();
-        services.AddTransient<AuthHeaderHandler>();
+        services.AddSingleton<IAuthenticationWorkflow, AuthenticationWorkflow>();
+        services.AddSingleton<ISessionRefreshWorkflow, SessionRefreshWorkflow>();
+        services.AddSingleton<IMasterPasswordUnlockWorkflow, MasterPasswordUnlockWorkflow>();
+        services.AddSingleton<IVaultDataService, VaultDataService>();
 
         services.AddHttpClient<IIdentityClient, IdentityClient>()
             .AddBitwaredRetryPolicy();
 
         services.AddHttpClient<IApiClient, ApiClient>()
-            .AddBitwaredRetryPolicy()
-            .AddHttpMessageHandler<AuthHeaderHandler>();
+            .AddBitwaredRetryPolicy();
 
         return services;
     }

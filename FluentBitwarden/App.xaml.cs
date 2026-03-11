@@ -4,12 +4,13 @@ using FluentBitwarden.Extensions;
 using FluentBitwarden.Ui;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.ViewModels;
-using FluentBitwarden.ViewModels.SetUp;
+using FluentBitwarden.ViewModels.Setup;
 using FluentBitwarden.Views;
-using FluentBitwarden.Views.SetUp;
+using FluentBitwarden.Views.Setup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using System.Text;
 using WinUI.DependencyInjection;
 
 namespace FluentBitwarden;
@@ -25,7 +26,7 @@ public partial class App : Application, IXamlMetadataServiceProvider
             .ConfigureServices((ctx, services) =>
             {
                 services.AddBitwaredPlatformServices();
-                services.AddBitwaredCoreServices(BitwardenEnvironment.UnitedStates);
+                services.AddBitwaredCoreServices();
                 services.AddBitwaredWorkflowServices();
                 services.AddUiServices();
 
@@ -51,19 +52,23 @@ public partial class App : Application, IXamlMetadataServiceProvider
         _mainWindow.Activate();
 
         var navigationService = Host.Services.GetRequiredService<INavigationService>();
-        var authService = Host.Services.GetRequiredService<IAuthService>();
+        var vaultService = Host.Services.GetRequiredService<IVaultService>();
 
         try
         {
-            var session = await authService.GetStoredSessionAsync();
+            var state = await vaultService.GetStateAsync();
 
-            if (session is not null)
+            if (!state.HasStoredSession)
+            {
+                navigationService.Navigate<SetupPage>(clearBackStack: true);
+            }
+            else if (state.IsLocked)
             {
                 navigationService.Navigate<LoginPage>(clearBackStack: true);
             }
             else
             {
-                navigationService.Navigate<SetupPage>(clearBackStack: true);
+                navigationService.Navigate<VaultPage>(clearBackStack: true);
             }
         }
         catch

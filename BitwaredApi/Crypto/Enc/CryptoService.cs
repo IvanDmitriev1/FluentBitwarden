@@ -7,7 +7,7 @@ using BitwaredApi.Models.Vault;
 
 namespace BitwaredApi.Crypto.Enc;
 
-public sealed class CryptoService : ICryptoService
+internal sealed class CryptoService : ICryptoService
 {
     public MasterPasswordAuth DeriveMasterPasswordAuth(string email, string masterPassword, KdfConfigModel kdfConfig, string? kdfSalt = null)
     {

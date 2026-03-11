@@ -1,35 +1,39 @@
+using System.ComponentModel.DataAnnotations;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Abstractions.UnlockServices;
 using FluentBitwarden.Models.Session;
-using FluentBitwarden.Views;
-using FluentBitwarden.Views.SetUp;
-using System.ComponentModel.DataAnnotations;
+using FluentBitwarden.Models.Vault;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Ui.Controls;
+using FluentBitwarden.Views;
+using FluentBitwarden.Views.Setup;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.ViewModels;
 
 public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycleAware
 {
-    private readonly IAuthService _authService;
+    private readonly IVaultService _vaultService;
+    private readonly ISessionManager _sessionManager;
     private readonly IWindowsHelloUnlockService _windowsHelloUnlockService;
     private readonly IPinUnlockService _pinUnlockService;
     private readonly INavigationService _navigationService;
     private StoredSessionInfo? _session;
+    private VaultState? _vaultState;
     private ValidatableProperty? _pinValidation;
     private ValidatableProperty? _confirmPinValidation;
 
     public SettingsPageViewModel(
-        IAuthService authService,
-        IWindowsHelloUnlockService windowsHelloUnlockService,
-        IPinUnlockService pinUnlockService,
+        IVaultService vaultService,
+        IServiceProvider serviceProvider,
         INavigationService navigationService)
     {
-        _authService = authService;
-        _windowsHelloUnlockService = windowsHelloUnlockService;
-        _pinUnlockService = pinUnlockService;
+        _vaultService = vaultService;
+        _sessionManager = serviceProvider.GetRequiredService<ISessionManager>();
+        _windowsHelloUnlockService = serviceProvider.GetRequiredService<IWindowsHelloUnlockService>();
+        _pinUnlockService = serviceProvider.GetRequiredService<IPinUnlockService>();
         _navigationService = navigationService;
     }
 
@@ -44,6 +48,9 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
 
     [ObservableProperty]
     public partial LoginSessionDisplay SessionDisplay { get; set; } = LoginSessionDisplay.Empty;
+
+    [ObservableProperty]
+    public partial bool HasLocalUnlockData { get; set; }
 
     [ObservableProperty]
     public partial bool IsWindowsHelloConfigured { get; set; }
@@ -71,15 +78,20 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
     [ObservableProperty]
     public partial bool ShowValidationErrors { get; set; }
 
-    public string WindowsHelloStatusText => IsWindowsHelloConfigured
-        ? "Windows Hello is enabled for vault unlock."
-        : CanEnableWindowsHello
-            ? "Windows Hello is available and can be enabled."
-            : "Windows Hello is not configured on this device.";
+    public string WindowsHelloStatusText => HasLocalUnlockData switch
+    {
+        false => "Lock and unlock once with your master password before enabling Windows Hello.",
+        true when IsWindowsHelloConfigured => "Windows Hello is enabled for vault unlock.",
+        true when CanEnableWindowsHello => "Windows Hello is available and can be enabled.",
+        _ => "Windows Hello is not configured on this device.",
+    };
 
-    public string PinStatusText => IsPinConfigured
-        ? "PIN unlock is enabled."
-        : "Set an app PIN to unlock the vault faster.";
+    public string PinStatusText => HasLocalUnlockData switch
+    {
+        false => "Lock and unlock once with your master password before enabling PIN unlock.",
+        true when IsPinConfigured => "PIN unlock is enabled.",
+        _ => "Set an app PIN to unlock the vault faster.",
+    };
 
     public ValidatableProperty PinValidation
         => _pinValidation ??= ValidatableProperty.Create(this, static viewModel => viewModel.Pin);
@@ -91,25 +103,32 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
     {
         ResetStatus();
 
-        StoredSessionInfo? session = await _authService.GetStoredSessionAsync(cancellationToken);
-        if (session is null)
+        VaultState state = await _vaultService.GetStateAsync(cancellationToken).ConfigureAwait(true);
+        if (!state.HasStoredSession)
         {
             _navigationService.Navigate<SetupPage>(clearBackStack: true);
             return;
         }
 
-        if (session.IsLocked)
+        if (state.IsLocked)
         {
             _navigationService.Navigate<LoginPage>(clearBackStack: true);
             return;
         }
 
-        _session = session;
-        SessionDisplay = new LoginSessionDisplay(
-            session.Email,
-            DescribeEnvironment(session));
+        _session = await _sessionManager.GetStoredSessionAsync(cancellationToken).ConfigureAwait(true);
+        if (_session is null)
+        {
+            _navigationService.Navigate<SetupPage>(clearBackStack: true);
+            return;
+        }
 
-        await RefreshAsync(cancellationToken);
+        _vaultState = state;
+        SessionDisplay = new LoginSessionDisplay(
+            state.Email ?? string.Empty,
+            DescribeEnvironment(state));
+
+        await RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
 
     public Task OnUnloadingAsync(CancellationToken cancellationToken)
@@ -137,9 +156,12 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         {
             await RunBusyAsync(async () =>
             {
-                await _windowsHelloUnlockService.SetupAsync(session);
-                await RefreshAsync();
-            });
+                VaultConfigurationOutcome outcome = await _windowsHelloUnlockService
+                    .SetupAsync(session)
+                    .ConfigureAwait(true);
+
+                await HandleConfigurationOutcomeAsync(outcome, resetPinEntry: false).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -157,9 +179,12 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         {
             await RunBusyAsync(async () =>
             {
-                await _windowsHelloUnlockService.DisableAsync(session);
-                await RefreshAsync();
-            });
+                VaultConfigurationOutcome outcome = await _windowsHelloUnlockService
+                    .DisableAsync(session)
+                    .ConfigureAwait(true);
+
+                await HandleConfigurationOutcomeAsync(outcome, resetPinEntry: false).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -184,10 +209,12 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
 
             await RunBusyAsync(async () =>
             {
-                await _pinUnlockService.SetupAsync(session, normalizedPin);
-                ResetPinEntryState();
-                await RefreshAsync();
-            });
+                VaultConfigurationOutcome outcome = await _pinUnlockService
+                    .SetupAsync(session, normalizedPin)
+                    .ConfigureAwait(true);
+
+                await HandleConfigurationOutcomeAsync(outcome, resetPinEntry: true).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -205,10 +232,12 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         {
             await RunBusyAsync(async () =>
             {
-                await _pinUnlockService.DisableAsync(session);
-                ResetPinEntryState();
-                await RefreshAsync();
-            });
+                VaultConfigurationOutcome outcome = await _pinUnlockService
+                    .DisableAsync(session)
+                    .ConfigureAwait(true);
+
+                await HandleConfigurationOutcomeAsync(outcome, resetPinEntry: true).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -218,16 +247,14 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
 
     private async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        StoredSessionInfo session = RequireSession();
+        VaultState state = await _vaultService.GetStateAsync(cancellationToken).ConfigureAwait(true);
+        _vaultState = state;
 
-        bool windowsHelloConfigured = await _windowsHelloUnlockService.IsConfiguredAsync(session, cancellationToken);
-        bool windowsHelloSupported = await _windowsHelloUnlockService.CanSetupAsync(cancellationToken);
-        bool pinConfigured = await _pinUnlockService.IsConfiguredAsync(session, cancellationToken);
-
-        IsWindowsHelloConfigured = windowsHelloConfigured;
-        CanEnableWindowsHello = windowsHelloSupported && !windowsHelloConfigured;
-        IsPinConfigured = pinConfigured;
-        CanEnablePin = !pinConfigured;
+        HasLocalUnlockData = state.HasLocalUnlockData;
+        IsWindowsHelloConfigured = state.IsWindowsHelloConfigured;
+        CanEnableWindowsHello = state.HasLocalUnlockData && state.CanUseWindowsHello && !state.IsWindowsHelloConfigured;
+        IsPinConfigured = state.IsPinConfigured;
+        CanEnablePin = state.HasLocalUnlockData && !state.IsPinConfigured;
 
         if (!CanEnablePin)
         {
@@ -236,6 +263,37 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
 
         OnPropertyChanged(nameof(WindowsHelloStatusText));
         OnPropertyChanged(nameof(PinStatusText));
+    }
+
+    private async Task HandleConfigurationOutcomeAsync(
+        VaultConfigurationOutcome outcome,
+        bool resetPinEntry)
+    {
+        switch (outcome)
+        {
+            case VaultConfigurationOutcome.Success:
+                if (resetPinEntry)
+                {
+                    ResetPinEntryState();
+                }
+
+                await RefreshAsync().ConfigureAwait(true);
+                break;
+
+            case VaultConfigurationOutcome.InvalidInput invalidInput:
+                ShowError(invalidInput.Message);
+                break;
+
+            case VaultConfigurationOutcome.Unavailable unavailable:
+                ShowError(unavailable.Message);
+                break;
+
+            case VaultConfigurationOutcome.Cancelled:
+                break;
+
+            default:
+                throw new InvalidOperationException("Unsupported vault configuration outcome.");
+        }
     }
 
     partial void OnPinChanged(string value)
@@ -255,12 +313,9 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
             : new ValidationResult("PIN confirmation does not match.");
     }
 
-    private StoredSessionInfo RequireSession()
-        => _session ?? throw new InvalidOperationException("No unlocked session is available.");
-
-    private static string DescribeEnvironment(StoredSessionInfo session)
+    private static string DescribeEnvironment(VaultState state)
     {
-        string host = session.Environment.ApiBase.Host;
+        string host = state.Environment?.ApiBase.Host ?? string.Empty;
 
         if (host.Contains("bitwarden.eu", StringComparison.OrdinalIgnoreCase))
         {
@@ -275,6 +330,9 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         return host;
     }
 
+    private StoredSessionInfo RequireSession()
+        => _session ?? throw new InvalidOperationException("No unlocked session is available.");
+
     private async Task RunBusyAsync(Func<Task> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
@@ -283,7 +341,7 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
 
         try
         {
-            await operation();
+            await operation().ConfigureAwait(true);
         }
         finally
         {

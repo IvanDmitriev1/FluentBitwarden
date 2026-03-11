@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions.UnlockServices;
 using FluentBitwarden.Models;
+using FluentBitwarden.Models.Session;
+using FluentBitwarden.Models.Vault;
 
 namespace FluentBitwarden.ViewModels;
 
@@ -51,9 +53,12 @@ internal partial class WindowsHelloUnlockViewModel : ObservableObject
         {
             await ParentViewModel.RunBusyAsync(async () =>
             {
-                await _windowsHelloUnlockService.UnlockAsync(ParentViewModel.RequireSession(), cancellationToken);
-                await ParentViewModel.CompleteUnlockAsync();
-            });
+                SessionUnlockOutcome outcome = await _windowsHelloUnlockService
+                    .UnlockAsync(ParentViewModel.RequireSession(), cancellationToken)
+                    .ConfigureAwait(true);
+
+                await ParentViewModel.HandleUnlockOutcomeAsync(MapUnlockOutcome(outcome)).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -70,4 +75,14 @@ internal partial class WindowsHelloUnlockViewModel : ObservableObject
 
     public void Reset()
         => Method.Reset();
+
+    private static VaultUnlockOutcome MapUnlockOutcome(SessionUnlockOutcome outcome)
+        => outcome switch
+        {
+            SessionUnlockOutcome.Success => new VaultUnlockOutcome.Success(),
+            SessionUnlockOutcome.InvalidCredentials invalidCredentials => new VaultUnlockOutcome.InvalidCredentials(invalidCredentials.Message),
+            SessionUnlockOutcome.Unavailable unavailable => new VaultUnlockOutcome.Unavailable(unavailable.Message),
+            SessionUnlockOutcome.Cancelled cancelled => new VaultUnlockOutcome.Cancelled(cancelled.Message),
+            _ => throw new InvalidOperationException("Unsupported session unlock outcome."),
+        };
 }

@@ -25,18 +25,20 @@ internal sealed class WindowsHelloVerificationPrompt(IWindowHandleProvider windo
         }
     }
 
-    public async ValueTask VerifyAsync(string message, CancellationToken cancellationToken = default)
+    public async ValueTask<WindowsHelloVerificationOutcome> VerifyAsync(
+        string message,
+        CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
         if (!IsDesktopPromptSupported())
         {
-            throw new InvalidOperationException("Windows Hello is not supported on this version of Windows.");
+            return new WindowsHelloVerificationOutcome.Unavailable("Windows Hello is not supported on this version of Windows.");
         }
 
         if (!windowHandleProvider.TryGetWindowHandle(out nint windowHandle))
         {
-            throw new InvalidOperationException("Windows Hello is not available because the app window is not ready.");
+            return new WindowsHelloVerificationOutcome.Unavailable("Windows Hello is not available because the app window is not ready.");
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -49,17 +51,19 @@ internal sealed class WindowsHelloVerificationPrompt(IWindowHandleProvider windo
         }
         catch (TypeLoadException)
         {
-            throw new InvalidOperationException("Windows Hello is not supported on this version of Windows.");
+            return new WindowsHelloVerificationOutcome.Unavailable("Windows Hello is not supported on this version of Windows.");
         }
         catch (MissingMethodException)
         {
-            throw new InvalidOperationException("Windows Hello is not supported on this version of Windows.");
+            return new WindowsHelloVerificationOutcome.Unavailable("Windows Hello is not supported on this version of Windows.");
         }
 
-        if (result != UserConsentVerificationResult.Verified)
+        return result switch
         {
-            throw new InvalidOperationException(MapFailureMessage(result));
-        }
+            UserConsentVerificationResult.Verified => new WindowsHelloVerificationOutcome.Verified(),
+            UserConsentVerificationResult.Canceled => new WindowsHelloVerificationOutcome.Cancelled(MapFailureMessage(result)),
+            _ => new WindowsHelloVerificationOutcome.Unavailable(MapFailureMessage(result)),
+        };
     }
 
     private static bool IsDesktopPromptSupported()
@@ -75,4 +79,13 @@ internal sealed class WindowsHelloVerificationPrompt(IWindowHandleProvider windo
         UserConsentVerificationResult.RetriesExhausted => "Windows Hello verification failed too many times. Try again.",
         _ => "Windows Hello verification failed.",
     };
+}
+
+internal abstract record WindowsHelloVerificationOutcome
+{
+    private WindowsHelloVerificationOutcome() {}
+
+    internal sealed record Verified : WindowsHelloVerificationOutcome;
+    internal sealed record Cancelled(string Message) : WindowsHelloVerificationOutcome;
+    internal sealed record Unavailable(string Message) : WindowsHelloVerificationOutcome;
 }

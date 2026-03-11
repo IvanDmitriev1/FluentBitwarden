@@ -1,20 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Abstractions.UnlockServices;
+using FluentBitwarden.Abstractions;
 using FluentBitwarden.Models;
+using FluentBitwarden.Models.Vault;
 
 namespace FluentBitwarden.ViewModels;
 
 internal partial class PinUnlockViewModel : ObservableObject
 {
-    private readonly IPinUnlockService _pinUnlockService;
+    private readonly IVaultService _vaultService;
 
     public PinUnlockViewModel(
         LoginPageViewModel parentViewModel,
-        IPinUnlockService pinUnlockService)
+        IVaultService vaultService)
     {
         ParentViewModel = parentViewModel;
-        _pinUnlockService = pinUnlockService;
+        _vaultService = vaultService;
         Method = new LoginUnlockMethodItem(
             LoginUnlockMethod.Pin,
             "Unlock with PIN",
@@ -57,9 +58,12 @@ internal partial class PinUnlockViewModel : ObservableObject
         {
             await ParentViewModel.RunBusyAsync(async () =>
             {
-                await _pinUnlockService.UnlockAsync(ParentViewModel.RequireSession(), normalizedPin, cancellationToken);
-                await ParentViewModel.CompleteUnlockAsync();
-            });
+                VaultUnlockOutcome outcome = await _vaultService
+                    .UnlockAsync(normalizedPin, cancellationToken)
+                    .ConfigureAwait(true);
+
+                await ParentViewModel.HandleUnlockOutcomeAsync(outcome).ConfigureAwait(true);
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

@@ -1,15 +1,21 @@
-using System.Text.Json;
 using BitwaredApi.Models.Auth;
 
 namespace BitwaredApi.Abstractions;
 
-public interface IApiClient
+internal interface IApiClient
 {
-    ValueTask<JsonDocument> GetSyncAsync(CancellationToken cancellationToken = default);
+    ValueTask<HttpResponseMessage> CreateSyncResponseAsync(
+        BitwardenEnvironment environment,
+        string accessToken,
+        CancellationToken cancellationToken = default);
 
-    ValueTask<DateTimeOffset?> GetRevisionDateAsync(CancellationToken cancellationToken = default);
+    ValueTask<DateTimeOffset?> GetRevisionDateAsync(
+        BitwardenEnvironment environment,
+        string accessToken,
+        CancellationToken cancellationToken = default);
 
     ValueTask<AuthRequestCreateResponse> CreateAuthRequestAsync(
+        BitwardenEnvironment environment,
         string email,
         string deviceIdentifier,
         string publicKey,
@@ -17,7 +23,8 @@ public interface IApiClient
         string accessCode,
         CancellationToken cancellationToken = default);
 
-    ValueTask<AuthRequestStatusResponse> GetAuthResponseAsync(
+    ValueTask<AuthRequestPollOutcome> GetAuthResponseAsync(
+        BitwardenEnvironment environment,
         string requestId,
         string accessCode,
         CancellationToken cancellationToken = default);
