@@ -66,9 +66,6 @@ internal sealed class VaultDataService(
 
     public DecryptedCipher DecryptCipher(EncryptedCipherRecord record, byte[] userKey)
     {
-        ArgumentNullException.ThrowIfNull(record);
-        ArgumentNullException.ThrowIfNull(userKey);
-
         try
         {
             using JsonDocument document = JsonDocument.Parse(record.EncryptedPayload);
@@ -165,15 +162,10 @@ internal sealed class VaultDataService(
 
     public IReadOnlyList<DecryptedCipher> DecryptCiphers(IReadOnlyList<EncryptedCipherRecord> records, byte[] userKey)
     {
-        ArgumentNullException.ThrowIfNull(records);
-        ArgumentNullException.ThrowIfNull(userKey);
-
-        return records
-            .Select(record => DecryptCipher(record, userKey))
-            .ToArray();
+        return [.. records.Select(record => DecryptCipher(record, userKey))];
     }
 
-    private async ValueTask<EncryptedSyncSnapshot> CreateSnapshotAsync(
+    private static async ValueTask<EncryptedSyncSnapshot> CreateSnapshotAsync(
         Stream stream,
         VaultSyncRequest request,
         DateTimeOffset lastSyncUtc,
@@ -238,7 +230,11 @@ internal sealed class VaultDataService(
 
                     if (currentSection is null)
                     {
-                        reader.Skip();
+                        if (!reader.TrySkip())
+                        {
+                            needsMoreData = true;
+                            break;
+                        }
                     }
 
                     continue;
