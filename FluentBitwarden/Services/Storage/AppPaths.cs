@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using FluentBitwarden.Core.Abstractions;
+using FluentBitwarden.Abstractions;
 
 namespace FluentBitwarden.Services.Storage;
 

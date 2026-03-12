@@ -63,8 +63,6 @@ internal sealed class VaultService(
             return new VaultSyncOutcome.Unavailable(NoStoredSessionMessage);
         }
 
-        await vaultCache.InitializeAsync(cancellationToken).ConfigureAwait(false);
-
         try
         {
             VaultSyncStateRecord? syncState = await vaultCache
@@ -118,7 +116,6 @@ internal sealed class VaultService(
             return new VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Locked(LockedVaultMessage);
         }
 
-        await vaultCache.InitializeAsync(cancellationToken).ConfigureAwait(false);
         VaultSyncStateRecord? syncState = await vaultCache
             .GetSyncStateAsync(session.AccountId, cancellationToken)
             .ConfigureAwait(false);
@@ -163,7 +160,6 @@ internal sealed class VaultService(
             return new VaultReadOutcome<DecryptedCipher?>.Locked(LockedVaultMessage);
         }
 
-        await vaultCache.InitializeAsync(cancellationToken).ConfigureAwait(false);
         VaultSyncStateRecord? syncState = await vaultCache
             .GetSyncStateAsync(session.AccountId, cancellationToken)
             .ConfigureAwait(false);

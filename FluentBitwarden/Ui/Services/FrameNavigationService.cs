@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using FluentBitwarden.Ui.Abstractions;
-using FluentBitwarden.Ui.Controls;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Services;
@@ -23,7 +22,7 @@ public sealed class FrameNavigationService : INavigationService
         }
     }
 
-    public void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : CorePage
+    public void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : Page
     {
         if (_frame is null || !_frame.TryGetTarget(out var frame))
         {

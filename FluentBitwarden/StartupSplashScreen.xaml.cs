@@ -1,8 +1,6 @@
 using FluentBitwarden.Abstractions;
-using FluentBitwarden.Models.Vault;
-using FluentBitwarden.Ui.Abstractions;
-using FluentBitwarden.Views;
-using FluentBitwarden.Views.Setup;
+using FluentBitwarden.Abstractions.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
@@ -11,20 +9,16 @@ namespace FluentBitwarden;
 
 public sealed partial class StartupSplashScreen : SplashScreen
 {
-    private readonly ILocalDeviceInfoProvider _deviceInfoProvider;
+    private readonly IServiceProvider _serviceProvider;
 
     internal StartupSplashScreen(
         MainWindow mainWindow,
-        ILocalDeviceInfoProvider deviceInfoProvider)
+        IServiceProvider serviceProvider)
         : base(mainWindow)
     {
-        _deviceInfoProvider = deviceInfoProvider ?? throw new ArgumentNullException(nameof(deviceInfoProvider));
+        _serviceProvider = serviceProvider;
 
         InitializeComponent();
-
-        Width = double.NaN;
-        Height = double.NaN;
-        IsAlwaysOnTop = true;
     }
 
     public string AppDisplayName => "FluentBitwarden";
@@ -33,9 +27,14 @@ public sealed partial class StartupSplashScreen : SplashScreen
     {
         try
         {
-            await _deviceInfoProvider.InitializeAsync().ConfigureAwait(true);
+            var deviceInfoProvider = _serviceProvider.GetRequiredService<ILocalDeviceInfoProvider>();
+            var dbInitializerService = _serviceProvider.GetRequiredService<IDbInitializerService>();
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.WhenAll(
+                deviceInfoProvider.InitializeAsync(),
+                dbInitializerService.InitializeAsync()).ConfigureAwait(false);
+
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

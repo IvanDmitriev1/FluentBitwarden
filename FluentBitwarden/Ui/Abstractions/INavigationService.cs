@@ -1,4 +1,3 @@
-using FluentBitwarden.Ui.Controls;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Abstractions;
@@ -16,7 +15,7 @@ public interface INavigationService
     /// <summary>
     /// Navigates to a page and optionally clears navigation history.
     /// </summary>
-    void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : CorePage;
+    void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : Page;
 
     /// <summary>
     /// Indicates whether navigation can move back to a previous page.

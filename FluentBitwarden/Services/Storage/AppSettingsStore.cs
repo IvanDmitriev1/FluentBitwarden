@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using FluentBitwarden.Abstractions;
-using FluentBitwarden.Core.Abstractions;
 using FluentBitwarden.Models.Settings;
 using FluentBitwarden.Models.Vault;
 

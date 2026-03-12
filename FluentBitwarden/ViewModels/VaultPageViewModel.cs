@@ -54,7 +54,7 @@ public partial class VaultPageViewModel(
         }
     }
 
-    public Task OnUnloadingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task OnUnloadingAsync() => Task.CompletedTask;
 
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task RefreshAsync()

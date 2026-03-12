@@ -8,11 +8,6 @@ namespace FluentBitwarden.Abstractions;
 internal interface IVaultCache
 {
     /// <summary>
-    /// Ensures the local vault cache is ready for use.
-    /// </summary>
-    ValueTask InitializeAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Persists an encrypted sync snapshot to the local cache.
     /// </summary>
     ValueTask SaveSyncAsync(EncryptedSyncSnapshot snapshot, CancellationToken cancellationToken = default);

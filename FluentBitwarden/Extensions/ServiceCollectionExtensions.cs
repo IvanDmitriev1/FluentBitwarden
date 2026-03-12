@@ -1,8 +1,8 @@
 using BitwaredApi;
 using BitwaredApi.Abstractions;
 using FluentBitwarden.Abstractions;
+using FluentBitwarden.Abstractions.Storage;
 using FluentBitwarden.Abstractions.UnlockServices;
-using FluentBitwarden.Core.Abstractions;
 using FluentBitwarden.Services;
 using FluentBitwarden.Services.Storage;
 using FluentBitwarden.Services.UnlockServices;
@@ -18,13 +18,25 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IAppPaths, AppPaths>();
         services.AddSingleton<IAppSettingsStore, AppSettingsStore>();
+        services.AddVaultStorageServices();
         services.AddSingleton<WindowHandleProvider>();
         services.AddSingleton<IWindowHandleProvider>(sp => sp.GetRequiredService<WindowHandleProvider>());
         services.AddSingleton<IUnlockSettingsPromptService, UnlockSettingsPromptService>();
         services.AddSingleton<ILocalDeviceInfoProvider, LocalDeviceInfoProvider>();
         services.AddSingleton<ISessionStore, SessionStore>();
-        services.AddSingleton<IVaultCache, SqliteVaultCache>();
         services.AddLocalUnlockServices();
+
+        return services;
+    }
+
+    public static IServiceCollection AddVaultStorageServices(this IServiceCollection services)
+    {
+        services.AddSingleton<IDbInitializerService, SqliteDbInitializerService>();
+        services.AddSingleton<IVaultDbConnectionFactory, SqliteVaultDbConnectionFactory>();
+        services.AddSingleton<IVaultCipherReadStore, SqliteVaultCipherReadStore>();
+        services.AddSingleton<IVaultSyncStateStore, SqliteVaultSyncStateStore>();
+        services.AddSingleton<IVaultSnapshotWriteStore, SqliteVaultSnapshotWriteStore>();
+        services.AddSingleton<IVaultCache, SqliteVaultCache>();
 
         return services;
     }

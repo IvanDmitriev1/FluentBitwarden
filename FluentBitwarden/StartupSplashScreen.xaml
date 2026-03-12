@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <winUiEx:SplashScreen
     x:Class="FluentBitwarden.StartupSplashScreen"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -6,39 +6,43 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winUiEx="using:WinUIEx"
+    IsAlwaysOnTop="True"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" x:Name="Root">
-        <Border HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Padding="32"
-                CornerRadius="20"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+    <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Border
+            Padding="32"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="20">
             <Border.Background>
-                <SolidColorBrush Color="{ThemeResource CardBackgroundFillColorDefault}"
-                                 Opacity="0.94" />
+                <SolidColorBrush Opacity="0.94" Color="{ThemeResource CardBackgroundFillColorDefault}" />
             </Border.Background>
 
-            <StackPanel Spacing="16"
-                        HorizontalAlignment="Center">
-                <Image Source="ms-appx:///Assets/Square150x150Logo.scale-200.png"
-                       Width="72"
-                       Height="72"
-                       HorizontalAlignment="Center" />
+            <StackPanel HorizontalAlignment="Center" Spacing="16">
+                <Image
+                    Width="72"
+                    Height="72"
+                    HorizontalAlignment="Center"
+                    Source="ms-appx:///Assets/Square150x150Logo.scale-200.png" />
 
-                <TextBlock Text="{x:Bind AppDisplayName}"
-                           Style="{ThemeResource TitleTextBlockStyle}"
-                           HorizontalAlignment="Center" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="{x:Bind AppDisplayName}" />
 
-                <TextBlock Text="Initializing secure device state"
-                           HorizontalAlignment="Center"
-                           Opacity="0.72" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Opacity="0.72"
+                    Text="Initializing secure device state" />
 
-                <ProgressRing IsActive="True"
-                              Width="32"
-                              Height="32"
-                              HorizontalAlignment="Center" />
+                <ProgressRing
+                    Width="32"
+                    Height="32"
+                    HorizontalAlignment="Center"
+                    IsActive="True" />
             </StackPanel>
         </Border>
     </Grid>

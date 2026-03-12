@@ -13,5 +13,5 @@ public interface IPageLifecycleAware
     /// <summary>
     /// Runs when a page is being unloaded.
     /// </summary>
-    Task OnUnloadingAsync(CancellationToken cancellationToken);
+    Task OnUnloadingAsync();
 }

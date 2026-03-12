@@ -1,5 +1,6 @@
 using BitwaredApi;
 using FluentBitwarden.Abstractions;
+using FluentBitwarden.Abstractions.Storage;
 using FluentBitwarden.Extensions;
 using FluentBitwarden.Models.Vault;
 using FluentBitwarden.Services;
@@ -61,7 +62,7 @@ public partial class App : Application, IXamlMetadataServiceProvider
         _mainWindow = Host.Services.GetRequiredService<MainWindow>();
         var splashScreen = new StartupSplashScreen(
             _mainWindow,
-            Host.Services.GetRequiredService<ILocalDeviceInfoProvider>());
+            Host.Services);
 
         splashScreen.Completed += async (sender, window) =>
         {

@@ -1,13 +1,14 @@
-using FluentBitwarden.Ui.Controls;
 using FluentBitwarden.ViewModels;
+using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Views;
 
-public sealed partial class SettingsPage : CorePage
+public sealed partial class SettingsPage : Page
 {
-    public SettingsPage(SettingsPageViewModel viewModel) : base(viewModel)
+    public SettingsPage(SettingsPageViewModel viewModel)
     {
         ViewModel = viewModel;
+        DataContext = viewModel;
         InitializeComponent();
     }
 

@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Core.Abstractions;
+namespace FluentBitwarden.Abstractions;
 
 /// <summary>
 /// Provides the file system locations used by FluentBitwarden storage services.

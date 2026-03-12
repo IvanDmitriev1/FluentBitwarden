@@ -1,6 +1,5 @@
 using BitwaredApi.Models.Auth;
 using FluentBitwarden.Abstractions;
-using FluentBitwarden.Core.Abstractions;
 using FluentBitwarden.Services.Storage;
 
 namespace FluentBitwarden.Services;

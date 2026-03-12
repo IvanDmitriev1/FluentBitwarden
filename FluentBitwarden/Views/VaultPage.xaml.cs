@@ -1,15 +1,16 @@
 using FluentBitwarden.Models.Navigation;
-using FluentBitwarden.Ui.Controls;
 using FluentBitwarden.ViewModels;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace FluentBitwarden.Views;
 
-public sealed partial class VaultPage : CorePage
+public sealed partial class VaultPage : Page
 {
-    public VaultPage(VaultPageViewModel viewModel) : base(viewModel)
+    public VaultPage(VaultPageViewModel viewModel)
     {
         ViewModel = viewModel;
+        DataContext = viewModel;
         InitializeComponent();
     }
 

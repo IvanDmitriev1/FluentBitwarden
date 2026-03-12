@@ -109,7 +109,7 @@ public partial class LoginPageViewModel : ObservableObject, IPageLifecycleAware
         }
     }
 
-    public Task OnUnloadingAsync(CancellationToken cancellationToken)
+    public Task OnUnloadingAsync()
     {
         _hasAttemptedWindowsHelloAutoPrompt = false;
         ResetUnlockInputs();

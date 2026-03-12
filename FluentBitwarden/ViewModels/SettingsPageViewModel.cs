@@ -129,7 +129,7 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         await RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
 
-    public Task OnUnloadingAsync(CancellationToken cancellationToken)
+    public Task OnUnloadingAsync()
     {
         ResetPinEntryState();
         return Task.CompletedTask;

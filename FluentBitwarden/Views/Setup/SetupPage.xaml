@@ -1,45 +1,53 @@
-<?xml version="1.0" encoding="utf-8"?>
-<controls:CorePage
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
     x:Class="FluentBitwarden.Views.Setup.SetupPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:FluentBitwarden.Ui.Controls" 
+    xmlns:behaviors="using:FluentBitwarden.Ui.Behaviors"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:setup="using:FluentBitwarden.Views.Setup">
 
-    <controls:CorePage.Resources>
+    <interactivity:Interaction.Behaviors>
+        <behaviors:PageLifecycleBehavior />
+    </interactivity:Interaction.Behaviors>
+
+    <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <setup:SetupStepTemplates />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </controls:CorePage.Resources>
+    </Page.Resources>
 
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center"
-          MaxWidth="750"
-          MinWidth="420"
-          Margin="24">
+    <Grid
+        MinWidth="420"
+        MaxWidth="750"
+        Margin="24"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
 
-        <Border CornerRadius="16"
-                Padding="28"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+        <Border
+            Padding="28"
+            BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="16">
             <Border.Background>
-                <SolidColorBrush Color="{ThemeResource CardBackgroundFillColorDefault}"
-                                 Opacity="0.92"/>
+                <SolidColorBrush Opacity="0.92" Color="{ThemeResource CardBackgroundFillColorDefault}" />
             </Border.Background>
 
             <StackPanel Spacing="18">
-                <ContentControl Content="{x:Bind ViewModel.CurrentStepViewModel, Mode=OneWay}"
-                                ContentTemplateSelector="{StaticResource SetupStepTemplateSelector}"
-                                HorizontalContentAlignment="Stretch"/>
+                <ContentControl
+                    HorizontalContentAlignment="Stretch"
+                    Content="{x:Bind ViewModel.CurrentStepViewModel, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource SetupStepTemplateSelector}" />
 
-                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
-                              Width="28"
-                              Height="28"
-                              Visibility="{x:Bind ViewModel.IsBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}"
-                              HorizontalAlignment="Center" />
+                <ProgressRing
+                    Width="28"
+                    Height="28"
+                    HorizontalAlignment="Center"
+                    IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}" />
             </StackPanel>
         </Border>
     </Grid>
-</controls:CorePage>
+</Page>

@@ -47,7 +47,7 @@ public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
     public Task OnLoadingAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
 
-    public Task OnUnloadingAsync(CancellationToken cancellationToken)
+    public Task OnUnloadingAsync()
     {
         IsBusy = false;
         _twoFactorStep.Dispose();
