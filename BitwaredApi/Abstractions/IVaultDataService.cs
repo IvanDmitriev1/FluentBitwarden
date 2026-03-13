@@ -8,7 +8,7 @@ public interface IVaultDataService
         VaultSyncRequest request,
         CancellationToken cancellationToken = default);
 
-    DecryptedCipher DecryptCipher(EncryptedCipherRecord record, byte[] userKey);
+    DecryptedCipher DecryptCipher(CipherSyncItem record, byte[] userKey);
 
-    IReadOnlyList<DecryptedCipher> DecryptCiphers(IReadOnlyList<EncryptedCipherRecord> records, byte[] userKey);
+    IReadOnlyList<DecryptedCipher> DecryptCiphers(IReadOnlyList<CipherSyncItem> records, byte[] userKey);
 }

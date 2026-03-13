@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Views;
+using FluentBitwarden.Views.Vault;
 
 namespace FluentBitwarden.ViewModels.Setup;
 
@@ -76,9 +77,9 @@ public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
         AuthenticationSuccess authentication,
         CancellationToken cancellationToken = default)
     {
-        await _vaultService.AdoptAuthenticationAsync(authentication, cancellationToken).ConfigureAwait(true);
-        await _vaultService.SyncAsync(cancellationToken).ConfigureAwait(true);
-        _navigationService.Navigate<VaultPage>(clearBackStack: true);
+        await _vaultService.AdoptAuthenticationAsync(authentication, cancellationToken);
+        await _vaultService.SyncAsync(cancellationToken);
+        _navigationService.Navigate<ShellPage>(clearBackStack: true);
     }
 
     public void ShowError(string message)

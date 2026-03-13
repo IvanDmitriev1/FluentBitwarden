@@ -6,7 +6,7 @@ namespace FluentBitwarden.Abstractions.UnlockServices;
 /// <summary>
 /// Manages Windows Hello enrollment and Windows Hello-based vault unlock.
 /// </summary>
-internal interface IWindowsHelloUnlockService
+public interface IWindowsHelloUnlockService
 {
     /// <summary>
     /// Checks whether Windows Hello can be used on the current device.

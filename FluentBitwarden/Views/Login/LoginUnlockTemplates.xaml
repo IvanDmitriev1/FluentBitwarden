@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Views.Login.LoginUnlockTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:attachedProperties="using:FluentBitwarden.Ui.AttachedProperties"
+    xmlns:controls="using:FluentBitwarden.Ui.Controls"
+    xmlns:local="using:FluentBitwarden.Views.Login"
+    xmlns:login="using:FluentBitwarden.ViewModels.Login">
+
+    <DataTemplate x:Key="MasterPasswordUnlockViewModelTemplate" x:DataType="login:MasterPasswordUnlockViewModel">
+        <StackPanel Spacing="12">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="22"
+                FontWeight="SemiBold"
+                Text="{x:Bind Title}" />
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                Opacity="0.75"
+                Text="{x:Bind Description}"
+                TextWrapping="WrapWholeWords"
+                Visibility="{x:Bind Description, Converter={StaticResource StringVisibilityConverter}}" />
+
+            <controls:ValidatedField Property="{x:Bind MasterPasswordValidation}">
+                <PasswordBox
+                    attachedProperties:PasswordBoxBinding.BindPassword="True"
+                    attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind MasterPassword, Mode=TwoWay}"
+                    Header="Master password" />
+            </controls:ValidatedField>
+
+            <Button
+                HorizontalAlignment="Stretch"
+                Command="{x:Bind UnlockCommand}"
+                Content="Unlock with master password"
+                Style="{ThemeResource AccentButtonStyle}" />
+        </StackPanel>
+
+    </DataTemplate>
+
+    <local:LoginUnlockTemplatesSelector x:Key="LoginUnlockTemplatesSelector" MasterPasswordUnlockViewModelTemplate="{StaticResource MasterPasswordUnlockViewModelTemplate}" />
+
+</ResourceDictionary>

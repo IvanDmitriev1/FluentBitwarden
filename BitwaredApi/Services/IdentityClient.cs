@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using BitwaredApi.Abstractions;
 using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Extensions;
 using BitwaredApi.Models.Auth;
+using BitwaredApi.Serialization;
 using BitwaredApi.Utils;
 
 namespace BitwaredApi.Services;
@@ -20,17 +20,21 @@ internal sealed class IdentityClient(HttpClient httpClient) : IIdentityClient
         {
             using HttpResponseMessage response = await httpClient.PostAsJsonAsync(
                 environment.IdentityBase.AppendRelativePath("/accounts/prelogin"),
-                new { email },
-                JsonDefaults.SerializerOptions,
+                new PreloginRequestDto
+                {
+                    Email = email,
+                },
+                BitwaredApiJsonContext.Default.PreloginRequestDto,
                 cancellationToken);
 
             await response.EnsureBitwaredSuccessAsync("Identity endpoint", cancellationToken);
 
-            using JsonDocument document = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
+            PreloginResponseDto? payload = await response.Content.ReadFromJsonAsync(
+                BitwaredApiJsonContext.Default.PreloginResponseDto,
+                cancellationToken);
 
-            return IdentityTokenResponseParser.ParsePreloginResponse(document.RootElement);
+            return IdentityJsonMapper.ToPreloginResponse(
+                payload ?? throw new ServerVersionMismatchException("Identity prelogin response was empty."));
         }
         catch (HttpRequestException ex)
         {
@@ -66,21 +70,48 @@ internal sealed class IdentityClient(HttpClient httpClient) : IIdentityClient
 
             if (!response.IsSuccessStatusCode)
             {
-                return await IdentityTokenResponseParser.ReadTokenFailureAsync(response, cancellationToken);
+                string body = await response.Content.ReadAsStringAsync(cancellationToken);
+                return ReadTokenFailure(body, response.StatusCode);
             }
 
-            using JsonDocument document = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
+            TokenSuccessResponseDto? payload = await response.Content.ReadFromJsonAsync(
+                BitwaredApiJsonContext.Default.TokenSuccessResponseDto,
+                cancellationToken);
 
             return new TokenExchangeOutcome.Success(
-                IdentityTokenResponseParser.ParseTokenSuccessResponse(
-                    document.RootElement,
+                IdentityJsonMapper.ToTokenResponse(
+                    payload ?? throw new ServerVersionMismatchException("Identity token response was empty."),
                     DateTimeOffset.UtcNow));
         }
         catch (HttpRequestException ex)
         {
             throw new NetworkUnavailableException(innerException: ex);
         }
+    }
+
+    private static TokenExchangeOutcome ReadTokenFailure(string body, HttpStatusCode statusCode)
+    {
+        if (statusCode == HttpStatusCode.BadRequest && !string.IsNullOrWhiteSpace(body))
+        {
+            try
+            {
+                TokenFailureResponseDto? payload = System.Text.Json.JsonSerializer.Deserialize(
+                    body,
+                    BitwaredApiJsonContext.Default.TokenFailureResponseDto);
+
+                if (payload is not null)
+                {
+                    return IdentityJsonMapper.ToTokenFailureOutcome(payload);
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                throw new ServerVersionMismatchException(
+                    $"Token endpoint returned {(int)statusCode}: {body}",
+                    ex);
+            }
+        }
+
+        throw new ServerVersionMismatchException($"Token endpoint returned {(int)statusCode}: {body}");
     }
 }

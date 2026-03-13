@@ -15,14 +15,14 @@ internal interface IVaultCache
     /// <summary>
     /// Lists cached encrypted ciphers for an account.
     /// </summary>
-    ValueTask<IReadOnlyList<EncryptedCipherRecord>> ListCiphersAsync(
+    ValueTask<IReadOnlyList<CipherSyncItem>> ListCiphersAsync(
         string accountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a cached encrypted cipher for an account by identifier.
     /// </summary>
-    ValueTask<EncryptedCipherRecord?> GetCipherAsync(
+    ValueTask<CipherSyncItem?> GetCipherAsync(
         string accountId,
         string id,
         CancellationToken cancellationToken = default);

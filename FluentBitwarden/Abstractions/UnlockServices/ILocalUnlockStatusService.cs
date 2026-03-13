@@ -6,7 +6,7 @@ namespace FluentBitwarden.Abstractions.UnlockServices;
 /// <summary>
 /// Resolves unlock configuration status for a stored session.
 /// </summary>
-internal interface ILocalUnlockStatusService
+public interface ILocalUnlockStatusService
 {
     ValueTask<LocalUnlockStatus> GetAsync(
         StoredSessionInfo session,

@@ -42,7 +42,7 @@ public abstract record VaultReadOutcome<T>
     public sealed record Unavailable(string Message) : VaultReadOutcome<T>;
 }
 
-internal abstract record VaultConfigurationOutcome
+public abstract record VaultConfigurationOutcome
 {
     private VaultConfigurationOutcome() { }
 
@@ -52,14 +52,14 @@ internal abstract record VaultConfigurationOutcome
     public sealed record Cancelled(string Message) : VaultConfigurationOutcome;
 }
 
-internal enum UnlockMethodStatus
+public enum UnlockMethodStatus
 {
     Unavailable = 0,
     Available = 1,
     Configured = 2,
 }
 
-internal sealed record LocalUnlockStatus(
+public sealed record LocalUnlockStatus(
     bool HasLocalVaultData,
     UnlockMethodStatus WindowsHello,
     UnlockMethodStatus Pin)

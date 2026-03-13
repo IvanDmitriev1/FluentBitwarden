@@ -1,5 +1,5 @@
 using System.Text;
-using System.Text.Json;
+using BitwaredApi.Serialization;
 
 namespace BitwaredApi.Utils;
 
@@ -31,10 +31,25 @@ public static class JwtTokenReader
 
         try
         {
-            using JsonDocument document = JsonDocument.Parse(jsonBytes);
-            return document.RootElement.TryGetProperty(claimType, out JsonElement property)
-                ? property.GetString()
-                : null;
+            JwtTokenPayloadDto? tokenPayload = System.Text.Json.JsonSerializer.Deserialize(
+                jsonBytes,
+                BitwaredApiJsonContext.Default.JwtTokenPayloadDto);
+
+            if (tokenPayload is null)
+            {
+                return null;
+            }
+
+            return claimType switch
+            {
+                "sub" => tokenPayload.Subject,
+                "email" => tokenPayload.Email,
+                _ => tokenPayload.AdditionalClaims is not null
+                    && tokenPayload.AdditionalClaims.TryGetValue(claimType, out System.Text.Json.JsonElement claim)
+                    && claim.ValueKind == System.Text.Json.JsonValueKind.String
+                        ? claim.GetString()
+                        : null,
+            };
         }
         finally
         {

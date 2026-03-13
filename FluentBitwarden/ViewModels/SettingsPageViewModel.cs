@@ -8,7 +8,9 @@ using FluentBitwarden.Models.Vault;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.Ui.Controls;
 using FluentBitwarden.Views;
+using FluentBitwarden.Views.Login;
 using FluentBitwarden.Views.Setup;
+using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.ViewModels;

@@ -1,15 +1,17 @@
 using BitwaredApi;
 using FluentBitwarden.Abstractions;
-using FluentBitwarden.Abstractions.Storage;
 using FluentBitwarden.Extensions;
 using FluentBitwarden.Models.Vault;
-using FluentBitwarden.Services;
 using FluentBitwarden.Ui;
 using FluentBitwarden.Ui.Abstractions;
 using FluentBitwarden.ViewModels;
+using FluentBitwarden.ViewModels.Login;
 using FluentBitwarden.ViewModels.Setup;
+using FluentBitwarden.ViewModels.Vault;
 using FluentBitwarden.Views;
+using FluentBitwarden.Views.Login;
 using FluentBitwarden.Views.Setup;
+using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
@@ -36,7 +38,12 @@ public partial class App : Application, IXamlMetadataServiceProvider
                 services.AddView<LoginPage, LoginPageViewModel>();
                 services.AddView<SettingsPage, SettingsPageViewModel>();
                 services.AddView<SetupPage, SetupPageViewModel>();
+                services.AddView<ShellPage, ShellPageViewModel>();
+
                 services.AddView<VaultPage, VaultPageViewModel>();
+
+                services.AddView<BlankPage1, BlankPage1ViewModel>();
+                services.AddView<BlankPage2, BlankPage2ViewModel>();
             })
             .Build();
 
@@ -79,7 +86,7 @@ public partial class App : Application, IXamlMetadataServiceProvider
                     break;
 
                 case VaultSessionState.Unlocked:
-                    navigationService.Navigate<VaultPage>(clearBackStack: true);
+                    navigationService.Navigate<ShellPage>(clearBackStack: true);
                     break;
 
                 default:

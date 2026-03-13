@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentBitwarden.Views.Vault.VaultPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="using:FluentBitwarden.Ui.Behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vault="using:FluentBitwarden.Views.Vault"
+    mc:Ignorable="d">
+
+    <interactivity:Interaction.Behaviors>
+        <behaviors:PageLifecycleBehavior />
+    </interactivity:Interaction.Behaviors>
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <vault:VaultTemplates />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid>
+        <TwoPaneView
+            x:Name="LayoutRoot"
+            MinTallModeHeight="700"
+            MinWideModeWidth="900"
+            Pane1Length="Auto"
+            Pane2Length="Auto"
+            PanePriority="Pane1"
+            TallModeConfiguration="TopBottom"
+            WideModeConfiguration="LeftRight">
+
+            <!--  list  -->
+            <TwoPaneView.Pane1>
+                <Grid MinWidth="420">
+                    <ListView
+                        Margin="8,0,8,8"
+                        IsItemClickEnabled="True"
+                        ItemTemplate="{StaticResource DecryptedCipherListItemTemplate}"
+                        ItemsSource="{x:Bind ViewModel.Ciphers, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
+                        SelectionMode="Single" />
+                </Grid>
+            </TwoPaneView.Pane1>
+
+            <!--  details  -->
+            <TwoPaneView.Pane2>
+                <Grid MinWidth="360" Padding="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Details header  -->
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            FontSize="22"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay, FallbackValue=''}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Opacity="0.70"
+                            Text="{x:Bind ViewModel.SelectedCipher.Username, Mode=OneWay, FallbackValue=''}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <!--  Details body  -->
+                    <ScrollViewer Grid.Row="1" Margin="0,14,0,0" />
+                </Grid>
+            </TwoPaneView.Pane2>
+        </TwoPaneView>
+    </Grid>
+</Page>

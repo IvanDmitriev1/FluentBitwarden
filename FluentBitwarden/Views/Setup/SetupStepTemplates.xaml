@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
     x:Class="FluentBitwarden.Views.Setup.SetupStepTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,134 +9,154 @@
     xmlns:setUpViews="using:FluentBitwarden.Views.Setup"
     xmlns:ui="using:FluentBitwarden.Ui.Controls">
 
-    <DataTemplate x:Key="EmailSignInStepTemplate"
-                  x:DataType="setUp:EmailSignInStepState">
+    <DataTemplate x:Key="EmailSignInStepTemplate" x:DataType="setUp:EmailSignInStepState">
         <StackPanel Spacing="18">
             <StackPanel Spacing="6">
-                <TextBlock Text="Login in to Bitwarden"
-                           Style="{ThemeResource TitleTextBlockStyle}"
-                           HorizontalAlignment="Center" />
-                <TextBlock Text="Select your environment and continue with your Bitwarden email."
-                           TextWrapping="WrapWholeWords"
-                           HorizontalAlignment="Center" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Login in to Bitwarden" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Text="Select your environment and continue with your Bitwarden email."
+                    TextWrapping="WrapWholeWords" />
             </StackPanel>
 
             <controls:Segmented
+                HorizontalAlignment="Stretch"
                 ItemsSource="{x:Bind Environments, Mode=OneWay}"
-                SelectedItem="{x:Bind SelectedEnvironment, Mode=TwoWay}"
-                HorizontalAlignment="Stretch">
+                SelectedItem="{x:Bind SelectedEnvironment, Mode=TwoWay}">
                 <controls:Segmented.ItemTemplate>
                     <DataTemplate x:DataType="setUp:SetupEnvironmentOption">
                         <StackPanel Padding="10,6" Spacing="2">
-                            <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                            <TextBlock Text="{x:Bind Subtitle}" Opacity="0.65" FontSize="12" />
+                            <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" />
+                            <TextBlock
+                                FontSize="12"
+                                Opacity="0.65"
+                                Text="{x:Bind Subtitle}" />
                         </StackPanel>
                     </DataTemplate>
                 </controls:Segmented.ItemTemplate>
             </controls:Segmented>
 
             <StackPanel Spacing="12">
-                <Button Content="Sign in with passkey"
-                        Command="{x:Bind PasskeySignInCommand, Mode=OneWay}"
-                        HorizontalAlignment="Stretch" />
+                <Button
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind PasskeySignInCommand}"
+                    Content="Sign in with passkey" />
 
-                <TextBlock Text="or" HorizontalAlignment="Center" Opacity="0.55" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Opacity="0.55"
+                    Text="or" />
 
-                <ui:ValidatedField Property="{x:Bind EmailValidation, Mode=OneWay}">
-                    <TextBox Header="Email"
-                             Text="{x:Bind Email, Mode=TwoWay}"
-                             PlaceholderText="name@example.com" />
+                <ui:ValidatedField Property="{x:Bind EmailValidation}">
+                    <TextBox
+                        Header="Email"
+                        PlaceholderText="name@example.com"
+                        Text="{x:Bind Email, Mode=OneWay}" />
                 </ui:ValidatedField>
 
-                <Button Style="{ThemeResource AccentButtonStyle}"
-                        Content="Continue"
-                        Command="{x:Bind ContinueCommand, Mode=OneWay}"
-                        HorizontalAlignment="Stretch" />
+                <Button
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind ContinueCommand}"
+                    Content="Continue"
+                    Style="{ThemeResource AccentButtonStyle}" />
             </StackPanel>
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="PasswordSignInStepTemplate"
-                  x:DataType="setUp:PasswordSignInStepState">
+    <DataTemplate x:Key="PasswordSignInStepTemplate" x:DataType="setUp:PasswordSignInStepState">
         <StackPanel Spacing="18">
             <StackPanel Spacing="6">
-                <TextBlock Text="Welcome back"
-                           Style="{ThemeResource TitleTextBlockStyle}"
-                           HorizontalAlignment="Center" />
-                <TextBlock Text="{x:Bind Email, Mode=OneWay}"
-                           HorizontalAlignment="Center"
-                           FontWeight="SemiBold" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Welcome back" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{x:Bind Email, Mode=OneWay}" />
             </StackPanel>
 
             <StackPanel Spacing="12">
-                <ui:ValidatedField Property="{x:Bind MasterPasswordValidation, Mode=OneWay}">
-                    <PasswordBox Header="Master password"
-                                 attachedProperties:PasswordBoxBinding.BindPassword="True"
-                                 attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind MasterPassword, Mode=TwoWay}" />
+                <ui:ValidatedField Property="{x:Bind MasterPasswordValidation}">
+                    <PasswordBox
+                        attachedProperties:PasswordBoxBinding.BindPassword="True"
+                        attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind MasterPassword, Mode=TwoWay}"
+                        Header="Master password" />
                 </ui:ValidatedField>
 
-                <StackPanel Spacing="6" Margin="0, 10, 0, 0">
-                    <Button Style="{ThemeResource AccentButtonStyle}"
-                            Content="Log in with master password"
-                            HorizontalAlignment="Stretch"
-                            Command="{x:Bind SignInWithPasswordCommand, Mode=OneWay}" />
+                <StackPanel Margin="0,10,0,0" Spacing="6">
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Command="{x:Bind SignInWithPasswordCommand}"
+                        Content="Log in with master password"
+                        Style="{ThemeResource AccentButtonStyle}" />
 
-                    <Button Content="Back"
-                            HorizontalAlignment="Stretch"
-                            Command="{x:Bind BackToEmailCommand, Mode=OneWay}" />
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Command="{x:Bind BackToEmailCommand}"
+                        Content="Back" />
                 </StackPanel>
             </StackPanel>
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="TwoFactorStepTemplate"
-                  x:DataType="setUp:TwoFactorStepState">
+    <DataTemplate x:Key="TwoFactorStepTemplate" x:DataType="setUp:TwoFactorStepState">
         <StackPanel Spacing="18">
             <StackPanel Spacing="6">
-                <TextBlock Text="Two-factor authentication"
-                           HorizontalAlignment="Center"
-                           Style="{ThemeResource TitleTextBlockStyle}" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Two-factor authentication" />
 
-                <TextBlock Text="{x:Bind PromptText, Mode=OneWay}"
-                           Opacity="0.75"
-                           TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    Opacity="0.75"
+                    Text="{x:Bind PromptText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
 
-                <TextBlock Text="{x:Bind EmailHint, Mode=OneWay}"
-                           Opacity="0.6"
-                           Visibility="{x:Bind HasEmailHint, Converter={StaticResource BoolToVis}, Mode=OneWay}" />
+                <TextBlock
+                    Opacity="0.6"
+                    Text="{x:Bind EmailHint, Mode=OneWay}"
+                    Visibility="{x:Bind HasEmailHint, Converter={StaticResource BoolToVis}, Mode=OneWay}" />
             </StackPanel>
 
-            <ComboBox Header="Provider"
-                      ItemsSource="{x:Bind Providers, Mode=OneWay}"
-                      SelectedItem="{x:Bind SelectedProvider, Mode=TwoWay}"
-                      HorizontalAlignment="Stretch">
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                Header="Provider"
+                ItemsSource="{x:Bind Providers, Mode=OneWay}"
+                SelectedItem="{x:Bind SelectedProvider, Mode=TwoWay}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="setUp:TwoFactorProviderOptionModel">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="{x:Bind Title}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Text="{x:Bind Subtitle}"
-                                       Opacity="0.65"
-                                       FontSize="12" />
+                            <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" />
+                            <TextBlock
+                                FontSize="12"
+                                Opacity="0.65"
+                                Text="{x:Bind Subtitle}" />
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <ui:ValidatedField Property="{x:Bind CodeValidation, Mode=OneWay}">
-                <TextBox Header="Verification code"
-                         Text="{x:Bind Code, Mode=TwoWay}"
-                         PlaceholderText="123456" />
+            <ui:ValidatedField Property="{x:Bind CodeValidation}">
+                <TextBox
+                    Header="Verification code"
+                    PlaceholderText="123456"
+                    Text="{x:Bind Code, Mode=TwoWay}" />
             </ui:ValidatedField>
 
-            <StackPanel Spacing="6" Margin="0, 12, 0, 0">
-                <Button Style="{ThemeResource AccentButtonStyle}"
-                        HorizontalAlignment="Stretch"
-                        Content="Continue"
-                        Command="{x:Bind ContinueTwoFactorCommand, Mode=OneWay}" />
-                <Button Content="Back"
-                        HorizontalAlignment="Stretch"
-                        Command="{x:Bind BackFromTwoFactorCommand, Mode=OneWay}" />
+            <StackPanel Margin="0,12,0,0" Spacing="6">
+                <Button
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind ContinueTwoFactorCommand}"
+                    Content="Continue"
+                    Style="{ThemeResource AccentButtonStyle}" />
+                <Button
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind BackFromTwoFactorCommand}"
+                    Content="Back" />
             </StackPanel>
         </StackPanel>
     </DataTemplate>

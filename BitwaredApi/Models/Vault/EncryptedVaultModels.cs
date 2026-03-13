@@ -16,34 +16,28 @@ public sealed record VaultSyncStateRecord(
     int FolderCount,
     int CollectionCount);
 
-public sealed record EncryptedCipherRecord(
-    string AccountId,
+public sealed record CipherSyncItem(
     string Id,
     int Type,
     string? OrganizationId,
     string? FolderId,
     string CollectionIdsJson,
     DateTimeOffset? RevisionDate,
-    byte[] EncryptedPayload,
-    DateTimeOffset UpdatedUtc);
+    byte[] EncryptedPayload);
 
-public sealed record EncryptedFolderRecord(
-    string AccountId,
+public sealed record FolderSyncItem(
     string Id,
     DateTimeOffset? RevisionDate,
-    byte[] EncryptedPayload,
-    DateTimeOffset UpdatedUtc);
+    byte[] EncryptedPayload);
 
-public sealed record EncryptedCollectionRecord(
-    string AccountId,
+public sealed record CollectionSyncItem(
     string Id,
     DateTimeOffset? RevisionDate,
-    byte[] EncryptedPayload,
-    DateTimeOffset UpdatedUtc);
+    byte[] EncryptedPayload);
 
 public sealed record EncryptedSyncSnapshot(
     VaultAccountRecord Account,
     VaultSyncStateRecord SyncState,
-    IReadOnlyList<EncryptedCipherRecord> Ciphers,
-    IReadOnlyList<EncryptedFolderRecord> Folders,
-    IReadOnlyList<EncryptedCollectionRecord> Collections);
+    IReadOnlyList<CipherSyncItem> Ciphers,
+    IReadOnlyList<FolderSyncItem> Folders,
+    IReadOnlyList<CollectionSyncItem> Collections);

@@ -4,6 +4,7 @@ using BitwaredApi.Abstractions;
 using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Extensions;
 using BitwaredApi.Models.Auth;
+using BitwaredApi.Serialization;
 using BitwaredApi.Utils;
 
 namespace BitwaredApi.Services;
@@ -55,10 +56,8 @@ internal sealed class ApiClient(HttpClient httpClient) : IApiClient
             using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
             await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
 
-            string text = await response.Content.ReadAsStringAsync(cancellationToken);
-            return DateTimeOffset.TryParse(text.Trim('"'), out DateTimeOffset parsed)
-                ? parsed
-                : null;
+            string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            return ApiRevisionDateParser.Parse(body, response.Content.Headers.ContentType?.MediaType);
         }
         catch (HttpRequestException ex)
         {
@@ -80,15 +79,15 @@ internal sealed class ApiClient(HttpClient httpClient) : IApiClient
             HttpRequestMessage request = new(HttpMethod.Post, environment.ApiBase.AppendRelativePath("/auth-requests/"))
             {
                 Content = JsonContent.Create(
-                    new
+                    new AuthRequestCreateRequestDto
                     {
-                        email,
-                        deviceIdentifier,
-                        publicKey,
-                        type = (int)requestType,
-                        accessCode,
+                        Email = email,
+                        DeviceIdentifier = deviceIdentifier,
+                        PublicKey = publicKey,
+                        Type = (int)requestType,
+                        AccessCode = accessCode,
                     },
-                    options: JsonDefaults.SerializerOptions),
+                    BitwaredApiJsonContext.Default.AuthRequestCreateRequestDto),
             };
 
             request.Headers.TryAddWithoutValidation("Device-Identifier", deviceIdentifier);
@@ -96,14 +95,20 @@ internal sealed class ApiClient(HttpClient httpClient) : IApiClient
             using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
             await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
 
-            using JsonDocument document = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
+            try
+            {
+                AuthRequestCreateResponseDto? payload = await response.Content.ReadFromJsonAsync(
+                    BitwaredApiJsonContext.Default.AuthRequestCreateResponseDto,
+                    cancellationToken);
 
-            return ApiAuthRequestResponseParser.ParseCreateResponse(
-                document.RootElement,
-                accessCode,
-                DateTimeOffset.UtcNow);
+                return CreateAuthRequestResponse(
+                    payload ?? throw new ServerVersionMismatchException("Auth request response was empty."),
+                    accessCode);
+            }
+            catch (JsonException ex)
+            {
+                throw new ServerVersionMismatchException("Auth request response was not a supported JSON payload.", ex);
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -132,15 +137,71 @@ internal sealed class ApiClient(HttpClient httpClient) : IApiClient
 
             await response.EnsureBitwaredSuccessAsync("API endpoint", cancellationToken);
 
-            using JsonDocument document = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
+            try
+            {
+                AuthRequestPollResponseDto? payload = await response.Content.ReadFromJsonAsync(
+                    BitwaredApiJsonContext.Default.AuthRequestPollResponseDto,
+                    cancellationToken);
 
-            return ApiAuthRequestResponseParser.ParsePollOutcome(document.RootElement, DateTimeOffset.UtcNow);
+                return CreateAuthRequestPollOutcome(
+                    payload ?? throw new ServerVersionMismatchException("Auth request poll response was empty."));
+            }
+            catch (JsonException ex)
+            {
+                throw new ServerVersionMismatchException("Auth request poll response was not a supported JSON payload.", ex);
+            }
         }
         catch (HttpRequestException ex)
         {
             throw new NetworkUnavailableException(innerException: ex);
         }
+    }
+
+    private static AuthRequestCreateResponse CreateAuthRequestResponse(
+        AuthRequestCreateResponseDto dto,
+        string accessCode)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        return new AuthRequestCreateResponse(
+            dto.Id ?? throw new ServerVersionMismatchException("Auth request response did not include an Id."),
+            accessCode,
+            (dto.CreationDate ?? throw new ServerVersionMismatchException(
+                "Auth request response did not include required property 'creationDate'."))
+            .AddMinutes(15));
+    }
+
+    private static AuthRequestPollOutcome CreateAuthRequestPollOutcome(AuthRequestPollResponseDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        DateTimeOffset nowUtc = DateTimeOffset.UtcNow;
+        bool answered = dto.RequestApproved is not null;
+        bool approved = dto.RequestApproved == true;
+        DateTimeOffset creationDate = dto.CreationDate ?? throw new ServerVersionMismatchException(
+            "Auth request poll response did not include required property 'creationDate'.");
+
+        if (creationDate.AddMinutes(15) <= nowUtc)
+        {
+            return new AuthRequestPollOutcome.Expired("The device login request expired before approval.");
+        }
+
+        if (!answered)
+        {
+            return new AuthRequestPollOutcome.Pending();
+        }
+
+        if (!approved || string.IsNullOrWhiteSpace(dto.Key))
+        {
+            return new AuthRequestPollOutcome.Denied("The device login request was denied.");
+        }
+
+        return new AuthRequestPollOutcome.Approved(
+            new AuthRequestApproval(
+                dto.Key,
+                dto.ResponseDate,
+                dto.RequestDeviceIdentifier,
+                dto.RequestIpAddress,
+                dto.RequestCountryName));
     }
 }

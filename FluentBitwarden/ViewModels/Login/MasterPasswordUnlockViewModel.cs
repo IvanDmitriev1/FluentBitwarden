@@ -1,79 +1,56 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Models;
 using FluentBitwarden.Models.Vault;
+using FluentBitwarden.Ui.Controls;
+using System.ComponentModel.DataAnnotations;
 
-namespace FluentBitwarden.ViewModels;
+namespace FluentBitwarden.ViewModels.Login;
 
-internal partial class MasterPasswordUnlockViewModel : ObservableObject
+public sealed partial class MasterPasswordUnlockViewModel(LoginPageViewModel parentViewModel, IVaultService vaultService) : ObservableValidator, ILoginUnlockMethod
 {
-    private readonly IVaultService _vaultService;
+    public string Title => "Unlock with master password";
+    public string Description => string.Empty;
 
-    public MasterPasswordUnlockViewModel(
-        LoginPageViewModel parentViewModel,
-        IVaultService vaultService)
-    {
-        ParentViewModel = parentViewModel;
-        _vaultService = vaultService;
-        Method = new LoginUnlockMethodItem(
-            LoginUnlockMethod.MasterPassword,
-            "Unlock with master password",
-            string.Empty,
-            true,
-            "Master password",
-            "Unlock with master password",
-            UnlockCommandCommand);
-    }
+    private VaultUnlockOutcome.InvalidCredentials? _invalidCredentials;
 
-    public LoginPageViewModel ParentViewModel { get; }
-    public LoginUnlockMethodItem Method { get; }
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Required(ErrorMessage = "Enter your master password.")]
+    [CustomValidation(typeof(MasterPasswordUnlockViewModel), nameof(ValidateMasterPassword))]
+    public partial string MasterPassword { get; set; } = string.Empty;
+
+    public ValidatableProperty MasterPasswordValidation
+        => field ??= ValidatableProperty.Create(this, static state => state.MasterPassword);
 
     [RelayCommand(AllowConcurrentExecutions = false)]
-    private Task UnlockCommandAsync() => TryUnlockAsync();
-
-    internal Task TryUnlockAsync(CancellationToken cancellationToken = default)
+    private async Task Unlock()
     {
-        ParentViewModel.ClearStatus();
-
-        if (!Method.IsAvailable)
+        var outcome = await vaultService.UnlockAsync(MasterPassword);
+        if (outcome is VaultUnlockOutcome.InvalidCredentials invalidCredentials)
         {
-            ParentViewModel.ShowError("This session cannot be unlocked with the master password.");
-            return Task.CompletedTask;
+            _invalidCredentials = invalidCredentials;
+            ValidateAllProperties();
+            return;
         }
 
-        if (!Method.TryValidateForSubmit())
-        {
-            return Task.CompletedTask;
-        }
-
-        return UnlockCoreAsync(Method.SecretInput, cancellationToken);
+        parentViewModel.HandleUnlockOutcomeAsync(outcome);
     }
 
-    private async Task UnlockCoreAsync(string masterPassword, CancellationToken cancellationToken)
+    public static ValidationResult? ValidateMasterPassword(string? value, ValidationContext context)
     {
-        bool wasInitialized = ParentViewModel.HasInitializedLocalUnlock;
+        MasterPasswordUnlockViewModel vm = (MasterPasswordUnlockViewModel)context.ObjectInstance;
 
-        try
+        if (vm._invalidCredentials is null)
         {
-            await ParentViewModel.RunBusyAsync(async () =>
-            {
-                VaultUnlockOutcome outcome = await _vaultService
-                    .UnlockAsync(masterPassword, cancellationToken)
-                    .ConfigureAwait(true);
+            return ValidationResult.Success;
+        }
 
-                await ParentViewModel.HandleUnlockOutcomeAsync(outcome, recommendUnlockSetup: !wasInitialized).ConfigureAwait(true);
-            }).ConfigureAwait(true);
-        }
-        catch (Exception ex)
-        {
-            ParentViewModel.ShowError(ex.Message);
-        }
+        var error = new ValidationResult(vm._invalidCredentials.Message);
+        vm._invalidCredentials = null;
+        vm.ClearErrors();
+
+        return error;
     }
-
-    public void SetAvailability(bool isAvailable)
-        => Method.SetAvailability(isAvailable);
-
-    public void Reset()
-        => Method.Reset();
 }

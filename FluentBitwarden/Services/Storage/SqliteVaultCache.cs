@@ -13,12 +13,12 @@ internal sealed class SqliteVaultCache(
     public ValueTask SaveSyncAsync(EncryptedSyncSnapshot snapshot, CancellationToken cancellationToken = default)
         => snapshotWriteStore.SaveSyncAsync(snapshot, cancellationToken);
 
-    public ValueTask<IReadOnlyList<EncryptedCipherRecord>> ListCiphersAsync(
+    public ValueTask<IReadOnlyList<CipherSyncItem>> ListCiphersAsync(
         string accountId,
         CancellationToken cancellationToken = default)
         => cipherReadStore.ListByAccountAsync(accountId, cancellationToken);
 
-    public ValueTask<EncryptedCipherRecord?> GetCipherAsync(
+    public ValueTask<CipherSyncItem?> GetCipherAsync(
         string accountId,
         string id,
         CancellationToken cancellationToken = default)

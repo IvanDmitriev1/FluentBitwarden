@@ -78,9 +78,20 @@ internal sealed class SqliteVaultSnapshotWriteStore(IVaultDbConnectionFactory co
 
             if (snapshot.Ciphers.Count > 0)
             {
+                CipherWriteRow[] cipherRows = [.. snapshot.Ciphers.Select(cipher => new CipherWriteRow(
+                    accountId,
+                    cipher.Id,
+                    cipher.Type,
+                    cipher.OrganizationId,
+                    cipher.FolderId,
+                    cipher.CollectionIdsJson,
+                    cipher.RevisionDate,
+                    cipher.EncryptedPayload,
+                    snapshot.SyncState.LastSyncUtc))];
+
                 await connection.ExecuteAsync(new CommandDefinition(
                     insertCipher,
-                    snapshot.Ciphers,
+                    cipherRows,
                     transaction,
                     cancellationToken: cancellationToken)).ConfigureAwait(false);
             }
@@ -92,9 +103,16 @@ internal sealed class SqliteVaultSnapshotWriteStore(IVaultDbConnectionFactory co
 
             if (snapshot.Folders.Count > 0)
             {
+                FolderWriteRow[] folderRows = [.. snapshot.Folders.Select(folder => new FolderWriteRow(
+                    accountId,
+                    folder.Id,
+                    folder.RevisionDate,
+                    folder.EncryptedPayload,
+                    snapshot.SyncState.LastSyncUtc))];
+
                 await connection.ExecuteAsync(new CommandDefinition(
                     insertFolder,
-                    snapshot.Folders,
+                    folderRows,
                     transaction,
                     cancellationToken: cancellationToken)).ConfigureAwait(false);
             }
@@ -106,9 +124,16 @@ internal sealed class SqliteVaultSnapshotWriteStore(IVaultDbConnectionFactory co
 
             if (snapshot.Collections.Count > 0)
             {
+                CollectionWriteRow[] collectionRows = [.. snapshot.Collections.Select(collection => new CollectionWriteRow(
+                    accountId,
+                    collection.Id,
+                    collection.RevisionDate,
+                    collection.EncryptedPayload,
+                    snapshot.SyncState.LastSyncUtc))];
+
                 await connection.ExecuteAsync(new CommandDefinition(
                     insertCollection,
-                    snapshot.Collections,
+                    collectionRows,
                     transaction,
                     cancellationToken: cancellationToken)).ConfigureAwait(false);
             }
@@ -167,4 +192,29 @@ internal sealed class SqliteVaultSnapshotWriteStore(IVaultDbConnectionFactory co
             throw;
         }
     }
+
+    private sealed record CipherWriteRow(
+        string AccountId,
+        string Id,
+        int Type,
+        string? OrganizationId,
+        string? FolderId,
+        string CollectionIdsJson,
+        DateTimeOffset? RevisionDate,
+        byte[] EncryptedPayload,
+        DateTimeOffset UpdatedUtc);
+
+    private sealed record FolderWriteRow(
+        string AccountId,
+        string Id,
+        DateTimeOffset? RevisionDate,
+        byte[] EncryptedPayload,
+        DateTimeOffset UpdatedUtc);
+
+    private sealed record CollectionWriteRow(
+        string AccountId,
+        string Id,
+        DateTimeOffset? RevisionDate,
+        byte[] EncryptedPayload,
+        DateTimeOffset UpdatedUtc);
 }

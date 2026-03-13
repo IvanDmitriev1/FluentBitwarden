@@ -27,7 +27,12 @@ internal sealed class VaultService(
     public async ValueTask<VaultSessionState> GetSessionStateAsync(CancellationToken cancellationToken = default)
     {
         StoredSessionInfo? session = await sessionManager.GetStoredSessionAsync(cancellationToken).ConfigureAwait(false);
-        return VaultSessionStateFactory.Create(session);
+        return session switch
+        {
+            null => new VaultSessionState.NoSession(),
+            { IsLocked: true } => new VaultSessionState.Locked(session),
+            _ => new VaultSessionState.Unlocked(session),
+        };
     }
 
     public ValueTask AdoptAuthenticationAsync(
@@ -128,7 +133,7 @@ internal sealed class VaultService(
 
         try
         {
-            IReadOnlyList<EncryptedCipherRecord> records = await vaultCache
+            IReadOnlyList<CipherSyncItem> records = await vaultCache
                 .ListCiphersAsync(session.AccountId, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -172,7 +177,7 @@ internal sealed class VaultService(
 
         try
         {
-            EncryptedCipherRecord? record = await vaultCache
+            CipherSyncItem? record = await vaultCache
                 .GetCipherAsync(session.AccountId, id, cancellationToken)
                 .ConfigureAwait(false);
 

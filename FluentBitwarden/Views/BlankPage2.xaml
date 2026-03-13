@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentBitwarden.Views.BlankPage2"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="using:FluentBitwarden.Ui.Behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:local="using:FluentBitwarden.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <interactivity:Interaction.Behaviors>
+        <behaviors:PageLifecycleBehavior />
+    </interactivity:Interaction.Behaviors>
+
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel>
+            <Button Command="{x:Bind ViewModel.NavigateToPag1Command}" Content="To page 1" />
+            <Button Command="{x:Bind ViewModel.NavigateToPag1CleanCommand}" Content="Clean to page 1" />
+        </StackPanel>
+    </Grid>
+</Page>

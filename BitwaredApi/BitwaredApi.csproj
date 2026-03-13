@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
     <RootNamespace>BitwaredApi</RootNamespace>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <TrimMode>full</TrimMode>
   </PropertyGroup>
 
   <ItemGroup>
