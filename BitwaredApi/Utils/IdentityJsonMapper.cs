@@ -8,11 +8,11 @@ namespace BitwaredApi.Utils;
 
 internal static class IdentityJsonMapper
 {
-    public static PreloginResponseModel ToPreloginResponse(PreloginResponseDto dto)
+    public static PreloginResponseModel ToPreloginResponse(this PreloginResponseDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
-        if (dto.KdfSettings is { KdfType: int nestedType, Iterations: int nestedIterations } nested)
+        if (dto.KdfSettings is { KdfType: { } nestedType, Iterations: { } nestedIterations } nested)
         {
             return new PreloginResponseModel(
                 new KdfConfigModel(
@@ -22,7 +22,7 @@ internal static class IdentityJsonMapper
                     nested.Parallelism));
         }
 
-        if (dto.Kdf is int type && dto.KdfIterations is int iterations)
+        if (dto is { Kdf: { } type, KdfIterations: { } iterations })
         {
             return new PreloginResponseModel(
                 new KdfConfigModel(
@@ -35,7 +35,7 @@ internal static class IdentityJsonMapper
         throw new ServerVersionMismatchException("Prelogin response did not include KDF settings.");
     }
 
-    public static TokenResponseModel ToTokenResponse(TokenSuccessResponseDto dto, DateTimeOffset issuedAtUtc)
+    public static TokenResponseModel ToTokenResponse(this TokenSuccessResponseDto dto, DateTimeOffset issuedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
@@ -45,7 +45,7 @@ internal static class IdentityJsonMapper
         int expiresIn = FirstNonNull(dto.ExpiresIn, dto.ExpiresInPascal) ?? 900;
 
         KdfConfigModel? kdf = null;
-        if (dto.Kdf is int kdfType)
+        if (dto.Kdf is { } kdfType)
         {
             kdf = new KdfConfigModel(
                 (KdfType)kdfType,
@@ -83,10 +83,8 @@ internal static class IdentityJsonMapper
             userDecryptionOptions);
     }
 
-    public static TokenExchangeOutcome ToTokenFailureOutcome(TokenFailureResponseDto dto)
+    public static TokenExchangeOutcome ToTokenFailureOutcome(this TokenFailureResponseDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-
         string? error = dto.Error;
         string? description = FirstNonEmpty(dto.ErrorDescription, dto.ErrorDescriptionPascal);
 
@@ -133,7 +131,7 @@ internal static class IdentityJsonMapper
 
     private static KdfConfigModel ToRequiredKdfConfig(KdfSettingsDto? dto, string errorMessage)
     {
-        if (dto is not { KdfType: int type, Iterations: int iterations })
+        if (dto is not { KdfType: { } type, Iterations: { } iterations })
         {
             throw new ServerVersionMismatchException(errorMessage);
         }

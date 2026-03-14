@@ -1,27 +1,14 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using BitwaredApi.Abstractions.Exceptions;
-using BitwaredApi.Crypto.Enc;
 using BitwaredApi.Models.Auth;
+using BitwaredApi.Services;
 using BitwaredApi.Utils;
 
 namespace BitwaredApi.Utils;
 
 internal static class AuthenticationWorkflowFactory
 {
-    public static PasswordSignInOutcome.TwoFactorRequired CreateTwoFactorRequired(
-        string email,
-        KdfConfigModel kdf,
-        MasterPasswordAuth auth,
-        TwoFactorChallenge challenge,
-        ref bool continuationReturned)
-    {
-        continuationReturned = true;
-        return new PasswordSignInOutcome.TwoFactorRequired(
-            challenge,
-            new PasswordSignInContinuation(email, kdf, auth));
-    }
-
     public static AuthenticationSuccess CreateAuthenticationSuccess(
         BitwardenEnvironment environment,
         string email,
@@ -75,7 +62,7 @@ internal static class AuthenticationWorkflowFactory
             decryptedUserKey);
     }
 
-    public static string GetMasterPasswordEncryptedUserKey(TokenResponseModel response)
+    public static string GetMasterPasswordEncryptedUserKey(this TokenResponseModel response)
         => response.Key
             ?? response.UserDecryptionOptions?.MasterPasswordUnlock?.MasterKeyEncryptedUserKey
             ?? throw new ServerVersionMismatchException("The identity token response did not include a master-password wrapped user key.");

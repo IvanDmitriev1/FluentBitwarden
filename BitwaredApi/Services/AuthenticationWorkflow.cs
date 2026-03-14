@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using BitwaredApi.Abstractions;
 using BitwaredApi.Abstractions.Exceptions;
-using BitwaredApi.Crypto.Enc;
 using BitwaredApi.Models.Auth;
 using BitwaredApi.Models.Vault;
 using BitwaredApi.Utils;
@@ -114,8 +113,8 @@ internal sealed class AuthenticationWorkflow(
         }
         finally
         {
-            cryptoService.ZeroMemory(publicKey);
-            cryptoService.ZeroMemory(privateKey);
+            CryptographicOperations.ZeroMemory(publicKey);
+            CryptographicOperations.ZeroMemory(privateKey);
         }
     }
 
@@ -159,12 +158,10 @@ internal sealed class AuthenticationWorkflow(
         PreloginResponseModel prelogin,
         CancellationToken cancellationToken)
     {
-        MasterPasswordAuth auth = cryptoService.DeriveMasterPasswordAuth(
+        MasterPasswordAuth? auth = cryptoService.DeriveMasterPasswordAuth(
             request.Email,
             request.MasterPassword,
             prelogin.Kdf);
-
-        bool continuationReturned = false;
 
         try
         {
@@ -181,34 +178,43 @@ internal sealed class AuthenticationWorkflow(
                 tokenRequest,
                 cancellationToken);
 
-            return exchangeOutcome switch
+            switch (exchangeOutcome)
             {
-                TokenExchangeOutcome.Success success => new PasswordSignInOutcome.Success(
-                    await CreatePasswordAuthenticationSuccessAsync(
-                        request.Context,
-                        request.Email,
-                        prelogin.Kdf,
-                        auth,
-                        success.Response)),
-                TokenExchangeOutcome.TwoFactorRequired twoFactorRequired => AuthenticationWorkflowFactory.CreateTwoFactorRequired(
-                    request.Email,
-                    prelogin.Kdf,
-                    auth,
-                    twoFactorRequired.Challenge,
-                    ref continuationReturned),
-                TokenExchangeOutcome.InvalidCredentials invalidCredentials => new PasswordSignInOutcome.InvalidCredentials(
-                    invalidCredentials.Message),
-                TokenExchangeOutcome.DeviceVerificationRequired deviceVerificationRequired => new PasswordSignInOutcome.DeviceVerificationRequired(
-                    deviceVerificationRequired.Message),
-                _ => throw new ServerVersionMismatchException("The token endpoint returned an unsupported authentication outcome."),
-            };
+                case TokenExchangeOutcome.Success success:
+                    return new PasswordSignInOutcome.Success(
+                        await CreatePasswordAuthenticationSuccessAsync(
+                            request.Context,
+                            request.Email,
+                            prelogin.Kdf,
+                            auth,
+                            success.Response));
+
+                case TokenExchangeOutcome.TwoFactorRequired twoFactorRequired:
+                    MasterPasswordAuth continuationAuth = auth;
+                    auth = null;
+
+                    return new PasswordSignInOutcome.TwoFactorRequired(
+                        twoFactorRequired.Challenge,
+                        new PasswordSignInContinuation(
+                            request.Email,
+                            prelogin.Kdf,
+                            continuationAuth));
+
+                case TokenExchangeOutcome.InvalidCredentials invalidCredentials:
+                    return new PasswordSignInOutcome.InvalidCredentials(
+                        invalidCredentials.Message);
+
+                case TokenExchangeOutcome.DeviceVerificationRequired deviceVerificationRequired:
+                    return new PasswordSignInOutcome.DeviceVerificationRequired(
+                        deviceVerificationRequired.Message);
+
+                default:
+                    throw new ServerVersionMismatchException("The token endpoint returned an unsupported authentication outcome.");
+            }
         }
         finally
         {
-            if (!continuationReturned)
-            {
-                ZeroMasterPasswordAuth(auth);
-            }
+            auth?.Dispose();
         }
     }
 
@@ -223,8 +229,9 @@ internal sealed class AuthenticationWorkflow(
 
         try
         {
+            using EncString encryptedUserKey = EncString.From(approval.EncryptedUserKey);
             userKey = cryptoService.DecryptRsaWrappedKey(
-                new EncString(approval.EncryptedUserKey),
+                encryptedUserKey,
                 continuation.PrivateKeyPkcs8);
 
             PasswordTokenRequestModel tokenRequest = new(
@@ -259,7 +266,7 @@ internal sealed class AuthenticationWorkflow(
         }
         finally
         {
-            cryptoService.ZeroMemory(userKey);
+            CryptographicOperations.ZeroMemory(userKey);
         }
     }
 
@@ -270,13 +277,14 @@ internal sealed class AuthenticationWorkflow(
         MasterPasswordAuth auth,
         TokenResponseModel response)
     {
-        string encryptedUserKey = AuthenticationWorkflowFactory.GetMasterPasswordEncryptedUserKey(response);
+        string encryptedUserKey = response.GetMasterPasswordEncryptedUserKey();
         byte[]? userKey = null;
 
         try
         {
+            using var wrappedUserKey = EncString.From(encryptedUserKey);
             userKey = cryptoService.DecryptUserKey(
-                new EncString(encryptedUserKey),
+                wrappedUserKey,
                 auth.StretchedMasterKey);
 
             AuthenticationSuccess success = AuthenticationWorkflowFactory.CreateAuthenticationSuccess(
@@ -292,13 +300,8 @@ internal sealed class AuthenticationWorkflow(
         }
         finally
         {
-            cryptoService.ZeroMemory(userKey);
+            CryptographicOperations.ZeroMemory(userKey);
         }
     }
 
-    private void ZeroMasterPasswordAuth(MasterPasswordAuth auth)
-    {
-        cryptoService.ZeroMemory(auth.MasterKey);
-        cryptoService.ZeroMemory(auth.StretchedMasterKey);
-    }
 }

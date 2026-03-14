@@ -1,3 +1,4 @@
+using System.Net.Http;
 using BitwaredApi.Abstractions;
 using BitwaredApi.Models.Auth;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,6 +11,8 @@ namespace FluentBitwarden.ViewModels.Setup;
 
 public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
 {
+    private const string NetworkUnavailableMessage = "The Bitwarden service could not be reached.";
+
     private readonly IVaultService _vaultService;
     private readonly INavigationService _navigationService;
     private readonly INotificationService _notificationService;
@@ -89,6 +92,8 @@ public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
 
     public void ShowError(Exception exception)
     {
-        ShowError(exception.Message);
+        ArgumentNullException.ThrowIfNull(exception);
+
+        ShowError(exception is HttpRequestException ? NetworkUnavailableMessage : exception.Message);
     }
 }

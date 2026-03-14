@@ -25,5 +25,4 @@ public sealed record DecryptedCipher(
     IReadOnlyList<DecryptedCustomField> Fields,
     string? FolderId,
     string? OrganizationId,
-    DateTimeOffset? RevisionDate,
-    bool HasDecryptionError = false);
+    DateTimeOffset? RevisionDate);

@@ -11,15 +11,9 @@ internal interface ICryptoService
         KdfConfigModel kdfConfig,
         string? kdfSalt = null);
 
-    byte[] DecryptUserKey(EncString encryptedUserKey, byte[] stretchedMasterKey);
-
-    byte[] DecryptRsaWrappedKey(EncString encryptedUserKey, byte[] privateKeyPkcs8);
-
-    byte[]? UnwrapKey(EncString? encryptedKey, byte[] wrappingKey);
-
-    string? DecryptString(EncString? encryptedValue, byte[] key);
-
-    string CreateFingerprintPhrase(string email, byte[] publicKey);
-
-    void ZeroMemory(byte[]? buffer);
+    byte[] DecryptUserKey(EncString encryptedUserKey, ReadOnlySpan<byte> stretchedMasterKey);
+    byte[] DecryptRsaWrappedKey(EncString encryptedUserKey, ReadOnlySpan<byte> privateKeyPkcs8);
+    byte[] UnwrapKey(EncString encryptedKey, ReadOnlySpan<byte> wrappingKey);
+    string DecryptString(EncString encryptedValue, ReadOnlySpan<byte> key);
+    string CreateFingerprintPhrase(string email, ReadOnlySpan<byte> publicKey);
 }

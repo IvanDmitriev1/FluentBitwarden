@@ -98,9 +98,7 @@ public sealed class PasswordSignInContinuation : IDisposable
         }
 
         _disposed = true;
-
-        CryptographicOperations.ZeroMemory(Auth.MasterKey);
-        CryptographicOperations.ZeroMemory(Auth.StretchedMasterKey);
+        Auth.Dispose();
     }
 }
 

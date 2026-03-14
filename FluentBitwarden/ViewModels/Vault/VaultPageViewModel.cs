@@ -63,6 +63,11 @@ public sealed partial class VaultPageViewModel : ObservableObject, IPageLifecycl
                     }
                     break;
 
+                case VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.DecryptionFailed decryptionFailed:
+                    Ciphers.Clear();
+                    //ShowError(decryptionFailed.Message);
+                    break;
+
                 case VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Locked locked:
                     _navigationService.Navigate<LoginPage>(clearBackStack: true);
                     break;
@@ -80,10 +85,6 @@ public sealed partial class VaultPageViewModel : ObservableObject, IPageLifecycl
                 default:
                     throw new InvalidOperationException("Unsupported vault read outcome.");
             }
-        }
-        catch (Exception ex)
-        {
-            //ShowError(ex.Message);
         }
         finally
         {

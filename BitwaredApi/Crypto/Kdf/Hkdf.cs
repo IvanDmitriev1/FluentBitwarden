@@ -1,23 +1,17 @@
+using System.Security.Cryptography;
 using System.Text;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
+using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwaredApi.Crypto.Kdf;
 
 internal static class Hkdf
 {
-    public static byte[] Expand(ReadOnlySpan<byte> inputKeyMaterial, string info, int outputLength)
+    public static void Expand(ReadOnlySpan<byte> inputKeyMaterial, ReadOnlySpan<char> info, Span<byte> destination)
     {
-        return Expand(inputKeyMaterial, Encoding.UTF8.GetBytes(info), outputLength);
-    }
+        int infoByteCount = Encoding.UTF8.GetByteCount(info);
+        Span<byte> infoBytes = stackalloc byte[infoByteCount];
 
-    public static byte[] Expand(ReadOnlySpan<byte> inputKeyMaterial, ReadOnlySpan<byte> info, int outputLength)
-    {
-        byte[] output = new byte[outputLength];
-        HkdfBytesGenerator generator = new(new Sha256Digest());
-        generator.Init(HkdfParameters.SkipExtractParameters(inputKeyMaterial.ToArray(), info.ToArray()));
-        generator.GenerateBytes(output, 0, output.Length);
-        return output;
+        Encoding.UTF8.GetBytes(info, infoBytes);
+        HKDF.Expand(HashAlgorithmName.SHA256, inputKeyMaterial, destination, infoBytes);
     }
 }

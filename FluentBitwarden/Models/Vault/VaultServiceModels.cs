@@ -37,6 +37,7 @@ public abstract record VaultReadOutcome<T>
     private VaultReadOutcome() { }
 
     public sealed record Success(T Value) : VaultReadOutcome<T>;
+    public sealed record DecryptionFailed(string Message) : VaultReadOutcome<T>;
     public sealed record Locked(string Message) : VaultReadOutcome<T>;
     public sealed record NoCachedData(string Message) : VaultReadOutcome<T>;
     public sealed record Unavailable(string Message) : VaultReadOutcome<T>;

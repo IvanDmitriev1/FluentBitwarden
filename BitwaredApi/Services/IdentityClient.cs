@@ -16,30 +16,22 @@ internal sealed class IdentityClient(HttpClient httpClient) : IIdentityClient
         string email,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            using HttpResponseMessage response = await httpClient.PostAsJsonAsync(
-                environment.IdentityBase.AppendRelativePath("/accounts/prelogin"),
-                new PreloginRequestDto
-                {
-                    Email = email,
-                },
-                BitwaredApiJsonContext.Default.PreloginRequestDto,
-                cancellationToken);
+        using var response = await httpClient.PostAsJsonAsync(
+            environment.IdentityBase.AppendRelativePath("/accounts/prelogin"),
+            new PreloginRequestDto
+            {
+                Email = email,
+            },
+            BitwaredApiJsonContext.Default.PreloginRequestDto,
+            cancellationToken);
 
-            await response.EnsureBitwaredSuccessAsync("Identity endpoint", cancellationToken);
+        await response.EnsureBitwaredSuccessAsync("Identity endpoint", cancellationToken);
 
-            PreloginResponseDto? payload = await response.Content.ReadFromJsonAsync(
-                BitwaredApiJsonContext.Default.PreloginResponseDto,
-                cancellationToken);
+        PreloginResponseDto? payload = await response.Content.ReadFromJsonAsync(
+            BitwaredApiJsonContext.Default.PreloginResponseDto,
+            cancellationToken);
 
-            return IdentityJsonMapper.ToPreloginResponse(
-                payload ?? throw new ServerVersionMismatchException("Identity prelogin response was empty."));
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new NetworkUnavailableException(innerException: ex);
-        }
+        return (payload ?? throw new ServerVersionMismatchException("Identity prelogin response was empty.")).ToPreloginResponse();
     }
 
     public ValueTask<TokenExchangeOutcome> ExchangePasswordAsync(
@@ -59,34 +51,25 @@ internal sealed class IdentityClient(HttpClient httpClient) : IIdentityClient
         TokenRequestModel request,
         CancellationToken cancellationToken)
     {
-        using FormUrlEncodedContent form = new(request.ToFormValues());
+        using var form = new FormUrlEncodedContent(request.ToFormValues());
 
-        try
+        using HttpResponseMessage response = await httpClient.PostAsync(
+            environment.IdentityBase.AppendRelativePath("/connect/token"),
+            form,
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
         {
-            using HttpResponseMessage response = await httpClient.PostAsync(
-                environment.IdentityBase.AppendRelativePath("/connect/token"),
-                form,
-                cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string body = await response.Content.ReadAsStringAsync(cancellationToken);
-                return ReadTokenFailure(body, response.StatusCode);
-            }
-
-            TokenSuccessResponseDto? payload = await response.Content.ReadFromJsonAsync(
-                BitwaredApiJsonContext.Default.TokenSuccessResponseDto,
-                cancellationToken);
-
-            return new TokenExchangeOutcome.Success(
-                IdentityJsonMapper.ToTokenResponse(
-                    payload ?? throw new ServerVersionMismatchException("Identity token response was empty."),
-                    DateTimeOffset.UtcNow));
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return ReadTokenFailure(body, response.StatusCode);
         }
-        catch (HttpRequestException ex)
-        {
-            throw new NetworkUnavailableException(innerException: ex);
-        }
+
+        TokenSuccessResponseDto? payload = await response.Content.ReadFromJsonAsync(
+            BitwaredApiJsonContext.Default.TokenSuccessResponseDto,
+            cancellationToken);
+
+        return new TokenExchangeOutcome.Success(
+            (payload ?? throw new ServerVersionMismatchException("Identity token response was empty.")).ToTokenResponse(DateTimeOffset.UtcNow));
     }
 
     private static TokenExchangeOutcome ReadTokenFailure(string body, HttpStatusCode statusCode)
@@ -101,7 +84,7 @@ internal sealed class IdentityClient(HttpClient httpClient) : IIdentityClient
 
                 if (payload is not null)
                 {
-                    return IdentityJsonMapper.ToTokenFailureOutcome(payload);
+                    return payload.ToTokenFailureOutcome();
                 }
             }
             catch (System.Text.Json.JsonException ex)

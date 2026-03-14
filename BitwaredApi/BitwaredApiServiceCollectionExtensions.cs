@@ -1,5 +1,4 @@
 using BitwaredApi.Abstractions;
-using BitwaredApi.Crypto.Enc;
 using BitwaredApi.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;

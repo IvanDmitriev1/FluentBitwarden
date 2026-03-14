@@ -1,11 +1,11 @@
 using System.Net.Http;
 using System.Security.Cryptography;
 using BitwaredApi.Abstractions;
-using BitwaredApi.Abstractions.Exceptions;
 using BitwaredApi.Models.Auth;
 using BitwaredApi.Models.Vault;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Abstractions.UnlockServices;
+using FluentBitwarden.Extensions;
 using FluentBitwarden.Models.Session;
 using FluentBitwarden.Models.Vault;
 
@@ -96,13 +96,9 @@ internal sealed class VaultService(
                 _ => throw new InvalidOperationException("Unsupported vault sync result."),
             };
         }
-        catch (NetworkUnavailableException ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            return new VaultSyncOutcome.Offline(FormatOfflineMessage(ex));
-        }
         catch (HttpRequestException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            return new VaultSyncOutcome.Offline(FormatOfflineMessage(ex));
+            return new VaultSyncOutcome.Offline(ex.ToOfflineVaultMessage());
         }
     }
 
@@ -137,9 +133,10 @@ internal sealed class VaultService(
                 .ListCiphersAsync(session.AccountId, cancellationToken)
                 .ConfigureAwait(false);
 
-            IReadOnlyList<DecryptedCipher> ciphers = vaultDataService.DecryptCiphers(records, userKey);
+            VaultDecryptionOutcome<IReadOnlyList<DecryptedCipher>> decryptOutcome =
+                vaultDataService.DecryptCiphers(records, userKey);
 
-            return new VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Success(ciphers);
+            return decryptOutcome.ToVaultReadOutcome();
         }
         finally
         {
@@ -181,8 +178,13 @@ internal sealed class VaultService(
                 .GetCipherAsync(session.AccountId, id, cancellationToken)
                 .ConfigureAwait(false);
 
-            return new VaultReadOutcome<DecryptedCipher?>.Success(
-                record is null ? null : vaultDataService.DecryptCipher(record, userKey));
+            if (record is null)
+            {
+                return new VaultReadOutcome<DecryptedCipher?>.Success(null);
+            }
+
+            VaultDecryptionOutcome<DecryptedCipher> decryptOutcome = vaultDataService.DecryptCipher(record, userKey);
+            return decryptOutcome.ToNullableVaultReadOutcome();
         }
         finally
         {
@@ -220,7 +222,7 @@ internal sealed class VaultService(
 
             if (pinOutcome is not SessionUnlockOutcome.InvalidCredentials || !session.CanUnlockWithMasterPassword)
             {
-                return MapUnlockOutcome(pinOutcome);
+                return pinOutcome.ToVaultUnlockOutcome();
             }
         }
 
@@ -230,7 +232,7 @@ internal sealed class VaultService(
                 .UnlockAsync(session, normalizedSecret, cancellationToken)
                 .ConfigureAwait(false);
 
-            return MapUnlockOutcome(masterPasswordOutcome);
+            return masterPasswordOutcome.ToVaultUnlockOutcome();
         }
 
         return new VaultUnlockOutcome.Unavailable("This session cannot be unlocked with a secret.");
@@ -243,19 +245,4 @@ internal sealed class VaultService(
         await vaultCache.SaveSyncAsync(updated.Snapshot, cancellationToken).ConfigureAwait(false);
         return new VaultSyncOutcome.Success(updated.Summary);
     }
-
-    private static VaultUnlockOutcome MapUnlockOutcome(SessionUnlockOutcome outcome)
-        => outcome switch
-        {
-            SessionUnlockOutcome.Success => new VaultUnlockOutcome.Success(),
-            SessionUnlockOutcome.InvalidCredentials invalidCredentials => new VaultUnlockOutcome.InvalidCredentials(invalidCredentials.Message),
-            SessionUnlockOutcome.Unavailable unavailable => new VaultUnlockOutcome.Unavailable(unavailable.Message),
-            SessionUnlockOutcome.Cancelled cancelled => new VaultUnlockOutcome.Cancelled(cancelled.Message),
-            _ => throw new InvalidOperationException("Unsupported session unlock outcome."),
-        };
-
-    private static string FormatOfflineMessage(Exception exception)
-        => string.IsNullOrWhiteSpace(exception.Message)
-            ? "The vault could not reach Bitwarden. Cached data is still available offline."
-            : exception.Message;
 }

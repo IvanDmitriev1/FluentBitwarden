@@ -1,125 +1,154 @@
 using System.Security.Cryptography;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Macs;
-using Org.BouncyCastle.Crypto.Modes;
-using Org.BouncyCastle.Crypto.Paddings;
-using Org.BouncyCastle.Crypto.Parameters;
+using BitwaredApi.Models.Vault;
+using BitwaredApi.Utils;
+using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwaredApi.Crypto.Enc;
 
 internal static class AesCbcHmac
 {
-    public static byte[] Decrypt(ParsedEncString encString, ReadOnlySpan<byte> key)
-    {
-        byte[] data = Convert.FromBase64String(encString.Data);
+    private const int IvByteLength = 16;
+    private const int MacByteLength = 32;
 
-        try
+    public static byte[] Decrypt(EncStringParts encString, ReadOnlySpan<byte> key)
+    {
+        int maxPlaintextLength = CryptoEncoding.GetBase64DecodedLength(encString.Data, "EncString ciphertext");
+        byte[] plaintext = new byte[maxPlaintextLength];
+        int bytesWritten = DecryptCore(encString, key, plaintext);
+
+        if (bytesWritten == plaintext.Length)
         {
-            return encString.Type switch
-            {
-                EncStringType.AesCbc256_B64 => DecryptAesCbc(encString, data, key[..32]),
-                EncStringType.AesCbc256_HmacSha256_B64 => DecryptAesCbcHmac(encString, data, key),
-                _ => throw new CryptographicException($"Unsupported symmetric EncString type: {encString.Type}."),
-            };
+            return plaintext;
         }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(data);
-        }
+
+        byte[] trimmed = new byte[bytesWritten];
+        plaintext.AsSpan(0, bytesWritten).CopyTo(trimmed);
+        CryptographicOperations.ZeroMemory(plaintext);
+        return trimmed;
     }
 
-    private static byte[] DecryptAesCbc(ParsedEncString encString, byte[] cipherBytes, ReadOnlySpan<byte> encryptionKey)
-    {
-        ArgumentNullException.ThrowIfNull(encString.Iv);
-        byte[] iv = Convert.FromBase64String(encString.Iv);
+    public static int DecryptTo(EncStringParts encString, ReadOnlySpan<byte> key, Span<byte> destination)
+        => DecryptCore(encString, key, destination);
 
-        try
+    private static int DecryptCore(EncStringParts encString, ReadOnlySpan<byte> key, Span<byte> destination)
+    {
+        int cipherByteLength = CryptoEncoding.GetBase64DecodedLength(encString.Data, "EncString ciphertext");
+        using var cipherOwner = MemoryOwner<byte>.Allocate(cipherByteLength);
+        Span<byte> cipherBytes = cipherOwner.Span[..cipherByteLength];
+
+        _ = CryptoEncoding.DecodeBase64(encString.Data, cipherBytes, "EncString ciphertext");
+        return encString.Type switch
         {
-            return DecryptAesCbcPkcs7(cipherBytes, encryptionKey.ToArray(), iv);
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(iv);
-        }
+            EncStringType.AesCbc256_B64 => DecryptAesCbc(encString, cipherBytes, key[..32], destination),
+            EncStringType.AesCbc256_HmacSha256_B64 => DecryptAesCbcHmac(encString, cipherBytes, key, destination),
+            _ => throw new CryptographicException($"Unsupported symmetric EncString type: {encString.Type}."),
+        };
     }
 
-    private static byte[] DecryptAesCbcHmac(ParsedEncString encString, byte[] cipherBytes, ReadOnlySpan<byte> key)
+    private static int DecryptAesCbc(
+        EncStringParts encString,
+        ReadOnlySpan<byte> cipherBytes,
+        ReadOnlySpan<byte> encryptionKey,
+        Span<byte> destination)
     {
-        ArgumentNullException.ThrowIfNull(encString.Iv);
-        ArgumentNullException.ThrowIfNull(encString.Mac);
+        if (encString.Iv.IsEmpty)
+        {
+            throw new CryptographicException("EncString IV is required.");
+        }
 
+        using var ivOwner = MemoryOwner<byte>.Allocate(IvByteLength);
+        Span<byte> iv = ivOwner.Span[..IvByteLength];
+
+        if (CryptoEncoding.GetBase64DecodedLength(encString.Iv, "EncString IV") != IvByteLength)
+        {
+            throw new CryptographicException("EncString IV length was invalid.");
+        }
+
+        _ = CryptoEncoding.DecodeBase64(encString.Iv, iv, "EncString IV");
+        return DecryptAesCbcPkcs7(cipherBytes, encryptionKey, iv, destination);
+    }
+
+    private static int DecryptAesCbcHmac(
+        EncStringParts encString,
+        ReadOnlySpan<byte> cipherBytes,
+        ReadOnlySpan<byte> key,
+        Span<byte> destination)
+    {
         if (key.Length < 64)
         {
             throw new CryptographicException("A 64-byte key is required for HMAC-protected EncStrings.");
         }
 
-        byte[] iv = Convert.FromBase64String(encString.Iv);
-        byte[] mac = Convert.FromBase64String(encString.Mac);
-        byte[] macInput = new byte[iv.Length + cipherBytes.Length];
-        byte[] encryptionKey = key[..32].ToArray();
-        byte[] macKey = key[32..64].ToArray();
+        if (encString.Iv.IsEmpty || encString.Mac.IsEmpty)
+        {
+            throw new CryptographicException("EncString IV and MAC are required.");
+        }
+
+        using var fixedBufferOwner = MemoryOwner<byte>.Allocate(IvByteLength + MacByteLength + MacByteLength);
+        Span<byte> fixedBuffers = fixedBufferOwner.Span[..(IvByteLength + (2 * MacByteLength))];
+        Span<byte> iv = fixedBuffers[..IvByteLength];
+        Span<byte> mac = fixedBuffers.Slice(IvByteLength, MacByteLength);
+        Span<byte> computedMac = fixedBuffers.Slice(IvByteLength + MacByteLength, MacByteLength);
+
+        int macInputLength = IvByteLength + cipherBytes.Length;
+        using var macInputOwner = MemoryOwner<byte>.Allocate(macInputLength);
+        Span<byte> macInput = macInputOwner.Span[..macInputLength];
+
+        if (CryptoEncoding.GetBase64DecodedLength(encString.Iv, "EncString IV") != IvByteLength)
+        {
+            throw new CryptographicException("EncString IV length was invalid.");
+        }
+
+        if (CryptoEncoding.GetBase64DecodedLength(encString.Mac, "EncString MAC") != MacByteLength)
+        {
+            throw new CryptographicException("EncString MAC length was invalid.");
+        }
+
+        _ = CryptoEncoding.DecodeBase64(encString.Iv, iv, "EncString IV");
+        _ = CryptoEncoding.DecodeBase64(encString.Mac, mac, "EncString MAC");
+
+        iv.CopyTo(macInput);
+        cipherBytes.CopyTo(macInput[IvByteLength..]);
+        HMACSHA256.HashData(key[32..64], macInput, computedMac);
+
+        if (!CryptographicOperations.FixedTimeEquals(computedMac, mac))
+        {
+            throw new CryptographicException("EncString MAC validation failed.");
+        }
+
+        return DecryptAesCbcPkcs7(cipherBytes, key[..32], iv, destination);
+    }
+
+    private static int DecryptAesCbcPkcs7(
+        ReadOnlySpan<byte> cipherBytes,
+        ReadOnlySpan<byte> key,
+        ReadOnlySpan<byte> iv,
+        Span<byte> destination)
+    {
+        if (destination.Length < cipherBytes.Length)
+        {
+            throw new ArgumentException("Destination span was too small for the decrypted plaintext.", nameof(destination));
+        }
+
+        byte[] keyBytes = new byte[key.Length];
+        key.CopyTo(keyBytes);
 
         try
         {
-            Array.Copy(iv, 0, macInput, 0, iv.Length);
-            Array.Copy(cipherBytes, 0, macInput, iv.Length, cipherBytes.Length);
+            using var aes = Aes.Create();
+            aes.Key = keyBytes;
 
-            byte[] computedMac = ComputeHmacSha256(macKey, macInput);
-
-            try
+            if (!aes.TryDecryptCbc(cipherBytes, iv, destination, out int outputLength, PaddingMode.PKCS7))
             {
-                if (!CryptographicOperations.FixedTimeEquals(computedMac, mac))
-                {
-                    throw new CryptographicException("EncString MAC validation failed.");
-                }
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(computedMac);
+                throw new CryptographicException("EncString AES-CBC decryption failed.");
             }
 
-            return DecryptAesCbcPkcs7(cipherBytes, encryptionKey, iv);
+            destination[outputLength..].Clear();
+            return outputLength;
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(iv);
-            CryptographicOperations.ZeroMemory(mac);
-            CryptographicOperations.ZeroMemory(macInput);
-            CryptographicOperations.ZeroMemory(encryptionKey);
-            CryptographicOperations.ZeroMemory(macKey);
+            CryptographicOperations.ZeroMemory(keyBytes);
         }
-    }
-
-    private static byte[] ComputeHmacSha256(byte[] key, byte[] data)
-    {
-        HMac hmac = new(new Sha256Digest());
-        hmac.Init(new KeyParameter(key));
-        hmac.BlockUpdate(data, 0, data.Length);
-
-        byte[] output = new byte[hmac.GetMacSize()];
-        hmac.DoFinal(output, 0);
-        return output;
-    }
-
-    private static byte[] DecryptAesCbcPkcs7(byte[] cipherBytes, byte[] key, byte[] iv)
-    {
-        IBufferedCipher cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(new AesEngine()));
-        cipher.Init(false, new ParametersWithIV(new KeyParameter(key), iv));
-
-        byte[] output = new byte[cipher.GetOutputSize(cipherBytes.Length)];
-        int outputLength = cipher.ProcessBytes(cipherBytes, 0, cipherBytes.Length, output, 0);
-        outputLength += cipher.DoFinal(output, outputLength);
-
-        if (outputLength == output.Length)
-        {
-            return output;
-        }
-
-        byte[] trimmed = new byte[outputLength];
-        Array.Copy(output, trimmed, outputLength);
-        CryptographicOperations.ZeroMemory(output);
-        return trimmed;
     }
 }
