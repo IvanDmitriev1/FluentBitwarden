@@ -3,7 +3,7 @@ using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwaredApi.Models.Vault;
 
-public enum EncStringType : byte
+internal enum EncStringType : byte
 {
     AesCbc256_B64 = 0,
     AesCbc256_HmacSha256_B64 = 2,
@@ -13,7 +13,7 @@ public enum EncStringType : byte
     Rsa2048_OaepSha1_HmacSha256_B64 = 5,
 }
 
-public readonly ref struct EncStringParts(
+internal readonly ref struct EncStringParts(
     EncStringType type,
     ReadOnlySpan<char> data,
     ReadOnlySpan<char> iv = default,
@@ -25,7 +25,7 @@ public readonly ref struct EncStringParts(
     public ReadOnlySpan<char> Mac { get; } = mac;
 }
 
-public sealed class EncString : IDisposable
+internal sealed class EncString : IDisposable
 {
     private MemoryOwner<char>? _owner;
     private readonly int _length;

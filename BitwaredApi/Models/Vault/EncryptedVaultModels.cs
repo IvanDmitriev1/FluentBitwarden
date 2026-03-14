@@ -22,22 +22,12 @@ public sealed record CipherSyncItem(
     string? OrganizationId,
     string? FolderId,
     string CollectionIdsJson,
-    DateTimeOffset? RevisionDate,
-    byte[] EncryptedPayload);
+    DateTimeOffset? RevisionDate);
 
 public sealed record FolderSyncItem(
     string Id,
-    DateTimeOffset? RevisionDate,
-    byte[] EncryptedPayload);
+    DateTimeOffset? RevisionDate);
 
 public sealed record CollectionSyncItem(
     string Id,
-    DateTimeOffset? RevisionDate,
-    byte[] EncryptedPayload);
-
-public sealed record EncryptedSyncSnapshot(
-    VaultAccountRecord Account,
-    VaultSyncStateRecord SyncState,
-    IReadOnlyList<CipherSyncItem> Ciphers,
-    IReadOnlyList<FolderSyncItem> Folders,
-    IReadOnlyList<CollectionSyncItem> Collections);
+    DateTimeOffset? RevisionDate);

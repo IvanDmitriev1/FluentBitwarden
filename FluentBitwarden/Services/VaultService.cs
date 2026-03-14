@@ -16,7 +16,9 @@ internal sealed class VaultService(
     ISessionManager sessionManager,
     IMasterPasswordUnlockService masterPasswordUnlockService,
     IPinUnlockService pinUnlockService,
-    IVaultDataService vaultDataService)
+    IVaultSyncService vaultSyncService,
+    ICipherPayloadDecryptor cipherPayloadDecryptor,
+    IVaultSyncWriter vaultSyncWriter)
     : IVaultService
 {
     private const string NoStoredSessionMessage = "No persisted Bitwarden session is available.";
@@ -75,7 +77,7 @@ internal sealed class VaultService(
                 .ConfigureAwait(false);
 
             string accessToken = await sessionManager.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
-            VaultSyncResult syncResult = await vaultDataService.SyncAsync(
+            VaultSyncResult syncResult = await vaultSyncService.SyncAsync(
                 new VaultSyncRequest(
                     session.Environment,
                     accessToken,
@@ -87,11 +89,12 @@ internal sealed class VaultService(
                     syncState?.CipherCount ?? 0,
                     syncState?.FolderCount ?? 0,
                     syncState?.CollectionCount ?? 0),
+                vaultSyncWriter,
                 cancellationToken).ConfigureAwait(false);
 
             return syncResult switch
             {
-                VaultSyncResult.Updated updated => await SaveUpdatedSnapshotAsync(updated, cancellationToken).ConfigureAwait(false),
+                VaultSyncResult.Updated updated => new VaultSyncOutcome.Success(updated.Summary),
                 VaultSyncResult.NotModified notModified => new VaultSyncOutcome.Success(notModified.Summary),
                 _ => throw new InvalidOperationException("Unsupported vault sync result."),
             };
@@ -129,14 +132,40 @@ internal sealed class VaultService(
 
         try
         {
-            IReadOnlyList<CipherSyncItem> records = await vaultCache
-                .ListCiphersAsync(session.AccountId, cancellationToken)
-                .ConfigureAwait(false);
+            List<DecryptedCipher> decrypted = [];
+            string? decryptionFailure = null;
 
-            VaultDecryptionOutcome<IReadOnlyList<DecryptedCipher>> decryptOutcome =
-                vaultDataService.DecryptCiphers(records, userKey);
+            await vaultCache.VisitCiphersAsync(
+                session.AccountId,
+                (item, payload, ct) =>
+                {
+                    VaultDecryptionOutcome<DecryptedCipher> outcome =
+                        cipherPayloadDecryptor.DecryptCipher(item, payload, userKey);
 
-            return decryptOutcome.ToVaultReadOutcome();
+                    return outcome switch
+                    {
+                        VaultDecryptionOutcome<DecryptedCipher>.Success success => AddAndContinue(success.Value),
+                        VaultDecryptionOutcome<DecryptedCipher>.Failed failed => StopWithFailure(failed.Message),
+                        _ => throw new InvalidOperationException("Unsupported vault decryption outcome."),
+                    };
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            return decryptionFailure is null
+                ? new VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.Success(decrypted)
+                : new VaultReadOutcome<IReadOnlyList<DecryptedCipher>>.DecryptionFailed(decryptionFailure);
+
+            ValueTask<bool> AddAndContinue(DecryptedCipher cipher)
+            {
+                decrypted.Add(cipher);
+                return ValueTask.FromResult(true);
+            }
+
+            ValueTask<bool> StopWithFailure(string message)
+            {
+                decryptionFailure = message;
+                return ValueTask.FromResult(false);
+            }
         }
         finally
         {
@@ -174,17 +203,43 @@ internal sealed class VaultService(
 
         try
         {
-            CipherSyncItem? record = await vaultCache
-                .GetCipherAsync(session.AccountId, id, cancellationToken)
-                .ConfigureAwait(false);
+            DecryptedCipher? decryptedCipher = null;
+            string? decryptionFailure = null;
 
-            if (record is null)
+            bool found = await vaultCache.VisitCipherAsync(
+                session.AccountId,
+                id,
+                (item, payload, ct) =>
+                {
+                    VaultDecryptionOutcome<DecryptedCipher> outcome =
+                        cipherPayloadDecryptor.DecryptCipher(item, payload, userKey);
+
+                    switch (outcome)
+                    {
+                        case VaultDecryptionOutcome<DecryptedCipher>.Success success:
+                            decryptedCipher = success.Value;
+                            break;
+
+                        case VaultDecryptionOutcome<DecryptedCipher>.Failed failed:
+                            decryptionFailure = failed.Message;
+                            break;
+
+                        default:
+                            throw new InvalidOperationException("Unsupported vault decryption outcome.");
+                    }
+
+                    return ValueTask.CompletedTask;
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            if (!found)
             {
                 return new VaultReadOutcome<DecryptedCipher?>.Success(null);
             }
 
-            VaultDecryptionOutcome<DecryptedCipher> decryptOutcome = vaultDataService.DecryptCipher(record, userKey);
-            return decryptOutcome.ToNullableVaultReadOutcome();
+            return decryptionFailure is null
+                ? new VaultReadOutcome<DecryptedCipher?>.Success(decryptedCipher)
+                : new VaultReadOutcome<DecryptedCipher?>.DecryptionFailed(decryptionFailure);
         }
         finally
         {
@@ -236,13 +291,5 @@ internal sealed class VaultService(
         }
 
         return new VaultUnlockOutcome.Unavailable("This session cannot be unlocked with a secret.");
-    }
-
-    private async ValueTask<VaultSyncOutcome> SaveUpdatedSnapshotAsync(
-        VaultSyncResult.Updated updated,
-        CancellationToken cancellationToken)
-    {
-        await vaultCache.SaveSyncAsync(updated.Snapshot, cancellationToken).ConfigureAwait(false);
-        return new VaultSyncOutcome.Success(updated.Summary);
     }
 }

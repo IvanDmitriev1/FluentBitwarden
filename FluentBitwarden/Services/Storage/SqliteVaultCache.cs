@@ -7,22 +7,21 @@ namespace FluentBitwarden.Services.Storage;
 internal sealed class SqliteVaultCache(
     IVaultCipherReadStore cipherReadStore,
     IVaultSyncStateStore syncStateStore,
-    IVaultSnapshotWriteStore snapshotWriteStore)
+    IVaultAccountClearStore clearStore)
     : IVaultCache
 {
-    public ValueTask SaveSyncAsync(EncryptedSyncSnapshot snapshot, CancellationToken cancellationToken = default)
-        => snapshotWriteStore.SaveSyncAsync(snapshot, cancellationToken);
-
-    public ValueTask<IReadOnlyList<CipherSyncItem>> ListCiphersAsync(
+    public ValueTask VisitCiphersAsync(
         string accountId,
+        Func<CipherSyncItem, Stream, CancellationToken, ValueTask<bool>> visitAsync,
         CancellationToken cancellationToken = default)
-        => cipherReadStore.ListByAccountAsync(accountId, cancellationToken);
+        => cipherReadStore.VisitByAccountAsync(accountId, visitAsync, cancellationToken);
 
-    public ValueTask<CipherSyncItem?> GetCipherAsync(
+    public ValueTask<bool> VisitCipherAsync(
         string accountId,
         string id,
+        Func<CipherSyncItem, Stream, CancellationToken, ValueTask> visitAsync,
         CancellationToken cancellationToken = default)
-        => cipherReadStore.GetByIdAsync(accountId, id, cancellationToken);
+        => cipherReadStore.VisitByIdAsync(accountId, id, visitAsync, cancellationToken);
 
     public ValueTask<VaultSyncStateRecord?> GetSyncStateAsync(
         string accountId,
@@ -30,5 +29,5 @@ internal sealed class SqliteVaultCache(
         => syncStateStore.GetByAccountAsync(accountId, cancellationToken);
 
     public ValueTask ClearAccountAsync(string accountId, CancellationToken cancellationToken = default)
-        => snapshotWriteStore.ClearAccountAsync(accountId, cancellationToken);
+        => clearStore.ClearAccountAsync(accountId, cancellationToken);
 }

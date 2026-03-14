@@ -13,10 +13,7 @@ internal sealed class SqliteVaultDbConnectionFactory(IAppPaths paths) : IVaultDb
         Mode = SqliteOpenMode.ReadWriteCreate,
     }.ToString();
 
-    public ValueTask<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
-        => OpenConnectionCoreAsync(cancellationToken);
-
-    private async ValueTask<SqliteConnection> OpenConnectionCoreAsync(CancellationToken cancellationToken)
+    public async ValueTask<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
     {
         Batteries_V2.Init();
 

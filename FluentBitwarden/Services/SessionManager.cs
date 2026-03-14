@@ -70,7 +70,6 @@ internal sealed class SessionManager(
         finally
         {
             _gate.Release();
-            CryptographicOperations.ZeroMemory(userKey);
         }
     }
 

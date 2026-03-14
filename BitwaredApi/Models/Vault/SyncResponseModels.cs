@@ -22,9 +22,7 @@ public abstract record VaultSyncResult
 
     public sealed record NotModified(SyncSummary Summary) : VaultSyncResult;
 
-    public sealed record Updated(
-        EncryptedSyncSnapshot Snapshot,
-        SyncSummary Summary) : VaultSyncResult;
+    public sealed record Updated(SyncSummary Summary) : VaultSyncResult;
 }
 
 public sealed record SyncSummary(

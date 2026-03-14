@@ -35,7 +35,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IVaultDbConnectionFactory, SqliteVaultDbConnectionFactory>();
         services.AddSingleton<IVaultCipherReadStore, SqliteVaultCipherReadStore>();
         services.AddSingleton<IVaultSyncStateStore, SqliteVaultSyncStateStore>();
-        services.AddSingleton<IVaultSnapshotWriteStore, SqliteVaultSnapshotWriteStore>();
+        services.AddSingleton<SqliteVaultSyncWriter>();
+        services.AddSingleton<IVaultSyncWriter>(sp => sp.GetRequiredService<SqliteVaultSyncWriter>());
+        services.AddSingleton<IVaultAccountClearStore>(sp => sp.GetRequiredService<SqliteVaultSyncWriter>());
         services.AddSingleton<IVaultCache, SqliteVaultCache>();
 
         return services;

@@ -56,7 +56,7 @@ public sealed class PageLifecycleBehavior : Behavior<Page>
         }
         catch (OperationCanceledException)
         {
-
+            //
         }
         catch (Exception ex)
         {

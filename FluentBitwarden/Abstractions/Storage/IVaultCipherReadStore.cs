@@ -4,12 +4,14 @@ namespace FluentBitwarden.Abstractions.Storage;
 
 internal interface IVaultCipherReadStore
 {
-    ValueTask<IReadOnlyList<CipherSyncItem>> ListByAccountAsync(
+    ValueTask VisitByAccountAsync(
         string accountId,
+        Func<CipherSyncItem, Stream, CancellationToken, ValueTask<bool>> visitAsync,
         CancellationToken cancellationToken = default);
 
-    ValueTask<CipherSyncItem?> GetByIdAsync(
+    ValueTask<bool> VisitByIdAsync(
         string accountId,
         string id,
+        Func<CipherSyncItem, Stream, CancellationToken, ValueTask> visitAsync,
         CancellationToken cancellationToken = default);
 }

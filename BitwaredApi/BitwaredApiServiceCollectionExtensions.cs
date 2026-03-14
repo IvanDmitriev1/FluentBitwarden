@@ -16,7 +16,8 @@ public static class BitwaredApiServiceCollectionExtensions
         services.AddSingleton<IAuthenticationWorkflow, AuthenticationWorkflow>();
         services.AddSingleton<ISessionRefreshWorkflow, SessionRefreshWorkflow>();
         services.AddSingleton<IMasterPasswordUnlockWorkflow, MasterPasswordUnlockWorkflow>();
-        services.AddSingleton<IVaultDataService, VaultDataService>();
+        services.AddSingleton<IVaultSyncService, VaultSyncService>();
+        services.AddSingleton<ICipherPayloadDecryptor, CipherPayloadDecryptor>();
 
         services.AddHttpClient<IIdentityClient, IdentityClient>()
             .AddBitwaredRetryPolicy();
