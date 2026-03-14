@@ -30,6 +30,9 @@ public sealed class FrameNavigationService : INavigationService
             return;
         }
 
+        if (frame.Content is T)
+            return;
+
         var navigated = frame.Navigate(typeof(T), parameter);
 
         if (navigated && clearBackStack)

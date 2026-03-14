@@ -1,16 +1,17 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using Windows.Win32;
+using Windows.Win32.Foundation;
 using FluentBitwarden.Abstractions;
+using FluentBitwarden.Extensions;
 
 namespace FluentBitwarden.Services.Storage;
 
 public sealed class AppPaths : IAppPaths
 {
-    private const int AppModelErrorNoPackage = 15700;
-
     public AppPaths()
     {
-        IsPackaged = DetectPackaged();
+        IsPackaged = PackageHelper.IsPackaged;
         AppDataRoot = ResolveRoot();
         Directory.CreateDirectory(AppDataRoot);
 
@@ -36,38 +37,14 @@ public sealed class AppPaths : IAppPaths
         return Path.Combine(localAppData, "FluentBitwarden");
     }
 
-    private static bool DetectPackaged()
-    {
-        int length = 0;
-        int result = GetCurrentPackageFullName(ref length, null);
-        return result != AppModelErrorNoPackage;
-    }
-
     private static string ResolvePackagedRoot()
     {
-        int length = 0;
-        int result = GetCurrentPackageFamilyName(ref length, null);
-
-        if (result == AppModelErrorNoPackage)
+        if (PackageHelper.IsPackaged)
         {
             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             return Path.Combine(localAppData, "FluentBitwarden");
         }
 
-        StringBuilder builder = new(length);
-        result = GetCurrentPackageFamilyName(ref length, builder);
-        if (result != 0)
-        {
-            throw new InvalidOperationException($"GetCurrentPackageFamilyName failed with error code {result}.");
-        }
-
-        string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(root, "Packages", builder.ToString(), "LocalState");
+        return Windows.Storage.ApplicationData.Current.LocalFolder.Path;
     }
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder? packageFullName);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int GetCurrentPackageFamilyName(ref int packageFamilyNameLength, StringBuilder? packageFamilyName);
 }

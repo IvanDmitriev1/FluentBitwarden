@@ -1,0 +1,7 @@
+﻿GetCurrentPackageFullName
+GetCurrentPackageFamilyName
+
+CreateEvent
+SetEvent
+CoWaitForMultipleObjects
+SetForegroundWindow
