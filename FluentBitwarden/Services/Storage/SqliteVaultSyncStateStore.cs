@@ -22,7 +22,7 @@ internal sealed class SqliteVaultSyncStateStore(IVaultDbConnectionFactory connec
             .ConfigureAwait(false);
 
         VaultSyncStateRow? row = await connection.QuerySingleOrDefaultAsync<VaultSyncStateRow>(
-            new CommandDefinition(sql, new { AccountId = accountId }, cancellationToken: cancellationToken)).ConfigureAwait(false);
+            new CommandDefinition(sql, new AccountIdParameters(accountId), cancellationToken: cancellationToken)).ConfigureAwait(false);
 
         return row is null ? null : MapSyncStateRow(row);
     }
@@ -43,4 +43,6 @@ internal sealed class SqliteVaultSyncStateStore(IVaultDbConnectionFactory connec
         long CipherCount,
         long FolderCount,
         long CollectionCount);
+
+    private readonly record struct AccountIdParameters(string AccountId);
 }

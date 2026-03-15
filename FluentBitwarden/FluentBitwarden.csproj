@@ -19,12 +19,11 @@
 		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 		<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
 		<CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
-	</PropertyGroup>
+		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 
-  <PropertyGroup>
-	  <EnableMsixTooling>false</EnableMsixTooling>
-	  <WindowsPackageType>None</WindowsPackageType>
-  </PropertyGroup>
+		<EnableMsixTooling>true</EnableMsixTooling>
+		<!--<WindowsPackageType>None</WindowsPackageType>-->
+	</PropertyGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -39,46 +38,15 @@
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
+
   <!--
     Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
     Tools extension to be activated for this project even if the Windows App SDK Nuget
     package has not yet been restored.
   -->
-  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-    <ProjectCapability Include="Msix" />
-  </ItemGroup>
-
-  <ItemGroup>
-	  <ProjectReference Include="..\BitwaredApi\BitwaredApi.csproj" />
-  </ItemGroup>
-
-	<ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
-    <PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
-    <PackageReference Include="CommunityToolkit.WinUI.Helpers" Version="8.2.251219" />
-    <PackageReference Include="Dapper" Version="2.1.72" />
-    <PackageReference Include="DependencyPropertyGenerator" Version="1.5.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.269">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
-    <PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
-    <PackageReference Include="WinUIEx" Version="2.9.0" />
-  </ItemGroup>
+<ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+	<ProjectCapability Include="Msix" />
+</ItemGroup>
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
@@ -86,14 +54,66 @@
     the Windows App SDK Nuget package has not yet been restored.
   -->
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+	  <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
 
-  <!-- Publish Properties -->
-  <PropertyGroup>
-    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
-  </PropertyGroup>
+<ItemGroup>
+	<ProjectReference Include="..\BitwaredApi\BitwaredApi.csproj" />
+</ItemGroup>
+
+<ItemGroup>
+	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	<PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+	<PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
+	<PackageReference Include="CommunityToolkit.WinUI.Helpers" Version="8.2.251219" />
+	<PackageReference Include="Dapper" Version="2.1.72" />
+	<PackageReference Include="Dapper.AOT" Version="1.0.48" />
+	<PackageReference Include="DependencyPropertyGenerator" Version="1.5.0">
+		<PrivateAssets>all</PrivateAssets>
+		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.3" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+	<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+	<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
+	<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.269">
+		<PrivateAssets>all</PrivateAssets>
+		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
+	<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
+	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
+	<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
+	<PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
+	<PackageReference Include="WinUIEx" Version="2.9.0" />
+</ItemGroup>
+
+<!-- Publish Properties -->
+<PropertyGroup>
+	<PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+	<PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+	<PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+	<PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+	<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
+</PropertyGroup>
+
+<!-- Partial trimming still needs these roots for WinUI/XAML activation paths such as XamlControlsResources. -->
+<ItemGroup Condition="'$(PublishTrimmed)' == 'true'">
+	<TrimmerRootAssembly Include="Microsoft.WinUI" />
+	<TrimmerRootAssembly Include="WinUIEx" />
+	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
+</ItemGroup>
+
+  <Target Name="IncludeGeneratedXbfInMsixPayload" BeforeTargets="BeforeGenerateAppxPackageRecipe;_CreatePackageLayout_CalculateInputsAndOutputs" Condition="'$(WindowsPackageType)' != 'None'">
+    <ItemGroup>
+      <_GeneratedXbfForMsixPayload Include="$(TargetDir)**\*.xbf" Exclude="$(LayoutDir)\**\*;$(TargetDir)AppPackages\**\*" />
+
+      <AppxPackagePayload Include="@(_GeneratedXbfForMsixPayload)">
+        <OutputGroup>CustomOutputGroupForPackaging</OutputGroup>
+        <TargetPath>%(_GeneratedXbfForMsixPayload.RecursiveDir)%(_GeneratedXbfForMsixPayload.Filename)%(_GeneratedXbfForMsixPayload.Extension)</TargetPath>
+      </AppxPackagePayload>
+    </ItemGroup>
+  </Target>
 </Project>

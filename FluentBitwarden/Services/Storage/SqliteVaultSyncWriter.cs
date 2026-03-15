@@ -9,6 +9,12 @@ namespace FluentBitwarden.Services.Storage;
 internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connectionFactory)
     : IVaultSyncWriter, IVaultAccountClearStore
 {
+    private const string DeleteCiphersSql = "DELETE FROM Ciphers WHERE AccountId = @AccountId;";
+    private const string DeleteFoldersSql = "DELETE FROM Folders WHERE AccountId = @AccountId;";
+    private const string DeleteCollectionsSql = "DELETE FROM Collections WHERE AccountId = @AccountId;";
+    private const string DeleteSyncStateSql = "DELETE FROM SyncState WHERE AccountId = @AccountId;";
+    private const string DeleteAccountsSql = "DELETE FROM Accounts WHERE AccountId = @AccountId;";
+
     public async ValueTask<IVaultSyncWriteSession> BeginReplaceAsync(
         VaultAccountRecord account,
         CancellationToken cancellationToken = default)
@@ -48,8 +54,8 @@ internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connection
             .ConfigureAwait(false);
 
         await DeleteVaultRowsAsync(connection, transaction, accountId, cancellationToken).ConfigureAwait(false);
-        await ExecuteDeleteAsync(connection, transaction, "DELETE FROM SyncState WHERE AccountId = @AccountId;", accountId, cancellationToken).ConfigureAwait(false);
-        await ExecuteDeleteAsync(connection, transaction, "DELETE FROM Accounts WHERE AccountId = @AccountId;", accountId, cancellationToken).ConfigureAwait(false);
+        await ExecuteDeleteAsync(connection, transaction, DeleteSyncStateSql, accountId, cancellationToken).ConfigureAwait(false);
+        await ExecuteDeleteAsync(connection, transaction, DeleteAccountsSql, accountId, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -59,9 +65,9 @@ internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connection
         string accountId,
         CancellationToken cancellationToken)
     {
-        await ExecuteDeleteAsync(connection, transaction, "DELETE FROM Ciphers WHERE AccountId = @AccountId;", accountId, cancellationToken).ConfigureAwait(false);
-        await ExecuteDeleteAsync(connection, transaction, "DELETE FROM Folders WHERE AccountId = @AccountId;", accountId, cancellationToken).ConfigureAwait(false);
-        await ExecuteDeleteAsync(connection, transaction, "DELETE FROM Collections WHERE AccountId = @AccountId;", accountId, cancellationToken).ConfigureAwait(false);
+        await ExecuteDeleteAsync(connection, transaction, DeleteCiphersSql, accountId, cancellationToken).ConfigureAwait(false);
+        await ExecuteDeleteAsync(connection, transaction, DeleteFoldersSql, accountId, cancellationToken).ConfigureAwait(false);
+        await ExecuteDeleteAsync(connection, transaction, DeleteCollectionsSql, accountId, cancellationToken).ConfigureAwait(false);
     }
 
     private static ValueTask ExecuteDeleteAsync(
@@ -72,9 +78,11 @@ internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connection
         CancellationToken cancellationToken)
         => new(connection.ExecuteAsync(new CommandDefinition(
             sql,
-            new { AccountId = accountId },
+            new AccountIdParameters(accountId),
             transaction,
             cancellationToken: cancellationToken)));
+
+    private readonly record struct AccountIdParameters(string AccountId);
 
     private sealed class SqliteVaultSyncWriteSession(
         SqliteConnection connection,
@@ -82,6 +90,29 @@ internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connection
         VaultAccountRecord account)
         : IVaultSyncWriteSession
     {
+        private const string UpsertAccountSql =
+            """
+            INSERT INTO Accounts (AccountId, Email, ApiBase, IdentityBase, CreatedUtc, LastSyncUtc)
+            VALUES (@AccountId, @Email, @ApiBase, @IdentityBase, @CreatedUtc, @LastSyncUtc)
+            ON CONFLICT(AccountId) DO UPDATE SET
+                Email = excluded.Email,
+                ApiBase = excluded.ApiBase,
+                IdentityBase = excluded.IdentityBase,
+                LastSyncUtc = excluded.LastSyncUtc;
+            """;
+
+        private const string UpsertSyncStateSql =
+            """
+            INSERT INTO SyncState (AccountId, RevisionDate, LastSyncUtc, CipherCount, FolderCount, CollectionCount)
+            VALUES (@AccountId, @RevisionDate, @LastSyncUtc, @CipherCount, @FolderCount, @CollectionCount)
+            ON CONFLICT(AccountId) DO UPDATE SET
+                RevisionDate = excluded.RevisionDate,
+                LastSyncUtc = excluded.LastSyncUtc,
+                CipherCount = excluded.CipherCount,
+                FolderCount = excluded.FolderCount,
+                CollectionCount = excluded.CollectionCount;
+            """;
+
         public ValueTask WriteCipherAsync(
             CipherSyncItem item,
             ReadOnlyMemory<byte> payload,
@@ -232,24 +263,14 @@ internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connection
         private async ValueTask UpsertAccountAsync(CancellationToken cancellationToken)
         {
             await connection.ExecuteAsync(new CommandDefinition(
-                """
-                INSERT INTO Accounts (AccountId, Email, ApiBase, IdentityBase, CreatedUtc, LastSyncUtc)
-                VALUES (@AccountId, @Email, @ApiBase, @IdentityBase, @CreatedUtc, @LastSyncUtc)
-                ON CONFLICT(AccountId) DO UPDATE SET
-                    Email = excluded.Email,
-                    ApiBase = excluded.ApiBase,
-                    IdentityBase = excluded.IdentityBase,
-                    LastSyncUtc = excluded.LastSyncUtc;
-                """,
-                new
-                {
+                UpsertAccountSql,
+                new UpsertAccountParameters(
                     account.AccountId,
                     account.Email,
                     account.ApiBase,
                     account.IdentityBase,
-                    CreatedUtc = account.CreatedUtc.ToString("O"),
-                    LastSyncUtc = account.LastSyncUtc?.ToString("O"),
-                },
+                    account.CreatedUtc.ToString("O"),
+                    account.LastSyncUtc?.ToString("O")),
                 transaction,
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
         }
@@ -259,30 +280,35 @@ internal sealed class SqliteVaultSyncWriter(IVaultDbConnectionFactory connection
             CancellationToken cancellationToken)
         {
             await connection.ExecuteAsync(new CommandDefinition(
-                """
-                INSERT INTO SyncState (AccountId, RevisionDate, LastSyncUtc, CipherCount, FolderCount, CollectionCount)
-                VALUES (@AccountId, @RevisionDate, @LastSyncUtc, @CipherCount, @FolderCount, @CollectionCount)
-                ON CONFLICT(AccountId) DO UPDATE SET
-                    RevisionDate = excluded.RevisionDate,
-                    LastSyncUtc = excluded.LastSyncUtc,
-                    CipherCount = excluded.CipherCount,
-                    FolderCount = excluded.FolderCount,
-                    CollectionCount = excluded.CollectionCount;
-                """,
-                new
-                {
+                UpsertSyncStateSql,
+                new UpsertSyncStateParameters(
                     syncState.AccountId,
-                    RevisionDate = syncState.RevisionDate?.ToString("O"),
-                    LastSyncUtc = syncState.LastSyncUtc.ToString("O"),
+                    syncState.RevisionDate?.ToString("O"),
+                    syncState.LastSyncUtc.ToString("O"),
                     syncState.CipherCount,
                     syncState.FolderCount,
-                    syncState.CollectionCount,
-                },
+                    syncState.CollectionCount),
                 transaction,
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
         }
 
         private DateTimeOffset SyncUpdatedUtc => account.LastSyncUtc
             ?? throw new InvalidOperationException("Vault account sync timestamp was not provided.");
+
+        private readonly record struct UpsertAccountParameters(
+            string AccountId,
+            string Email,
+            string ApiBase,
+            string IdentityBase,
+            string CreatedUtc,
+            string? LastSyncUtc);
+
+        private readonly record struct UpsertSyncStateParameters(
+            string AccountId,
+            string? RevisionDate,
+            string LastSyncUtc,
+            int CipherCount,
+            int FolderCount,
+            int CollectionCount);
     }
 }

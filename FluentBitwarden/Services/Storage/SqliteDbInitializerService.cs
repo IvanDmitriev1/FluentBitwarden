@@ -11,6 +11,8 @@ internal sealed class SqliteDbInitializerService(
     : IDbInitializerService
 {
     private const int SchemaVersion = 2;
+    private const string ReadUserVersionSql = "PRAGMA user_version;";
+    private static readonly string SetUserVersionSql = $"PRAGMA user_version = {SchemaVersion};";
     private const string Schema = """
         CREATE TABLE IF NOT EXISTS Accounts (
             AccountId TEXT NOT NULL PRIMARY KEY,
@@ -91,7 +93,7 @@ internal sealed class SqliteDbInitializerService(
                     .ConfigureAwait(false);
 
                 long userVersion = await versionConnection.ExecuteScalarAsync<long>(
-                    new CommandDefinition("PRAGMA user_version;", cancellationToken: cancellationToken)).ConfigureAwait(false);
+                    new CommandDefinition(ReadUserVersionSql, cancellationToken: cancellationToken)).ConfigureAwait(false);
 
                 recreateDatabase = userVersion != SchemaVersion;
             }
@@ -111,7 +113,6 @@ internal sealed class SqliteDbInitializerService(
             .ConfigureAwait(false);
 
         await connection.ExecuteAsync(new CommandDefinition(Schema, cancellationToken: cancellationToken)).ConfigureAwait(false);
-        await connection.ExecuteAsync(
-            new CommandDefinition($"PRAGMA user_version = {SchemaVersion};", cancellationToken: cancellationToken)).ConfigureAwait(false);
+        await connection.ExecuteAsync(new CommandDefinition(SetUserVersionSql, cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 }

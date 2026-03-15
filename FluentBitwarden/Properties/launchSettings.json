@@ -2,6 +2,9 @@
   "profiles": {
     "FluentBitwarden (Unpackaged)": {
       "commandName": "Project"
+    },
+    "FluentBitwarden (Packaged)": {
+      "commandName": "MsixPackage"
     }
   }
 }

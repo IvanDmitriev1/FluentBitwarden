@@ -90,6 +90,15 @@ public sealed partial class LoginPageViewModel : ObservableObject, IPageLifecycl
         VaultUnlockOutcome outcome,
         bool recommendUnlockSetup = false)
     {
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            App.WriteException(e);
+        }
+
         switch (outcome)
         {
             case VaultUnlockOutcome.Success:

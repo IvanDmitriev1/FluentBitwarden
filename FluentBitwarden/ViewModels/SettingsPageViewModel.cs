@@ -12,9 +12,14 @@ using FluentBitwarden.Views.Login;
 using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.ViewModels;
 
+[UnconditionalSuppressMessage(
+    "Trimming",
+    "IL2026",
+    Justification = "ObservableValidator validation uses reflection-based metadata. Custom validators and generated validation helpers are preserved explicitly.")]
 public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycleAware
 {
     private readonly IVaultService _vaultService;
@@ -26,6 +31,11 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
     private ValidatableProperty? _pinValidation;
     private ValidatableProperty? _confirmPinValidation;
 
+    [DynamicDependency(nameof(ValidateConfirmPin), typeof(SettingsPageViewModel))]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "ObservableValidator constructs ValidationContext via reflection. This viewmodel keeps its custom validator method explicitly preserved.")]
     public SettingsPageViewModel(
         IVaultService vaultService,
         IServiceProvider serviceProvider,
@@ -68,12 +78,20 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Required(ErrorMessage = "Enter your new PIN.")]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
     public partial string Pin { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Required(ErrorMessage = "Confirm your new PIN.")]
     [CustomValidation(typeof(SettingsPageViewModel), nameof(ValidateConfirmPin))]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
     public partial string ConfirmPin { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -297,6 +315,10 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         }
     }
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Cross-field validation uses ObservableValidator.ValidateProperty intentionally for PIN confirmation.")]
     partial void OnPinChanged(string value)
         => ValidateProperty(ConfirmPin, nameof(ConfirmPin));
 
@@ -362,6 +384,10 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         ErrorMessage = message;
     }
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Resetting validation-bound properties calls generated setters that are intentionally preserved.")]
     private void ResetPinEntryState()
     {
         Pin = string.Empty;
@@ -375,6 +401,10 @@ public partial class SettingsPageViewModel : ObservableValidator, IPageLifecycle
         ClearStatus();
     }
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Full property validation is intentionally used here and the generated validator helper is preserved.")]
     public bool TryValidateForSubmit()
     {
         ShowValidationErrors = true;

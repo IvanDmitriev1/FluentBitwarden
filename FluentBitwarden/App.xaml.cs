@@ -12,6 +12,7 @@ using FluentBitwarden.Views;
 using FluentBitwarden.Views.Login;
 using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Vault;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
@@ -25,8 +26,11 @@ namespace FluentBitwarden;
 [XamlMetadataServiceProvider]
 public partial class App : Application, IXamlMetadataServiceProvider
 {
+    public new static App Current => (App)Application.Current;
+
     private static DispatcherQueue? _dispatcherQueue;
     private MainWindow? _mainWindow;
+    private StartupSplashScreen? _startupSplashScreen;
     private TrayIcon? _trayIcon;
     private bool _isInitialized;
 
@@ -58,6 +62,8 @@ public partial class App : Application, IXamlMetadataServiceProvider
 
     public App()
     {
+        ValidationTrimDependencies.Preserve();
+
         InitializeComponent();
     }
 
@@ -117,13 +123,14 @@ public partial class App : Application, IXamlMetadataServiceProvider
         _isInitialized = true;
         MainWindow mainWindow = GetMainWindow();
 
-        var splashScreen = new StartupSplashScreen(
+        _startupSplashScreen = new StartupSplashScreen(
             mainWindow,
             Host.Services);
 
-        splashScreen.Completed += async (sender, window) =>
+        _startupSplashScreen.Completed += async (sender, window) =>
         {
             await NavigateToPage();
+            _startupSplashScreen = null;
         };
     }
 
@@ -195,5 +202,40 @@ public partial class App : Application, IXamlMetadataServiceProvider
             default:
                 throw new InvalidOperationException("Unsupported vault session state.");
         }
+    }
+
+    public static void WriteException(Exception e)
+    {
+        string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string logFilePath = Path.Combine(localAppData, "FluentBitwarden", "Logs", "unhandled-exceptions.log");
+        string? logDirectory = Path.GetDirectoryName(logFilePath);
+
+        if (!string.IsNullOrWhiteSpace(logDirectory))
+        {
+            Directory.CreateDirectory(logDirectory);
+        }
+
+        File.AppendAllText(logFilePath, BuildUnhandledExceptionLogEntry(e), Encoding.UTF8);
+    }
+
+    private static string BuildUnhandledExceptionLogEntry(Exception exception)
+    {
+        StringBuilder builder = new();
+       
+
+        builder.AppendLine(new string('-', 80));
+        builder.Append("Timestamp: ").AppendLine(DateTimeOffset.Now.ToString("O"));
+        builder.AppendLine("Source: Application.UnhandledException");
+        builder.Append("Packaged: ").AppendLine(PackageHelper.IsPackaged.ToString());
+        builder.Append("ProcessId: ").AppendLine(Environment.ProcessId.ToString());
+        builder.Append("BaseDirectory: ").AppendLine(AppContext.BaseDirectory);
+
+        builder.Append("ExceptionType: ").AppendLine(exception.GetType().FullName ?? exception.GetType().Name);
+        builder.Append("ExceptionMessage: ").AppendLine(exception.Message);
+        builder.AppendLine();
+        builder.AppendLine(exception.ToString());
+
+        builder.AppendLine();
+        return builder.ToString();
     }
 }

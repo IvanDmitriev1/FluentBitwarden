@@ -1,15 +1,13 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace FluentBitwarden.Services.Storage;
 
-internal sealed class ProtectedJsonFileStore<TState>(string filePath)
+internal sealed class ProtectedJsonFileStore<TState>(
+    string filePath,
+    JsonTypeInfo<TState> jsonTypeInfo)
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = false,
-    };
-
     public async ValueTask<TState?> LoadAsync(CancellationToken cancellationToken = default)
     {
         if (!File.Exists(filePath))
@@ -25,7 +23,7 @@ internal sealed class ProtectedJsonFileStore<TState>(string filePath)
 
             try
             {
-                return JsonSerializer.Deserialize<TState>(jsonBytes, SerializerOptions);
+                return JsonSerializer.Deserialize(jsonBytes, jsonTypeInfo);
             }
             catch (JsonException)
             {
@@ -53,7 +51,7 @@ internal sealed class ProtectedJsonFileStore<TState>(string filePath)
         ArgumentNullException.ThrowIfNull(state);
 
         Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-        byte[] jsonBytes = JsonSerializer.SerializeToUtf8Bytes(state, SerializerOptions);
+        byte[] jsonBytes = JsonSerializer.SerializeToUtf8Bytes(state, jsonTypeInfo);
 
         try
         {

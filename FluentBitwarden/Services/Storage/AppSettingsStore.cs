@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using FluentBitwarden.Abstractions;
+using FluentBitwarden.Extensions;
 using FluentBitwarden.Models.Settings;
 using FluentBitwarden.Models.Vault;
 
@@ -8,10 +9,7 @@ namespace FluentBitwarden.Services.Storage;
 
 internal sealed class AppSettingsStore(IAppPaths paths) : IAppSettingsStore
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = false,
-    };
+    private static readonly FluentBitwardenJsonContext SerializerContext = FluentBitwardenJsonContext.Default;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private AppSettingsDocument? _document;
@@ -200,7 +198,9 @@ internal sealed class AppSettingsStore(IAppPaths paths) : IAppSettingsStore
 
                 try
                 {
-                    AppSettingsDocument? document = JsonSerializer.Deserialize<AppSettingsDocument>(jsonBytes, SerializerOptions);
+                    AppSettingsDocument? document = JsonSerializer.Deserialize(
+                        jsonBytes,
+                        SerializerContext.AppSettingsDocument);
                     if (document is null)
                     {
                         DeleteInvalidConfigFile();
@@ -236,7 +236,9 @@ internal sealed class AppSettingsStore(IAppPaths paths) : IAppSettingsStore
         CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(paths.ConfigFilePath)!);
-        byte[] jsonBytes = JsonSerializer.SerializeToUtf8Bytes(document, SerializerOptions);
+        byte[] jsonBytes = JsonSerializer.SerializeToUtf8Bytes(
+            document,
+            SerializerContext.AppSettingsDocument);
 
         try
         {

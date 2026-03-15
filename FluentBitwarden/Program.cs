@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;
@@ -9,7 +9,6 @@ namespace FluentBitwarden;
 public static class Program
 {
     private static Microsoft.Win32.SafeHandles.SafeFileHandle? _redirectEventHandle;
-   
 
     [STAThread]
     static int Main(string[] args)
@@ -17,10 +16,10 @@ public static class Program
         WinRT.ComWrappersSupport.InitializeComWrappers();
         bool isRedirect = DecideRedirection();
 
-        if (isRedirect) 
+        if (isRedirect)
             return 0;
 
-        Application.Start((p) =>
+        Application.Start(static (p) =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());

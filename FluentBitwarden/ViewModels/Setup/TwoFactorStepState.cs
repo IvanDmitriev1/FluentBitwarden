@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Ui.Controls;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace FluentBitwarden.ViewModels.Setup;
@@ -15,6 +16,10 @@ public sealed record TwoFactorProviderOptionModel(
     string Subtitle,
     bool IsSupported);
 
+[UnconditionalSuppressMessage(
+    "Trimming",
+    "IL2026",
+    Justification = "ObservableValidator validation uses reflection-based metadata and the generated helper is preserved explicitly.")]
 public partial class TwoFactorStepState : ObservableValidator, IDisposable
 {
     private const string DefaultPrompt = "Complete the Bitwarden two-factor challenge to continue.";
@@ -23,6 +28,10 @@ public partial class TwoFactorStepState : ObservableValidator, IDisposable
     private readonly IAuthenticationWorkflow _authenticationWorkflow;
     private PasswordSignInOutcome.TwoFactorRequired? _twoFactor;
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "ObservableValidator constructs ValidationContext via reflection for this validation-only step model.")]
     internal TwoFactorStepState(
         SetupPageViewModel shell,
         IAuthenticationWorkflow authenticationWorkflow)
@@ -37,6 +46,10 @@ public partial class TwoFactorStepState : ObservableValidator, IDisposable
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Required(ErrorMessage = "Enter the verification code.")]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
     public partial string Code { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -87,6 +100,10 @@ public partial class TwoFactorStepState : ObservableValidator, IDisposable
         EmailHint = _twoFactor.Challenge.Email ?? string.Empty;
     }
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Resetting the validation-bound code uses the generated setter intentionally.")]
     public void Clear()
     {
         _twoFactor?.Continuation.Dispose();
@@ -177,6 +194,10 @@ public partial class TwoFactorStepState : ObservableValidator, IDisposable
             or TwoFactorProviderType.Email
             or TwoFactorProviderType.RecoveryCode;
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Full property validation is intentionally used here and the generated validator helper is preserved.")]
     public bool TryValidateForSubmit()
     {
         ValidateAllProperties();
