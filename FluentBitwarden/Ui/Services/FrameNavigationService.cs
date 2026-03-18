@@ -25,10 +25,7 @@ public sealed class FrameNavigationService : INavigationService
     public void Navigate<T>(object? parameter = null, bool clearBackStack = false) where T : Page
     {
         if (_frame is null || !_frame.TryGetTarget(out var frame))
-        {
-            Debug.Fail("Frame reference is not set or has been collected.");
             return;
-        }
 
         if (frame.Content is T)
             return;

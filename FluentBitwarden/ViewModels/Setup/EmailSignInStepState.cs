@@ -49,6 +49,7 @@ public partial class EmailSignInStepState : ObservableValidator
 
     public SetupEnvironmentOption[] Environments { get; }
 
+    [field: AllowNull, MaybeNull]
     public ValidatableProperty EmailValidation
         => field ??= ValidatableProperty.Create(this, static state => state.Email);
 

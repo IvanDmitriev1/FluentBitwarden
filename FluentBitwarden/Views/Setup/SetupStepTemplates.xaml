@@ -54,7 +54,7 @@
                     <TextBox
                         Header="Email"
                         PlaceholderText="name@example.com"
-                        Text="{x:Bind Email, Mode=OneWay}" />
+                        Text="{x:Bind Email, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                 </ui:ValidatedField>
 
                 <Button

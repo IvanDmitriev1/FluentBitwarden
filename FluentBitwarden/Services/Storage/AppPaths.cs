@@ -1,7 +1,3 @@
-using System.Runtime.InteropServices;
-using System.Text;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using FluentBitwarden.Abstractions;
 using FluentBitwarden.Extensions;
 
@@ -11,7 +7,6 @@ public sealed class AppPaths : IAppPaths
 {
     public AppPaths()
     {
-        IsPackaged = PackageHelper.IsPackaged;
         AppDataRoot = ResolveRoot();
         Directory.CreateDirectory(AppDataRoot);
 
@@ -20,7 +15,6 @@ public sealed class AppPaths : IAppPaths
         ConfigFilePath = Path.Combine(AppDataRoot, "config.json");
     }
 
-    public bool IsPackaged { get; }
     public string AppDataRoot { get; }
     public string VaultDbFilePath { get; }
     public string SessionFilePath { get; }
@@ -28,23 +22,12 @@ public sealed class AppPaths : IAppPaths
 
     private string ResolveRoot()
     {
-        if (IsPackaged)
+        if (PackageHelper.IsPackaged)
         {
-            return ResolvePackagedRoot();
+            return Windows.Storage.ApplicationData.Current.LocalFolder.Path;
         }
 
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return Path.Combine(localAppData, "FluentBitwarden");
-    }
-
-    private static string ResolvePackagedRoot()
-    {
-        if (PackageHelper.IsPackaged)
-        {
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(localAppData, "FluentBitwarden");
-        }
-
-        return Windows.Storage.ApplicationData.Current.LocalFolder.Path;
     }
 }

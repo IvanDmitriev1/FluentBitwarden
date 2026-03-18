@@ -6,11 +6,6 @@ namespace FluentBitwarden.Abstractions;
 public interface IAppPaths
 {
     /// <summary>
-    /// Indicates whether the app is running as a packaged application.
-    /// </summary>
-    bool IsPackaged { get; }
-
-    /// <summary>
     /// Gets the root directory for app-managed data files.
     /// </summary>
     string AppDataRoot { get; }

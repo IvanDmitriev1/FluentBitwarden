@@ -192,11 +192,12 @@ internal sealed class AuthRequestPollResponseDto
 internal sealed class JwtTokenPayloadDto
 {
     [JsonPropertyName("sub")]
-    public string? Subject { get; init; }
+    public string? Subject { get; set; }
 
     [JsonPropertyName("email")]
-    public string? Email { get; init; }
+    public string? Email { get; set; }
 
     [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalClaims { get; init; }
+    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
+    public Dictionary<string, JsonElement>? AdditionalClaims { get; } = new();
 }

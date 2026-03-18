@@ -30,7 +30,6 @@ public partial class App : Application, IXamlMetadataServiceProvider
 
     private static DispatcherQueue? _dispatcherQueue;
     private MainWindow? _mainWindow;
-    private StartupSplashScreen? _startupSplashScreen;
     private TrayIcon? _trayIcon;
     private bool _isInitialized;
 
@@ -123,14 +122,13 @@ public partial class App : Application, IXamlMetadataServiceProvider
         _isInitialized = true;
         MainWindow mainWindow = GetMainWindow();
 
-        _startupSplashScreen = new StartupSplashScreen(
+        var startupSplashScreen = new StartupSplashScreen(
             mainWindow,
             Host.Services);
 
-        _startupSplashScreen.Completed += async (sender, window) =>
+        startupSplashScreen.Completed += async (sender, window) =>
         {
             await NavigateToPage();
-            _startupSplashScreen = null;
         };
     }
 
@@ -163,9 +161,13 @@ public partial class App : Application, IXamlMetadataServiceProvider
             flyout.Items.Add(showFlyoutItem);
 
             var lockFlyoutItem = new MenuFlyoutItem() { Text = "Lock" };
-            showFlyoutItem.Click += (_, _) =>
+            lockFlyoutItem.Click += async (_, _) =>
             {
-                
+                var vaultService = Host.Services.GetRequiredService<IVaultService>();
+                var navigationService = Host.Services.GetRequiredService<INavigationService>();
+
+                await vaultService.LockAsync();
+                navigationService.Navigate<LoginPage>(clearBackStack: true);
             };
             flyout.Items.Add(lockFlyoutItem);
 
