@@ -3,6 +3,7 @@
     <Platform Name="ARM64" />
     <Platform Name="x64" />
   </Configurations>
+  <Project Path="BitwardenApi/BitwardenApi.csproj" />
   <Project Path="BitwaredApi/BitwaredApi.csproj" />
   <Project Path="FluentBitwarden.Package/FluentBitwarden.Package.wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5" Id="7dc711cb-4f28-45a8-9cfd-524e411d2031">
     <Deploy />
