@@ -41,13 +41,6 @@
         <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Images\SplashScreen.png" />
       </uap:VisualElements>
-      <Extensions>
-        <desktop:Extension Category="windows.fullTrustProcess" Executable="FluentBitwarden.VaultWorker\FluentBitwarden.VaultWorker.exe">
-          <desktop:FullTrustProcess>
-            <desktop:ParameterGroup GroupId="OnDemand" Parameters="--on-demand" />
-          </desktop:FullTrustProcess>
-        </desktop:Extension>
-      </Extensions>
     </Application>
   </Applications>
 

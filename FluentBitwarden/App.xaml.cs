@@ -1,18 +1,6 @@
-using BitwaredApi;
-using FluentBitwarden.Abstractions;
-using FluentBitwarden.Extensions;
-using FluentBitwarden.Models.Vault;
-using FluentBitwarden.Ui;
-using FluentBitwarden.Ui.Abstractions;
-using FluentBitwarden.ViewModels;
-using FluentBitwarden.ViewModels.Login;
-using FluentBitwarden.ViewModels.Setup;
-using FluentBitwarden.ViewModels.Vault;
-using FluentBitwarden.Views;
-using FluentBitwarden.Views.Login;
-using FluentBitwarden.Views.Setup;
-using FluentBitwarden.Views.Vault;
 using System.Text;
+using FluentBitwarden.Extensions;
+using FluentBitwarden.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
@@ -38,21 +26,7 @@ public partial class App : Application, IXamlMetadataServiceProvider
             .CreateDefaultBuilder()
             .ConfigureServices((ctx, services) =>
             {
-                services.AddBitwaredPlatformServices();
-                services.AddBitwaredCoreServices();
-                services.AddBitwaredWorkflowServices();
-                services.AddUiServices();
-
                 services.AddTransient<MainWindow>();
-                services.AddView<LoginPage, LoginPageViewModel>();
-                services.AddView<SettingsPage, SettingsPageViewModel>();
-                services.AddView<SetupPage, SetupPageViewModel>();
-                services.AddView<ShellPage, ShellPageViewModel>();
-
-                services.AddView<VaultPage, VaultPageViewModel>();
-
-                services.AddView<BlankPage1, BlankPage1ViewModel>();
-                services.AddView<BlankPage2, BlankPage2ViewModel>();
             })
             .Build();
 
@@ -70,7 +44,8 @@ public partial class App : Application, IXamlMetadataServiceProvider
     {
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-        CreateSplashScreen();
+        _mainWindow = new MainWindow();
+        _mainWindow.Activate();
         CreateTrayIcon();
     }
 
@@ -90,7 +65,8 @@ public partial class App : Application, IXamlMetadataServiceProvider
         mainWindow.Activate();
         mainWindow.BringToFront();
 
-        return NavigateToPage();
+        //return NavigateToPage();
+        return Task.CompletedTask;
     }
 
     private MainWindow GetMainWindow()
@@ -112,24 +88,6 @@ public partial class App : Application, IXamlMetadataServiceProvider
         };
 
         return _mainWindow;
-    }
-
-    private void CreateSplashScreen()
-    {
-        if (_isInitialized)
-            return;
-
-        _isInitialized = true;
-        MainWindow mainWindow = GetMainWindow();
-
-        var startupSplashScreen = new StartupSplashScreen(
-            mainWindow,
-            Host.Services);
-
-        startupSplashScreen.Completed += async (sender, window) =>
-        {
-            await NavigateToPage();
-        };
     }
 
     private void CreateTrayIcon()
@@ -161,13 +119,8 @@ public partial class App : Application, IXamlMetadataServiceProvider
             flyout.Items.Add(showFlyoutItem);
 
             var lockFlyoutItem = new MenuFlyoutItem() { Text = "Lock" };
-            lockFlyoutItem.Click += async (_, _) =>
+            lockFlyoutItem.Click += (_, _) =>
             {
-                var vaultService = Host.Services.GetRequiredService<IVaultService>();
-                var navigationService = Host.Services.GetRequiredService<INavigationService>();
-
-                await vaultService.LockAsync();
-                navigationService.Navigate<LoginPage>(clearBackStack: true);
             };
             flyout.Items.Add(lockFlyoutItem);
 
@@ -179,33 +132,6 @@ public partial class App : Application, IXamlMetadataServiceProvider
             e.Flyout = flyout;
         };
     }
-
-    private async Task NavigateToPage()
-    {
-        var vaultService = Host.Services.GetRequiredService<IVaultService>();
-        var navigationService = Host.Services.GetRequiredService<INavigationService>();
-
-        VaultSessionState state = await vaultService.GetSessionStateAsync().ConfigureAwait(true);
-
-        switch (state)
-        {
-            case VaultSessionState.NoSession:
-                navigationService.Navigate<SetupPage>(clearBackStack: true);
-                break;
-
-            case VaultSessionState.Locked:
-                navigationService.Navigate<LoginPage>(clearBackStack: true);
-                break;
-
-            case VaultSessionState.Unlocked:
-                navigationService.Navigate<ShellPage>(clearBackStack: true);
-                break;
-
-            default:
-                throw new InvalidOperationException("Unsupported vault session state.");
-        }
-    }
-
     public static void WriteException(Exception e)
     {
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
