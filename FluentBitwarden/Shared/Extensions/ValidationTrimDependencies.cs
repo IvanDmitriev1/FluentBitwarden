@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace FluentBitwarden.Extensions;
+namespace FluentBitwarden.Shared.Extensions;
 
 internal static class ValidationTrimDependencies
 {

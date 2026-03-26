@@ -1,20 +1,19 @@
+using FluentBitwarden.Shell.Navigation;
+using FluentBitwarden.Views.Loading;
 using Microsoft.UI.Windowing;
-using WinRT.Interop;
 
 namespace FluentBitwarden.Shell;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx
 {
-    public MainWindow()
+    public MainWindow(NavigationService navigationService)
     {
         InitializeComponent();
 
+        navigationService.Initialize(ContentFrame);
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-        if (AppWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.Maximize();
-        }
+        ContentFrame.Navigate(typeof(LoadingPage));
     }
 }

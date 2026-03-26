@@ -2,7 +2,7 @@
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
-namespace FluentBitwarden.Extensions;
+namespace FluentBitwarden.Shared.Extensions;
 
 public static class PackageHelper
 {

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentBitwarden.Shell.ShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <NavigationView
+        x:Name="Nav"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="True"
+        OpenPaneLength="200"
+        PaneDisplayMode="Auto"
+        SelectionChanged="Nav_SelectionChanged">
+
+        <NavigationView.MenuItems>
+            <NavigationViewItem
+                Content="Vault"
+                Icon="Library"
+                Tag="vault" />
+            <NavigationViewItem
+                Content="Generator"
+                Icon="Shuffle"
+                Tag="generator" />
+            <NavigationViewItem
+                Content="Send"
+                Icon="Send"
+                Tag="send" />
+        </NavigationView.MenuItems>
+
+        <Frame x:Name="ContentFrame" />
+    </NavigationView>
+</Page>

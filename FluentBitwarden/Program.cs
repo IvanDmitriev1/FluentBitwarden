@@ -19,7 +19,7 @@ public static class Program
         if (isRedirect)
             return 0;
 
-        Application.Start(static (p) =>
+        Microsoft.UI.Xaml.Application.Start(static (p) =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
@@ -66,7 +66,7 @@ public static class Program
 
     private static void OnActivated(object? sender, AppActivationArguments args)
     {
-        App currentApp = ((App)Application.Current);
-        currentApp.QueueOnMainThread(() => currentApp.ReopenWindowAsync());
+        App currentApp = App.Current;
+        currentApp.ReopenWindow();
     }
 }
