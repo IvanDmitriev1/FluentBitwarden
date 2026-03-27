@@ -1,3 +1,4 @@
+using BitwardenApi.Context;
 using BitwardenApi.Primitives;
 
 namespace BitwardenApi.Vault;

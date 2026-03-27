@@ -1,6 +1,6 @@
 using BitwardenApi.Primitives;
 
-namespace BitwardenApi.Identity;
+namespace BitwardenApi.Context;
 
 public enum DeviceType
 {

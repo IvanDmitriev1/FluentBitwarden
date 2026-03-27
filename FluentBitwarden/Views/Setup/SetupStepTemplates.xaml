@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Views.Setup.SetupStepTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:attachedProperties="using:FluentBitwarden.Shared.AttachedProperties"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:controls1="using:FluentBitwarden.Resources.Controls"
+    xmlns:models="using:FluentBitwarden.Views.Setup.Models"
+    xmlns:setUp="using:FluentBitwarden.Views.Setup.States"
+    xmlns:setup="using:FluentBitwarden.Views.Setup">
+
+    <DataTemplate x:Key="EmailSignInStepTemplate" x:DataType="setUp:EmailSignInStepState">
+        <StackPanel Spacing="18">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Login in to Bitwarden" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Text="Select your environment and continue with your Bitwarden email."
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
+
+            <controls:Segmented
+                HorizontalAlignment="Stretch"
+                ItemsSource="{x:Bind Environments, Mode=OneWay}"
+                SelectedItem="{x:Bind SelectedEnvironment, Mode=TwoWay}">
+                <controls:Segmented.ItemTemplate>
+                    <DataTemplate x:DataType="models:SetupEnvironmentOption">
+                        <StackPanel Padding="10,6" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" />
+                            <TextBlock
+                                FontSize="12"
+                                Opacity="0.65"
+                                Text="{x:Bind Subtitle}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </controls:Segmented.ItemTemplate>
+            </controls:Segmented>
+
+            <StackPanel Spacing="12">
+                <Button HorizontalAlignment="Stretch" Content="Sign in with passkey" />
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Opacity="0.55"
+                    Text="or" />
+
+                <controls1:ValidationField Property="{x:Bind EmailValidation}">
+                    <TextBox
+                        Header="Email"
+                        PlaceholderText="name@example.com"
+                        Text="{x:Bind Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </controls1:ValidationField>
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="PasswordSignInStepTemplate" x:DataType="setUp:PasswordSignInStepState">
+        <StackPanel Spacing="18" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="TwoFactorStepTemplate" x:DataType="setUp:TwoFactorStepState">
+        <StackPanel Spacing="18" />
+    </DataTemplate>
+
+    <setup:SetupStepTemplateSelector
+        x:Key="SetupStepTemplateSelector"
+        EmailSignInTemplate="{StaticResource EmailSignInStepTemplate}"
+        PasswordSignInTemplate="{StaticResource PasswordSignInStepTemplate}"
+        TwoFactorTemplate="{StaticResource TwoFactorStepTemplate}" />
+
+</ResourceDictionary>

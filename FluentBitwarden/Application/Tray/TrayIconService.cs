@@ -1,5 +1,4 @@
 ﻿using FluentBitwarden.Application.Lifetime;
-using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
 
 namespace FluentBitwarden.Application.Tray;

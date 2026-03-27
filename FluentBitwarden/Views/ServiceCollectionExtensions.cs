@@ -1,7 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using FluentBitwarden.Views.Loading;
+﻿using FluentBitwarden.Views.Loading;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Views;
 

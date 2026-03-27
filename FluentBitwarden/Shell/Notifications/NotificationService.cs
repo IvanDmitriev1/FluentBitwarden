@@ -1,6 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
-
-namespace FluentBitwarden.Shell.Notifications;
+﻿namespace FluentBitwarden.Shell.Notifications;
 
 internal sealed class NotificationService : INotificationService
 {

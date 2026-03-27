@@ -1,5 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace FluentBitwarden.Shell.Navigation;
 

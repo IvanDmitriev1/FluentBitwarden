@@ -1,6 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
-
-namespace FluentBitwarden.Shell.Navigation;
+﻿namespace FluentBitwarden.Shell.Navigation;
 
 public interface INavigationService
 {

@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
-
 namespace FluentBitwarden.Shell;
 
 public sealed partial class ShellPage : Page

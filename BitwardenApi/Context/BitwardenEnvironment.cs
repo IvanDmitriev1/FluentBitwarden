@@ -1,4 +1,4 @@
-namespace BitwardenApi;
+namespace BitwardenApi.Context;
 
 public sealed record BitwardenEnvironment(
     Uri ApiBase,

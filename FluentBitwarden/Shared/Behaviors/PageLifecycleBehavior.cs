@@ -1,5 +1,4 @@
 ﻿using System.Runtime.ExceptionServices;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Xaml.Interactivity;
 
 namespace FluentBitwarden.Shared.Behaviors;

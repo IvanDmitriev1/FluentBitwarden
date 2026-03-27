@@ -1,41 +1,42 @@
 using System.Globalization;
+using BitwardenApi.Context;
 
-namespace BitwardenApi.Identity;
+namespace BitwardenApi.Identity.Internal;
 
-internal static class TokenFormMapper
+internal static class TokenRequestFormFactory
 {
-    public static IReadOnlyDictionary<string, string> CreatePasswordGrant(PasswordLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreatePasswordGrant(this PasswordLoginRequest request)
     {
-        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.ClientId, request.Context);
+        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "password";
         form["username"] = request.Email;
         form["password"] = request.MasterPasswordHash;
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreatePasswordWithTwoFactorGrant(PasswordTwoFactorLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreatePasswordWithTwoFactorGrant(this PasswordTwoFactorLoginRequest request)
     {
-        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.ClientId, request.Context);
+        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "password";
         form["username"] = request.Email;
         form["password"] = request.MasterPasswordHash;
         form["twoFactorToken"] = request.TwoFactor.Code;
         form["twoFactorProvider"] = ((int)request.TwoFactor.Provider).ToString(CultureInfo.InvariantCulture);
-        form["twoFactorRemember"] = request.TwoFactor.Remember ? "1" : "0";
+        form["twoFactorRemember"] = "1";
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateRefreshTokenGrant(RefreshLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateRefreshTokenGrant(this RefreshLoginRequest request)
     {
-        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.ClientId, request.Context);
+        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "refresh_token";
         form["refresh_token"] = request.RefreshToken.Value;
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateDeviceGrant(DeviceLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateDeviceGrant(this DeviceLoginRequest request)
     {
-        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.ClientId, request.Context);
+        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "password";
         form["username"] = request.Email;
         form["password"] = request.OneTimeAccessCode;
@@ -48,7 +49,7 @@ internal static class TokenFormMapper
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateClientCredentialsGrant(ClientCredentialsLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateClientCredentialsGrant(this ClientCredentialsLoginRequest request)
     {
         return new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -59,9 +60,9 @@ internal static class TokenFormMapper
         };
     }
 
-    public static IReadOnlyDictionary<string, string> CreateAuthorizationCodeGrant(AuthorizationCodeLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateAuthorizationCodeGrant(this AuthorizationCodeLoginRequest request)
     {
-        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.ClientId, request.Context);
+        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "authorization_code";
         form["code"] = request.Code;
         form["redirect_uri"] = request.RedirectUri;
@@ -69,11 +70,11 @@ internal static class TokenFormMapper
         return form;
     }
 
-    private static Dictionary<string, string> CreateBaseDeviceForm(string scope, string clientId, BitwardenClientContext context) =>
+    private static Dictionary<string, string> CreateBaseDeviceForm(string scope, BitwardenClientContext context) =>
         new(StringComparer.Ordinal)
         {
             ["scope"] = scope,
-            ["client_id"] = clientId,
+            ["client_id"] = "desktop",
             ["deviceType"] = ((int)context.DeviceInfo.DeviceType).ToString(CultureInfo.InvariantCulture),
             ["deviceName"] = context.DeviceInfo.DeviceName.Value,
             ["deviceIdentifier"] = context.DeviceInfo.DeviceIdentifier.Value,

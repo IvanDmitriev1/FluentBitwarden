@@ -4,7 +4,7 @@ using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.Application.Lifetime;
 
-internal sealed class AppRestartService(IAppActivationService activationService) : IAppRestartService
+internal sealed class AppRestartService : IAppRestartService
 {
     public Task RestartForLockAsync()
     {

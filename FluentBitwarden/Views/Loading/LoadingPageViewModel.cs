@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using FluentBitwarden.Shared.Behaviors;
+﻿using FluentBitwarden.Shared.Behaviors;
 using FluentBitwarden.Shell;
 using FluentBitwarden.Shell.Navigation;
 

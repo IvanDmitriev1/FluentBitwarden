@@ -1,37 +1,37 @@
 namespace BitwardenApi.Primitives;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct AccessToken;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct RefreshToken;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct DeviceIdentifier;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct DeviceName;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.Guid, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId]
 public partial struct CipherId;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.Guid, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId]
 public partial struct FolderId;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.Guid, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId]
 public partial struct CollectionId;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.Guid, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId]
 public partial struct UserId;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct ClientId;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct ClientSecret;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct AuthRequestId;
 
-[StronglyTypedId(true, StronglyTypedIdBackingType.String, StronglyTypedIdJsonConverter.SystemTextJson)]
+[StronglyTypedId(Template.String)]
 public partial struct AttachmentId;

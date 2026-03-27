@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentBitwarden.Resources.Controls">
+
+    <Style TargetType="controls:ValidationField">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:ValidationField">
+                    <StackPanel Spacing="6">
+                        <ContentPresenter
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}" />
+
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            Text="{TemplateBinding CurrentErrorMessage}"
+                            TextWrapping="WrapWholeWords"
+                            Visibility="{TemplateBinding ErrorVisibility}" />
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

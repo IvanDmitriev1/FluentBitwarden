@@ -1,6 +1,4 @@
-using BitwardenApi.Identity;
-
-namespace BitwardenApi;
+namespace BitwardenApi.Context;
 
 public sealed record BitwardenClientContext(
     BitwardenEnvironment Environment,

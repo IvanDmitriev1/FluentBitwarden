@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
-
 namespace FluentBitwarden.Views.Loading;
 
 public sealed partial class LoadingPage : Page

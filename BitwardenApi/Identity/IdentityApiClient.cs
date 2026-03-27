@@ -1,7 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using BitwardenApi.Context;
 using BitwardenApi.Internal;
-using BitwardenApi.Primitives;
+using BitwardenApi.Identity.Internal;
 
 namespace BitwardenApi.Identity;
 
@@ -12,7 +13,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         CancellationToken cancellationToken = default)
         => SendTokenRequestAsync(
             request.Context,
-            TokenFormMapper.CreatePasswordGrant(request),
+            request.CreatePasswordGrant(),
             "Identity login with password",
             cancellationToken);
 
@@ -21,7 +22,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         CancellationToken cancellationToken = default)
         => SendTokenRequestAsync(
             request.Context,
-            TokenFormMapper.CreatePasswordWithTwoFactorGrant(request),
+            request.CreatePasswordWithTwoFactorGrant(),
             "Identity login with password and two-factor",
             cancellationToken);
 
@@ -30,7 +31,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         CancellationToken cancellationToken = default)
         => SendTokenRequestAsync(
             request.Context,
-            TokenFormMapper.CreateRefreshTokenGrant(request),
+            request.CreateRefreshTokenGrant(),
             "Identity refresh token",
             cancellationToken);
 
@@ -39,7 +40,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         CancellationToken cancellationToken = default)
         => SendTokenRequestAsync(
             request.Context,
-            TokenFormMapper.CreateDeviceGrant(request),
+            request.CreateDeviceGrant(),
             "Identity login with device",
             cancellationToken);
 
@@ -48,7 +49,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         CancellationToken cancellationToken = default)
         => SendTokenRequestAsync(
             request.Context,
-            TokenFormMapper.CreateClientCredentialsGrant(request),
+            request.CreateClientCredentialsGrant(),
             "Identity login with client credentials",
             cancellationToken);
 
@@ -57,7 +58,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         CancellationToken cancellationToken = default)
         => SendTokenRequestAsync(
             request.Context,
-            TokenFormMapper.CreateAuthorizationCodeGrant(request),
+            request.CreateAuthorizationCodeGrant(),
             "Identity login with authorization code",
             cancellationToken);
 
@@ -69,10 +70,8 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
     {
         Uri tokenEndpoint = new(context.Environment.IdentityBase, "/connect/token");
         using FormUrlEncodedContent content = new(form);
-        using HttpRequestMessage request = new(HttpMethod.Post, tokenEndpoint)
-        {
-            Content = content,
-        };
+        using HttpRequestMessage request = new(HttpMethod.Post, tokenEndpoint);
+        request.Content = content;
 
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -95,18 +94,6 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         if (string.IsNullOrWhiteSpace(payload.AccessToken.Value))
         {
             throw new InvalidDataException("Identity token response did not include access_token.");
-        }
-
-        RefreshToken? refreshToken = string.IsNullOrWhiteSpace(payload.RefreshToken?.Value)
-            ? null
-            : payload.RefreshToken;
-
-        if (refreshToken != payload.RefreshToken)
-        {
-            payload = payload with
-            {
-                RefreshToken = refreshToken,
-            };
         }
 
         return payload;

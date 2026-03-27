@@ -34,6 +34,10 @@
 
 ## Main Types
 
+- Shared context:
+  - `BitwardenApi.Context.BitwardenClientContext`
+  - `BitwardenApi.Context.BitwardenEnvironment`
+  - `BitwardenApi.Context.DeviceInfo`
 - `IIdentityApiClient` / `IdentityApiClient`
 - `IVaultApiClient` / `VaultApiClient`
 - `IAttachmentsApiClient` / `AttachmentsApiClient`
@@ -47,7 +51,16 @@ DI entrypoint:
 
 ## Request DTO style
 
-All service methods use request DTOs that include `BitwardenClientContext`:
+All service methods use request DTOs that include `BitwardenApi.Context.BitwardenClientContext`.
+
+The `Identity` feature is grouped into:
+
+- `IdentityApiClient` / `IIdentityApiClient`
+- `IdentityRequests.cs`
+- `IdentityModels.cs`
+- `Internal/TokenRequestFormFactory.cs`
+
+Request DTOs:
 
 - Identity flows:
   - `PasswordLoginRequest`

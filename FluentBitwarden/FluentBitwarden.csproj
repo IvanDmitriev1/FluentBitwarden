@@ -32,11 +32,21 @@
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
 
-  <ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BitwardenApi\BitwardenApi.csproj" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
-<ItemGroup>
+	<ItemGroup>
+		<AdditionalFiles Include="Data\TypeIds\*.typedid" />
+	</ItemGroup>
+
+	<ItemGroup>
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 	<PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
 	<PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
@@ -60,6 +70,7 @@
 	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
 	<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
+	<PackageReference Include="StronglyTypedId" Version="1.0.0-beta08" PrivateAssets="all" ExcludeAssets="runtime" />
 	<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
 	<PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
 	<PackageReference Include="WinUIEx" Version="2.9.0" />
@@ -80,6 +91,5 @@
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
 </ItemGroup>
-
 
 </Project>

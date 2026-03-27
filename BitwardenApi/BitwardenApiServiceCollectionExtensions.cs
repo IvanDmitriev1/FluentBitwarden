@@ -3,7 +3,8 @@ using BitwardenApi.Identity;
 using BitwardenApi.Notifications;
 using BitwardenApi.Vault;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+
+[assembly: Fody.ConfigureAwait(false)]
 
 namespace BitwardenApi;
 
