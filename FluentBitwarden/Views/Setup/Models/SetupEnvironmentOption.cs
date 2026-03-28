@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Context;
+﻿using BitwardenApi.Shared.Context;
 
 namespace FluentBitwarden.Views.Setup.Models;
 

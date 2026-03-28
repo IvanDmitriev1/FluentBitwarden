@@ -1,16 +1,21 @@
-﻿using FluentBitwarden.Views.Setup.Models;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Context;
+﻿using BitwardenApi.Shared.Context;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Resources.Controls;
+using FluentBitwarden.Views.Setup.Models;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.Views.Setup.States;
 
 internal partial class EmailSignInStepState : ObservableValidator
 {
-    public EmailSignInStepState()
+    private readonly SetupLoginContext _context;
+    private readonly Action _onContinue;
+
+    public EmailSignInStepState(SetupLoginContext context, Action onContinue)
     {
+        _context = context;
+        _onContinue = onContinue;
         Environments =
         [
             new SetupEnvironmentOption("Bitwarden US", "bitwarden.com", BitwardenEnvironment.UnitedStates),
@@ -48,6 +53,9 @@ internal partial class EmailSignInStepState : ObservableValidator
             return;
         }
 
-        
+        _context.Email = Email;
+        _context.DeviceInfoEnvironment = SelectedEnvironment.Environment;
+
+        _onContinue.Invoke();
     }
 }

@@ -55,15 +55,94 @@
                         Text="{x:Bind Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </controls1:ValidationField>
             </StackPanel>
+
+            <Button
+                HorizontalAlignment="Stretch"
+                Command="{x:Bind ContinueCommand}"
+                Content="Continue"
+                Style="{ThemeResource AccentButtonStyle}" />
         </StackPanel>
     </DataTemplate>
 
     <DataTemplate x:Key="PasswordSignInStepTemplate" x:DataType="setUp:PasswordSignInStepState">
-        <StackPanel Spacing="18" />
+        <StackPanel Spacing="18">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Welcome back" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{x:Bind Email}" />
+            </StackPanel>
+
+            <StackPanel Spacing="12">
+                <controls1:ValidationField Property="{x:Bind MasterPasswordValidation}">
+                    <PasswordBox
+                        attachedProperties:PasswordBoxBinding.BindPassword="True"
+                        attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind MasterPassword, Mode=TwoWay}"
+                        Header="Master password" />
+                </controls1:ValidationField>
+
+                <StackPanel Margin="0,10,0,0" Spacing="6">
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Command="{x:Bind SignInWithPasswordCommand}"
+                        Content="Log in with master password"
+                        Style="{ThemeResource AccentButtonStyle}" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
     </DataTemplate>
 
     <DataTemplate x:Key="TwoFactorStepTemplate" x:DataType="setUp:TwoFactorStepState">
-        <StackPanel Spacing="18" />
+        <StackPanel Spacing="18">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Two-factor authentication" />
+
+                <TextBlock
+                    Opacity="0.75"
+                    Text="{x:Bind PromptText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
+
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                Header="Provider"
+                ItemsSource="{x:Bind Providers, Mode=OneWay}"
+                SelectedItem="{x:Bind SelectedProvider, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:TwoFactorProviderOptionModel">
+                        <StackPanel Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" />
+                            <TextBlock
+                                FontSize="12"
+                                Opacity="0.65"
+                                Text="{x:Bind Subtitle}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <controls1:ValidationField Property="{x:Bind CodeValidation}">
+                <TextBox
+                    Header="Verification code"
+                    PlaceholderText="123456"
+                    Text="{x:Bind Code, Mode=TwoWay}" />
+            </controls1:ValidationField>
+
+            <StackPanel Margin="0,12,0,0" Spacing="6">
+                <Button
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind ContinueTwoFactorCommand}"
+                    Content="Continue"
+                    Style="{ThemeResource AccentButtonStyle}" />
+            </StackPanel>
+        </StackPanel>
     </DataTemplate>
 
     <setup:SetupStepTemplateSelector

@@ -6,10 +6,11 @@ using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
+using BitwardenApi;
 using FluentBitwarden.Application.Diagnostics;
-using FluentBitwarden.Modules.Accounts.Models;
+using FluentBitwarden.Data;
+using FluentBitwarden.Modules.Session;
 using WinUI.DependencyInjection;
-using Dapper;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 namespace FluentBitwarden;
@@ -21,7 +22,22 @@ public partial class App : IXamlMetadataServiceProvider
 
     private readonly DispatcherQueue _dispatcherQueue;
 
-    public IHost Host { get; } = CreateHost();
+    public IHost Host { get; } = Microsoft.Extensions.Hosting.Host
+        .CreateDefaultBuilder()
+        .ConfigureServices((ctx, services) =>
+        {
+            services.AddSingleton<IAppActivationService, AppActivationService>();
+            services.AddSingleton<ITrayIconService, TrayIconService>();
+            services.AddSingleton<IAppRestartService, AppRestartService>();
+
+            services.AddShellServices();
+            services.AddViews();
+            services.AddDataServices();
+
+            services.AddBitwardenApi();
+            services.AddSessionModule();
+        })
+        .Build();
 
     public object GetRequiredService(Type type)
         => Host.Services.GetRequiredService(type);
@@ -49,28 +65,5 @@ public partial class App : IXamlMetadataServiceProvider
     public void ReopenWindow()
     {
         _dispatcherQueue.TryEnqueue(() => Host.Services.GetRequiredService<IAppActivationService>().ReopenMainWindow());
-    }
-
-    private static IHost CreateHost()
-    {
-        RegisterDapperTypeHandlers();
-
-        return Microsoft.Extensions.Hosting.Host
-            .CreateDefaultBuilder()
-            .ConfigureServices((ctx, services) =>
-            {
-                services.AddSingleton<IAppActivationService, AppActivationService>();
-                services.AddSingleton<ITrayIconService, TrayIconService>();
-                services.AddSingleton<IAppRestartService, AppRestartService>();
-
-                services.AddShellServices();
-                services.AddViews();
-            })
-            .Build();
-    }
-
-    private static void RegisterDapperTypeHandlers()
-    {
-        SqlMapper.AddTypeHandler(new AccountProfileId.DapperTypeHandler());
     }
 }

@@ -31,34 +31,75 @@
 - Streaming-first responses for vault and attachment downloads.
 - No crypto/decryption implementation in this project.
 - No large encrypted vault DTO object graph.
+- Shared infrastructure stays under `BitwardenApi.Shared.*`.
+
+## Project Structure
+
+`BitwardenApi` stays a single project and single package. Each module now follows the same three-folder structure:
+
+- `Modules/<Module>/Abstractions/`
+  - public interfaces
+- `Modules/<Module>/Models/`
+  - request DTOs, response DTOs, strongly typed IDs, enums, and payload records
+- `Modules/<Module>/Services/`
+  - concrete API clients and module-local helpers
+
+Module namespaces follow the folder layout:
+
+- `BitwardenApi.Modules.Identity.Abstractions`
+- `BitwardenApi.Modules.Identity.Models`
+- `BitwardenApi.Modules.Identity.Services`
+- `BitwardenApi.Modules.Vault.Abstractions`
+- `BitwardenApi.Modules.Vault.Models`
+- `BitwardenApi.Modules.Vault.Services`
+- `BitwardenApi.Modules.Attachments.Abstractions`
+- `BitwardenApi.Modules.Attachments.Models`
+- `BitwardenApi.Modules.Attachments.Services`
+- `BitwardenApi.Modules.Notifications.Abstractions`
+- `BitwardenApi.Modules.Notifications.Models`
+- `BitwardenApi.Modules.Notifications.Services`
+
+Shared namespaces remain:
+
+- `BitwardenApi.Shared.Context.*`
+- `BitwardenApi.Shared.Cryptography.*`
+- `BitwardenApi.Shared.Exceptions.*`
+- `BitwardenApi.Shared.Transport.*`
+- `BitwardenApi.Shared.Serialization.*`
 
 ## Main Types
 
 - Shared context:
-  - `BitwardenApi.Context.BitwardenClientContext`
-  - `BitwardenApi.Context.BitwardenEnvironment`
-  - `BitwardenApi.Context.DeviceInfo`
-- `IIdentityApiClient` / `IdentityApiClient`
-- `IVaultApiClient` / `VaultApiClient`
-- `IAttachmentsApiClient` / `AttachmentsApiClient`
-- `INotificationsClient` / `NotificationsClient`
-- `ApiStreamResponse`
-- `BitwardenApiException`
+  - `BitwardenApi.Shared.Context.BitwardenClientContext`
+  - `BitwardenApi.Shared.Context.BitwardenEnvironment`
+  - `BitwardenApi.Shared.Context.DeviceInfo`
+- `BitwardenApi.Modules.Identity.Abstractions.IIdentityApiClient`
+- `BitwardenApi.Modules.Identity.Services.IdentityApiClient`
+- `BitwardenApi.Modules.Vault.Abstractions.IVaultApiClient`
+- `BitwardenApi.Modules.Vault.Services.VaultApiClient`
+- `BitwardenApi.Modules.Attachments.Abstractions.IAttachmentsApiClient`
+- `BitwardenApi.Modules.Attachments.Services.AttachmentsApiClient`
+- `BitwardenApi.Modules.Notifications.Abstractions.INotificationsClient`
+- `BitwardenApi.Modules.Notifications.Services.NotificationsClient`
+- `BitwardenApi.Shared.Transport.ApiStreamResponse`
+- `BitwardenApi.Shared.Exceptions.BitwardenApiException`
 
 DI entrypoint:
 
 - `BitwardenApi.BitwardenApiServiceCollectionExtensions.AddBitwardenApi()`
+  - registers the module services directly from the project root
 
 ## Request DTO style
 
-All service methods use request DTOs that include `BitwardenApi.Context.BitwardenClientContext`.
+All service methods use request DTOs that include `BitwardenApi.Shared.Context.BitwardenClientContext`.
 
-The `Identity` feature is grouped into:
+The `Identity` module is grouped into:
 
-- `IdentityApiClient` / `IIdentityApiClient`
-- `IdentityRequests.cs`
-- `IdentityModels.cs`
-- `Internal/TokenRequestFormFactory.cs`
+- `Abstractions/IIdentityApiClient.cs`
+- `Models/IdentityRequests.cs`
+- `Models/IdentityModels.cs`
+- `Services/IdentityApiClient.cs`
+- `Services/Internal/TokenRequestFormFactory.cs`
 
 Request DTOs:
 

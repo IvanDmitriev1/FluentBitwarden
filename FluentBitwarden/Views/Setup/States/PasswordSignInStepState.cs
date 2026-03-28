@@ -1,5 +1,81 @@
-﻿namespace FluentBitwarden.Views.Setup.States;
+﻿using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Resources.Controls;
+using FluentBitwarden.Views.Setup.Models;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Modules.Session.Models.Authentication;
 
-internal partial class PasswordSignInStepState : ObservableObject
+namespace FluentBitwarden.Views.Setup.States;
+
+public partial class PasswordSignInStepState(
+    SetupLoginContext context,
+    IAuthenticationService authenticationService,
+    Action<PasswordSignInOutcome.TwoFactorRequired> onComplete) : ObservableValidator
 {
+    public string Email => context.Email;
+
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [StringLength(int.MaxValue, MinimumLength = 8, ErrorMessage = "Master password must be at least 8 characters long.")]
+    [Required(ErrorMessage = "Enter your master password.")]
+    [CustomValidation(typeof(PasswordSignInStepState), nameof(ValidateMasterPassword))]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
+    public partial string MasterPassword { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasInvalidCredentials { get; set; }
+
+    [field: MaybeNull]
+    public ValidatableProperty MasterPasswordValidation
+        => field ??= ValidatableProperty.Create(this, static state => state.MasterPassword);
+
+    public static ValidationResult? ValidateMasterPassword(string name, ValidationContext context)
+    {
+        PasswordSignInStepState instance = (PasswordSignInStepState)context.ObjectInstance;
+
+        return !instance.HasInvalidCredentials
+            ? ValidationResult.Success
+            : new ValidationResult("Invalid master password");
+    }
+
+    partial void OnHasInvalidCredentialsChanged(bool value)
+    {
+        ValidateAllProperties();
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task SignInWithPasswordAsync()
+    {
+        ValidateAllProperties();
+        if (HasErrors)
+        {
+            return;
+        }
+
+        var result = await authenticationService.SignInWithPasswordAsync(new PasswordSignInRequest(context.BitwardenClientContext,
+            Email, MasterPassword));
+
+        switch (result)
+        {
+            case PasswordSignInOutcome.Success:
+                Debugger.Break();
+                break;
+            case PasswordSignInOutcome.DeviceVerificationRequired:
+            case PasswordSignInOutcome.InvalidCredentials:
+                HasInvalidCredentials = true;
+                break;
+                
+            case PasswordSignInOutcome.TwoFactorRequired twoFactorRequired:
+                onComplete.Invoke(twoFactorRequired);
+                break;
+
+            default:
+                throw new InvalidOperationException("Unsupported password sign-in outcome.");
+        }
+    }
 }

@@ -1,5 +1,11 @@
-﻿namespace FluentBitwarden.Views.Setup;
+using Microsoft.UI.Xaml;
 
-public partial class SetupStepTemplates
+namespace FluentBitwarden.Views.Setup;
+
+public sealed partial class SetupStepTemplates : ResourceDictionary
 {
+    public SetupStepTemplates()
+    {
+        InitializeComponent();
+    }
 }

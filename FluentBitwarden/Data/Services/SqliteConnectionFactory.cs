@@ -1,5 +1,7 @@
-﻿namespace FluentBitwarden.Data.Services;
+﻿using FluentBitwarden.Data.Abstractions;
 
-internal class SqliteConnectionFactory
+namespace FluentBitwarden.Data.Services;
+
+internal class SqliteConnectionFactory : IConnectionFactory
 {
 }
