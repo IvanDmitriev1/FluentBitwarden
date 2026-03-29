@@ -3,7 +3,7 @@ using FluentBitwarden.Data.Abstractions;
 
 namespace FluentBitwarden.Data.Migrations;
 
-internal sealed class DataInitializationService(IConnectionFactory connectionFactory) : IDataInitializationService
+internal sealed class DataInitializationService(ISqliteConnectionFactory connectionFactory) : IDataInitializationService
 {
     private const string CreateAccountsTableSql =
         """
@@ -23,14 +23,13 @@ internal sealed class DataInitializationService(IConnectionFactory connectionFac
         );
         """;
 
-    public async Task InitializeAsync(CancellationToken cancellationToken = default)
-    {
-        await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+    public Task InitializeAsync(CancellationToken cancellationToken = default) =>
+        connectionFactory.ExecuteAsync(connection =>
+        {
+            CommandDefinition command = new(
+                CreateAccountsTableSql,
+                cancellationToken: cancellationToken);
 
-        CommandDefinition command = new(
-            CreateAccountsTableSql,
-            cancellationToken: cancellationToken);
-
-        await connection.ExecuteAsync(command);
-    }
+            connection.Execute(command);
+        }, cancellationToken);
 }

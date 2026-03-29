@@ -1,8 +1,10 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace FluentBitwarden.Shell.Navigation;
 
-public sealed class NavigationService : INavigationService
+public sealed class NavigationService(IMessenger messenger) : INavigationService
 {
     private WeakReference<Frame>? _frame;
 
@@ -22,7 +24,7 @@ public sealed class NavigationService : INavigationService
 
     public void NavigateTo<T>() where T : Page
     {
-        if (_frame is null || !_frame.TryGetTarget(out var frame))
+        if (!TryGetFrame(out var frame))
             return;
 
         if (frame.Content is T)
@@ -34,14 +36,43 @@ public sealed class NavigationService : INavigationService
         Debug.Assert(navigated, "Navigation failed.");
     }
 
+    public void NavigateTo<TPage, TMessage>(TMessage message)
+        where TPage : Page
+        where TMessage : class
+    {
+        if (!TryGetFrame(out var frame))
+            return;
+
+        if (frame.Content is TPage)
+        {
+            messenger.Send(message);
+            return;
+        }
+
+        var navigated = frame.Navigate(typeof(TPage));
+        Debug.Assert(navigated, "Navigation failed.");
+
+        if (!navigated)
+            return;
+
+        frame.BackStack.Clear();
+        messenger.Send(message);
+    }
+
     public bool GoBack()
     {
-        if (_frame is null || !_frame.TryGetTarget(out var frame) || !frame.CanGoBack)
+        if (!TryGetFrame(out var frame) || !frame.CanGoBack)
         {
             return false;
         }
 
         frame.GoBack();
         return true;
+    }
+
+    private bool TryGetFrame([NotNullWhen(true)] out Frame? frame)
+    {
+        frame = null;
+        return _frame?.TryGetTarget(out frame) == true;
     }
 }

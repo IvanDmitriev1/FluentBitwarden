@@ -1,15 +1,18 @@
+using BitwardenApi;
+using FluentBitwarden.Application.Diagnostics;
 using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Application.Tray;
+using FluentBitwarden.Data;
+using FluentBitwarden.Modules.Account;
+using FluentBitwarden.Modules.Session;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Services;
 using FluentBitwarden.Shared.Extensions;
 using FluentBitwarden.Shell;
 using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
-using BitwardenApi;
-using FluentBitwarden.Application.Diagnostics;
-using FluentBitwarden.Data;
-using FluentBitwarden.Modules.Session;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
@@ -34,7 +37,8 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddViews();
             services.AddDataServices();
 
-            services.AddBitwardenApi();
+            services.AddBitwardenApi<BearerTokenHandler>();
+            services.AddAccountModule();
             services.AddSessionModule();
         })
         .Build();
@@ -53,6 +57,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        _ = Host.Services.GetRequiredService<ISessionTokensStore>();
         Host.Services.GetRequiredService<IAppActivationService>().Activate(args);
         Host.Services.GetRequiredService<ITrayIconService>().EnsureCreated();
 

@@ -8,8 +8,18 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddSessionModule(this IServiceCollection services)
     {
+        services.AddTransient<BearerTokenHandler>();
+
         services.AddSingleton<IAuthenticationService, AuthenticationService>();
-        services.AddSingleton<ISessionTokensStore, DpapiSessionTokensStore>();
+        services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
+
+        if (TpmSessionTokensStore.IsSupported())
+            services.AddSingleton<ISessionTokensStore, TpmSessionTokensStore>();
+        else
+            services.AddSingleton<ISessionTokensStore, DpapiSessionTokensStore>();
+
+        services.AddSingleton<CurrentSessionAccessor>();
+        services.AddSingleton<ICurrentSessionAccessor>(static sp => sp.GetRequiredService<CurrentSessionAccessor>());
 
         return services;
     }

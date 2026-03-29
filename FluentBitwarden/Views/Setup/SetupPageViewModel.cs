@@ -1,5 +1,4 @@
-﻿using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Context;
+﻿using BitwardenApi.Shared.Context;
 using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security;
@@ -58,7 +57,7 @@ public partial class SetupPageViewModel : ObservableObject
 
     private async Task OnCompleteSetup(AuthenticationSuccess success)
     {
-        _sessionTokensStore.StoreAsync(success.UserId, success.SessionTokens);
+        _sessionTokensStore.Store(success.UserId, success.SessionTokens);
 
         await _accountRepository.UpsertAsync(
             new StoredAccount(success.UserId, success.Email, _loginContext.DeviceInfoEnvironment,

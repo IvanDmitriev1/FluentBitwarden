@@ -13,4 +13,5 @@ namespace FluentBitwarden.Modules.Session;
         typeof(RefreshToken.RefreshTokenSystemTextJsonConverter), 
         typeof(TwoFactorToken.TwoFactorTokenSystemTextJsonConverter)])]
 [JsonSerializable(typeof(SessionTokens))]
+[JsonSerializable(typeof(TpmProtectedSessionBlob))]
 internal sealed partial class SessionJsonContext : JsonSerializerContext;

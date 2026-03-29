@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.Shell.Navigation;
+using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Shell.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Shell;
@@ -9,6 +10,7 @@ internal static class ServiceCollectionExtensions
     {
         services.AddSingleton<MainWindow>();
         services.AddTransient<ShellPage>();
+        services.AddSingleton<IMessenger, WeakReferenceMessenger>();
 
         services.AddShellService<INavigationService, NavigationService>();
 

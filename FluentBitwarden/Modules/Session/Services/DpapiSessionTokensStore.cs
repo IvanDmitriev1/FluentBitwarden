@@ -11,7 +11,7 @@ internal sealed class DpapiSessionTokensStore : ISessionTokensStore
 {
     private static readonly byte[] Entropy = "bw_session_v1"u8.ToArray();
 
-    public void StoreAsync(UserId userId, SessionTokens tokens, CancellationToken cancellationToken = default)
+    public void Store(UserId userId, SessionTokens tokens)
     {
         var json = JsonSerializer.SerializeToUtf8Bytes(tokens, SessionJsonContext.Default.SessionTokens);
         var blob = ProtectedData.Protect(json, Entropy, DataProtectionScope.CurrentUser);
@@ -23,7 +23,7 @@ internal sealed class DpapiSessionTokensStore : ISessionTokensStore
         CryptographicOperations.ZeroMemory(json);
     }
 
-    public SessionTokens? TryGetAsync(UserId userId, CancellationToken cancellationToken = default)
+    public SessionTokens? TryGet(UserId userId)
     {
         var path = SessionPath(userId);
         if (!File.Exists(path))
@@ -37,7 +37,7 @@ internal sealed class DpapiSessionTokensStore : ISessionTokensStore
         return result;
     }
 
-    public void RemoveAsync(UserId userId, CancellationToken cancellationToken = default)
+    public void Remove(UserId userId)
     {
         var path = SessionPath(userId);
         if (File.Exists(path))

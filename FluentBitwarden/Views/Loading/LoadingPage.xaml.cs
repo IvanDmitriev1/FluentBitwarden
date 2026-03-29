@@ -6,7 +6,6 @@ public sealed partial class LoadingPage : Page
     {
         ViewModel = viewModel;
         DataContext = viewModel;
-
         InitializeComponent();
     }
 

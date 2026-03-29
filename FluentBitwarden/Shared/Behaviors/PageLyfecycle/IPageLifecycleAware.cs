@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Shared.Behaviors;
+﻿namespace FluentBitwarden.Shared.Behaviors.PageLyfecycle;
 
 /// <summary>
 /// Defines async lifecycle hooks for pages that participate in navigation.
@@ -13,5 +13,5 @@ public interface IPageLifecycleAware
     /// <summary>
     /// Runs when a page is being unloaded.
     /// </summary>
-    Task OnUnloadingAsync();
+    void OnUnloading();
 }
