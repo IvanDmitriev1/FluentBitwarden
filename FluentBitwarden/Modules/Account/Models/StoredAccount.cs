@@ -7,4 +7,5 @@ public sealed record StoredAccount(
     UserId UserId,
     string Email,
     BitwardenEnvironment Environment,
+    AccountCryptoMaterial AccountCryptoMaterial,
     DateTimeOffset LastSyncAt);

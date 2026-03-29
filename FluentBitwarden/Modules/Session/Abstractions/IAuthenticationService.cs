@@ -7,12 +7,15 @@ namespace FluentBitwarden.Modules.Session.Abstractions;
 public interface IAuthenticationService
 {
     Task<PasswordSignInOutcome> SignInWithPasswordAsync(
-        PasswordSignInRequest request,
+        BitwardenClientContext context,
+        string email,
+        string masterPassword,
         CancellationToken cancellationToken = default);
 
     Task<PasswordSignInOutcome> ContinueTwoFactorAsync(
         BitwardenClientContext context,
-        PasswordSignInContinuation passwordSignInContinuation,
+        string email,
+        string serverAuthorizationHash,
         TwoFactorProof twoFactorProof,
         CancellationToken cancellationToken);
 }

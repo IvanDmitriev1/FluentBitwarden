@@ -57,8 +57,8 @@ public partial class PasswordSignInStepState(
             return;
         }
 
-        var result = await authenticationService.SignInWithPasswordAsync(new PasswordSignInRequest(context.BitwardenClientContext,
-            Email, MasterPassword));
+        var result =
+            await authenticationService.SignInWithPasswordAsync(context.BitwardenClientContext, Email, MasterPassword);
 
         switch (result)
         {

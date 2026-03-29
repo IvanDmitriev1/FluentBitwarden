@@ -47,15 +47,6 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
             "Identity login with device",
             cancellationToken);
 
-    public Task<TokenExchangeOutcome> LoginWithClientCredentialsAsync(
-        ClientCredentialsLoginRequest request,
-        CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreateClientCredentialsGrant(),
-            "Identity login with client credentials",
-            cancellationToken);
-
     public Task<TokenExchangeOutcome> LoginWithAuthorizationCodeAsync(
         AuthorizationCodeLoginRequest request,
         CancellationToken cancellationToken = default)

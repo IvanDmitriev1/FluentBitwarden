@@ -1,8 +1,6 @@
 ﻿using BitwardenApi.Shared.Cryptography;
-using FluentBitwarden.Modules.Security.Crypto;
 using FluentBitwarden.Modules.Security.Crypto.Enc;
 using FluentBitwarden.Modules.Security.Crypto.Kdf;
-using FluentBitwarden.Modules.Session.Models.Authentication;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
@@ -10,7 +8,7 @@ namespace FluentBitwarden.Modules.Session.Services;
 
 internal static class SessionCrypto
 {
-    public static PasswordSignInContinuation DeriveMasterPasswordAuth(
+    public static string HashMasterPassword(
         string email,
         string masterPassword,
         KdfConfig kdfConfig,
@@ -32,15 +30,16 @@ internal static class SessionCrypto
             _ => throw new ArgumentOutOfRangeException(nameof(kdfConfig))
         };
 
-        byte[] stretchedMasterKey = StretchMasterKey(masterKey);
-        Span<byte> authHash = stackalloc byte[32];
-        Pbkdf2Kdf.Derive(masterKey, masterPassword, 1, authHash);
-
-        return new PasswordSignInContinuation(
-            email,
-            masterKey,
-            stretchedMasterKey,
-            Convert.ToBase64String(authHash));
+        try
+        {
+            Span<byte> authHash = stackalloc byte[32];
+            Pbkdf2Kdf.Derive(masterKey, masterPassword, 1, authHash);
+            return Convert.ToBase64String(authHash);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(masterKey);
+        }
     }
 
 
@@ -57,13 +56,5 @@ internal static class SessionCrypto
         Debug.Assert(result >= 0);
 
         return span.ToString();
-    }
-
-    private static byte[] StretchMasterKey(ReadOnlySpan<byte> masterKey)
-    {
-        byte[] stretched = new byte[64];
-        Hkdf.Expand(masterKey, "enc", stretched.AsSpan(0, 32));
-        Hkdf.Expand(masterKey, "mac", stretched.AsSpan(32, 32));
-        return stretched;
     }
 }

@@ -26,9 +26,9 @@ internal sealed partial class BitwardenApiJsonContext : JsonSerializerContext
         options.Converters.Add(new AccessToken.AccessTokenSystemTextJsonConverter());
         options.Converters.Add(new RefreshToken.RefreshTokenSystemTextJsonConverter());
         options.Converters.Add(new TwoFactorToken.TwoFactorTokenSystemTextJsonConverter());
+        options.Converters.Add(new EncryptedPrivateKey.EncryptedPrivateKeySystemTextJsonConverter());
+        options.Converters.Add(new EncryptedUserKey.EncryptedUserKeySystemTextJsonConverter());
         options.Converters.Add(new UserId.UserIdSystemTextJsonConverter());
-        options.Converters.Add(new ClientId.ClientIdSystemTextJsonConverter());
-        options.Converters.Add(new ClientSecret.ClientSecretSystemTextJsonConverter());
         options.Converters.Add(new AuthRequestId.AuthRequestIdSystemTextJsonConverter());
         options.Converters.Add(new DeviceIdentifier.DeviceIdentifierSystemTextJsonConverter());
         options.Converters.Add(new DeviceName.DeviceNameSystemTextJsonConverter());

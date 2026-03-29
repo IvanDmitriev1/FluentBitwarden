@@ -1,9 +1,9 @@
 ﻿using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Cryptography;
 
-namespace FluentBitwarden.Modules.Session.Models;
+namespace FluentBitwarden.Modules.Account.Models;
 
-public sealed record AccountUnlockData(
+public sealed record AccountCryptoMaterial(
     KdfConfig KdfConfig,
     EncryptedUserKey EncryptedUserKey,
-    string Salt);
+    EncryptedPrivateKey EncryptedPrivateKey);

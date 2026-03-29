@@ -28,12 +28,6 @@ public sealed record DeviceLoginRequest(
     AuthRequestId? AuthRequestId = null,
     string Scope = "api offline_access");
 
-public sealed record ClientCredentialsLoginRequest(
-    BitwardenClientContext Context,
-    ClientId ClientId,
-    ClientSecret ClientSecret,
-    string Scope = "api");
-
 public sealed record AuthorizationCodeLoginRequest(
     BitwardenClientContext Context,
     string Code,

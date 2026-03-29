@@ -50,17 +50,6 @@ internal static class TokenRequestFormFactory
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateClientCredentialsGrant(this ClientCredentialsLoginRequest request)
-    {
-        return new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["grant_type"] = "client_credentials",
-            ["scope"] = request.Scope,
-            ["client_id"] = request.ClientId.Value,
-            ["client_secret"] = request.ClientSecret.Value,
-        };
-    }
-
     public static IReadOnlyDictionary<string, string> CreateAuthorizationCodeGrant(this AuthorizationCodeLoginRequest request)
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);

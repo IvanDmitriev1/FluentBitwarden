@@ -106,7 +106,7 @@
 
                 <TextBlock
                     Opacity="0.75"
-                    Text="{x:Bind PromptText, Mode=OneWay}"
+                    Text="Complete the Bitwarden two-factor challenge to continue"
                     TextWrapping="WrapWholeWords" />
             </StackPanel>
 

@@ -1,29 +1,7 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
 using System.Text.Json;
 
-namespace FluentBitwarden.Modules.Security.Crypto;
-
-internal enum EncStringType : byte
-{
-    AesCbc256_B64 = 0,
-    AesCbc256_HmacSha256_B64 = 2,
-    Rsa2048_OaepSha256_B64 = 4,
-    Rsa2048_OaepSha1_B64 = 3,
-    Rsa2048_OaepSha256_HmacSha256_B64 = 6,
-    Rsa2048_OaepSha1_HmacSha256_B64 = 5,
-}
-
-internal readonly ref struct EncStringParts(
-    EncStringType type,
-    ReadOnlySpan<char> data,
-    ReadOnlySpan<char> iv = default,
-    ReadOnlySpan<char> mac = default)
-{
-    public EncStringType Type { get; } = type;
-    public ReadOnlySpan<char> Data { get; } = data;
-    public ReadOnlySpan<char> Iv { get; } = iv;
-    public ReadOnlySpan<char> Mac { get; } = mac;
-}
+namespace FluentBitwarden.Modules.Security.Crypto.Enc;
 
 internal sealed class EncString : IDisposable
 {
@@ -65,8 +43,7 @@ internal sealed class EncString : IDisposable
             : parsed;
     }
 
-    public override string ToString()
-        => new(AsSpan());
+    public override string ToString() => new(AsSpan());
 
     public void Dispose()
     {
@@ -84,12 +61,9 @@ internal sealed class EncString : IDisposable
     public ReadOnlySpan<char> AsSpan()
     {
         MemoryOwner<char>? currentOwner = _owner;
-        if (currentOwner is null)
-        {
-            throw new ObjectDisposedException(nameof(EncString));
-        }
-
-        return currentOwner.Span[.._length].Trim();
+        return currentOwner is null
+            ? throw new ObjectDisposedException(nameof(EncString))
+            : currentOwner.Span[.._length].Trim();
     }
 
     private bool TryParse(out EncStringParts parsed)
@@ -102,37 +76,37 @@ internal sealed class EncString : IDisposable
         }
 
         EncStringType type;
-        ReadOnlySpan<char> body;
-        int headerSeparatorIndex = valueSpan.IndexOf('.');
+        ReadOnlySpan<char> payload;
+        int typeSeparatorIndex = valueSpan.IndexOf('.');
 
-        if (headerSeparatorIndex >= 0
-            && int.TryParse(valueSpan[..headerSeparatorIndex].Trim(), out int typeValue))
+        if (typeSeparatorIndex >= 0
+            && int.TryParse(valueSpan[..typeSeparatorIndex].Trim(), out int typeValue))
         {
             type = (EncStringType)typeValue;
-            body = valueSpan[(headerSeparatorIndex + 1)..].Trim();
+            payload = valueSpan[(typeSeparatorIndex + 1)..].Trim();
         }
         else
         {
             type = EncStringType.AesCbc256_B64;
-            body = valueSpan;
+            payload = valueSpan;
         }
 
-        int firstSeparatorIndex = body.IndexOf('|');
+        int firstSeparatorIndex = payload.IndexOf('|');
         int secondSeparatorIndex = firstSeparatorIndex < 0
             ? -1
-            : body[(firstSeparatorIndex + 1)..].IndexOf('|');
+            : payload[(firstSeparatorIndex + 1)..].IndexOf('|');
 
-        ReadOnlySpan<char> first = firstSeparatorIndex < 0 ? body : body[..firstSeparatorIndex];
-        ReadOnlySpan<char> second = firstSeparatorIndex < 0
+        ReadOnlySpan<char> firstSegment = firstSeparatorIndex < 0 ? payload : payload[..firstSeparatorIndex];
+        ReadOnlySpan<char> secondSegment = firstSeparatorIndex < 0
             ? default
             : secondSeparatorIndex < 0
-                ? body[(firstSeparatorIndex + 1)..]
-                : body.Slice(firstSeparatorIndex + 1, secondSeparatorIndex);
-        ReadOnlySpan<char> third = secondSeparatorIndex < 0
+                ? payload[(firstSeparatorIndex + 1)..]
+                : payload.Slice(firstSeparatorIndex + 1, secondSeparatorIndex);
+        ReadOnlySpan<char> thirdSegment = secondSeparatorIndex < 0
             ? default
-            : body[(firstSeparatorIndex + secondSeparatorIndex + 2)..];
+            : payload[(firstSeparatorIndex + secondSeparatorIndex + 2)..];
 
-        if (secondSeparatorIndex >= 0 && third.IndexOf('|') >= 0)
+        if (secondSeparatorIndex >= 0 && thirdSegment.IndexOf('|') >= 0)
         {
             parsed = default;
             return false;
@@ -141,14 +115,14 @@ internal sealed class EncString : IDisposable
         parsed = type switch
         {
             EncStringType.AesCbc256_B64 when firstSeparatorIndex >= 0 && secondSeparatorIndex < 0
-                => new EncStringParts(type, second, first),
+                => new EncStringParts(type, secondSegment, firstSegment),
             EncStringType.AesCbc256_HmacSha256_B64 when firstSeparatorIndex >= 0 && secondSeparatorIndex >= 0
-                => new EncStringParts(type, second, first, third),
+                => new EncStringParts(type, secondSegment, firstSegment, thirdSegment),
             EncStringType.Rsa2048_OaepSha1_B64 or EncStringType.Rsa2048_OaepSha256_B64 when firstSeparatorIndex < 0
-                => new EncStringParts(type, first),
+                => new EncStringParts(type, firstSegment),
             EncStringType.Rsa2048_OaepSha1_HmacSha256_B64 or EncStringType.Rsa2048_OaepSha256_HmacSha256_B64
                 when firstSeparatorIndex >= 0 && secondSeparatorIndex < 0
-                => new EncStringParts(type, first, default, second),
+                => new EncStringParts(type, firstSegment, default, secondSegment),
             _ => default,
         };
 

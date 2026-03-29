@@ -20,10 +20,6 @@ public interface IIdentityApiClient
         DeviceLoginRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<TokenExchangeOutcome> LoginWithClientCredentialsAsync(
-        ClientCredentialsLoginRequest request,
-        CancellationToken cancellationToken = default);
-
     Task<TokenExchangeOutcome> LoginWithAuthorizationCodeAsync(
         AuthorizationCodeLoginRequest request,
         CancellationToken cancellationToken = default);

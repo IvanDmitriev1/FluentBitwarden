@@ -3,7 +3,7 @@ using FluentBitwarden.Modules.Account.Models;
 
 namespace FluentBitwarden.Modules.Account.Abstractions;
 
-internal interface IAccountRepository
+public interface IAccountRepository
 {
     Task<IReadOnlyList<StoredAccount>> GetAccountsAsync(CancellationToken cancellationToken = default);
     Task<StoredAccount?> GetByIdAsync(UserId accountId, CancellationToken cancellationToken = default);

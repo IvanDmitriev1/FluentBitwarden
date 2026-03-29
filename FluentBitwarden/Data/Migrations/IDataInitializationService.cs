@@ -1,5 +1,6 @@
-﻿namespace FluentBitwarden.Data.Migrations;
+namespace FluentBitwarden.Data.Migrations;
 
-internal interface IDataInitializationService
+public interface IDataInitializationService
 {
+    Task InitializeAsync(CancellationToken cancellationToken = default);
 }

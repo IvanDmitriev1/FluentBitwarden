@@ -5,9 +5,9 @@ using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Views.Setup.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text.Json;
 
 namespace FluentBitwarden.Views.Setup.States;
 
@@ -15,16 +15,21 @@ public partial class TwoFactorStepState : ObservableValidator
 {
     private readonly SetupLoginContext _context;
     private readonly IAuthenticationService _authenticationService;
-    private readonly PasswordSignInContinuation _loginContinuation;
+    private readonly Func<AuthenticationSuccess, Task> _onSuccess;
+    private readonly string _email;
+    private readonly string _serverAuthorizationHash;
 
     public TwoFactorStepState(
         SetupLoginContext context,
         PasswordSignInOutcome.TwoFactorRequired twoFactorRequired,
-        IAuthenticationService authenticationService)
+        IAuthenticationService authenticationService,
+        Func<AuthenticationSuccess, Task> onSuccess)
     {
         _context = context;
         _authenticationService = authenticationService;
-        _loginContinuation = twoFactorRequired.Continuation;
+        _onSuccess = onSuccess;
+        _email = twoFactorRequired.Email;
+        _serverAuthorizationHash = twoFactorRequired.ServerAuthorizationHash;
 
         Providers = twoFactorRequired.Challenge.Providers
             .Select(static provider => new TwoFactorProviderOptionModel(
@@ -33,10 +38,12 @@ public partial class TwoFactorStepState : ObservableValidator
                 BuildSubtitle(provider),
                 IsSupported(provider.Provider)))
             .ToArray();
+
+        SelectedProvider = Providers[0];
     }
 
     [ObservableProperty]
-    public partial TwoFactorProviderOptionModel? SelectedProvider { get; set; }
+    public partial TwoFactorProviderOptionModel SelectedProvider { get; set; }
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
@@ -46,9 +53,6 @@ public partial class TwoFactorStepState : ObservableValidator
         "IL2026",
         Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
     public partial string Code { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial string PromptText { get; set; } = "Complete the Bitwarden two-factor challenge to continue";
 
     [field: MaybeNull]
     public ValidatableProperty CodeValidation
@@ -61,15 +65,22 @@ public partial class TwoFactorStepState : ObservableValidator
     private async Task ContinueTwoFactorAsync()
     {
         ValidateAllProperties();
-        if (HasErrors || SelectedProvider is null)
+        if (HasErrors)
             return;
 
         var result = await _authenticationService.ContinueTwoFactorAsync(
             _context.BitwardenClientContext,
-            _loginContinuation,
+            _email,
+            _serverAuthorizationHash,
             new TwoFactorProof(Code, SelectedProvider.Provider), CancellationToken.None);
 
+        if (result is PasswordSignInOutcome.Success success)
+        {
+            await _onSuccess.Invoke(success.AuthenticationSuccess);
+            return;
+        }
 
+        Debugger.Break();
     }
 
     public static bool IsSupported(TwoFactorProviderType provider) =>

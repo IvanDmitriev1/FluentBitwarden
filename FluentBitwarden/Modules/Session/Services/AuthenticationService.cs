@@ -5,6 +5,7 @@ using FluentBitwarden.Modules.Session.Abstractions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using BitwardenApi.Shared.Context;
+using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Authentication;
 
@@ -14,56 +15,54 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
 {
     private static readonly JwtSecurityTokenHandler JwtSecurityTokenHandler = new();
 
-    public async Task<PasswordSignInOutcome> SignInWithPasswordAsync(PasswordSignInRequest request, CancellationToken cancellationToken = default)
+    public async Task<PasswordSignInOutcome> SignInWithPasswordAsync(
+        BitwardenClientContext context,
+        string email,
+        string masterPassword,
+        CancellationToken cancellationToken = default)
     {
-        var signInContinuation = SessionCrypto.DeriveMasterPasswordAuth(request.Email, request.MasterPassword, new KdfConfig.Pbkdf2(600000));
+        string serverAuthorizationHash =
+            SessionCrypto.HashMasterPassword(email, masterPassword, new KdfConfig.Pbkdf2(600000));
 
-        var passwordLoginRequest =
-            new PasswordLoginRequest(request.Context, request.Email, signInContinuation.ServerAuthorizationHash);
+        var passwordLoginRequest = new PasswordLoginRequest(context, email, serverAuthorizationHash);
 
         var result = await identityApiClient.LoginWithPasswordAsync(passwordLoginRequest, cancellationToken);
-        return ParseTokenOutcome(signInContinuation, result);
+        return ParseTokenOutcome(email, serverAuthorizationHash, result);
     }
 
     public async Task<PasswordSignInOutcome> ContinueTwoFactorAsync(
         BitwardenClientContext context,
-        PasswordSignInContinuation passwordSignInContinuation,
+        string email,
+        string serverAuthorizationHash,
         TwoFactorProof twoFactorProof,
         CancellationToken cancellationToken)
     {
-         var result = await identityApiClient.LoginWithPasswordAndTwoFactorAsync(new PasswordTwoFactorLoginRequest(context,
-            passwordSignInContinuation.Email, passwordSignInContinuation.ServerAuthorizationHash, twoFactorProof), cancellationToken);
+        var result = await identityApiClient.LoginWithPasswordAndTwoFactorAsync(new PasswordTwoFactorLoginRequest(context,
+            email, serverAuthorizationHash, twoFactorProof), cancellationToken);
 
-         return ParseTokenOutcome(passwordSignInContinuation, result);
+        return ParseTokenOutcome(email, serverAuthorizationHash, result);
     }
 
-
-    private static PasswordSignInOutcome ParseTokenOutcome(PasswordSignInContinuation signInContinuation, TokenExchangeOutcome outcome)
+    private static PasswordSignInOutcome ParseTokenOutcome(
+        string email,
+        string serverAuthorizationHash,
+        TokenExchangeOutcome outcome)
     {
-        PasswordSignInContinuation? currentContinuation = signInContinuation;
-
-        try
+        switch (outcome)
         {
-            switch (outcome)
-            {
-                case TokenExchangeOutcome.Success success:
-                    return new PasswordSignInOutcome.Success(CreateAuthenticationSuccess(success.Response));
-                case TokenExchangeOutcome.DeviceVerificationRequired dv:
-                    return new PasswordSignInOutcome.DeviceVerificationRequired(dv.Message);
-                case TokenExchangeOutcome.InvalidCredentials ic:
-                    return new PasswordSignInOutcome.InvalidCredentials(ic.Message);
-
-                case TokenExchangeOutcome.TwoFactorRequired twoFactorRequired:
-                    currentContinuation = null;
-                    return new PasswordSignInOutcome.TwoFactorRequired(twoFactorRequired.Challenge, signInContinuation);
-
-                default:
-                    throw new InvalidOperationException("Unsupported password token outcome.");
-            }
-        }
-        finally
-        {
-            currentContinuation?.Dispose();
+            case TokenExchangeOutcome.Success success:
+                return new PasswordSignInOutcome.Success(CreateAuthenticationSuccess(success.Response));
+            case TokenExchangeOutcome.DeviceVerificationRequired dv:
+                return new PasswordSignInOutcome.DeviceVerificationRequired(dv.Message);
+            case TokenExchangeOutcome.InvalidCredentials ic:
+                return new PasswordSignInOutcome.InvalidCredentials(ic.Message);
+            case TokenExchangeOutcome.TwoFactorRequired twoFactorRequired:
+                return new PasswordSignInOutcome.TwoFactorRequired(
+                    twoFactorRequired.Challenge,
+                    email,
+                    serverAuthorizationHash);
+            default:
+                throw new InvalidOperationException("Unsupported password token outcome.");
         }
     }
 
@@ -75,6 +74,7 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
 
         return new AuthenticationSuccess(UserId.Parse(accountId), email,
             new SessionTokens(model.AccessToken, model.RefreshToken, model.TwoFactorToken, model.ExpiresAt),
-            new AccountUnlockData(model.MasterPasswordUnlockModel.KdfConfig, model.MasterPasswordUnlockModel.UserKey, model.MasterPasswordUnlockModel.Salt));
+            new AccountCryptoMaterial(model.MasterPasswordUnlockModel.KdfConfig,
+                model.MasterPasswordUnlockModel.UserKey, model.PrivateKey));
     }
 }

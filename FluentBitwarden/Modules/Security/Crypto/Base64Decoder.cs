@@ -1,10 +1,10 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 
 namespace FluentBitwarden.Modules.Security.Crypto;
 
-internal static class CryptoEncoding
+internal static class Base64Decoder
 {
-    public static int GetBase64DecodedLength(ReadOnlySpan<char> source, string sourceName)
+    public static int GetDecodedByteCount(ReadOnlySpan<char> source, string sourceName)
     {
         if (source.IsEmpty)
         {
@@ -35,7 +35,7 @@ internal static class CryptoEncoding
         return checked(source.Length / 4 * 3 - paddingCount);
     }
 
-    public static int DecodeBase64(ReadOnlySpan<char> source, Span<byte> destination, string sourceName)
+    public static int Decode(ReadOnlySpan<char> source, Span<byte> destination, string sourceName)
     {
         if (!Convert.TryFromBase64Chars(source, destination, out int bytesWritten))
         {
@@ -44,9 +44,6 @@ internal static class CryptoEncoding
 
         return bytesWritten;
     }
-
-    public static char ToHexLower(int value)
-        => (char)(value < 10 ? '0' + value : 'a' + (value - 10));
 
     private static void ThrowInvalidBase64(string sourceName)
         => throw new CryptographicException($"{sourceName} was not valid Base64.");

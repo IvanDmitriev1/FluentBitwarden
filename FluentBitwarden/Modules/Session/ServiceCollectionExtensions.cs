@@ -9,6 +9,7 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddSessionModule(this IServiceCollection services)
     {
         services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        services.AddSingleton<ISessionTokensStore, DpapiSessionTokensStore>();
 
         return services;
     }
