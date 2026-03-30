@@ -1,19 +1,19 @@
-using System.Security.Cryptography;
-
 namespace FluentBitwarden.Modules.Security.Crypto;
 
 internal static class Base64Decoder
 {
-    public static int GetDecodedByteCount(ReadOnlySpan<char> source, string sourceName)
+    public static bool TryGetDecodedByteCount(ReadOnlySpan<char> source, out int decodedByteCount)
     {
         if (source.IsEmpty)
         {
-            return 0;
+            decodedByteCount = 0;
+            return true;
         }
 
         if ((source.Length & 0x03) != 0)
         {
-            ThrowInvalidBase64(sourceName);
+            decodedByteCount = 0;
+            return false;
         }
 
         int paddingCount = 0;
@@ -27,24 +27,22 @@ internal static class Base64Decoder
             }
         }
 
-        if (source[..^paddingCount].IndexOf('=') >= 0)
+        ReadOnlySpan<char> unpaddedSource = paddingCount == 0
+            ? source
+            : source[..^paddingCount];
+
+        if (unpaddedSource.IndexOf('=') >= 0)
         {
-            ThrowInvalidBase64(sourceName);
+            decodedByteCount = 0;
+            return false;
         }
 
-        return checked(source.Length / 4 * 3 - paddingCount);
+        decodedByteCount = checked(source.Length / 4 * 3 - paddingCount);
+        return true;
     }
 
-    public static int Decode(ReadOnlySpan<char> source, Span<byte> destination, string sourceName)
+    public static bool TryDecode(ReadOnlySpan<char> source, Span<byte> destination, out int bytesWritten)
     {
-        if (!Convert.TryFromBase64Chars(source, destination, out int bytesWritten))
-        {
-            ThrowInvalidBase64(sourceName);
-        }
-
-        return bytesWritten;
+        return Convert.TryFromBase64Chars(source, destination, out bytesWritten);
     }
-
-    private static void ThrowInvalidBase64(string sourceName)
-        => throw new CryptographicException($"{sourceName} was not valid Base64.");
 }

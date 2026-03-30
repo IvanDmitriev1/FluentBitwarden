@@ -4,6 +4,7 @@ using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Application.Tray;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
+using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
@@ -39,6 +40,7 @@ public partial class App : IXamlMetadataServiceProvider
 
             services.AddBitwardenApi<BearerTokenHandler>();
             services.AddAccountModule();
+            services.AddSecurityModule();
             services.AddSessionModule();
         })
         .Build();

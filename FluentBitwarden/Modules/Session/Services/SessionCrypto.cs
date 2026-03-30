@@ -1,5 +1,4 @@
-﻿using BitwardenApi.Shared.Cryptography;
-using FluentBitwarden.Modules.Security.Crypto.Enc;
+using BitwardenApi.Shared.Cryptography;
 using FluentBitwarden.Modules.Security.Crypto.Kdf;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -11,24 +10,23 @@ internal static class SessionCrypto
     public static string HashMasterPassword(
         string email,
         string masterPassword,
-        KdfConfig kdfConfig,
-        string? salt = null)
+        KdfConfig kdfConfig)
     {
         string normalizedEmail = NormalizeText(email);
-        string normalizedSalt = string.IsNullOrEmpty(salt) ? normalizedEmail : NormalizeText(salt);
+        string salt = normalizedEmail;
 
-        byte[] masterKey = kdfConfig switch
+        Span<byte> masterKey = stackalloc byte[32];
+
+        switch (kdfConfig)
         {
-            KdfConfig.Pbkdf2 pbkdf2 => Pbkdf2Kdf.Derive(masterPassword, normalizedSalt, pbkdf2.Iterations, 32),
-            KdfConfig.Argon2Id argon2Id => Argon2IdKdf.Derive(
-                masterPassword,
-                normalizedSalt,
-                argon2Id.Iterations,
-                argon2Id.MemoryMib,
-                argon2Id.Parallelism,
-                32),
-            _ => throw new ArgumentOutOfRangeException(nameof(kdfConfig))
-        };
+            case KdfConfig.Pbkdf2 pbkdf2:
+                Pbkdf2Kdf.Derive(masterPassword, salt, pbkdf2.Iterations, masterKey);
+                break;
+            case KdfConfig.Argon2Id argon2Id:
+                Argon2IdKdf.Derive(masterPassword, salt, argon2Id.Iterations, argon2Id.MemoryMib, argon2Id.Parallelism, masterKey);
+                break;
+            default: throw new ArgumentOutOfRangeException(nameof(kdfConfig));
+        }
 
         try
         {
@@ -40,13 +38,6 @@ internal static class SessionCrypto
         {
             CryptographicOperations.ZeroMemory(masterKey);
         }
-    }
-
-
-    public static byte[] DecryptUserKey(EncString encryptedUserKey, ReadOnlySpan<byte> stretchedMasterKey)
-    {
-        EncStringParts parsed = encryptedUserKey.Parse();
-        return AesCbcHmac.Decrypt(parsed, stretchedMasterKey);
     }
 
     public static string NormalizeText(ReadOnlySpan<char> email)

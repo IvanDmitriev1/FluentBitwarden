@@ -12,11 +12,7 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<IAuthenticationService, AuthenticationService>();
         services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
-
-        if (TpmSessionTokensStore.IsSupported())
-            services.AddSingleton<ISessionTokensStore, TpmSessionTokensStore>();
-        else
-            services.AddSingleton<ISessionTokensStore, DpapiSessionTokensStore>();
+        services.AddSingleton<ISessionTokensStore, ProtectedSessionTokensStore>();
 
         services.AddSingleton<CurrentSessionAccessor>();
         services.AddSingleton<ICurrentSessionAccessor>(static sp => sp.GetRequiredService<CurrentSessionAccessor>());

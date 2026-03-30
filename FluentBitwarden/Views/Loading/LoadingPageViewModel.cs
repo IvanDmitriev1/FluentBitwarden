@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Data.Migrations;
 using FluentBitwarden.Modules.Account.Abstractions;
+using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Shared.Behaviors.PageLyfecycle;
 using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Setup;
@@ -10,6 +11,7 @@ namespace FluentBitwarden.Views.Loading;
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
     IAccountRepository accountRepository,
+    ISessionTokensStore sessionTokensStore,
     IDataInitializationService dataInitializationService,
     IMessenger messenger)
     : ObservableRecipient(messenger), IPageLifecycleAware
@@ -25,10 +27,10 @@ public partial class LoadingPageViewModel(
         await dataInitializationService.InitializeAsync(cancellationToken);
 
         var accounts = await accountRepository.GetAccountsAsync(cancellationToken);
-        var shouldNavigateToSetup = accounts.Count == 0;
 
-        if (!shouldNavigateToSetup)
+        if (accounts.Count > 0)
         {
+            var q = sessionTokensStore.TryGet(accounts[0].UserId);
             return;
         }
 

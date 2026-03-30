@@ -46,25 +46,17 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
     private static PasswordSignInOutcome ParseTokenOutcome(
         string email,
         string serverAuthorizationHash,
-        TokenExchangeOutcome outcome)
+        TokenExchangeOutcome outcome) => outcome switch
     {
-        switch (outcome)
-        {
-            case TokenExchangeOutcome.Success success:
-                return new PasswordSignInOutcome.Success(CreateAuthenticationSuccess(success.Response));
-            case TokenExchangeOutcome.DeviceVerificationRequired dv:
-                return new PasswordSignInOutcome.DeviceVerificationRequired(dv.Message);
-            case TokenExchangeOutcome.InvalidCredentials ic:
-                return new PasswordSignInOutcome.InvalidCredentials(ic.Message);
-            case TokenExchangeOutcome.TwoFactorRequired twoFactorRequired:
-                return new PasswordSignInOutcome.TwoFactorRequired(
-                    twoFactorRequired.Challenge,
-                    email,
-                    serverAuthorizationHash);
-            default:
-                throw new InvalidOperationException("Unsupported password token outcome.");
-        }
-    }
+        TokenExchangeOutcome.Success success => new PasswordSignInOutcome.Success(
+            CreateAuthenticationSuccess(success.Response)),
+        TokenExchangeOutcome.DeviceVerificationRequired dv => new PasswordSignInOutcome.DeviceVerificationRequired(
+            dv.Message),
+        TokenExchangeOutcome.InvalidCredentials ic => new PasswordSignInOutcome.InvalidCredentials(ic.Message),
+        TokenExchangeOutcome.TwoFactorRequired twoFactorRequired => new PasswordSignInOutcome.TwoFactorRequired(
+            twoFactorRequired.Challenge, email, serverAuthorizationHash),
+        _ => throw new InvalidOperationException("Unsupported password token outcome.")
+    };
 
     private static AuthenticationSuccess CreateAuthenticationSuccess(TokenResponseModel model)
     {

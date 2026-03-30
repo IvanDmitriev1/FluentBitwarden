@@ -8,9 +8,9 @@ internal static class AesCbcHmac
     private const int IvByteLength = 16;
     private const int MacByteLength = 32;
 
-    public static byte[] Decrypt(EncStringParts parts, ReadOnlySpan<byte> key)
+    public static byte[] Decrypt(in EncStringParts parts, ReadOnlySpan<byte> key)
     {
-        int maxPlaintextLength = Base64Decoder.GetDecodedByteCount(parts.Data, "EncString ciphertext");
+        int maxPlaintextLength = GetDecodedByteCountOrThrow(parts.Data, "EncString ciphertext");
         byte[] plaintext = new byte[maxPlaintextLength];
         int bytesWritten = DecryptCore(parts, key, plaintext);
 
@@ -25,16 +25,16 @@ internal static class AesCbcHmac
         return trimmed;
     }
 
-    public static int DecryptTo(EncStringParts parts, ReadOnlySpan<byte> key, Span<byte> destination)
+    public static int DecryptTo(in EncStringParts parts, ReadOnlySpan<byte> key, Span<byte> destination)
         => DecryptCore(parts, key, destination);
 
-    private static int DecryptCore(EncStringParts parts, ReadOnlySpan<byte> key, Span<byte> destination)
+    private static int DecryptCore(in EncStringParts parts, ReadOnlySpan<byte> key, Span<byte> destination)
     {
-        int ciphertextByteCount = Base64Decoder.GetDecodedByteCount(parts.Data, "EncString ciphertext");
+        int ciphertextByteCount = GetDecodedByteCountOrThrow(parts.Data, "EncString ciphertext");
         using var ciphertextOwner = MemoryOwner<byte>.Allocate(ciphertextByteCount);
         Span<byte> ciphertext = ciphertextOwner.Span[..ciphertextByteCount];
 
-        _ = Base64Decoder.Decode(parts.Data, ciphertext, "EncString ciphertext");
+        _ = DecodeOrThrow(parts.Data, ciphertext, "EncString ciphertext");
         return parts.Type switch
         {
             EncStringType.AesCbc256_B64 => DecryptAesCbcOnly(parts, ciphertext, key[..32], destination),
@@ -44,7 +44,7 @@ internal static class AesCbcHmac
     }
 
     private static int DecryptAesCbcOnly(
-        EncStringParts parts,
+        in EncStringParts parts,
         ReadOnlySpan<byte> ciphertext,
         ReadOnlySpan<byte> encryptionKey,
         Span<byte> destination)
@@ -57,17 +57,17 @@ internal static class AesCbcHmac
         using var ivOwner = MemoryOwner<byte>.Allocate(IvByteLength);
         Span<byte> iv = ivOwner.Span[..IvByteLength];
 
-        if (Base64Decoder.GetDecodedByteCount(parts.Iv, "EncString IV") != IvByteLength)
+        if (GetDecodedByteCountOrThrow(parts.Iv, "EncString IV") != IvByteLength)
         {
             throw new CryptographicException("EncString IV length was invalid.");
         }
 
-        _ = Base64Decoder.Decode(parts.Iv, iv, "EncString IV");
+        _ = DecodeOrThrow(parts.Iv, iv, "EncString IV");
         return DecryptAesCbcPkcs7(ciphertext, encryptionKey, iv, destination);
     }
 
     private static int DecryptAesCbcWithHmac(
-        EncStringParts parts,
+        in EncStringParts parts,
         ReadOnlySpan<byte> ciphertext,
         ReadOnlySpan<byte> key,
         Span<byte> destination)
@@ -92,18 +92,18 @@ internal static class AesCbcHmac
         using var macPayloadOwner = MemoryOwner<byte>.Allocate(macPayloadLength);
         Span<byte> macPayload = macPayloadOwner.Span[..macPayloadLength];
 
-        if (Base64Decoder.GetDecodedByteCount(parts.Iv, "EncString IV") != IvByteLength)
+        if (GetDecodedByteCountOrThrow(parts.Iv, "EncString IV") != IvByteLength)
         {
             throw new CryptographicException("EncString IV length was invalid.");
         }
 
-        if (Base64Decoder.GetDecodedByteCount(parts.Mac, "EncString MAC") != MacByteLength)
+        if (GetDecodedByteCountOrThrow(parts.Mac, "EncString MAC") != MacByteLength)
         {
             throw new CryptographicException("EncString MAC length was invalid.");
         }
 
-        _ = Base64Decoder.Decode(parts.Iv, iv, "EncString IV");
-        _ = Base64Decoder.Decode(parts.Mac, providedMac, "EncString MAC");
+        _ = DecodeOrThrow(parts.Iv, iv, "EncString IV");
+        _ = DecodeOrThrow(parts.Mac, providedMac, "EncString MAC");
 
         iv.CopyTo(macPayload);
         ciphertext.CopyTo(macPayload[IvByteLength..]);
@@ -149,4 +149,17 @@ internal static class AesCbcHmac
             CryptographicOperations.ZeroMemory(keyBytes);
         }
     }
+
+    private static int GetDecodedByteCountOrThrow(ReadOnlySpan<char> source, string sourceName)
+        => Base64Decoder.TryGetDecodedByteCount(source, out int decodedByteCount)
+            ? decodedByteCount
+            : throw CreateInvalidBase64Exception(sourceName);
+
+    private static int DecodeOrThrow(ReadOnlySpan<char> source, Span<byte> destination, string sourceName)
+        => Base64Decoder.TryDecode(source, destination, out int bytesWritten)
+            ? bytesWritten
+            : throw CreateInvalidBase64Exception(sourceName);
+
+    private static CryptographicException CreateInvalidBase64Exception(string sourceName)
+        => new($"{sourceName} was not valid Base64.");
 }
