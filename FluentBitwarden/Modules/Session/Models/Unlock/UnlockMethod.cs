@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Modules.Vault.Models;
+﻿namespace FluentBitwarden.Modules.Session.Models.Unlock;
 
 public enum UnlockMethod
 {

@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Shared.Behaviors.PageLyfecycle;
+﻿namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
 
 /// <summary>
 /// Defines async lifecycle hooks for pages that participate in navigation.

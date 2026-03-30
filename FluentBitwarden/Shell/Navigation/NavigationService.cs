@@ -1,10 +1,9 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using CommunityToolkit.Mvvm.Messaging;
 
 namespace FluentBitwarden.Shell.Navigation;
 
-public sealed class NavigationService(IMessenger messenger) : INavigationService
+public sealed class NavigationService : INavigationService
 {
     private WeakReference<Frame>? _frame;
 
@@ -22,7 +21,7 @@ public sealed class NavigationService(IMessenger messenger) : INavigationService
         }
     }
 
-    public void NavigateTo<T>() where T : Page
+    public void NavigateTo<T>(object? param = null) where T : Page
     {
         if (!TryGetFrame(out var frame))
             return;
@@ -30,33 +29,10 @@ public sealed class NavigationService(IMessenger messenger) : INavigationService
         if (frame.Content is T)
             return;
 
-        var navigated = frame.Navigate(typeof(T));
+        var navigated = frame.Navigate(typeof(T), param);
 
         frame.BackStack.Clear();
         Debug.Assert(navigated, "Navigation failed.");
-    }
-
-    public void NavigateTo<TPage, TMessage>(TMessage message)
-        where TPage : Page
-        where TMessage : class
-    {
-        if (!TryGetFrame(out var frame))
-            return;
-
-        if (frame.Content is TPage)
-        {
-            messenger.Send(message);
-            return;
-        }
-
-        var navigated = frame.Navigate(typeof(TPage));
-        Debug.Assert(navigated, "Navigation failed.");
-
-        if (!navigated)
-            return;
-
-        frame.BackStack.Clear();
-        messenger.Send(message);
     }
 
     public bool GoBack()

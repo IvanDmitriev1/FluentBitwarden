@@ -61,7 +61,7 @@ public partial class SetupPageViewModel : ObservableObject
 
         await _accountRepository.UpsertAsync(
             new StoredAccount(success.UserId, success.Email, _loginContext.DeviceInfoEnvironment,
-                success.AccountCryptoMaterial, DateTimeOffset.UtcNow));
+                success.AccountCryptoMaterial, DateTimeOffset.UtcNow, false, false));
 
         _navigationService.NavigateTo<LoadingPage>();
     }

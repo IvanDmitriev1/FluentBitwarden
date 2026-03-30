@@ -24,7 +24,7 @@ internal sealed class ProtectedSessionTokensStore(ISecretProtector secretProtect
         }
     }
 
-    public SessionTokens? TryGet(UserId userId)
+    public SessionTokens? Get(UserId userId)
     {
         var payload = secretProtector.TryUnprotect(SessionPath(userId));
         if (payload is null)

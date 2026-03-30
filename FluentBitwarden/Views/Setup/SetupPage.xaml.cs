@@ -1,8 +1,9 @@
+using FluentBitwarden.Shared.Behaviors.Lifecycle;
+
 namespace FluentBitwarden.Views.Setup;
 
-public sealed partial class SetupPage : Page
+public sealed partial class SetupPage : LifecyclePage
 {
-
     public SetupPage(SetupPageViewModel viewModel)
     {
         ViewModel = viewModel;

@@ -3,6 +3,9 @@ using BitwardenApi.Shared.Context;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Security;
+using FluentBitwarden.Modules.Session.Models.Unlock;
 
 namespace FluentBitwarden.Modules.Session.Services
 {
@@ -28,19 +31,35 @@ namespace FluentBitwarden.Modules.Session.Services
         }
 
         [field: MaybeNull]
-        public SessionTokens SessionTokens
+        public SessionTokens CurrentSession
+        {
+            get => field ?? throw new InvalidOperationException();
+            private set;
+        }
+
+        [field: MaybeNull]
+        public UserKeySession CurrentUserKeySession
         {
             get => field ?? throw new InvalidOperationException();
             private set;
         }
 
 
-        public void SetCurrentSession(UserId currentUser, BitwardenClientContext context, SessionTokens sessionTokens)
+        public void SetCurrentSession(StoredAccount account, SessionTokens sessionTokens, UserKeySession userKeySession)
         {
             IsAuthenticated = true;
-            CurrentUser = currentUser;
-            SessionTokens = sessionTokens;
-            CurrentContext = context;
+            CurrentUser = account.UserId;
+            CurrentContext = new BitwardenClientContext(account.Environment, DeviceIdentity.DeviceInfo);
+            CurrentSession = sessionTokens;
+            CurrentUserKeySession = userKeySession;
+        }
+
+        public void UpdateSession(UserId userId, SessionTokens sessionTokens)
+        {
+            if (CurrentUser != userId)
+                throw new InvalidOperationException();
+
+            CurrentSession = sessionTokens;
         }
     }
 }

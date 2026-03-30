@@ -50,8 +50,8 @@ internal sealed class TpmSecretProtector : ISecretProtector
         aes.Encrypt(protectedPayloadOwner.Nonce, plaintext, protectedPayloadOwner.Ciphertext, protectedPayloadOwner.Tag);
 
         using var rsa = TpmRsaFactory.OpenRsa();
-        using var wrappedKeyOwner = MemoryOwner<byte>.Allocate(rsa.KeySize / 8);
-        var wrappedKey = wrappedKeyOwner.Span[..(rsa.KeySize / 8)];
+        using var wrappedKeyOwner = SpanOwner<byte>.Allocate(rsa.KeySize / 8);
+        Span<byte> wrappedKey = wrappedKeyOwner.Span;
 
         try
         {

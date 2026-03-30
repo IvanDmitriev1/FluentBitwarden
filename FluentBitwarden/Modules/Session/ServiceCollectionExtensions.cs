@@ -1,5 +1,6 @@
 ﻿using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
+using FluentBitwarden.Modules.Session.Services.Unlock;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Modules.Session;
@@ -16,6 +17,9 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<CurrentSessionAccessor>();
         services.AddSingleton<ICurrentSessionAccessor>(static sp => sp.GetRequiredService<CurrentSessionAccessor>());
+
+        services.AddSingleton<IUnlockService, UnlockServices>();
+        services.AddSingleton<MasterPasswordUnlockStrategy>();
 
         return services;
     }

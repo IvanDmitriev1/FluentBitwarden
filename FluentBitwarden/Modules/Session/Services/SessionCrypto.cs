@@ -1,32 +1,24 @@
 using BitwardenApi.Shared.Cryptography;
+using FluentBitwarden.Modules.Security.Crypto.Enc;
 using FluentBitwarden.Modules.Security.Crypto.Kdf;
-using System.Diagnostics;
 using System.Security.Cryptography;
+using BitwardenApi.Modules.Identity.Models;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
 internal static class SessionCrypto
 {
     public static string HashMasterPassword(
-        string email,
-        string masterPassword,
+        ReadOnlySpan<char> email,
+        ReadOnlySpan<char> masterPassword,
         KdfConfig kdfConfig)
     {
-        string normalizedEmail = NormalizeText(email);
-        string salt = normalizedEmail;
+        Span<char> normalizedEmailOwner = stackalloc char[email.Length];
+        int normalizedEmailLength = email.Trim().ToLowerInvariant(normalizedEmailOwner);
+        ReadOnlySpan<char> normalizedEmail = normalizedEmailOwner[..normalizedEmailLength];
 
         Span<byte> masterKey = stackalloc byte[32];
-
-        switch (kdfConfig)
-        {
-            case KdfConfig.Pbkdf2 pbkdf2:
-                Pbkdf2Kdf.Derive(masterPassword, salt, pbkdf2.Iterations, masterKey);
-                break;
-            case KdfConfig.Argon2Id argon2Id:
-                Argon2IdKdf.Derive(masterPassword, salt, argon2Id.Iterations, argon2Id.MemoryMib, argon2Id.Parallelism, masterKey);
-                break;
-            default: throw new ArgumentOutOfRangeException(nameof(kdfConfig));
-        }
+        DeriveMasterKey(masterPassword, normalizedEmail, kdfConfig, masterKey);
 
         try
         {
@@ -40,12 +32,36 @@ internal static class SessionCrypto
         }
     }
 
-    public static string NormalizeText(ReadOnlySpan<char> email)
+    public static byte[] DecryptUserKey(in EncryptedUserKey encryptedUserKey, ReadOnlySpan<char> masterPassword, ReadOnlySpan<char> salt, KdfConfig kdfConfig)
     {
-        Span<char> span = stackalloc char[email.Length];
-        int result = email.Trim().ToLowerInvariant(span);
-        Debug.Assert(result >= 0);
+        Span<byte> stretchedMasterKey = stackalloc byte[64];
+        StretchMasterKey(masterPassword, salt, kdfConfig, stretchedMasterKey);
 
-        return span.ToString();
+        using var encString = EncString.From(encryptedUserKey.Value);
+        var parsed = encString.Parse();
+        return AesCbcHmac.Decrypt(parsed, stretchedMasterKey);
+    }
+
+    public static void StretchMasterKey(ReadOnlySpan<char> masterPassword, ReadOnlySpan<char> salt, KdfConfig kdfConfig, Span<byte> stretchedMasterKey)
+    {
+        Span<byte> masterKey = stackalloc byte[32];
+        DeriveMasterKey(masterPassword, salt, kdfConfig, masterKey);
+
+        Hkdf.Expand(masterKey, "enc", stretchedMasterKey[..32]);
+        Hkdf.Expand(masterKey, "mac", stretchedMasterKey.Slice(32, 32));
+    }
+
+    private static void DeriveMasterKey(ReadOnlySpan<char> masterPassword, ReadOnlySpan<char> salt, KdfConfig kdfConfig, Span<byte> output)
+    {
+        switch (kdfConfig)
+        {
+            case KdfConfig.Pbkdf2 pbkdf2:
+                Pbkdf2Kdf.Derive(masterPassword, salt, pbkdf2.Iterations, output);
+                break;
+            case KdfConfig.Argon2Id argon2Id:
+                Argon2IdKdf.Derive(masterPassword, salt, argon2Id.Iterations, argon2Id.MemoryMib, argon2Id.Parallelism, output);
+                break;
+            default: throw new ArgumentOutOfRangeException(nameof(kdfConfig));
+        }
     }
 }

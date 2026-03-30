@@ -19,7 +19,9 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             kdf_iterations INTEGER NOT NULL,
             kdf_memory_mib INTEGER NULL,
             kdf_parallelism INTEGER NULL,
-            last_sync_at_unix_ms INTEGER NOT NULL
+            last_sync_at_unix_ms INTEGER NOT NULL,
+            has_pin INTEGER NOT NULL,
+            has_windows_hello INTEGER NOT NULL
         );
         """;
 

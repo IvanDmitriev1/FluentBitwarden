@@ -1,5 +1,17 @@
-﻿namespace FluentBitwarden.Views.Unlock;
+using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Shared.Behaviors.Lifecycle;
 
-public sealed class UnlockPageViewModel : ObservableRecipient
+namespace FluentBitwarden.Views.Unlock;
+
+public sealed class UnlockPageViewModel : ObservableRecipient, IPageLifecycleAwareParam<IReadOnlyList<StoredAccount>>
 {
+    public Task OnLoadingAsync(IReadOnlyList<StoredAccount> param, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public void OnUnloading()
+    {
+        
+    }
 }

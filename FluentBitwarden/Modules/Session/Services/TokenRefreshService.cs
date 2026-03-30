@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
+[Fody.ConfigureAwait(false)]
 internal sealed class TokenRefreshService(
     IIdentityApiClient identityApiClient,
     ISessionTokensStore sessionTokensStore,
@@ -22,7 +23,7 @@ internal sealed class TokenRefreshService(
 
         try
         {
-            if (sessionTokensStore.TryGet(userId) is not { } retrievedSession ||
+            if (sessionTokensStore.Get(userId) is not { } retrievedSession ||
                 retrievedSession.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(5))
                 return current;
 
@@ -35,7 +36,7 @@ internal sealed class TokenRefreshService(
                 response.ExpiresAt);
 
             sessionTokensStore.Store(userId, newSession);
-            currentSessionAccessor.SetCurrentSession(userId, context, newSession);
+            currentSessionAccessor.UpdateSession(userId, newSession);
             return newSession;
         }
         finally

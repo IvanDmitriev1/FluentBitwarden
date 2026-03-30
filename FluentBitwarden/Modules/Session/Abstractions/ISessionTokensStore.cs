@@ -6,6 +6,6 @@ namespace FluentBitwarden.Modules.Session.Abstractions;
 public interface ISessionTokensStore
 {
     void Store(UserId userId, SessionTokens tokens);
-    SessionTokens? TryGet(UserId userId);
+    SessionTokens? Get(UserId userId);
     void Remove(UserId userId);
 }

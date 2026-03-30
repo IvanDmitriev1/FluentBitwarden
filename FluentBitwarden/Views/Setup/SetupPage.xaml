@@ -1,26 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Page
+<lifecycle:LifecyclePage
     x:Class="FluentBitwarden.Views.Setup.SetupPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:lifecycle="using:FluentBitwarden.Shared.Behaviors.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:pageLyfecycle="using:FluentBitwarden.Shared.Behaviors.PageLyfecycle"
     xmlns:setup="using:FluentBitwarden.Views.Setup"
     mc:Ignorable="d">
 
-    <interactivity:Interaction.Behaviors>
-        <pageLyfecycle:PageLifecycleBehavior />
-    </interactivity:Interaction.Behaviors>
-
-    <Page.Resources>
+    <lifecycle:LifecyclePage.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <setup:SetupStepTemplates />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Page.Resources>
+    </lifecycle:LifecyclePage.Resources>
 
     <Grid
         MinWidth="420"
@@ -46,4 +41,4 @@
             </StackPanel>
         </Border>
     </Grid>
-</Page>
+</lifecycle:LifecyclePage>

@@ -1,6 +1,8 @@
+using FluentBitwarden.Shared.Behaviors.Lifecycle;
+
 namespace FluentBitwarden.Views.Loading;
 
-public sealed partial class LoadingPage : Page
+public sealed partial class LoadingPage : LifecyclePage
 {
     public LoadingPage(LoadingPageViewModel viewModel)
     {

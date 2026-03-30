@@ -31,8 +31,8 @@ internal static class AesCbcHmac
     private static int DecryptCore(in EncStringParts parts, ReadOnlySpan<byte> key, Span<byte> destination)
     {
         int ciphertextByteCount = GetDecodedByteCountOrThrow(parts.Data, "EncString ciphertext");
-        using var ciphertextOwner = MemoryOwner<byte>.Allocate(ciphertextByteCount);
-        Span<byte> ciphertext = ciphertextOwner.Span[..ciphertextByteCount];
+        using SpanOwner<byte> ciphertextOwner = SpanOwner<byte>.Allocate(ciphertextByteCount);
+        Span<byte> ciphertext = ciphertextOwner.Span;
 
         _ = DecodeOrThrow(parts.Data, ciphertext, "EncString ciphertext");
         return parts.Type switch
@@ -54,8 +54,8 @@ internal static class AesCbcHmac
             throw new CryptographicException("EncString IV is required.");
         }
 
-        using var ivOwner = MemoryOwner<byte>.Allocate(IvByteLength);
-        Span<byte> iv = ivOwner.Span[..IvByteLength];
+        using SpanOwner<byte> ivOwner = SpanOwner<byte>.Allocate(IvByteLength);
+        Span<byte> iv = ivOwner.Span;
 
         if (GetDecodedByteCountOrThrow(parts.Iv, "EncString IV") != IvByteLength)
         {
@@ -82,15 +82,15 @@ internal static class AesCbcHmac
             throw new CryptographicException("EncString IV and MAC are required.");
         }
 
-        using var decodedMetadataOwner = MemoryOwner<byte>.Allocate(IvByteLength + MacByteLength + MacByteLength);
-        Span<byte> decodedMetadata = decodedMetadataOwner.Span[..(IvByteLength + (2 * MacByteLength))];
+        using SpanOwner<byte> decodedMetadataOwner = SpanOwner<byte>.Allocate(IvByteLength + MacByteLength + MacByteLength);
+        Span<byte> decodedMetadata = decodedMetadataOwner.Span;
         Span<byte> iv = decodedMetadata[..IvByteLength];
         Span<byte> providedMac = decodedMetadata.Slice(IvByteLength, MacByteLength);
         Span<byte> expectedMac = decodedMetadata.Slice(IvByteLength + MacByteLength, MacByteLength);
 
         int macPayloadLength = IvByteLength + ciphertext.Length;
-        using var macPayloadOwner = MemoryOwner<byte>.Allocate(macPayloadLength);
-        Span<byte> macPayload = macPayloadOwner.Span[..macPayloadLength];
+        using SpanOwner<byte> macPayloadOwner = SpanOwner<byte>.Allocate(macPayloadLength);
+        Span<byte> macPayload = macPayloadOwner.Span;
 
         if (GetDecodedByteCountOrThrow(parts.Iv, "EncString IV") != IvByteLength)
         {

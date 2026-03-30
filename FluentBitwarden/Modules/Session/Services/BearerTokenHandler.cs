@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
+[Fody.ConfigureAwait(false)]
 internal sealed class BearerTokenHandler(
     ICurrentSessionAccessor currentSessionAccessor,
     ITokenRefreshService tokenRefreshService) : DelegatingHandler
@@ -13,7 +14,7 @@ internal sealed class BearerTokenHandler(
         if (!currentSessionAccessor.IsAuthenticated)
             throw new InvalidOperationException("Tried to request to authorized endpoint while unauthorized.");
 
-        var currentSession = currentSessionAccessor.SessionTokens;
+        var currentSession = currentSessionAccessor.CurrentSession;
         var currentUser = currentSessionAccessor.CurrentUser;
 
         if (currentSession.ExpiresAt <= DateTimeOffset.UtcNow.AddMinutes(5))

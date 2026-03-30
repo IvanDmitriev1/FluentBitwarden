@@ -10,7 +10,7 @@ internal static class ServiceCollectionExtensions
     {
         services.AddSingleton<MainWindow>();
         services.AddTransient<ShellPage>();
-        services.AddSingleton<IMessenger, WeakReferenceMessenger>();
+        services.AddSingleton<IMessenger>(StrongReferenceMessenger.Default);
 
         services.AddShellService<INavigationService, NavigationService>();
 

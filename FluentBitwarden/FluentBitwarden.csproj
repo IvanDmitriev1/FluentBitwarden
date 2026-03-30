@@ -59,6 +59,7 @@
 	<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
 	<PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
 	<PackageReference Include="CommunityToolkit.WinUI.Helpers" Version="8.2.251219" />
+	<PackageReference Include="ConfigureAwait.Fody" Version="3.3.2" PrivateAssets="all" ExcludeAssets="runtime" />
 	<PackageReference Include="Dapper" Version="2.1.72" />
 	<PackageReference Include="Dapper.AOT" Version="1.0.48" />
 	<PackageReference Include="DependencyPropertyGenerator" Version="1.5.0">

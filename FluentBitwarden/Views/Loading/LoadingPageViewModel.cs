@@ -2,9 +2,10 @@ using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Data.Migrations;
 using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Shared.Behaviors.PageLyfecycle;
+using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Setup;
+using FluentBitwarden.Views.Unlock;
 
 namespace FluentBitwarden.Views.Loading;
 
@@ -28,13 +29,13 @@ public partial class LoadingPageViewModel(
 
         var accounts = await accountRepository.GetAccountsAsync(cancellationToken);
 
-        if (accounts.Count > 0)
+        if (accounts.Count <= 0)
         {
-            var q = sessionTokensStore.TryGet(accounts[0].UserId);
+            navigationService.NavigateTo<SetupPage>();
             return;
         }
 
-        navigationService.NavigateTo<SetupPage>();
+        navigationService.NavigateTo<UnlockPage>(accounts);
     }
 
     public void OnUnloading() { }
