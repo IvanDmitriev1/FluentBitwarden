@@ -1,3 +1,4 @@
+using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -21,7 +22,7 @@ public sealed class NavigationService : INavigationService
         }
     }
 
-    public void NavigateTo<T>(object? param = null) where T : Page
+    public void NavigateTo<T>(IPageNavigationParameter? parameter = null) where T : Page
     {
         if (!TryGetFrame(out var frame))
             return;
@@ -29,7 +30,7 @@ public sealed class NavigationService : INavigationService
         if (frame.Content is T)
             return;
 
-        var navigated = frame.Navigate(typeof(T), param);
+        var navigated = frame.Navigate(typeof(T), parameter);
 
         frame.BackStack.Clear();
         Debug.Assert(navigated, "Navigation failed.");

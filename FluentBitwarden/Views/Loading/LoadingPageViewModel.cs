@@ -1,8 +1,9 @@
-using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Data.Migrations;
 using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models.Unlock;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Shell;
 using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Unlock;
@@ -13,9 +14,10 @@ public partial class LoadingPageViewModel(
     INavigationService navigationService,
     IAccountRepository accountRepository,
     ISessionTokensStore sessionTokensStore,
-    IDataInitializationService dataInitializationService,
-    IMessenger messenger)
-    : ObservableRecipient(messenger), IPageLifecycleAware
+    IDataInitializationService dataInitializationService)
+    : ObservableObject,
+        IPageLifecycleAware,
+        IPageLifecycleAware<UnlockResult.Success>
 {
     [ObservableProperty]
     public partial bool IsLoading { get; private set; }
@@ -35,7 +37,14 @@ public partial class LoadingPageViewModel(
             return;
         }
 
-        navigationService.NavigateTo<UnlockPage>(accounts);
+        navigationService.NavigateTo<UnlockPage>(PageNavigationParameter.From(accounts));
+    }
+
+    public async Task OnLoadingAsync(UnlockResult.Success param, CancellationToken cancellationToken)
+    {
+        await Task.Delay(100, cancellationToken);
+
+        navigationService.NavigateTo<ShellPage>();
     }
 
     public void OnUnloading() { }

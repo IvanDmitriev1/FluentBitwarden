@@ -8,7 +8,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
     private const string CreateAccountsTableSql =
         """
         CREATE TABLE IF NOT EXISTS accounts (
-            user_id TEXT PRIMARY KEY NOT NULL,
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE,
             email TEXT NOT NULL,
             api_base TEXT NOT NULL,
             identity_base TEXT NOT NULL,

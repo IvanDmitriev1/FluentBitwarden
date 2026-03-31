@@ -16,9 +16,9 @@ internal sealed class UnlockServices(
     {
         var account = await accountRepository.GetByIdAsync(userId, cancellationToken);
         if (account is null)
-            return new UnlockCapabilities(false, false, false, 0);
+            return new UnlockCapabilities(false, false, 0);
 
-        return new UnlockCapabilities(true, account.HasPin, account.HasWindowsHello, 5);
+        return new UnlockCapabilities(account.HasPin, account.HasWindowsHello, 5);
     }
 
     public async Task<UnlockResult> UnlockAsync<TRequest>(UserId userId, TRequest request, CancellationToken cancellationToken = default) where TRequest : struct, IUnlockRequest

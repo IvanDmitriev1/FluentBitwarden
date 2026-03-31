@@ -59,13 +59,19 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
                     has_pin AS HasPin,
                     has_windows_hello AS HasWindowsHello
                 FROM accounts
-                WHERE user_id = @UserId;
+                WHERE user_id = @UserId COLLATE NOCASE;
                 """,
                 new { UserId = accountId },
                 cancellationToken: cancellationToken);
 
-            AccountData? row = connection.QuerySingleOrDefault<AccountData?>(command);
-            return row?.ToStoredAccount();
+            AccountData[] rows = connection.Query<AccountData>(command).Take(2).ToArray();
+
+            return rows.Length switch
+            {
+                0 => null,
+                1 => rows[0].ToStoredAccount(),
+                _ => throw new InvalidOperationException($"Expected a single account row for user '{accountId}', but found {rows.Length}.")
+            };
         }, cancellationToken);
 
     public Task UpsertAsync(StoredAccount account, CancellationToken cancellationToken = default)
@@ -134,7 +140,7 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
         connectionFactory.ExecuteAsync(connection =>
         {
             CommandDefinition command = new(
-                "DELETE FROM accounts WHERE user_id = @UserId;",
+                "DELETE FROM accounts WHERE user_id = @UserId COLLATE NOCASE;",
                 new { UserId = accountId },
                 cancellationToken: cancellationToken);
 

@@ -1,17 +1,19 @@
 ﻿namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
 
-/// <summary>
-/// Defines async lifecycle hooks for pages that participate in navigation.
-/// </summary>
-public interface IPageLifecycleAware
+public interface IPageLifecycleAwareBase
 {
-    /// <summary>
-    /// Runs when a page is being loaded.
-    /// </summary>
-    Task OnLoadingAsync(CancellationToken cancellationToken);
-
     /// <summary>
     /// Runs when a page is being unloaded.
     /// </summary>
     void OnUnloading();
+}
+
+public interface IPageLifecycleAware : IPageLifecycleAwareBase
+{
+    Task OnLoadingAsync(CancellationToken cancellationToken);
+}
+
+public interface IPageLifecycleAware<in TParam> : IPageLifecycleAwareBase where TParam : class
+{
+    Task OnLoadingAsync(TParam param, CancellationToken cancellationToken);
 }

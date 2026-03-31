@@ -1,7 +1,6 @@
 ﻿namespace FluentBitwarden.Modules.Session.Models.Unlock;
 
-public sealed record UnlockCapabilities(
-    bool SupportsMasterPassword,
+public readonly record struct UnlockCapabilities(
     bool SupportsPin,
     bool SupportsWindowsHello,
     int RemainingPinAttempts);

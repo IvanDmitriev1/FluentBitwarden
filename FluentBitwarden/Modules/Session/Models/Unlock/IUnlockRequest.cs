@@ -1,3 +1,3 @@
 ﻿namespace FluentBitwarden.Modules.Session.Models.Unlock;
 
-internal interface IUnlockRequest;
+public interface IUnlockRequest;

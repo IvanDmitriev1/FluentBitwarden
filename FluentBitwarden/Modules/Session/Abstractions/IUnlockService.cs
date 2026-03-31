@@ -3,7 +3,7 @@ using FluentBitwarden.Modules.Session.Models.Unlock;
 
 namespace FluentBitwarden.Modules.Session.Abstractions;
 
-internal interface IUnlockService
+public interface IUnlockService
 {
     Task<UnlockCapabilities> GetCapabilitiesAsync(
         UserId userId,

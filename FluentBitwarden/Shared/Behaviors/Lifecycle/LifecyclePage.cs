@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
@@ -18,27 +17,22 @@ public abstract class LifecyclePage : Page
 
         try
         {
-            Task task = Task.CompletedTask;
-
-            if (DataContext is IPageLifecycleAware lifecycleAware)
+            Task loadingTask = (DataContext, e.Parameter) switch
             {
-                task = lifecycleAware.OnLoadingAsync(_cts.Token);
-            }
+                ({ } target, IPageNavigationParameter parameter) =>
+                    parameter.Load(target, _cts.Token),
 
-            if (DataContext is IPageLifecycleAwareParam lifecycleAwareParam)
-            {
-                task = lifecycleAwareParam.OnLoadingAsync(e.Parameter, _cts.Token);
-            }
+                (IPageLifecycleAware lifecycleAware, _) =>
+                    lifecycleAware.OnLoadingAsync(_cts.Token),
 
-            await task.ConfigureAwait(false);
+                _ => Task.CompletedTask
+            };
+
+            await loadingTask;
         }
         catch (OperationCanceledException ex) when (_cts.IsCancellationRequested)
         {
             Debug.WriteLine($"Canceled page loading for {GetType().Name}: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            DispatcherQueue.TryEnqueue(() => ExceptionDispatchInfo.Throw(ex));
         }
     }
 
@@ -47,10 +41,7 @@ public abstract class LifecyclePage : Page
         base.OnNavigatedFrom(e);
         CancelCts();
 
-        if (DataContext is IPageLifecycleAware lifecycleAware)
-        {
-            lifecycleAware.OnUnloading();
-        }
+        (DataContext as IPageLifecycleAwareBase)?.OnUnloading();
     }
 
     private void CancelCts()
