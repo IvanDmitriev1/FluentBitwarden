@@ -1,13 +1,13 @@
 ﻿using BitwardenApi.Shared.Context;
-using FluentBitwarden.Modules.Account.Abstractions;
+using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models.Authentication;
-using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Setup.Models;
 using FluentBitwarden.Views.Setup.States;
+using FluentBitwarden.Views.Shell.Navigation;
 
 namespace FluentBitwarden.Views.Setup;
 
@@ -15,23 +15,20 @@ public partial class SetupPageViewModel : ObservableObject
 {
     private readonly INavigationService _navigationService;
     private readonly IAuthenticationService _authenticationService;
-    private readonly IAccountRepository _accountRepository;
-    private readonly IAccountSecurityRepository _accountSecurityRepository;
     private readonly ISessionTokensStore _sessionTokensStore;
+    private readonly IUnitOfWorkFactory _unitOfWorkFactory;
     private readonly SetupLoginContext _loginContext;
 
     public SetupPageViewModel(
         INavigationService navigationService,
         IAuthenticationService authenticationService,
-        IAccountRepository accountRepository,
-        IAccountSecurityRepository accountSecurityRepository,
-        ISessionTokensStore sessionTokensStore)
+        ISessionTokensStore sessionTokensStore,
+        IUnitOfWorkFactory unitOfWorkFactory)
     {
         _navigationService = navigationService;
         _authenticationService = authenticationService;
-        _accountRepository = accountRepository;
-        _accountSecurityRepository = accountSecurityRepository;
         _sessionTokensStore = sessionTokensStore;
+        _unitOfWorkFactory = unitOfWorkFactory;
         _loginContext = new SetupLoginContext(DeviceIdentity.DeviceInfo, BitwardenEnvironment.UnitedStates);
 
         GoToEmail();
@@ -60,15 +57,17 @@ public partial class SetupPageViewModel : ObservableObject
 
     private async Task OnCompleteSetup(AuthenticationSuccess success)
     {
-        _sessionTokensStore.Store(success.UserId, success.SessionTokens);
+        using var unitOfWork = _unitOfWorkFactory.Create();
 
-        await _accountRepository.UpsertAsync(new StoredAccount(
+        await Task.Run(() => unitOfWork.AccountRepository.Upsert(new StoredAccount(
             success.UserId,
             success.Email,
             _loginContext.DeviceInfoEnvironment,
             success.AccountCryptoMaterial,
-            DateTimeOffset.UtcNow));
-        await _accountSecurityRepository.UpdateAsync(new StoredAccountSecurity(success.UserId, false, false));
+            DateTimeOffset.UtcNow)));
+
+        _sessionTokensStore.Store(success.UserId, success.SessionTokens);
+        unitOfWork.SaveChanges();
 
         _navigationService.NavigateTo<LoadingPage>();
     }

@@ -1,7 +1,7 @@
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
 
-namespace FluentBitwarden.Shell;
+namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class ShellPage : Page
 {

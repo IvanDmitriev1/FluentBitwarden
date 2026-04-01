@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Shell.Notifications;
+﻿namespace FluentBitwarden.Views.Shell.Notifications;
 
 internal interface INotificationService
 {

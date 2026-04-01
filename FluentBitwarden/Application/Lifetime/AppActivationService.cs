@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Shell;
+﻿using FluentBitwarden.Views.Shell;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using WinUIEx;

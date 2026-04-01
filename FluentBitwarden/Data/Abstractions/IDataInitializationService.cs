@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Data.Migrations;
+namespace FluentBitwarden.Data.Abstractions;
 
 public interface IDataInitializationService
 {

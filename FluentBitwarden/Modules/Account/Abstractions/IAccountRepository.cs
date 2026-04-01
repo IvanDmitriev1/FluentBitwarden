@@ -5,8 +5,8 @@ namespace FluentBitwarden.Modules.Account.Abstractions;
 
 public interface IAccountRepository
 {
-    Task<IReadOnlyList<StoredAccount>> GetAccountsAsync(CancellationToken cancellationToken = default);
-    Task<StoredAccount?> GetByIdAsync(UserId accountId, CancellationToken cancellationToken = default);
-    Task UpsertAsync(StoredAccount account, CancellationToken cancellationToken = default);
-    Task RemoveAsync(UserId accountId, CancellationToken cancellationToken = default);
+    IReadOnlyList<StoredAccount> GetAccounts();
+    StoredAccount? GetById(UserId accountId);
+    void Upsert(StoredAccount account);
+    void Remove(UserId accountId);
 }

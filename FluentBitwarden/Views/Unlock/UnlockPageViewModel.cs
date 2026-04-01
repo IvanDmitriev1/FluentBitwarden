@@ -7,10 +7,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Security.Abstractions;
-using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Security.Services.Unlock;
+using FluentBitwarden.Views.Shell.Navigation;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -25,7 +25,7 @@ public sealed partial class UnlockPageViewModel(
     [NotifyPropertyChangedFor(nameof(HasUnlockMethods))]
     public partial IReadOnlyList<UnlockOption> UnlockMethods { get; private set; } = [];
 
-    public bool HasUnlockMethods => UnlockMethods.Count > 0;
+    public bool HasUnlockMethods => UnlockMethods.Count > 1;
 
 
 

@@ -65,7 +65,7 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
         string email = jwt.Claims.First(c => c.Type == "email").Value;
 
         return new AuthenticationSuccess(UserId.Parse(accountId), email,
-            new SessionTokens(model.AccessToken, model.RefreshToken, model.TwoFactorToken, model.ExpiresAt),
+            new SessionTokens(model.RefreshToken, model.TwoFactorToken, model.AccessToken, model.ExpiresAt),
             new AccountCryptoMaterial(model.MasterPasswordUnlockModel.KdfConfig,
                 model.MasterPasswordUnlockModel.UserKey, model.PrivateKey));
     }

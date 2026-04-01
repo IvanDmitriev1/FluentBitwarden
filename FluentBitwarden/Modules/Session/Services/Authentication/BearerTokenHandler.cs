@@ -1,6 +1,7 @@
 ﻿using FluentBitwarden.Modules.Session.Abstractions;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using BitwardenApi.Modules.Identity.Models;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
@@ -17,7 +18,7 @@ internal sealed class BearerTokenHandler(
         var currentSession = currentSessionAccessor.CurrentSession;
         var currentUser = currentSessionAccessor.CurrentUser;
 
-        if (currentSession.ExpiresAt <= DateTimeOffset.UtcNow.AddMinutes(5))
+        if (currentSession.AccessToken == AccessToken.Empty || currentSession.ExpiresAt <= DateTimeOffset.UtcNow.AddMinutes(5))
         {
             currentSession = await tokenRefreshService.RefreshAsync(
                 currentUser,

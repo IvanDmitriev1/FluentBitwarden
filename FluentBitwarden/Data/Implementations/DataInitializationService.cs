@@ -1,7 +1,7 @@
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
 
-namespace FluentBitwarden.Data.Migrations;
+namespace FluentBitwarden.Data.Implementations;
 
 internal sealed class DataInitializationService(ISqliteConnectionFactory connectionFactory) : IDataInitializationService
 {
@@ -23,20 +23,13 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         );
         """;
 
-    private const string CreateAccountSecurityTableSql =
-        """
-        CREATE TABLE IF NOT EXISTS account_security (
-            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE,
-            has_pin INTEGER NOT NULL,
-            has_windows_hello INTEGER NOT NULL,
-            FOREIGN KEY(user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
-        );
-        """;
+    public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.Run(() =>
+    {
+        using var connection = connectionFactory.OpenConnection();
+        using var transaction = connection.BeginTransaction();
 
-    public Task InitializeAsync(CancellationToken cancellationToken = default) =>
-        connectionFactory.ExecuteAsync(connection =>
-        {
-            connection.Execute(new CommandDefinition(CreateAccountsTableSql, cancellationToken: cancellationToken));
-            connection.Execute(new CommandDefinition(CreateAccountSecurityTableSql, cancellationToken: cancellationToken));
-        }, cancellationToken);
+        connection.Execute(CreateAccountsTableSql, transaction: transaction);
+        transaction.Commit();
+
+    }, cancellationToken);
 }

@@ -6,12 +6,11 @@ using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Shared.Extensions;
 using System.Security.Cryptography;
 using Windows.Storage;
-using Windows.System;
-using Path = System.IO.Path;
+
 
 namespace FluentBitwarden.Modules.Session.Services;
 
-internal sealed class ProtectedSessionTokensStore : ISessionTokensStore
+internal sealed class DpApiSessionTokensStore : ISessionTokensStore
 {
     private static readonly string SessionsDirectoryPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "Sessions");
     private static byte[] Entropy => "bw_session_v1"u8.ToArray();

@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Shell.Navigation;
+using FluentBitwarden.Views.Shell.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.Shell;
+namespace FluentBitwarden.Views.Shell;
 
 internal static class ServiceCollectionExtensions
 {

@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using WinUIEx;
 
 namespace FluentBitwarden;
 
@@ -19,12 +20,14 @@ public static class Program
         if (isRedirect)
             return 0;
 
-        Microsoft.UI.Xaml.Application.Start(static (p) =>
+        var fss = SimpleSplashScreen.ShowDefaultSplashScreen();
+
+        Microsoft.UI.Xaml.Application.Start(p =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
-            _ = new App();
+            _ = new App(fss);
         });
 
         return 0;

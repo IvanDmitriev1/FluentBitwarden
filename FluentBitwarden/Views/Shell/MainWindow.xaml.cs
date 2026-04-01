@@ -1,9 +1,9 @@
 using FluentBitwarden.Modules.AppState.Services;
-using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Loading;
+using FluentBitwarden.Views.Shell.Navigation;
 using Microsoft.UI.Windowing;
 
-namespace FluentBitwarden.Shell;
+namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx
 {

@@ -119,9 +119,9 @@ internal static class SessionTokensCodec
             }
 
             tokens = new SessionTokens(
-                new AccessToken(accessToken),
                 new RefreshToken(refreshToken),
                 twoFactorToken,
+                new AccessToken(accessToken),
                 DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMilliseconds));
 
             return true;

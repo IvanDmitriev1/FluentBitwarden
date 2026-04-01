@@ -32,7 +32,10 @@ internal sealed class TokenRefreshService(
                 throw new SessionRefreshException(result);
 
             var response = success.Response;
-            var newSession = new SessionTokens(response.AccessToken, response.RefreshToken, response.TwoFactorToken,
+            var newSession = new SessionTokens(
+                response.RefreshToken,
+                response.TwoFactorToken,
+                response.AccessToken,
                 response.ExpiresAt);
 
             sessionTokensStore.Store(userId, newSession);

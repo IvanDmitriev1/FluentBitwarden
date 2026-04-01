@@ -1,29 +1,24 @@
-using FluentBitwarden.Data.Migrations;
-using FluentBitwarden.Modules.Account.Abstractions;
+using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
-using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
-using FluentBitwarden.Shell;
-using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Setup;
+using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock;
 
 namespace FluentBitwarden.Views.Loading;
 
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
-    IAccountRepository accountRepository,
-    ISessionTokensStore sessionTokensStore,
-    IDataInitializationService dataInitializationService)
+    IUnitOfWorkFactory unitOfWorkFactory)
     : ObservableObject,
         IPageLifecycleAware,
         IPageLifecycleAware<UnlockResult.Success>
 {
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        await dataInitializationService.InitializeAsync(cancellationToken);
-
-        var accounts = await accountRepository.GetAccountsAsync(cancellationToken);
+        using var unitOfWork = unitOfWorkFactory.Create();
+        var accounts = await Task.Run(unitOfWork.AccountRepository.GetAccounts, cancellationToken);
 
         if (accounts.Count <= 0)
         {
