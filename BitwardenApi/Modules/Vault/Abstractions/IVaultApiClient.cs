@@ -1,4 +1,5 @@
 using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Shared.Context;
 using BitwardenApi.Shared.Transport;
 
 namespace BitwardenApi.Modules.Vault.Abstractions;
@@ -6,26 +7,20 @@ namespace BitwardenApi.Modules.Vault.Abstractions;
 public interface IVaultApiClient
 {
     Task<ApiStreamResponse> GetSyncAsync(
-        GetSyncRequest request,
+        BitwardenEnvironment environment,
         CancellationToken cancellationToken = default);
 
     Task<ApiStreamResponse> GetCipherAsync(
-        GetCipherRequest request,
+        BitwardenEnvironment environment,
+        CipherId cipherId,
         CancellationToken cancellationToken = default);
 
     Task<ApiStreamResponse> GetAllCiphersAsync(
-        GetAllCiphersRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task CreateCipherAsync(
-        CreateCipherRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task UpdateCipherAsync(
-        UpdateCipherRequest request,
+        BitwardenEnvironment environment,
         CancellationToken cancellationToken = default);
 
     Task DeleteCipherAsync(
-        DeleteCipherRequest request,
+        BitwardenEnvironment environment,
+        CipherId cipherId,
         CancellationToken cancellationToken = default);
 }

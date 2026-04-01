@@ -2,7 +2,13 @@
 
 namespace BitwardenApi.Modules.Identity.Models;
 
-public sealed record TokenResponseModel(
+public sealed record TokenRefreshSessionModel(
+    AccessToken AccessToken,
+    RefreshToken RefreshToken,
+    TwoFactorToken? TwoFactorToken,
+    DateTimeOffset ExpiresAt);
+
+public sealed record TokenAuthenticatedModel(
     AccessToken AccessToken,
     RefreshToken RefreshToken,
     TwoFactorToken? TwoFactorToken,

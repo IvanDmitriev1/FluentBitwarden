@@ -1,15 +1,15 @@
-﻿using BitwardenApi.Modules.Identity.Abstractions;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Cryptography;
-using FluentBitwarden.Modules.Session.Abstractions;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using BitwardenApi.Modules.Identity.Abstractions;
+using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
+using BitwardenApi.Shared.Cryptography;
 using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Authentication;
 
-namespace FluentBitwarden.Modules.Session.Services;
+namespace FluentBitwarden.Modules.Session.Services.Authentication;
 
 internal sealed class AuthenticationService(IIdentityApiClient identityApiClient) : IAuthenticationService
 {
@@ -48,8 +48,8 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
         string serverAuthorizationHash,
         TokenExchangeOutcome outcome) => outcome switch
     {
-        TokenExchangeOutcome.Success success => new PasswordSignInOutcome.Success(
-            CreateAuthenticationSuccess(success.Response)),
+        TokenExchangeOutcome.Authenticated success => new PasswordSignInOutcome.Success(
+            CreateAuthenticationSuccess(success.AuthenticatedModel)),
         TokenExchangeOutcome.DeviceVerificationRequired dv => new PasswordSignInOutcome.DeviceVerificationRequired(
             dv.Message),
         TokenExchangeOutcome.InvalidCredentials ic => new PasswordSignInOutcome.InvalidCredentials(ic.Message),
@@ -58,7 +58,7 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
         _ => throw new InvalidOperationException("Unsupported password token outcome.")
     };
 
-    private static AuthenticationSuccess CreateAuthenticationSuccess(TokenResponseModel model)
+    private static AuthenticationSuccess CreateAuthenticationSuccess(TokenAuthenticatedModel model)
     {
         var jwt = JwtSecurityTokenHandler.ReadJwtToken(model.AccessToken.Value);
         string accountId = jwt.Claims.First(c => c.Type == "sub").Value;

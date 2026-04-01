@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Internal;
 using BitwardenApi.Modules.Identity.Models;
@@ -18,6 +19,8 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
             request.Context,
             request.CreatePasswordGrant(),
             "Identity login with password",
+            BitwardenApiJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
     public Task<TokenExchangeOutcome> LoginWithPasswordAndTwoFactorAsync(
@@ -27,6 +30,8 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
             request.Context,
             request.CreatePasswordWithTwoFactorGrant(),
             "Identity login with password and two-factor",
+            BitwardenApiJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
     public Task<TokenExchangeOutcome> RefreshAsync(
@@ -36,6 +41,8 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
             request.Context,
             request.CreateRefreshTokenGrant(),
             "Identity refresh token",
+            BitwardenApiJsonContext.ConfiguredDefault.TokenRefreshSessionResponse,
+            static payload => new TokenExchangeOutcome.SessionRefreshed(payload.ToTokenRefreshSessionModel()),
             cancellationToken);
 
     public Task<TokenExchangeOutcome> LoginWithDeviceAsync(
@@ -45,6 +52,8 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
             request.Context,
             request.CreateDeviceGrant(),
             "Identity login with device",
+            BitwardenApiJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
     public Task<TokenExchangeOutcome> LoginWithAuthorizationCodeAsync(
@@ -54,17 +63,22 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
             request.Context,
             request.CreateAuthorizationCodeGrant(),
             "Identity login with authorization code",
+            BitwardenApiJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
-    private async Task<TokenExchangeOutcome> SendTokenRequestAsync(
+    private async Task<TokenExchangeOutcome> SendTokenRequestAsync<TPayload>(
         BitwardenClientContext context,
         IReadOnlyDictionary<string, string> form,
         string operation,
+        JsonTypeInfo<TPayload> payloadTypeInfo,
+        Func<TPayload, TokenExchangeOutcome> successFactory,
         CancellationToken cancellationToken)
     {
         Uri tokenEndpoint = new(context.Environment.IdentityBase, "/connect/token");
-        using FormUrlEncodedContent content = new(form);
-        using HttpRequestMessage request = new(HttpMethod.Post, tokenEndpoint);
+
+        using var content = new FormUrlEncodedContent(form);
+        using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint);
         request.Content = content;
 
         using var response = await httpClient.SendAsync(
@@ -74,7 +88,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
 
         if (response is { IsSuccessStatusCode: false, StatusCode: HttpStatusCode.BadRequest })
         {
-            var failureResponse = await response.Content.ReadFromJsonAsync<TokenFailureResponse>(
+            var failureResponse = await response.Content.ReadFromJsonAsync(
                 BitwardenApiJsonContext.ConfiguredDefault.TokenFailureResponse,
                 cancellationToken: cancellationToken);
 
@@ -86,16 +100,13 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
 
         response.EnsureSuccess(operation, cancellationToken);
 
-        TokenSuccessResponse? payload = await response.Content.ReadFromJsonAsync(
-            BitwardenApiJsonContext.ConfiguredDefault.TokenSuccessResponse,
+        TPayload? payload = await response.Content.ReadFromJsonAsync(
+            payloadTypeInfo,
             cancellationToken);
 
         if (payload is null)
             throw new InvalidDataException("Response JSON payload was empty.");
 
-        if (string.IsNullOrWhiteSpace(payload.AccessToken.Value))
-            throw new InvalidDataException("Identity token response did not include access_token.");
-
-        return new TokenExchangeOutcome.Success(payload.ToTokenResponse());
+        return successFactory(payload);
     }
 }

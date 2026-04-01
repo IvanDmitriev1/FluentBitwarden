@@ -1,7 +1,4 @@
-using System.Security.Cryptography;
-using Windows.Security.Credentials;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
-using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Views.Loading;
 

@@ -1,12 +1,12 @@
-﻿using BitwardenApi.Modules.Identity.Abstractions;
+﻿using System.Collections.Concurrent;
+using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
-using System.Collections.Concurrent;
 
-namespace FluentBitwarden.Modules.Session.Services;
+namespace FluentBitwarden.Modules.Session.Services.Authentication;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class TokenRefreshService(
@@ -28,10 +28,10 @@ internal sealed class TokenRefreshService(
                 return current;
 
             var result = await identityApiClient.RefreshAsync(new RefreshLoginRequest(context, current.RefreshToken), ct);
-            if (result is not TokenExchangeOutcome.Success success)
+            if (result is not TokenExchangeOutcome.SessionRefreshed success)
                 throw new SessionRefreshException(result);
 
-            var response = success.Response;
+            var response = success.Session;
             var newSession = new SessionTokens(
                 response.RefreshToken,
                 response.TwoFactorToken,

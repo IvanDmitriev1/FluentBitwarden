@@ -7,11 +7,17 @@ namespace BitwardenApi.Modules.Identity.Internal;
 
 internal static class IdentityJsonMapper
 {
-    public static TokenResponseModel ToTokenResponse(this TokenSuccessResponse dto)
+    public static TokenRefreshSessionModel ToTokenRefreshSessionModel(this TokenRefreshSessionResponse dto)
+    {
+        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(dto.ExpiresInSeconds);
+        return new TokenRefreshSessionModel(dto.AccessToken, dto.RefreshToken, dto.TwoFactorToken, expiresAt);
+    }
+
+    public static TokenAuthenticatedModel ToTokenResponse(this TokenAuthenticatedResponse dto)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddSeconds(dto.ExpiresInSeconds);
 
-        return new TokenResponseModel(
+        return new TokenAuthenticatedModel(
             dto.AccessToken,
             dto.RefreshToken,
             dto.TwoFactorToken,

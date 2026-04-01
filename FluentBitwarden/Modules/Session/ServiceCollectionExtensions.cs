@@ -1,5 +1,6 @@
 ﻿using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
+using FluentBitwarden.Modules.Session.Services.Authentication;
 using FluentBitwarden.Shared.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 

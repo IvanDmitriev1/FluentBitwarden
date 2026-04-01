@@ -4,7 +4,7 @@ using BitwardenApi.Shared.Cryptography;
 
 namespace BitwardenApi.Modules.Identity.Models;
 
-internal sealed record TokenSuccessResponse
+internal record TokenRefreshSessionResponse
 {
     [JsonPropertyName("access_token")]
     public required AccessToken AccessToken { get; init; }
@@ -17,8 +17,10 @@ internal sealed record TokenSuccessResponse
 
     [JsonPropertyName("expires_in")]
     public required int ExpiresInSeconds { get; init; }
+}
 
-
+internal sealed record TokenAuthenticatedResponse : TokenRefreshSessionResponse
+{
     [JsonPropertyName("privateKey")]
     public required EncryptedPrivateKey EncryptedPrivateKey { get; init; }
 

@@ -1,9 +1,9 @@
-﻿using FluentBitwarden.Modules.Session.Abstractions;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Headers;
 using BitwardenApi.Modules.Identity.Models;
+using FluentBitwarden.Modules.Session.Abstractions;
 
-namespace FluentBitwarden.Modules.Session.Services;
+namespace FluentBitwarden.Modules.Session.Services.Authentication;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class BearerTokenHandler(
