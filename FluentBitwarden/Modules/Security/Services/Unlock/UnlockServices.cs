@@ -1,24 +1,27 @@
 ﻿using BitwardenApi.Modules.Identity.Models;
 using FluentBitwarden.Modules.Account.Abstractions;
+using FluentBitwarden.Modules.Security.Abstractions;
+using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Unlock;
+using FluentBitwarden.Modules.Session.Services;
 
-namespace FluentBitwarden.Modules.Session.Services.Unlock;
+namespace FluentBitwarden.Modules.Security.Services.Unlock;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class UnlockServices(
     IAccountRepository accountRepository,
+    IAccountSecurityRepository accountSecurityRepository,
     ISessionTokensStore sessionTokensStore,
     CurrentSessionAccessor currentSessionAccessor,
     MasterPasswordUnlockStrategy masterPasswordUnlockStrategy) : IUnlockService
 {
     public async Task<UnlockCapabilities> GetCapabilitiesAsync(UserId userId, CancellationToken cancellationToken = default)
     {
-        var account = await accountRepository.GetByIdAsync(userId, cancellationToken);
-        if (account is null)
-            return new UnlockCapabilities(false, false, 0);
+        var security = await accountSecurityRepository.GetByAccountIdAsync(userId, cancellationToken);
+        if (security is null)
+            return new UnlockCapabilities(false, false, 5);
 
-        return new UnlockCapabilities(account.HasPin, account.HasWindowsHello, 5);
+        return new UnlockCapabilities(security.HasPin, security.HasWindowsHello, 5);
     }
 
     public async Task<UnlockResult> UnlockAsync<TRequest>(UserId userId, TRequest request, CancellationToken cancellationToken = default) where TRequest : struct, IUnlockRequest

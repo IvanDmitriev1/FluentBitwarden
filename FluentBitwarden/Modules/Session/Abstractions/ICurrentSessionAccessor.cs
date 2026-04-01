@@ -1,7 +1,7 @@
 ﻿using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
+using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Session.Models;
-using FluentBitwarden.Modules.Session.Models.Unlock;
 
 namespace FluentBitwarden.Modules.Session.Abstractions;
 

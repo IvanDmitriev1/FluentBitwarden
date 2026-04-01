@@ -9,7 +9,7 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddAccountModule(this IServiceCollection services)
     {
         services.AddSingleton<IAccountRepository, AccountRepository>();
-
+        services.AddSingleton<IAccountSecurityRepository, AccountSecurityRepository>();
 
         return services;
     }

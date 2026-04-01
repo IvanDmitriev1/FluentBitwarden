@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Modules.Session.Models.Unlock;
+﻿using FluentBitwarden.Modules.Security.Models.Unlock;
 
 namespace FluentBitwarden.Views.Unlock.Models;
 

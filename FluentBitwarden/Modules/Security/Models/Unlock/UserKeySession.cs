@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using BitwardenApi.Modules.Identity.Models;
 
-namespace FluentBitwarden.Modules.Session.Models.Unlock;
+namespace FluentBitwarden.Modules.Security.Models.Unlock;
 
 public sealed class UserKeySession(UserId userId, UnlockMethod unlockedVia, byte[] userKey) : IDisposable
 {

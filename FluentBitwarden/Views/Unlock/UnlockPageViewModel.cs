@@ -1,15 +1,16 @@
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Unlock;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using FluentBitwarden.Views.Unlock.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Modules.Session.Services.Unlock;
+using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Shell.Navigation;
 using FluentBitwarden.Views.Loading;
+using FluentBitwarden.Modules.Security.Models.Unlock;
+using FluentBitwarden.Modules.Security.Services.Unlock;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -21,7 +22,10 @@ public sealed partial class UnlockPageViewModel(
     public partial StoredAccount? SelectedAccount { get; private set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUnlockMethods))]
     public partial IReadOnlyList<UnlockOption> UnlockMethods { get; private set; } = [];
+
+    public bool HasUnlockMethods => UnlockMethods.Count > 0;
 
 
 

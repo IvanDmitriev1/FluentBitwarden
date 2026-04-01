@@ -1,7 +1,7 @@
 ﻿using BitwardenApi.Modules.Identity.Models;
-using FluentBitwarden.Modules.Session.Models.Unlock;
+using FluentBitwarden.Modules.Security.Models.Unlock;
 
-namespace FluentBitwarden.Modules.Session.Abstractions;
+namespace FluentBitwarden.Modules.Security.Abstractions;
 
 public interface IUnlockService
 {

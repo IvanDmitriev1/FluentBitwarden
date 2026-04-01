@@ -30,6 +30,8 @@
                 Tag="send" />
         </NavigationView.MenuItems>
 
-        <Frame x:Name="ContentFrame" />
+        <ScrollViewer>
+            <Frame x:Name="ContentFrame" Padding="22" />
+        </ScrollViewer>
     </NavigationView>
 </Page>

@@ -10,7 +10,7 @@
     xmlns:lifecycle="using:FluentBitwarden.Shared.Behaviors.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Unlock.Models"
-    xmlns:unlock="using:FluentBitwarden.Modules.Session.Models.Unlock"
+    xmlns:unlock="using:FluentBitwarden.Modules.Security.Models.Unlock"
     mc:Ignorable="d">
 
     <Grid
@@ -56,7 +56,7 @@
                     HorizontalAlignment="Stretch"
                     ItemsSource="{x:Bind ViewModel.UnlockMethods, Mode=OneWay}"
                     SelectedIndex="0"
-                    Visibility="{x:Bind 'ViewModel.UnlockMethods.Count > 0', Converter={StaticResource BoolToVis}, Mode=OneWay}">
+                    Visibility="{x:Bind ViewModel.HasUnlockMethods, Converter={StaticResource BoolToVis}, Mode=OneWay}">
                     <controls:Segmented.ItemTemplate>
                         <DataTemplate x:DataType="models:UnlockOption">
                             <TextBlock Text="{x:Bind Title}" />

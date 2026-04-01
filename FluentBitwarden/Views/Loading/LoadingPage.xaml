@@ -17,7 +17,6 @@
                 Width="48"
                 Height="48"
                 IsActive="True" />
-            <TextBlock HorizontalAlignment="Center" Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
         </StackPanel>
     </Grid>
 </lifecycle:LifecyclePage>

@@ -8,6 +8,4 @@ public sealed record StoredAccount(
     string Email,
     BitwardenEnvironment Environment,
     AccountCryptoMaterial AccountCryptoMaterial,
-    DateTimeOffset LastSyncAt,
-    bool HasPin,
-    bool HasWindowsHello);
+    DateTimeOffset LastSyncAt);

@@ -19,19 +19,24 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             kdf_iterations INTEGER NOT NULL,
             kdf_memory_mib INTEGER NULL,
             kdf_parallelism INTEGER NULL,
-            last_sync_at_unix_ms INTEGER NOT NULL,
+            last_sync_at_unix_ms INTEGER NOT NULL
+        );
+        """;
+
+    private const string CreateAccountSecurityTableSql =
+        """
+        CREATE TABLE IF NOT EXISTS account_security (
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE,
             has_pin INTEGER NOT NULL,
-            has_windows_hello INTEGER NOT NULL
+            has_windows_hello INTEGER NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
         );
         """;
 
     public Task InitializeAsync(CancellationToken cancellationToken = default) =>
         connectionFactory.ExecuteAsync(connection =>
         {
-            CommandDefinition command = new(
-                CreateAccountsTableSql,
-                cancellationToken: cancellationToken);
-
-            connection.Execute(command);
+            connection.Execute(new CommandDefinition(CreateAccountsTableSql, cancellationToken: cancellationToken));
+            connection.Execute(new CommandDefinition(CreateAccountSecurityTableSql, cancellationToken: cancellationToken));
         }, cancellationToken);
 }

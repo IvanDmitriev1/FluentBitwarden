@@ -14,6 +14,7 @@ using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
+using FluentBitwarden.Modules.AppState;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
@@ -42,6 +43,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddAccountModule();
             services.AddSecurityModule();
             services.AddSessionModule();
+            services.AddAppStateModule();
         })
         .Build();
 

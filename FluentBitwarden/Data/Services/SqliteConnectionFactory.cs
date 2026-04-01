@@ -11,6 +11,7 @@ internal sealed class SqliteConnectionFactory : ISqliteConnectionFactory
         {
             DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
+            ForeignKeys = true,
         };
 
         _connectionString = builder.ToString();

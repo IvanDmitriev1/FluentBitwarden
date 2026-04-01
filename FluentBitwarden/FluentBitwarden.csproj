@@ -47,10 +47,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="Views\Unlock\UnlockPage.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
 	<PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0-beta.98" />
 	<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -99,11 +95,6 @@
 	<TrimmerRootAssembly Include="Microsoft.WinUI" />
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
-</ItemGroup>
-<ItemGroup>
-  <Page Update="Views\Unlock\UnlockPage.xaml">
-    <Generator>MSBuild:Compile</Generator>
-  </Page>
 </ItemGroup>
 
 </Project>

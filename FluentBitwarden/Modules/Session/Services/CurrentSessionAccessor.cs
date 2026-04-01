@@ -5,7 +5,7 @@ using FluentBitwarden.Modules.Session.Models;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security;
-using FluentBitwarden.Modules.Session.Models.Unlock;
+using FluentBitwarden.Modules.Security.Models.Unlock;
 
 namespace FluentBitwarden.Modules.Session.Services
 {

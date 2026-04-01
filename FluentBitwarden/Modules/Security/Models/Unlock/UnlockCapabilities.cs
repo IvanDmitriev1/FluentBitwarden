@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Modules.Session.Models.Unlock;
+﻿namespace FluentBitwarden.Modules.Security.Models.Unlock;
 
 public readonly record struct UnlockCapabilities(
     bool SupportsPin,

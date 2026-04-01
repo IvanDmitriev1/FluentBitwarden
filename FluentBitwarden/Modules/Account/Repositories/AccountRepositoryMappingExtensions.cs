@@ -17,9 +17,7 @@ internal readonly record struct AccountData(
     int KdfIterations,
     int? KdfMemoryMib,
     int? KdfParallelism,
-    long LastSyncAtUnixMs,
-    bool HasPin,
-    bool HasWindowsHello);
+    long LastSyncAtUnixMs);
 
 internal static class AccountRepositoryMappingExtensions
 {
@@ -35,9 +33,7 @@ internal static class AccountRepositoryMappingExtensions
                 ToKdfConfig(in row),
                 row.EncryptedUserKey,
                 row.EncryptedPrivateKey),
-            DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs),
-            row.HasPin,
-            row.HasWindowsHello);
+            DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs));
 
     public static AccountData ToAccountData(this StoredAccount account)
     {
@@ -57,9 +53,7 @@ internal static class AccountRepositoryMappingExtensions
                 pbkdf2.Iterations,
                 null,
                 null,
-                account.LastSyncAt.ToUnixTimeMilliseconds(),
-                account.HasPin,
-                account.HasWindowsHello),
+                account.LastSyncAt.ToUnixTimeMilliseconds()),
             KdfConfig.Argon2Id argon2Id => new AccountData(
                 account.UserId,
                 account.Email,
@@ -72,9 +66,7 @@ internal static class AccountRepositoryMappingExtensions
                 argon2Id.Iterations,
                 argon2Id.MemoryMib,
                 argon2Id.Parallelism,
-                account.LastSyncAt.ToUnixTimeMilliseconds(),
-                account.HasPin,
-                account.HasWindowsHello),
+                account.LastSyncAt.ToUnixTimeMilliseconds()),
             _ => throw new ArgumentOutOfRangeException(nameof(account))
         };
     }

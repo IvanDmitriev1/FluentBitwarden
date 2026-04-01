@@ -16,6 +16,7 @@ public partial class SetupPageViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private readonly IAuthenticationService _authenticationService;
     private readonly IAccountRepository _accountRepository;
+    private readonly IAccountSecurityRepository _accountSecurityRepository;
     private readonly ISessionTokensStore _sessionTokensStore;
     private readonly SetupLoginContext _loginContext;
 
@@ -23,11 +24,13 @@ public partial class SetupPageViewModel : ObservableObject
         INavigationService navigationService,
         IAuthenticationService authenticationService,
         IAccountRepository accountRepository,
+        IAccountSecurityRepository accountSecurityRepository,
         ISessionTokensStore sessionTokensStore)
     {
         _navigationService = navigationService;
         _authenticationService = authenticationService;
         _accountRepository = accountRepository;
+        _accountSecurityRepository = accountSecurityRepository;
         _sessionTokensStore = sessionTokensStore;
         _loginContext = new SetupLoginContext(DeviceIdentity.DeviceInfo, BitwardenEnvironment.UnitedStates);
 
@@ -59,9 +62,13 @@ public partial class SetupPageViewModel : ObservableObject
     {
         _sessionTokensStore.Store(success.UserId, success.SessionTokens);
 
-        await _accountRepository.UpsertAsync(
-            new StoredAccount(success.UserId, success.Email, _loginContext.DeviceInfoEnvironment,
-                success.AccountCryptoMaterial, DateTimeOffset.UtcNow, false, false));
+        await _accountRepository.UpsertAsync(new StoredAccount(
+            success.UserId,
+            success.Email,
+            _loginContext.DeviceInfoEnvironment,
+            success.AccountCryptoMaterial,
+            DateTimeOffset.UtcNow));
+        await _accountSecurityRepository.UpdateAsync(new StoredAccountSecurity(success.UserId, false, false));
 
         _navigationService.NavigateTo<LoadingPage>();
     }

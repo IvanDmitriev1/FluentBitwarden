@@ -1,9 +1,10 @@
 ﻿using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Unlock;
+using FluentBitwarden.Modules.Security.Models.Unlock;
+using FluentBitwarden.Modules.Session.Services;
 using System.Security.Cryptography;
+using FluentBitwarden.Modules.Security.Abstractions;
 
-namespace FluentBitwarden.Modules.Session.Services.Unlock;
+namespace FluentBitwarden.Modules.Security.Services.Unlock;
 
 internal readonly record struct MasterPasswordUnlockRequest(string Password) : IUnlockRequest;
 

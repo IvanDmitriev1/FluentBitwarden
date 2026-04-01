@@ -15,7 +15,7 @@
         <MicaBackdrop />
     </winUiEx:WindowEx.SystemBackdrop>
 
-    <Grid>
+    <Grid x:Name="RootElement">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

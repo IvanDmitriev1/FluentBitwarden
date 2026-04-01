@@ -1,7 +1,7 @@
 using FluentBitwarden.Data.Migrations;
 using FluentBitwarden.Modules.Account.Abstractions;
+using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Unlock;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using FluentBitwarden.Shell;
 using FluentBitwarden.Shell.Navigation;
@@ -19,12 +19,6 @@ public partial class LoadingPageViewModel(
         IPageLifecycleAware,
         IPageLifecycleAware<UnlockResult.Success>
 {
-    [ObservableProperty]
-    public partial bool IsLoading { get; private set; }
-
-    [ObservableProperty]
-    public partial string StatusText { get; private set; } = "Loading...";
-
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
         await dataInitializationService.InitializeAsync(cancellationToken);
@@ -40,11 +34,10 @@ public partial class LoadingPageViewModel(
         navigationService.NavigateTo<UnlockPage>(PageNavigationParameter.From(accounts));
     }
 
-    public async Task OnLoadingAsync(UnlockResult.Success param, CancellationToken cancellationToken)
+    public Task OnLoadingAsync(UnlockResult.Success param, CancellationToken cancellationToken)
     {
-        await Task.Delay(100, cancellationToken);
-
         navigationService.NavigateTo<ShellPage>();
+        return Task.CompletedTask;
     }
 
     public void OnUnloading() { }

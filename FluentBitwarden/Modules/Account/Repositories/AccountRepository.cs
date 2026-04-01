@@ -26,9 +26,7 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
                     kdf_iterations AS KdfIterations,
                     kdf_memory_mib AS KdfMemoryMib,
                     kdf_parallelism AS KdfParallelism,
-                    last_sync_at_unix_ms AS LastSyncAtUnixMs,
-                    has_pin AS HasPin,
-                    has_windows_hello AS HasWindowsHello
+                    last_sync_at_unix_ms AS LastSyncAtUnixMs
                 FROM accounts
                 ORDER BY email COLLATE NOCASE;
                 """,
@@ -55,9 +53,7 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
                     kdf_iterations AS KdfIterations,
                     kdf_memory_mib AS KdfMemoryMib,
                     kdf_parallelism AS KdfParallelism,
-                    last_sync_at_unix_ms AS LastSyncAtUnixMs,
-                    has_pin AS HasPin,
-                    has_windows_hello AS HasWindowsHello
+                    last_sync_at_unix_ms AS LastSyncAtUnixMs
                 FROM accounts
                 WHERE user_id = @UserId COLLATE NOCASE;
                 """,
@@ -94,9 +90,7 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
                     kdf_iterations,
                     kdf_memory_mib,
                     kdf_parallelism,
-                    last_sync_at_unix_ms,
-                    has_pin,
-                    has_windows_hello
+                    last_sync_at_unix_ms
                 )
                 VALUES (
                     @UserId,
@@ -110,9 +104,7 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
                     @KdfIterations,
                     @KdfMemoryMib,
                     @KdfParallelism,
-                    @LastSyncAtUnixMs,
-                    @HasPin,
-                    @HasWindowsHello
+                    @LastSyncAtUnixMs
                 )
                 ON CONFLICT(user_id) DO UPDATE SET
                     email = excluded.email,
@@ -125,9 +117,7 @@ internal sealed class AccountRepository(ISqliteConnectionFactory connectionFacto
                     kdf_iterations = excluded.kdf_iterations,
                     kdf_memory_mib = excluded.kdf_memory_mib,
                     kdf_parallelism = excluded.kdf_parallelism,
-                    last_sync_at_unix_ms = excluded.last_sync_at_unix_ms,
-                    has_pin = excluded.has_pin,
-                    has_windows_hello = excluded.has_windows_hello;
+                    last_sync_at_unix_ms = excluded.last_sync_at_unix_ms;
                 """,
                 data,
                 cancellationToken: cancellationToken);
