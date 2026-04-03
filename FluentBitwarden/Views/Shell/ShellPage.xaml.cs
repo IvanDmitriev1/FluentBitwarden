@@ -1,5 +1,12 @@
+using BitwardenApi.Modules.Vault.Abstractions;
+using BitwardenApi.Modules.Vault.Models;
+using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Data.Implementations;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Vault.Repositories;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
+using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Views.Shell;
 

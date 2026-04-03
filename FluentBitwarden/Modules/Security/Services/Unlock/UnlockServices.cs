@@ -23,15 +23,17 @@ internal sealed class UnlockServices(
     public async Task<UnlockResult> UnlockAsync<TRequest>(UserId userId, TRequest request, CancellationToken cancellationToken = default) where TRequest : struct, IUnlockRequest
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var storedAccount = await Task.Run(() => unitOfWork.AccountRepository.GetById(userId), cancellationToken);
+        var accountDecryption = await Task.Run(() => unitOfWork.AccountDecryptionRepository.GetById(userId), cancellationToken);
 
-        if (storedAccount is null)
+        if (accountDecryption is null)
             return new UnlockResult.Failure("Account not found");
 
         ValueTask<UnlockResult> task = request switch
         {
-            MasterPasswordUnlockRequest masterPasswordRequest => masterPasswordUnlockStrategy.UnlockAsync(storedAccount,
-                masterPasswordRequest, cancellationToken),
+            MasterPasswordUnlockRequest masterPasswordRequest => masterPasswordUnlockStrategy.UnlockAsync(
+                accountDecryption,
+                masterPasswordRequest,
+                cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(request), request, null)
         };
 
@@ -42,6 +44,9 @@ internal sealed class UnlockServices(
         var session = sessionTokensStore.Get(userId);
         if (session is null)
             return new UnlockResult.RequiresOnlineReauth();
+
+        var storedAccount = await Task.Run(() => unitOfWork.AccountRepository.GetById(userId), cancellationToken);
+        ArgumentNullException.ThrowIfNull(storedAccount);
 
         currentSessionAccessor.SetCurrentSession(storedAccount, session, successUnlockResult.Session);
         return result;

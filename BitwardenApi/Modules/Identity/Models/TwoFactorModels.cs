@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-namespace BitwardenApi.Modules.Identity.Models;
+﻿namespace BitwardenApi.Modules.Identity.Models;
 
 public enum TwoFactorProviderType
 {

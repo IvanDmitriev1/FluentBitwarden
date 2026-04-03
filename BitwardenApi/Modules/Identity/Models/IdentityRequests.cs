@@ -1,4 +1,3 @@
-using BitwardenApi.Shared.Context;
 using System.Text.Json.Serialization;
 
 namespace BitwardenApi.Modules.Identity.Models;

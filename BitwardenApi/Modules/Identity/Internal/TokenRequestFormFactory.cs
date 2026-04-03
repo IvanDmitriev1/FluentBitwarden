@@ -1,6 +1,4 @@
 using System.Globalization;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Context;
 
 namespace BitwardenApi.Modules.Identity.Internal;
 

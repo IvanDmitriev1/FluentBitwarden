@@ -1,132 +1,126 @@
 using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Shared.Context;
 using Dapper;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
-using System.Linq;
 using Microsoft.Data.Sqlite;
+using System.Linq;
 
 namespace FluentBitwarden.Modules.Account.Repositories;
 
 internal sealed class AccountRepository(SqliteTransaction transaction) : BaseRepository(transaction), IAccountRepository
 {
+    public readonly record struct AccountRow(
+        string UserId,
+        string Email,
+        string ApiBase,
+        string IdentityBase,
+        string NotificationsBase,
+        long LastSyncAtUnixMs);
+
+    private static StoredAccount MapToDomain(AccountRow row) => new(
+        UserId: UserId.Parse(row.UserId), 
+        Email: row.Email,
+        Environment: new BitwardenEnvironment(
+            ApiBase: new Uri(row.ApiBase, UriKind.Absolute),
+            IdentityBase: new Uri(row.IdentityBase, UriKind.Absolute),
+            NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute)),
+        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs));
+
     public IReadOnlyList<StoredAccount> GetAccounts()
     {
-        CommandDefinition command = new(
-            """
-            SELECT
-                user_id AS UserId,
-                email AS Email,
-                api_base AS ApiBase,
-                identity_base AS IdentityBase,
-                notifications_base AS NotificationsBase,
-                encrypted_user_key AS EncryptedUserKey,
-                encrypted_private_key AS EncryptedPrivateKey,
-                kdf_type AS KdfType,
-                kdf_iterations AS KdfIterations,
-                kdf_memory_mib AS KdfMemoryMib,
-                kdf_parallelism AS KdfParallelism,
-                last_sync_at_unix_ms AS LastSyncAtUnixMs
-            FROM accounts
-            ORDER BY email COLLATE NOCASE;
-            """, transaction: Transaction);
+        const string sql = """
+                           SELECT *
+                           FROM accounts
+                           ORDER BY last_sync_at_unix_ms DESC;
+                           """;
 
-        var rows = Connection.Query<AccountData>(command);
-        return rows.Select(static row => row.ToStoredAccount()).ToArray();
+        var rows = Connection.Query<AccountRow>(sql, transaction: Transaction);
+        return rows.Select(MapToDomain).ToList();
     }
 
     public StoredAccount? GetById(UserId accountId)
     {
-        CommandDefinition command = new(
-            """
-            SELECT
-                user_id AS UserId,
-                email AS Email,
-                api_base AS ApiBase,
-                identity_base AS IdentityBase,
-                notifications_base AS NotificationsBase,
-                encrypted_user_key AS EncryptedUserKey,
-                encrypted_private_key AS EncryptedPrivateKey,
-                kdf_type AS KdfType,
-                kdf_iterations AS KdfIterations,
-                kdf_memory_mib AS KdfMemoryMib,
-                kdf_parallelism AS KdfParallelism,
-                last_sync_at_unix_ms AS LastSyncAtUnixMs
-            FROM accounts
-            WHERE user_id = @UserId COLLATE NOCASE;
-            """,
-            new { UserId = accountId }, transaction: Transaction);
+        const string sql = """
+                           SELECT *
+                           FROM accounts
+                           WHERE user_id = @UserId COLLATE NOCASE;
+                           """;
 
-        var rows = Connection.Query<AccountData>(command).Take(2).ToList();
+        var row = Connection.QueryFirstOrDefault<AccountRow>(sql,
+            new
+            {
+                UserId = accountId.ToString()
+            }, transaction: Transaction);
 
-        return rows.Count switch
+        return row == default ? null : MapToDomain(row);
+    }
+
+    public DateTimeOffset GetLastSyncTime(UserId accountId)
+    {
+        const string sql = """
+                           SELECT last_sync_at_unix_ms
+                           FROM accounts
+                           WHERE user_id = @UserId COLLATE NOCASE;
+                           """;
+
+        var lastSyncUtc = Connection.QueryFirstOrDefault<Int64>(sql, new
         {
-            0 => null,
-            1 => rows[0].ToStoredAccount(),
-            _ => throw new InvalidOperationException(
-                $"Expected a single account row for user '{accountId}', but found {rows.Count}.")
-        };
+            UserId = accountId.ToString()
+        }, transaction: Transaction);
+
+        return DateTimeOffset.FromUnixTimeMilliseconds(lastSyncUtc);
+    }
+
+    public void UpdateSyncTime(UserId accountId, DateTimeOffset syncTime)
+    {
+        const string sql = """
+                           UPDATE accounts
+                           SET last_sync_at_unix_ms = @LastSyncAtUnixMs
+                           WHERE user_id = @UserId;
+                           """;
+
+        Connection.Execute(sql, new
+        {
+            UserId = accountId.ToString(),
+            LastSyncAtUnixMs = syncTime.ToUnixTimeMilliseconds(),
+        }, transaction: Transaction);
     }
 
     public void Upsert(StoredAccount account)
     {
-        AccountData data = account.ToAccountData();
+        const string sql = """
+                           INSERT INTO accounts (user_id, email, api_base, identity_base, notifications_base, last_sync_at_unix_ms)
+                           VALUES (@UserId, @Email, @ApiBase, @IdentityBase, @NotificationsBase, @LastSyncAtUnixMs)
+                           ON CONFLICT(user_id) DO UPDATE SET
+                               email                = excluded.email,
+                               api_base             = excluded.api_base,
+                               identity_base        = excluded.identity_base,
+                               notifications_base   = excluded.notifications_base,
+                               last_sync_at_unix_ms = excluded.last_sync_at_unix_ms;
+                           """;
 
-        CommandDefinition command = new(
-            """
-            INSERT INTO accounts (
-                user_id,
-                email,
-                api_base,
-                identity_base,
-                notifications_base,
-                encrypted_user_key,
-                encrypted_private_key,
-                kdf_type,
-                kdf_iterations,
-                kdf_memory_mib,
-                kdf_parallelism,
-                last_sync_at_unix_ms
-            )
-            VALUES (
-                @UserId,
-                @Email,
-                @ApiBase,
-                @IdentityBase,
-                @NotificationsBase,
-                @EncryptedUserKey,
-                @EncryptedPrivateKey,
-                @KdfType,
-                @KdfIterations,
-                @KdfMemoryMib,
-                @KdfParallelism,
-                @LastSyncAtUnixMs
-            )
-            ON CONFLICT(user_id) DO UPDATE SET
-                email = excluded.email,
-                api_base = excluded.api_base,
-                identity_base = excluded.identity_base,
-                notifications_base = excluded.notifications_base,
-                encrypted_user_key = excluded.encrypted_user_key,
-                encrypted_private_key = excluded.encrypted_private_key,
-                kdf_type = excluded.kdf_type,
-                kdf_iterations = excluded.kdf_iterations,
-                kdf_memory_mib = excluded.kdf_memory_mib,
-                kdf_parallelism = excluded.kdf_parallelism,
-                last_sync_at_unix_ms = excluded.last_sync_at_unix_ms;
-            """,
-            data,
-            transaction: Transaction);
-
-        Connection.Execute(command);
+        Connection.Execute(sql, new
+        {
+            UserId = account.UserId.ToString(),
+            Email = account.Email,
+            ApiBase = account.Environment.ApiBase.ToString(),
+            IdentityBase = account.Environment.IdentityBase.ToString(),
+            NotificationsBase = account.Environment.NotificationsBase.ToString(),
+            LastSyncAtUnixMs = account.LastSyncAt.ToUnixTimeMilliseconds(),
+        }, transaction: Transaction);
     }
 
     public void Remove(UserId accountId)
     {
-        CommandDefinition command = new(
-            "DELETE FROM accounts WHERE user_id = @UserId COLLATE NOCASE;",
-            new { UserId = accountId }, transaction: Transaction);
+        const string sql = "DELETE FROM accounts WHERE user_id = @UserId;";
 
-        Connection.Execute(command);
+        Connection.Execute(sql,
+            new
+            {
+                UserId = accountId
+            }, transaction: Transaction);
+
     }
 }

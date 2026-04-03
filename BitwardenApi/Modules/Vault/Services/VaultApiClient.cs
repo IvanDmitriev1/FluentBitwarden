@@ -1,25 +1,50 @@
 using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
-using BitwardenApi.Shared.Context;
+using BitwardenApi.Modules.Vault.SyncParser;
+using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
+using System.Net.Http.Json;
+using BitwardenApi.Shared.Exceptions;
 
 namespace BitwardenApi.Modules.Vault.Services;
 
 public sealed class VaultApiClient(HttpClient httpClient) : IVaultApiClient
 {
-    public async Task<ApiStreamResponse> GetSyncAsync(
+    public async Task<DateTimeOffset> GetRevisionDateAsync(
         BitwardenEnvironment environment,
         CancellationToken cancellationToken = default)
     {
-        Uri requestUri = new(environment.ApiBase, "/sync");
+        Uri requestUri = new(environment.ApiBase, "/accounts/revision-date");
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        using var response = await httpClient.SendAsync(
+            requestMessage,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        response.EnsureSuccessStatusCode();
+
+        var rawValue = await response.Content.ReadFromJsonAsync(BitwardenApiJsonContext.ConfiguredDefault.Int64, cancellationToken);
+        if (rawValue < 0)
+            throw new BitwardenAccountDeletedException();
+
+        var revision = DateTimeOffset.FromUnixTimeMilliseconds(rawValue);
+        return revision;
+    }
+
+    public async Task<SyncPayload> GetSyncAsync(
+        BitwardenEnvironment environment,
+        CancellationToken cancellationToken = default)
+    {
+        Uri requestUri = new(environment.ApiBase, "/sync?excludeDomains=true");
+
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        return await response.CreateStreamResponseAsync("Vault sync", cancellationToken);
+        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        return new SyncPayload(response, stream);
     }
 
     public async Task<ApiStreamResponse> GetCipherAsync(
@@ -38,28 +63,13 @@ public sealed class VaultApiClient(HttpClient httpClient) : IVaultApiClient
         return await response.CreateStreamResponseAsync("Vault get cipher", cancellationToken);
     }
 
-    public async Task<ApiStreamResponse> GetAllCiphersAsync(
-        BitwardenEnvironment environment,
-        CancellationToken cancellationToken = default)
-    {
-        Uri requestUri = new(environment.ApiBase, "/ciphers");
-        var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        var response = await httpClient.SendAsync(
-            requestMessage,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-
-        return await response.CreateStreamResponseAsync("Vault get all ciphers", cancellationToken);
-    }
-
     public async Task DeleteCipherAsync(
         BitwardenEnvironment environment,
         CipherId cipherId,
         CancellationToken cancellationToken = default)
     {
         Uri requestUri = new(environment.ApiBase, $"/ciphers/{cipherId.Value:D}");
-
-        using HttpRequestMessage requestMessage = new(HttpMethod.Delete, requestUri);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);
 
         using var response = await httpClient.SendAsync(
             requestMessage,

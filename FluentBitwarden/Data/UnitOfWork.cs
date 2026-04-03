@@ -3,17 +3,19 @@ using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Account.Repositories;
 using Microsoft.Data.Sqlite;
 using System.Transactions;
+using IsolationLevel = System.Data.IsolationLevel;
 
 namespace FluentBitwarden.Data;
 
 public sealed class UnitOfWork : IUnitOfWork
 {
-    public UnitOfWork(SqliteConnection connection)
+    public UnitOfWork(SqliteConnection connection, IsolationLevel isolationLevel)
     {
         _connection = connection;
-        Transaction = connection.BeginTransaction();
+        Transaction = connection.BeginTransaction(isolationLevel);
 
         AccountRepository = new AccountRepository(Transaction);
+        AccountDecryptionRepository = new AccountDecryptionRepository(Transaction);
     }
 
     private readonly SqliteConnection _connection;
@@ -21,7 +23,8 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public SqliteTransaction Transaction { get; }
 
-    public IAccountRepository AccountRepository { get; private set; }
+    public IAccountRepository AccountRepository { get; }
+    public IAccountDecryptionRepository AccountDecryptionRepository { get; private set; }
 
     public void SaveChanges()
     {

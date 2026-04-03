@@ -4,7 +4,6 @@ using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
 using BitwardenApi.Shared.Cryptography;
-using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Authentication;
@@ -64,9 +63,15 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
         string accountId = jwt.Claims.First(c => c.Type == "sub").Value;
         string email = jwt.Claims.First(c => c.Type == "email").Value;
 
+        var userId = UserId.Parse(accountId);
+
         return new AuthenticationSuccess(UserId.Parse(accountId), email,
             new SessionTokens(model.RefreshToken, model.TwoFactorToken, model.AccessToken, model.ExpiresAt),
-            new AccountCryptoMaterial(model.MasterPasswordUnlockModel.KdfConfig,
-                model.MasterPasswordUnlockModel.UserKey, model.PrivateKey));
+            new AccountDecryption(
+                userId,
+                model.MasterPasswordUnlockModel.Salt,
+                model.MasterPasswordUnlockModel.KdfConfig,
+                model.MasterPasswordUnlockModel.UserKey,
+                model.PrivateKey));
     }
 }

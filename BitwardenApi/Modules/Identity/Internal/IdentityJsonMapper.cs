@@ -1,7 +1,5 @@
-﻿using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Cryptography;
+﻿using BitwardenApi.Shared.Cryptography;
 using System.Globalization;
-using System.Text.Json;
 
 namespace BitwardenApi.Modules.Identity.Internal;
 

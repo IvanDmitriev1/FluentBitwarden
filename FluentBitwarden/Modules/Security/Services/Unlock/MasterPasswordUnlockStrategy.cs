@@ -1,8 +1,9 @@
-﻿using FluentBitwarden.Modules.Account.Models;
+﻿using BitwardenApi.Modules.Identity.Models;
+using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Session.Services;
 using System.Security.Cryptography;
-using FluentBitwarden.Modules.Security.Abstractions;
 
 namespace FluentBitwarden.Modules.Security.Services.Unlock;
 
@@ -12,18 +13,18 @@ internal sealed class MasterPasswordUnlockStrategy : IUnlockStrategy<MasterPassw
 {
     public UnlockMethod Method => UnlockMethod.MasterPassword;
 
-    public ValueTask<UnlockResult> UnlockAsync(StoredAccount storedAccount, MasterPasswordUnlockRequest request, CancellationToken cancellationToken = default)
+    public ValueTask<UnlockResult> UnlockAsync(AccountDecryption decryption, MasterPasswordUnlockRequest request, CancellationToken cancellationToken = default)
     {
         try
         {
-            var encryptedKey = storedAccount.AccountCryptoMaterial.EncryptedUserKey;
+            var encryptedKey = decryption.EncryptedUserKey;
             var decryptedKey = SessionCrypto.DecryptUserKey(
                 encryptedKey,
                 request.Password,
-                storedAccount.Email,
-                storedAccount.AccountCryptoMaterial.KdfConfig);
+                decryption.Salt,
+                decryption.KdfConfig);
 
-            return ValueTask.FromResult<UnlockResult>(new UnlockResult.Success(new UserKeySession(storedAccount.UserId, Method, decryptedKey)));
+            return ValueTask.FromResult<UnlockResult>(new UnlockResult.Success(new UserKeySession(decryption.UserId, Method, decryptedKey)));
         }
         catch (CryptographicException e)
         {

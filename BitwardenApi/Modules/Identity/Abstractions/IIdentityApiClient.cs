@@ -1,5 +1,3 @@
-using BitwardenApi.Modules.Identity.Models;
-
 namespace BitwardenApi.Modules.Identity.Abstractions;
 
 public interface IIdentityApiClient

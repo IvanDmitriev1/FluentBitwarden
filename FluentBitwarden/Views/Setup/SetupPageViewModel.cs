@@ -59,12 +59,16 @@ public partial class SetupPageViewModel : ObservableObject
     {
         using var unitOfWork = _unitOfWorkFactory.Create();
 
-        await Task.Run(() => unitOfWork.AccountRepository.Upsert(new StoredAccount(
-            success.UserId,
-            success.Email,
-            _loginContext.DeviceInfoEnvironment,
-            success.AccountCryptoMaterial,
-            DateTimeOffset.UtcNow)));
+        await Task.Run(() =>
+        {
+            unitOfWork.AccountRepository.Upsert(new StoredAccount(
+                success.UserId,
+                success.Email,
+                _loginContext.DeviceInfoEnvironment,
+                LastSyncAt: DateTimeOffset.MinValue));
+
+            unitOfWork.AccountDecryptionRepository.Upsert(success.AccountDecryption);
+        });
 
         _sessionTokensStore.Store(success.UserId, success.SessionTokens);
         unitOfWork.SaveChanges();

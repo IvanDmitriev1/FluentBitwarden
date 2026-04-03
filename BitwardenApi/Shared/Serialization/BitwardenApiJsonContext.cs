@@ -1,9 +1,6 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using BitwardenApi.Modules.Attachments.Models;
-using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Modules.Vault.Models;
-using BitwardenApi.Shared.Context;
 
 namespace BitwardenApi.Shared.Serialization;
 
@@ -17,6 +14,7 @@ namespace BitwardenApi.Shared.Serialization;
 [JsonSerializable(typeof(TokenFailureResponse))]
 [JsonSerializable(typeof(PreloginRequest))]
 [JsonSerializable(typeof(string))]
+[JsonSerializable(typeof(Int64))]
 internal sealed partial class BitwardenApiJsonContext : JsonSerializerContext
 {
     public static BitwardenApiJsonContext ConfiguredDefault { get; } = new(CreateOptions());

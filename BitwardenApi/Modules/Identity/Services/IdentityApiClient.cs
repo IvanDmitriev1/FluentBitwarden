@@ -3,8 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Internal;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Context;
 using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
 

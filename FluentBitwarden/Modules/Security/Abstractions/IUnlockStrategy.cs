@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.Modules.Account.Models;
+﻿using BitwardenApi.Modules.Identity.Models;
+using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security.Models.Unlock;
 
 namespace FluentBitwarden.Modules.Security.Abstractions;
@@ -9,7 +10,7 @@ internal interface IUnlockStrategy<in TRequest>
     UnlockMethod Method { get; }
 
     ValueTask<UnlockResult> UnlockAsync(
-        StoredAccount account,
+        AccountDecryption decryption,
         TRequest request,
         CancellationToken cancellationToken = default);
 

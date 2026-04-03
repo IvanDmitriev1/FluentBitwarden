@@ -84,6 +84,7 @@
 	<PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
 	<PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
 	<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
+	<UserSecretsId>edb536ff-1bce-4891-af57-fe1708de56cf</UserSecretsId>
 </PropertyGroup>
 
 <!-- Partial trimming still needs these roots for WinUI/XAML activation paths such as XamlControlsResources. -->

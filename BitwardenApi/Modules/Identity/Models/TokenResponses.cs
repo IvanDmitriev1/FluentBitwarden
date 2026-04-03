@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using BitwardenApi.Shared.Cryptography;
 
 namespace BitwardenApi.Modules.Identity.Models;

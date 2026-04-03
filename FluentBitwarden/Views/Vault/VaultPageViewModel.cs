@@ -1,5 +1,14 @@
-﻿namespace FluentBitwarden.Views.Vault;
+﻿using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Shared.Behaviors.Lifecycle;
 
-public sealed partial class VaultPageViewModel : ObservableObject
+namespace FluentBitwarden.Views.Vault;
+
+public sealed partial class VaultPageViewModel(IVaultSyncService vaultSyncService) : ObservableObject, IPageLifecycleAware
 {
+    public async Task OnLoadingAsync(CancellationToken cancellationToken)
+    {
+        var result = await vaultSyncService.SyncVaultAsync();
+    }
+
+    public void OnUnloading() {}
 }

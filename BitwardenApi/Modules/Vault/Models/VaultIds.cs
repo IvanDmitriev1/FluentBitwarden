@@ -1,10 +1,10 @@
 namespace BitwardenApi.Modules.Vault.Models;
 
-[StronglyTypedId]
-public partial struct CipherId;
+[StronglyTypedId(Template.String, "string-dapper")]
+public readonly partial struct CipherId;
 
-[StronglyTypedId]
-public partial struct FolderId;
+[StronglyTypedId(Template.String, "string-dapper")]
+public readonly partial struct FolderId;
 
-[StronglyTypedId]
-public partial struct CollectionId;
+[StronglyTypedId(Template.String, "string-dapper")]
+public readonly partial struct CollectionId;

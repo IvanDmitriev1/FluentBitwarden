@@ -11,12 +11,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConfigureAwait.Fody" Version="3.3.2" PrivateAssets='All' ExcludeAssets="runtime" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
+    <PackageReference Include="ConfigureAwait.Fody" Version="3.3.2" PrivateAssets="All" ExcludeAssets="runtime" />
     <PackageReference Include="Dapper" Version="2.1.72" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="StronglyTypedId" Version="1.0.0-beta08" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Utf8JsonStreamReader" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>

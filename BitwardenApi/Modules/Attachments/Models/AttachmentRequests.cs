@@ -1,6 +1,4 @@
-using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Modules.Vault.Models;
-using BitwardenApi.Shared.Context;
 
 namespace BitwardenApi.Modules.Attachments.Models;
 

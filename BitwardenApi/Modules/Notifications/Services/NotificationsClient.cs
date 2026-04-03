@@ -1,4 +1,3 @@
-using System.Text.Json;
 using BitwardenApi.Modules.Notifications.Abstractions;
 using BitwardenApi.Modules.Notifications.Models;
 using BitwardenApi.Shared.Serialization;
