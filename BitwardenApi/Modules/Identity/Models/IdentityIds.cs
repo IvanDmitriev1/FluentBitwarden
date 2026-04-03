@@ -9,14 +9,14 @@ public readonly partial struct RefreshToken;
 [StronglyTypedId(Template.String)]
 public readonly partial struct TwoFactorToken;
 
-[StronglyTypedId(Template.String, "string-dapper")]
+[StronglyTypedId(Template.String)]
 public readonly partial struct EncryptedUserKey;
 
-[StronglyTypedId(Template.String, "string-dapper")]
+[StronglyTypedId(Template.String)]
 public readonly partial struct EncryptedPrivateKey;
 
 
-[StronglyTypedId(Template.Guid, "guid-dapper")]
+[StronglyTypedId(Template.Guid)]
 public readonly partial struct UserId;
 
 [StronglyTypedId(Template.String)]

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using BitwardenApi.Modules.Attachments.Models;
+using BitwardenApi.Modules.Notifications.Models;
 using BitwardenApi.Modules.Vault.Models;
 
 namespace BitwardenApi.Shared.Serialization;
@@ -13,6 +14,10 @@ namespace BitwardenApi.Shared.Serialization;
 [JsonSerializable(typeof(TokenRefreshSessionResponse))]
 [JsonSerializable(typeof(TokenFailureResponse))]
 [JsonSerializable(typeof(PreloginRequest))]
+[JsonSerializable(typeof(NotificationEnvelope))]
+[JsonSerializable(typeof(CipherChangedNotification))]
+[JsonSerializable(typeof(FolderChangedNotification))]
+[JsonSerializable(typeof(VaultSyncRequestedNotification))]
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(Int64))]
 internal sealed partial class BitwardenApiJsonContext : JsonSerializerContext
@@ -35,6 +40,7 @@ internal sealed partial class BitwardenApiJsonContext : JsonSerializerContext
         options.Converters.Add(new FolderId.FolderIdSystemTextJsonConverter());
         options.Converters.Add(new CollectionId.CollectionIdSystemTextJsonConverter());
         options.Converters.Add(new AttachmentId.AttachmentIdSystemTextJsonConverter());
+        options.Converters.Add(new ContextId.ContextIdSystemTextJsonConverter());
         return options;
     }
 }

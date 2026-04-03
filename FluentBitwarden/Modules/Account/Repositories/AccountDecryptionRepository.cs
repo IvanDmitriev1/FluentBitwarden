@@ -24,8 +24,8 @@ internal sealed class AccountDecryptionRepository(SqliteTransaction transaction)
         UserId: UserId.Parse(row.UserId), 
         Salt: row.Salt,
         KdfConfig: BuildKdf(row),
-        EncryptedUserKey: new EncryptedUserKey(row.EncryptedUserKey),
-        EncryptedPrivateKey: new EncryptedPrivateKey(row.EncryptedPrivateKey));
+        EncryptedUserKey: EncryptedUserKey.Parse(row.EncryptedUserKey),
+        EncryptedPrivateKey: EncryptedPrivateKey.Parse(row.EncryptedPrivateKey));
 
     private static KdfConfig BuildKdf(in AccountDecryptionRow row) =>
         (KdfType)row.KdfType switch

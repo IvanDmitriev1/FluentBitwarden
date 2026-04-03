@@ -1,22 +1,23 @@
+using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Security.Abstractions;
+using FluentBitwarden.Modules.Security.Models.Unlock;
+using FluentBitwarden.Modules.Security.Services.Unlock;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Modules.Security.Abstractions;
-using FluentBitwarden.Views.Loading;
-using FluentBitwarden.Modules.Security.Models.Unlock;
-using FluentBitwarden.Modules.Security.Services.Unlock;
-using FluentBitwarden.Views.Shell.Navigation;
+using FluentBitwarden.Modules.Vault.Abstractions;
 
 namespace FluentBitwarden.Views.Unlock;
 
 public sealed partial class UnlockPageViewModel(
     IUnlockService unlockService,
-    INavigationService navigationService) : ObservableValidator, IPageLifecycleAware<IReadOnlyList<StoredAccount>>
+    INavigationService navigationService,
+    IVaultSyncService vaultSyncService) : ObservableValidator, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
     public partial StoredAccount? SelectedAccount { get; private set; }
@@ -44,12 +45,12 @@ public sealed partial class UnlockPageViewModel(
 
 
     [MemberNotNull(nameof(SelectedAccount))]
-    public async Task OnLoadingAsync(IReadOnlyList<StoredAccount> param, CancellationToken cancellationToken)
+    public Task OnLoadingAsync(UnlockPageParameter param, CancellationToken cancellationToken)
     {
-        SelectedAccount = param[0];
+        SelectedAccount = param.FavoriteAccount;
+        UnlockMethods = UnlockOption.CreateUnlockOptions(param.FavoriteAccountUnlockCapabilities);
 
-        var capabilities = await unlockService.GetCapabilitiesAsync(SelectedAccount.UserId, cancellationToken);
-        UnlockMethods = CreateUnlockOptions(capabilities);
+        return Task.CompletedTask;
     }
 
     public void OnUnloading() { }
@@ -58,11 +59,11 @@ public sealed partial class UnlockPageViewModel(
     private async Task UnlockMasterPassword()
     {
         var result = await unlockService.UnlockAsync(SelectedAccount!.UserId, new MasterPasswordUnlockRequest(Password));
-        if (result is UnlockResult.Success {} unlockResult)
-        {
-            navigationService.NavigateTo<LoadingPage>(PageNavigationParameter.From(unlockResult));
+        if (result is not UnlockResult.Success { } unlockResult)
             return;
-        }
+
+        var syncResult = await vaultSyncService.SyncVaultAsync();
+        navigationService.NavigateTo<ShellPage>();
     }
 
     public static ValidationResult? ValidateMasterPassword(string? value, ValidationContext context)
@@ -79,25 +80,5 @@ public sealed partial class UnlockPageViewModel(
         vm.ClearErrors();
 
         return error;
-    }
-
-    private static IReadOnlyList<UnlockOption> CreateUnlockOptions(in UnlockCapabilities capabilities)
-    {
-        int size = 1 + Convert.ToInt32(capabilities.SupportsPin) + Convert.ToInt32(capabilities.SupportsWindowsHello);
-
-        var methods = new List<UnlockOption>(size);
-        methods.Add(new UnlockOption(UnlockMethod.MasterPassword, "Master password"));
-
-        if (capabilities.SupportsPin)
-        {
-            methods.Add(new UnlockOption(UnlockMethod.Pin, "Pin"));
-        }
-
-        if (capabilities.SupportsWindowsHello)
-        {
-            methods.Add(new UnlockOption(UnlockMethod.WindowsHello, "Windows Hello"));
-        }
-
-        return methods;
     }
 }

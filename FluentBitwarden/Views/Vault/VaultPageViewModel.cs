@@ -7,7 +7,7 @@ public sealed partial class VaultPageViewModel(IVaultSyncService vaultSyncServic
 {
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        var result = await vaultSyncService.SyncVaultAsync();
+        
     }
 
     public void OnUnloading() {}

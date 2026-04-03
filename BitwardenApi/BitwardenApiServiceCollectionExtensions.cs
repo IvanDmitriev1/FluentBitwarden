@@ -32,6 +32,7 @@ public static class BitwardenApiServiceCollectionExtensions
             .AddHttpMessageHandler<TAuthHandler>();
 
         services.AddSingleton<INotificationsClient, NotificationsClient>();
+        services.AddSingleton<INotificationDispatcher, NotificationDispatcher>();
 
         return services;
     }

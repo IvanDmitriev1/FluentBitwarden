@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.Modules.Session.Abstractions;
+﻿using BitwardenApi.Modules.Notifications.Abstractions;
+using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
 using FluentBitwarden.Modules.Session.Services.Authentication;
 using FluentBitwarden.Shared.Extensions;
@@ -11,6 +12,7 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddSessionModule(this IServiceCollection services)
     {
         services.AddTransient<BearerTokenHandler>();
+        services.AddSingleton<ISignalRAccessTokenProvider, SignalRAccessTokenProvider>();
 
         services.AddSingleton<IAuthenticationService, AuthenticationService>();
         services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
