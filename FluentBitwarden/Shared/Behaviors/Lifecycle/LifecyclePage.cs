@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
@@ -5,10 +6,22 @@ namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
 public abstract class LifecyclePage : Page
 {
     private CancellationTokenSource? _cts;
+    private IPageNavigationParameter? _pendingParameter;
 
-    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    protected LifecyclePage()
+    {
+        Loaded += OnLoaded;
+    }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        _pendingParameter = e.Parameter as IPageNavigationParameter;
+    }
+
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoaded;
 
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
@@ -16,15 +29,17 @@ public abstract class LifecyclePage : Page
         try
         {
             Task loadingTask = Task.CompletedTask;
-
-            if (e.Parameter is IPageNavigationParameter parameter)
-                loadingTask = parameter.Load(DataContext, token);
+            if (_pendingParameter is not null)
+                loadingTask = _pendingParameter.Load(DataContext, token);
             else if (DataContext is IPageLifecycleAware aware)
                 loadingTask = aware.OnLoadingAsync(token);
-
             await loadingTask;
         }
         catch (OperationCanceledException) { }
+        finally
+        {
+            _pendingParameter = null;
+        }
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)

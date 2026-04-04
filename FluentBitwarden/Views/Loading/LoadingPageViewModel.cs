@@ -17,7 +17,7 @@ public partial class LoadingPageViewModel(
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var accounts = await Task.Run(unitOfWork.AccountRepository.GetAccounts, cancellationToken);
+        var accounts = unitOfWork.AccountRepository.GetAccounts();
 
         if (accounts.Count <= 0)
         {

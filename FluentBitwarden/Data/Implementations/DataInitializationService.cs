@@ -67,7 +67,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         );
         """;
 
-    public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.Run(() =>
+    public void Initialize(CancellationToken cancellationToken = default)
     {
         using var connection = connectionFactory.OpenConnection();
         connection.Execute("""
@@ -77,6 +77,5 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         using var transaction = connection.BeginTransaction();
         connection.Execute(CreateTableSql, transaction: transaction);
         transaction.Commit();
-
-    }, cancellationToken);
+    }
 }

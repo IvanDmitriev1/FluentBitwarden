@@ -67,15 +67,17 @@ public partial class App : IXamlMetadataServiceProvider
         ValidationTrimDependencies.Preserve();
     }
 
-    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+#if DEBUG
         if (!Debugger.IsAttached)
         {
             Debugger.Launch();
         }
+#endif
 
         _ = Host.Services.GetRequiredService<ISettingsService>().Get();
-        await Host.Services.GetRequiredService<IDataInitializationService>().InitializeAsync();
+        Host.Services.GetRequiredService<IDataInitializationService>().Initialize();
 
         _fss.Hide();
         _fss.Dispose();
