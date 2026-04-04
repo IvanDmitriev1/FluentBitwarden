@@ -5,6 +5,7 @@ using FluentBitwarden.Application.Tray;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState;
+using FluentBitwarden.Modules.Connectivity;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Shared.Extensions;
@@ -42,6 +43,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddShellServices();
             services.AddViews();
             services.AddDatabaseServices();
+            services.AddConnectivityModule();
 
             services.AddBitwardenApi<BearerTokenHandler>();
             services.AddAccountModule();

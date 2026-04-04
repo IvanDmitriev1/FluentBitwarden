@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Security.Services.Unlock;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Views.Offline;
+using FluentBitwarden.Views.Offline.Models;
+using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock.Models;
@@ -17,7 +21,8 @@ namespace FluentBitwarden.Views.Unlock;
 public sealed partial class UnlockPageViewModel(
     IUnlockService unlockService,
     INavigationService navigationService,
-    IVaultSyncService vaultSyncService) : ObservableValidator, IPageLifecycleAware<UnlockPageParameter>
+    IVaultSyncService vaultSyncService,
+    IConnectivityService connectivityService) : ObservableValidator, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
     public partial StoredAccount? SelectedAccount { get; private set; }
@@ -59,11 +64,32 @@ public sealed partial class UnlockPageViewModel(
     private async Task UnlockMasterPassword()
     {
         var result = await unlockService.UnlockAsync(SelectedAccount!.UserId, new MasterPasswordUnlockRequest(Password));
-        if (result is not UnlockResult.Success { } unlockResult)
-            return;
+        switch (result)
+        {
+            case UnlockResult.Success:
+                _ = await vaultSyncService.SyncVaultAsync();
+                navigationService.NavigateTo<ShellPage>();
+                return;
 
-        var syncResult = await vaultSyncService.SyncVaultAsync();
-        navigationService.NavigateTo<ShellPage>();
+            case UnlockResult.RequiresOnlineReauth:
+                if (connectivityService.HasInternetAccess)
+                {
+                    navigationService.NavigateTo<SetupPage>();
+                    return;
+                }
+
+                navigationService.NavigateTo<OfflinePage>(
+                    PageNavigationParameter.From(new OfflinePageParameter(OfflinePageReason.ReauthRequiresInternet)));
+                return;
+
+            case UnlockResult.Failure failure:
+                _invalidCredentials = failure;
+                ValidateAllProperties();
+                return;
+
+            default:
+                return;
+        }
     }
 
     public static ValidationResult? ValidateMasterPassword(string? value, ValidationContext context)

@@ -1,6 +1,8 @@
-﻿namespace FluentBitwarden.Modules.Vault.Abstractions;
+﻿using FluentBitwarden.Modules.Vault.Models;
+
+namespace FluentBitwarden.Modules.Vault.Abstractions;
 
 public interface IVaultSyncService
 {
-    Task<bool> SyncVaultAsync();
+    Task<VaultSyncResult> SyncVaultAsync();
 }

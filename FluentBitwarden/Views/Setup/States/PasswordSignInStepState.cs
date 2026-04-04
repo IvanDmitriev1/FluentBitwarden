@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Views.Setup.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Modules.Session.Models.Authentication;
 
 namespace FluentBitwarden.Views.Setup.States;
 
@@ -51,6 +51,8 @@ public partial class PasswordSignInStepState(
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task SignInWithPasswordAsync()
     {
+        HasInvalidCredentials = false;
+
         ValidateAllProperties();
         if (HasErrors)
         {
@@ -65,11 +67,12 @@ public partial class PasswordSignInStepState(
             case PasswordSignInOutcome.Success:
                 Debugger.Break();
                 break;
+
             case PasswordSignInOutcome.DeviceVerificationRequired:
             case PasswordSignInOutcome.InvalidCredentials:
                 HasInvalidCredentials = true;
                 break;
-                
+
             case PasswordSignInOutcome.TwoFactorRequired twoFactorRequired:
                 onComplete.Invoke(twoFactorRequired);
                 break;

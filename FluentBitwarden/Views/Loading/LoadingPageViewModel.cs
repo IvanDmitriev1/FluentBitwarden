@@ -1,6 +1,9 @@
 using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Views.Offline;
+using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock;
@@ -11,7 +14,8 @@ namespace FluentBitwarden.Views.Loading;
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
     IUnlockService unlockService,
-    IUnitOfWorkFactory unitOfWorkFactory)
+    IUnitOfWorkFactory unitOfWorkFactory,
+    IConnectivityService connectivityService)
     : ObservableObject, IPageLifecycleAware
 {
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
@@ -21,6 +25,13 @@ public partial class LoadingPageViewModel(
 
         if (accounts.Count <= 0)
         {
+            if (!connectivityService.HasInternetAccess)
+            {
+                navigationService.NavigateTo<OfflinePage>(
+                    PageNavigationParameter.From(new OfflinePageParameter(OfflinePageReason.FirstSignInRequiresInternet)));
+                return;
+            }
+
             navigationService.NavigateTo<SetupPage>();
             return;
         }

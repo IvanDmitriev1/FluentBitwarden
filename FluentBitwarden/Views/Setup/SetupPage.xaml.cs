@@ -4,7 +4,8 @@ namespace FluentBitwarden.Views.Setup;
 
 public sealed partial class SetupPage : LifecyclePage
 {
-    public SetupPage(SetupPageViewModel viewModel)
+    public SetupPage(
+        SetupPageViewModel viewModel)
     {
         ViewModel = viewModel;
         DataContext = viewModel;

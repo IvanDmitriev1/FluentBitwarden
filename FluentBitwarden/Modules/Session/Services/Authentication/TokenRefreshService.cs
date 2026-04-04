@@ -2,6 +2,7 @@
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
+using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
@@ -12,7 +13,8 @@ namespace FluentBitwarden.Modules.Session.Services.Authentication;
 internal sealed class TokenRefreshService(
     IIdentityApiClient identityApiClient,
     ISessionTokensStore sessionTokensStore,
-    CurrentSessionAccessor currentSessionAccessor) : ITokenRefreshService
+    CurrentSessionAccessor currentSessionAccessor,
+    IConnectivityService connectivityService) : ITokenRefreshService
 {
     private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _locks = new();
 
@@ -25,6 +27,9 @@ internal sealed class TokenRefreshService(
         {
             if (sessionTokensStore.Get(userId) is not { } retrievedSession ||
                 retrievedSession.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(5))
+                return current;
+
+            if (!connectivityService.HasInternetAccess)
                 return current;
 
             var result = await identityApiClient.RefreshAsync(new RefreshLoginRequest(context, current.RefreshToken), ct);

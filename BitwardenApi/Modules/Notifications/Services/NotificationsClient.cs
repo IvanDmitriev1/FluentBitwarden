@@ -1,4 +1,4 @@
-using BitwardenApi.Modules.Notifications.Abstractions;
+﻿using BitwardenApi.Modules.Notifications.Abstractions;
 using BitwardenApi.Modules.Notifications.Internal;
 using BitwardenApi.Modules.Notifications.Models;
 using BitwardenApi.Shared.Serialization;
@@ -17,6 +17,13 @@ internal sealed class NotificationsClient(
         BitwardenEnvironment environment,
         CancellationToken cancellationToken = default)
     {
+        if (_connection?.State is HubConnectionState.Connected
+            or HubConnectionState.Connecting
+            or HubConnectionState.Reconnecting)
+        {
+            return;
+        }
+
         Uri requestedHubEndpoint = new(environment.NotificationsBase, "/hub");
         _connection = CreateConnection(requestedHubEndpoint);
 

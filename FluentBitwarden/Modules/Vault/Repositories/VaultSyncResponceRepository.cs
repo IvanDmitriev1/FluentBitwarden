@@ -19,7 +19,7 @@ internal sealed class VaultSyncResponceRepository(SqliteTransaction transaction,
                            DELETE FROM folders     WHERE user_id = @UserId;
                            """;
 
-        Connection.ExecuteAsync(sql, new { UserId = userId }, transaction: Transaction);
+        Connection.Execute(sql, new { UserId = userId }, transaction: Transaction);
     }
 
     public void WriteFolder(in FolderDto dto)

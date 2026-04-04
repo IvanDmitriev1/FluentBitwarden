@@ -5,7 +5,6 @@ using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Views.Setup.Models;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -15,7 +14,7 @@ public partial class TwoFactorStepState : ObservableValidator
 {
     private readonly SetupLoginContext _context;
     private readonly IAuthenticationService _authenticationService;
-    private readonly Func<AuthenticationSuccess, Task> _onSuccess;
+    private readonly Action<AuthenticationSuccess> _onSuccess;
     private readonly string _email;
     private readonly string _serverAuthorizationHash;
 
@@ -23,7 +22,7 @@ public partial class TwoFactorStepState : ObservableValidator
         SetupLoginContext context,
         PasswordSignInOutcome.TwoFactorRequired twoFactorRequired,
         IAuthenticationService authenticationService,
-        Func<AuthenticationSuccess, Task> onSuccess)
+        Action<AuthenticationSuccess> onSuccess)
     {
         _context = context;
         _authenticationService = authenticationService;
@@ -48,11 +47,15 @@ public partial class TwoFactorStepState : ObservableValidator
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Required(ErrorMessage = "Enter the verification code.")]
+    [CustomValidation(typeof(TwoFactorStepState), nameof(ValidateCode))]
     [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
     public partial string Code { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasInvalidCode { get; set; }
 
     [field: MaybeNull]
     public ValidatableProperty CodeValidation
@@ -60,10 +63,25 @@ public partial class TwoFactorStepState : ObservableValidator
 
     public TwoFactorProviderOptionModel[] Providers { get; }
 
+    public static ValidationResult? ValidateCode(string code, ValidationContext context)
+    {
+        TwoFactorStepState instance = (TwoFactorStepState)context.ObjectInstance;
+
+        return !instance.HasInvalidCode
+            ? ValidationResult.Success
+            : new ValidationResult("Invalid verification code.");
+    }
+
+    partial void OnHasInvalidCodeChanged(bool value)
+    {
+        ValidateAllProperties();
+    }
 
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task ContinueTwoFactorAsync()
     {
+        HasInvalidCode = false;
+
         ValidateAllProperties();
         if (HasErrors)
             return;
@@ -74,13 +92,21 @@ public partial class TwoFactorStepState : ObservableValidator
             _serverAuthorizationHash,
             new TwoFactorProof(Code, SelectedProvider.Provider), CancellationToken.None);
 
-        if (result is PasswordSignInOutcome.Success success)
+        switch (result)
         {
-            await _onSuccess.Invoke(success.AuthenticationSuccess);
-            return;
-        }
+            case PasswordSignInOutcome.Success success:
+                _onSuccess.Invoke(success.AuthenticationSuccess);
+                return;
 
-        Debugger.Break();
+            case PasswordSignInOutcome.InvalidCredentials:
+            case PasswordSignInOutcome.DeviceVerificationRequired:
+                HasInvalidCode = true;
+                return;
+
+            default:
+                HasInvalidCode = true;
+                return;
+        }
     }
 
     public static bool IsSupported(TwoFactorProviderType provider) =>
@@ -99,6 +125,4 @@ public partial class TwoFactorStepState : ObservableValidator
             ? "Supported in this build"
             : "Not supported in this build";
     }
-    
-
 }
