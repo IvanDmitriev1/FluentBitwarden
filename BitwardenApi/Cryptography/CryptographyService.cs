@@ -1,6 +1,7 @@
-﻿using BitwardenApi.Cryptography.Enc;
+using BitwardenApi.Cryptography.Enc;
 using BitwardenApi.Cryptography.Kdf;
 using CommunityToolkit.HighPerformance.Buffers;
+using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -34,13 +35,43 @@ public static class CryptographyService
         }
     }
 
-    public static byte[] DecryptUserKey(in EncryptedUserKey encryptedUserKey, ReadOnlySpan<char> masterPassword, ReadOnlySpan<char> salt, KdfConfig kdfConfig)
+    public static int UnwrapSymmetricKey(ReadOnlySpan<char> encKey, DecryptedUserKey userKey, Span<byte> destination)
+    {
+        Span<byte> keyBuffer = stackalloc byte[encKey.Length];
+        var status = Ascii.FromUtf16(encKey, keyBuffer, out int bytesWritten);
+        if (status != OperationStatus.Done)
+        {
+            throw new FormatException("EncString contains non-ASCII characters.");
+        }
+
+        var parts = EncString.Parse(keyBuffer[..bytesWritten]);
+        return AesCbcHmac.DecryptTo(parts, userKey.Key, destination);
+    }
+
+    public static byte[] DecryptUserKey(EncryptedUserKey encryptedUserKey, ReadOnlySpan<char> masterPassword, ReadOnlySpan<char> salt, KdfConfig kdfConfig)
     {
         Span<byte> stretchedMasterKey = stackalloc byte[64];
         StretchMasterKey(masterPassword, salt, kdfConfig, stretchedMasterKey);
 
-        using var encString = EncString.From(encryptedUserKey.Value);
-        var parsed = encString.Parse();
+        ReadOnlySpan<char> encryptedValue = encryptedUserKey.Value;
+        int length = encryptedValue.Length;
+        bool useStackAlloc = length <= MaxStackPlaintextByteCount;
+
+        using var bufferOwner = useStackAlloc
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(length);
+
+        Span<byte> buffer = useStackAlloc
+            ? stackalloc byte[length]
+            : bufferOwner.Span;
+
+        var status = Ascii.FromUtf16(encryptedValue, buffer, out int bytesWritten);
+        if (status != OperationStatus.Done)
+        {
+            throw new FormatException("EncString contains non-ASCII characters.");
+        }
+
+        var parsed = EncString.Parse(buffer[..bytesWritten]);
         return AesCbcHmac.Decrypt(parsed, stretchedMasterKey);
     }
 
@@ -67,7 +98,7 @@ public static class CryptographyService
         }
     }
 
-    public static string DecryptString(in EncStringParts encString, DecryptedUserKey key)
+    public static string DecryptString(in EncStringParts encString, ReadOnlySpan<byte> key)
     {
         int maxPlaintextLength = encString.Data.Length;
         bool useStack = maxPlaintextLength <= MaxStackPlaintextByteCount;
@@ -82,7 +113,7 @@ public static class CryptographyService
 
         try
         {
-            int bytesWritten = AesCbcHmac.DecryptTo(encString, key.Key, plaintext);
+            int bytesWritten = AesCbcHmac.DecryptTo(encString, key, plaintext);
             return Encoding.UTF8.GetString(plaintext[..bytesWritten]);
         }
         finally

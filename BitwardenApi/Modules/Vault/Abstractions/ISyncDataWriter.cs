@@ -6,5 +6,5 @@ public interface ISyncDataWriter
 {
     void WriteFolder(in FolderDto dto);
     void WriteCollection(in CollectionDto dto);
-    void WriteCipher(in CipherDto row);
+    void WriteCipher(in CipherDto row, ReadOnlySpan<byte> payload);
 }

@@ -21,3 +21,6 @@ public readonly partial struct UserId;
 
 [StronglyTypedId(Template.String)]
 public readonly partial struct AuthRequestId;
+
+[StronglyTypedId(Template.Guid)]
+public readonly partial struct OrganizationId;

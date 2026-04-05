@@ -103,15 +103,21 @@ internal static class AesCbcHmac
         ReadOnlySpan<byte> iv,
         Span<byte> destination)
     {
-        if (destination.Length < ciphertext.Length)
-            throw new ArgumentException(
-                "Destination span was too small for the decrypted plaintext.", nameof(destination));
+        
 
         using var aes = Aes.Create();
         aes.SetKey(key);
 
         if (!aes.TryDecryptCbc(ciphertext, iv, destination, out int written, PaddingMode.PKCS7))
+        {
+            if (destination.Length < ciphertext.Length)
+            {
+                throw new ArgumentException(
+                    "Destination span was too small for the decrypted plaintext.", nameof(destination));
+            }
+
             throw new CryptographicException("EncString AES-CBC decryption failed.");
+        }
 
         destination[written..].Clear();
         return written;

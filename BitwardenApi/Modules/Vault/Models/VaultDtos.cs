@@ -1,22 +1,36 @@
-﻿namespace BitwardenApi.Modules.Vault.Models;
+namespace BitwardenApi.Modules.Vault.Models;
 
-public readonly ref struct FolderDto
+public struct FolderDto
 {
-    public required FolderId Id { get; init; }
-    public required ReadOnlySpan<byte> Payload { get;init; }
+    public FolderId Id { get; set; }
+    public DateTimeOffset RevisionDate { get; set; }
+    public string? EncryptedName { get; set; }
 }
 
-public readonly ref struct CollectionDto
+public struct CollectionDto
 {
-    public required CollectionId Id { get;init; }
-    public required ReadOnlySpan<byte> Payload { get; init; }
+    public CollectionId Id { get; set; }
+    public OrganizationId? OrganizationId { get; set; }
+    public bool ReadOnly { get; set; }
+    public bool Manage { get; set; }
+    public bool HidePasswords { get; set; }
+    public int? Type { get; set; }
+    public string? EncryptedName { get; set; }
 }
 
-public readonly ref struct CipherDto
+public struct CipherDto
 {
-    public required CipherId Id { get; init; }
-    public required FolderId? FolderId { get; init; }
-    public required CipherType CipherType { get; init; }
-
-    public required ReadOnlySpan<byte> Payload { get; init; }
+    public CipherId Id { get; set; }
+    public OrganizationId? OrganizationId { get; set; }
+    public FolderId? FolderId { get; set; }
+    public string? EncryptedKey { get; set; }
+    public CipherType CipherType { get; set; }
+    public DateTimeOffset RevisionDate { get; set; }
+    public DateTimeOffset CreationDate { get; set; }
+    public DateTimeOffset? DeletedDate { get; set; }
+    public DateTimeOffset? ArchivedDate { get; set; }
+    public bool Favorite { get; set; }
+    public bool Reprompt { get; set; }
+    public bool Edit { get; set; }
+    public bool ViewPassword { get; set; }
 }

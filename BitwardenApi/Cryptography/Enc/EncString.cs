@@ -1,64 +1,18 @@
-﻿using CommunityToolkit.HighPerformance.Buffers;
 using System.Buffers;
 using System.Buffers.Text;
 using System.Text;
 
 namespace BitwardenApi.Cryptography.Enc;
 
-internal sealed class EncString : IDisposable
+internal static class EncString
 {
-    private static readonly int MaxStackallockSize = 512;
-
-    private readonly MemoryOwner<byte> _owner;
-    private readonly int _length;
-    private bool _isDecoded;
-    private PartsLayout _layout;
-    private ReadOnlySpan<byte> Raw => _owner.Span[.._length];
-
-    private EncString(MemoryOwner<byte> owner, int length)
+    public static EncStringParts Parse(Span<byte> buffer)
     {
-        _owner = owner;
-        _length = length;
-    }
+        if (!TryParseLayout(buffer, out var layout))
+            throw new FormatException("The provided value is not a valid EncString.");
 
-    public static EncString From(ReadOnlySpan<char> textValue)
-    {
-        var bufferOwner = MemoryOwner<byte>.Allocate(textValue.Length);
-        var status = Ascii.FromUtf16(textValue, bufferOwner.Span, out int bytesWritten);
-        if (status != OperationStatus.Done)
-        {
-            bufferOwner.Dispose();
-            throw new FormatException("EncString contains non-ASCII characters.");
-        }
-
-        return new EncString(bufferOwner, bytesWritten);
-    }
-
-    public static EncString From(ReadOnlySpan<byte> value)
-    {
-        var owner = MemoryOwner<byte>.Allocate(value.Length);
-        int writeBytes = NormalizeEncStringText(value, owner.Span);
-
-        return new EncString(owner, writeBytes);
-    }
-
-    public void Dispose()
-    {
-        _owner.Dispose();
-    }
-
-    public EncStringParts Parse()
-    {
-        if (!_isDecoded)
-        {
-            if (!TryParseLayout(Raw, out var layout))
-                throw new FormatException("The provided value is not a valid EncString.");
-            DecodeSegmentsInPlace(ref layout, _owner.Span);
-            _layout = layout;
-            _isDecoded = true;
-        }
-
-        return CreateParts(_owner.Span, _layout);
+        DecodeSegmentsInPlace(ref layout, buffer);
+        return CreateParts(buffer, layout);
     }
 
     private static void DecodeSegmentsInPlace(ref PartsLayout layout, Span<byte> buffer)
@@ -101,8 +55,8 @@ internal sealed class EncString : IDisposable
         throw new FormatException(
             $"EncString {segmentName} segment was not valid Base64/Base64Url. Raw segment: '{raw}'.");
 #else
-    throw new FormatException(
-        $"EncString {segmentName} segment was not valid Base64/Base64Url.");
+        throw new FormatException(
+            $"EncString {segmentName} segment was not valid Base64/Base64Url.");
 #endif
     }
 
@@ -135,7 +89,9 @@ internal sealed class EncString : IDisposable
         }
 
         ReadOnlySpan<byte> payload = value[payloadOffset..];
-        if (payload.IsEmpty) return false;
+        if (payload.IsEmpty)
+            return false;
+
         int firstSep = payload.IndexOf((byte)'|');
         int secondSep = firstSep >= 0 ? payload[(firstSep + 1)..].IndexOf((byte)'|') : -1;
         if (secondSep >= 0)
@@ -168,47 +124,6 @@ internal sealed class EncString : IDisposable
         };
 
         return layout.DataLength > 0;
-    }
-
-    private static int NormalizeEncStringText(
-        ReadOnlySpan<byte> source,
-        Span<byte> destination)
-    {
-        // Case 1: plain EncString text with no JSON escapes: just copy
-        if (source.IndexOf((byte)'\\') < 0)
-        {
-            source.CopyTo(destination);
-            return source.Length;
-        }
-
-        // Case 2: bare text that still contains JSON escapes, e.g. \u002B
-
-        int length = source.Length + 2;
-        bool useStackAlloc = length <= MaxStackallockSize;
-
-        using var bufferOwner = useStackAlloc
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(length);
-
-        Span<byte> buffer = useStackAlloc
-            ? stackalloc byte[length]
-            : bufferOwner.Span;
-
-        buffer[0] = (byte)'"';
-        source.CopyTo(buffer[1..]);
-        buffer[^1] = (byte)'"';
-
-        var reader = new Utf8JsonReader(buffer, isFinalBlock: true, state: default);
-
-        if (!reader.Read() || reader.TokenType != JsonTokenType.String)
-            throw new FormatException("Expected a JSON string literal.");
-
-        int written = reader.CopyString(destination);
-
-        if (reader.Read())
-            throw new FormatException("Expected exactly one JSON string literal.");
-
-        return written;
     }
 
     private struct PartsLayout(

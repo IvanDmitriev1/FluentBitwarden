@@ -19,8 +19,8 @@ public sealed class SyncPayload : IAsyncDisposable
         _response.Dispose();
     }
 
-    public Task<SyncResponceParser.SyncParserReport> ParseAsync(ISyncDataWriter dataWriter)
+    public Task<SyncResponseParser.SyncParserReport> ParseAsync(ISyncDataWriter dataWriter)
     {
-        return SyncResponceParser.ParseAsync(dataWriter, _content, CancellationToken.None);
+        return SyncResponseParser.ParseAsync(dataWriter, _content, CancellationToken.None);
     }
 }

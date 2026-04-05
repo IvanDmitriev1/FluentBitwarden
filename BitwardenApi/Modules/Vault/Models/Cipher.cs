@@ -60,3 +60,10 @@ public sealed class IdentityCipher : Cipher
     public string? PassportNumber { get; set; }
     public string? LicenseNumber { get; set; }
 }
+
+public sealed class SshKeyCipher : Cipher
+{
+    public string? PrivateKey { get; set; }
+    public string? PublicKey { get; set; }
+    public string? KeyFingerprint { get; set; }
+}

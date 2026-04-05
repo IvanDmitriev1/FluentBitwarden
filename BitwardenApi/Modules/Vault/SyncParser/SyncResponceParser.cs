@@ -1,51 +1,61 @@
-﻿using BitwardenApi.Modules.Vault.Abstractions;
+using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
-using CommunityToolkit.HighPerformance.Buffers;
 using Wololo.Text.Json;
 
 namespace BitwardenApi.Modules.Vault.SyncParser;
 
-public sealed partial class SyncResponceParser : IDisposable
+public sealed partial class SyncResponseParser : IDisposable
 {
-    public SyncResponceParser(ISyncDataWriter dataWriter)
-    {
-        _dataWriter = dataWriter;
-        _reader = new Utf8JsonStreamReader(BufferSize);
-    }
-
     private const int BufferSize = 1024 * 16;
 
     private readonly ISyncDataWriter _dataWriter;
+    private readonly CipherPayloadCapture _cipherPayloadCapture;
     private readonly Utf8JsonStreamReader _reader;
+    private ObjectCaptureState _objectCaptureState;
 
-    private RootProperty _pendingRootProperty;
-    private readonly ObjectCaptureState _objectCaptureState = new();
     private ArrayCaptureState _arrayCaptureState;
+    private RootProperty _pendingRootProperty;
 
-    private CipherState _cipherState;
+    private CipherDto _cipherDto;
+    private CipherProperty _cipherProperty;
     private int _parsedCiphers;
 
-    private CollectionState _collectionState;
+    private CollectionDto _collectionDto;
+    private CollectionProperty _collectionProperty;
     private int _parsedCollections;
 
-    private FolderState _folderState;
+    private FolderDto _folderDto;
+    private FolderProperty _folderProperty;
     private int _parsedFolders;
+
+    public SyncResponseParser(ISyncDataWriter dataWriter)
+    {
+        _dataWriter = dataWriter;
+        _cipherPayloadCapture = new CipherPayloadCapture();
+        _reader = new Utf8JsonStreamReader(BufferSize);
+    }
 
     public static async Task<SyncParserReport> ParseAsync(ISyncDataWriter dataWriter, Stream stream, CancellationToken token)
     {
-        using var parser = new SyncResponceParser(dataWriter);
+        using var parser = new SyncResponseParser(dataWriter);
         return await parser.ParseAsyncCore(stream, token);
     }
 
     public void Dispose()
     {
-        _objectCaptureState.Dispose();
+        _cipherPayloadCapture.Dispose();
         _reader.Dispose();
     }
 
     private async Task<SyncParserReport> ParseAsyncCore(Stream stream, CancellationToken token)
     {
         await _reader.ReadAsync(stream, OnRead, token);
+
+        if (_pendingRootProperty != RootProperty.None || _arrayCaptureState.IsActive || _objectCaptureState.IsActive)
+        {
+            throw new InvalidDataException("Sync response JSON ended before the parser completed.");
+        }
+
         return new SyncParserReport(_parsedCiphers, _parsedFolders, _parsedCollections);
     }
 
@@ -57,81 +67,82 @@ public sealed partial class SyncResponceParser : IDisposable
             return;
         }
 
+        HandleRootValue(ref reader);
+    }
+
+    private void HandleRootValue(ref Utf8JsonReader reader)
+    {
         switch (_pendingRootProperty)
         {
             case RootProperty.Folders:
-            {
                 CaptureArray(
                     ref reader,
-                    ref _folderState,
+                    ref _folderDto,
+                    ref _folderProperty,
                     ParseFolder,
-                    static (writer, ref state, payload) => writer.WriteFolder(new FolderDto()
-                    {
-                        Id = state.Id!.Value,
-                        Payload = payload,
-                    }));
-                _parsedFolders = int.Max(_parsedFolders, _arrayCaptureState.ProcessedItems);
-                break;
-            }
+                    static (writer, ref dto) => writer.WriteFolder(EnsureFolderIsComplete(dto)));
+                _parsedFolders = Math.Max(_parsedFolders, _arrayCaptureState.ProcessedItems);
+                if (!_arrayCaptureState.IsActive && reader.TokenType == JsonTokenType.EndArray)
+                {
+                    _pendingRootProperty = RootProperty.None;
+                }
+                return;
             case RootProperty.Collections:
-            {
                 CaptureArray(
                     ref reader,
-                    ref _collectionState,
+                    ref _collectionDto,
+                    ref _collectionProperty,
                     ParseCollection,
-                    static (writer, ref state, payload) => writer.WriteCollection(new CollectionDto()
-                    {
-                        Id = state.Id!.Value,
-                        Payload = payload,
-                    }));
-                _parsedCollections = int.Max(_parsedCollections, _arrayCaptureState.ProcessedItems);
-                break;
-            }
+                    static (writer, ref dto) => writer.WriteCollection(EnsureCollectionIsComplete(dto)));
+                _parsedCollections = Math.Max(_parsedCollections, _arrayCaptureState.ProcessedItems);
+                if (!_arrayCaptureState.IsActive && reader.TokenType == JsonTokenType.EndArray)
+                {
+                    _pendingRootProperty = RootProperty.None;
+                }
+                return;
             case RootProperty.Ciphers:
-            {
                 CaptureArray(
                     ref reader,
-                    ref _cipherState,
+                    ref _cipherDto,
+                    ref _cipherProperty,
                     ParseCipher,
-                    static (writer, ref state, payload) => writer.WriteCipher(new CipherDto()
+                    (writer, ref dto) =>
                     {
-                        Id = state.Id!.Value,
-                        FolderId = state.FolderId,
-                        CipherType = state.Type!.Value,
-                        Payload = payload[..state.PayloadLength].TrimEnd((byte)0),
-                    }));
-                _parsedCiphers = int.Max(_parsedCiphers, _arrayCaptureState.ProcessedItems);
-                break;
-            }
-            default:
+                        if (!_cipherPayloadCapture.HasCapturedPayload)
+                        {
+                            throw new InvalidDataException("Cipher payload did not include the root data property.");
+                        }
+
+                        writer.WriteCipher(EnsureCipherIsComplete(dto), _cipherPayloadCapture.PayloadSpan);
+                    });
+                _parsedCiphers = Math.Max(_parsedCiphers, _arrayCaptureState.ProcessedItems);
+                if (!_arrayCaptureState.IsActive && reader.TokenType == JsonTokenType.EndArray)
+                {
+                    _pendingRootProperty = RootProperty.None;
+                }
+                return;
+            case RootProperty.Ignore:
+                _pendingRootProperty = RootProperty.None;
                 reader.TrySkip();
-                break;
+                return;
+            default:
+                return;
         }
     }
 
     private static RootProperty MatchRootProperty(ref Utf8JsonReader reader)
     {
-        if (reader.ValueTextEquals("profile"u8))
-        {
-            return RootProperty.Profile;
-        }
-
-        if (reader.ValueTextEquals("userDecryption"u8))
-        {
-            return RootProperty.UserDecryption;
-        }
-
-        if (reader.ValueTextEquals("folders"u8))
+        if (reader.ValueTextEquals("folders"u8) || reader.ValueTextEquals("Folders"u8))
         {
             return RootProperty.Folders;
         }
 
-        if (reader.ValueTextEquals("collections"u8))
+        if (reader.ValueTextEquals("collections"u8) || reader.ValueTextEquals("Collections"u8))
         {
             return RootProperty.Collections;
         }
 
-        if (reader.ValueTextEquals("ciphers"u8))
+        if (reader.ValueTextEquals("ciphers"u8) || reader.ValueTextEquals("Ciphers"u8))
         {
             return RootProperty.Ciphers;
         }
@@ -142,8 +153,6 @@ public sealed partial class SyncResponceParser : IDisposable
     private enum RootProperty
     {
         None = 0,
-        Profile,
-        UserDecryption,
         Folders,
         Collections,
         Ciphers,

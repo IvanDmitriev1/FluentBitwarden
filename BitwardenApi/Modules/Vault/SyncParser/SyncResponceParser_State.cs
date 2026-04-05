@@ -1,10 +1,20 @@
-﻿using CommunityToolkit.HighPerformance.Buffers;
-
 namespace BitwardenApi.Modules.Vault.SyncParser;
 
-public partial class SyncResponceParser
+public partial class SyncResponseParser
 {
-    public readonly record struct SyncParserReport(int Ciphers, int Folders, int Collections);
+    public readonly struct SyncParserReport
+    {
+        public SyncParserReport(int ciphers, int folders, int collections)
+        {
+            Ciphers = ciphers;
+            Folders = folders;
+            Collections = collections;
+        }
+
+        public int Ciphers { get; }
+        public int Folders { get; }
+        public int Collections { get; }
+    }
 
     private struct ArrayCaptureState
     {
@@ -12,29 +22,9 @@ public partial class SyncResponceParser
         public int ProcessedItems { get; set; }
     }
 
-    private class ObjectCaptureState : IDisposable
+    private struct ObjectCaptureState
     {
-        private MemoryOwner<byte> _payloadMemoryOwner = MemoryOwner<byte>.Allocate(1024 * 4);
-
         public bool IsActive { get; set; }
         public int Depth { get; set; }
-        public Span<byte> PayloadSpan => _payloadMemoryOwner.Span;
-
-
-        public void ResizePayloadMemoryOwner(int newSize)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(newSize);
-
-            if (_payloadMemoryOwner.Length >= newSize)
-                return;
-
-            _payloadMemoryOwner.Dispose();
-            _payloadMemoryOwner = MemoryOwner<byte>.Allocate(newSize);
-        }
-
-        public void Dispose()
-        {
-            _payloadMemoryOwner.Dispose();
-        }
     }
 }
