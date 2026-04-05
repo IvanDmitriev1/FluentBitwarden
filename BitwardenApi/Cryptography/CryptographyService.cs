@@ -1,13 +1,15 @@
-using BitwardenApi.Shared.Cryptography;
-using FluentBitwarden.Modules.Security.Crypto.Enc;
-using FluentBitwarden.Modules.Security.Crypto.Kdf;
+﻿using BitwardenApi.Cryptography.Enc;
+using BitwardenApi.Cryptography.Kdf;
+using CommunityToolkit.HighPerformance.Buffers;
 using System.Security.Cryptography;
-using BitwardenApi.Modules.Identity.Models;
+using System.Text;
 
-namespace FluentBitwarden.Modules.Session.Services;
+namespace BitwardenApi.Cryptography;
 
-internal static class SessionCrypto
+public static class CryptographyService
 {
+    private const int MaxStackPlaintextByteCount = 512;
+
     public static string HashMasterPassword(
         ReadOnlySpan<char> email,
         ReadOnlySpan<char> masterPassword,
@@ -62,6 +64,30 @@ internal static class SessionCrypto
                 Argon2IdKdf.Derive(masterPassword, salt, argon2Id.Iterations, argon2Id.MemoryMib, argon2Id.Parallelism, output);
                 break;
             default: throw new ArgumentOutOfRangeException(nameof(kdfConfig));
+        }
+    }
+
+    public static string DecryptString(in EncStringParts encString, DecryptedUserKey key)
+    {
+        int maxPlaintextLength = encString.Data.Length;
+        bool useStack = maxPlaintextLength <= MaxStackPlaintextByteCount;
+
+        using var plaintextOwner = useStack
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(maxPlaintextLength);
+
+        Span<byte> plaintext = useStack
+            ? stackalloc byte[maxPlaintextLength]
+            : plaintextOwner.Span;
+
+        try
+        {
+            int bytesWritten = AesCbcHmac.DecryptTo(encString, key.Key, plaintext);
+            return Encoding.UTF8.GetString(plaintext[..bytesWritten]);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(plaintext);
         }
     }
 }

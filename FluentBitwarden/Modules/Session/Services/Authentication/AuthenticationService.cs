@@ -1,9 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using BitwardenApi.Cryptography;
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
-using BitwardenApi.Shared.Cryptography;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Authentication;
@@ -21,7 +21,7 @@ internal sealed class AuthenticationService(IIdentityApiClient identityApiClient
         CancellationToken cancellationToken = default)
     {
         string serverAuthorizationHash =
-            SessionCrypto.HashMasterPassword(email, masterPassword, new KdfConfig.Pbkdf2(600000));
+            CryptographyService.HashMasterPassword(email, masterPassword, new KdfConfig.Pbkdf2(600000));
 
         var passwordLoginRequest = new PasswordLoginRequest(context, email, serverAuthorizationHash);
 

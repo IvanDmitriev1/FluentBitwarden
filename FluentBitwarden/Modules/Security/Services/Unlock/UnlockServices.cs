@@ -48,7 +48,7 @@ internal sealed class UnlockServices(
         var storedAccount = await Task.Run(() => unitOfWork.AccountRepository.GetById(userId), cancellationToken);
         ArgumentNullException.ThrowIfNull(storedAccount);
 
-        currentSessionAccessor.SetCurrentSession(storedAccount, session, successUnlockResult.Session);
+        currentSessionAccessor.SetCurrentSession(storedAccount, session, successUnlockResult.userKey);
         return result;
     }
 }

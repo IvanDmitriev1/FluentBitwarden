@@ -1,8 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using CommunityToolkit.HighPerformance.Buffers;
 
-namespace FluentBitwarden.Modules.Security.Crypto.Kdf;
+namespace BitwardenApi.Cryptography.Kdf;
 
 internal static class Hkdf
 {

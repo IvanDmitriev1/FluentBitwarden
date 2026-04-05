@@ -17,7 +17,7 @@ public partial class SyncResponceParser
         public FolderId? Id { get; set; }
     }
 
-    private static void ParseFolder(ref Utf8JsonReader reader, int depth, ref FolderState state)
+    private static void ParseFolder(ref Utf8JsonReader reader, ObjectCaptureState objectCaptureState, ref FolderState state)
     {
         if (reader.TokenType == JsonTokenType.PropertyName)
         {

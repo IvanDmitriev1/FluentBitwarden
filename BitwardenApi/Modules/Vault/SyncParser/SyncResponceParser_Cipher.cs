@@ -10,6 +10,7 @@ public partial class SyncResponceParser
         Id,
         FolderId,
         Type,
+        Data
     }
 
     private struct CipherState
@@ -19,11 +20,12 @@ public partial class SyncResponceParser
         public CipherId? Id { get; set; }
         public FolderId? FolderId { get; set; }
         public CipherType? Type { get; set; }
+
+        public int PayloadLength { get; set; }
     }
 
-    private static void ParseCipher(ref Utf8JsonReader reader, int depth, ref CipherState state)
+    private static void ParseCipher(ref Utf8JsonReader reader, ObjectCaptureState captureState, ref CipherState state)
     {
-
         if (reader.TokenType == JsonTokenType.PropertyName)
         {
             state.CurrentProperty = MatchCipherProperty(ref reader);
@@ -31,25 +33,36 @@ public partial class SyncResponceParser
         }
 
         if (state.CurrentProperty == CipherProperty.None)
+        {
             return;
+        }
 
         Span<char> buffer = stackalloc char[64];
         int readBytes = 0;
 
         switch (state.CurrentProperty)
         {
-            case CipherProperty.Id when reader.TokenType == JsonTokenType.String:
+            case CipherProperty.Id when captureState.Depth == 1 && reader.TokenType == JsonTokenType.String:
                 readBytes = reader.CopyString(buffer);
                 state.Id = CipherId.Parse(buffer[..readBytes]);
                 break;
-            case CipherProperty.FolderId when reader.TokenType == JsonTokenType.String:
+            case CipherProperty.FolderId when captureState.Depth == 1 && reader.TokenType == JsonTokenType.String:
                 readBytes = reader.CopyString(buffer);
                 state.FolderId = FolderId.Parse(buffer[..readBytes]);
                 break;
-            case CipherProperty.Type when reader.TokenType == JsonTokenType.Number:
+            case CipherProperty.Type when captureState.Depth == 1 && reader.TokenType == JsonTokenType.Number:
                 int type = reader.GetInt32();
                 state.Type = (CipherType)type;
                 break;
+            case CipherProperty.Data when captureState.Depth == 1 && reader.TokenType == JsonTokenType.String:
+            {
+                captureState.ResizePayloadMemoryOwner(state.PayloadLength);
+
+                reader.CopyString(captureState.PayloadSpan);
+                state.PayloadLength = captureState.PayloadSpan.Length;
+
+                break;
+            }
         }
     }
 
@@ -68,6 +81,11 @@ public partial class SyncResponceParser
         if (reader.ValueTextEquals("type"u8))
         {
             return CipherProperty.Type;
+        }
+
+        if (reader.ValueTextEquals("data"u8))
+        {
+            return CipherProperty.Data;
         }
 
         return CipherProperty.None;

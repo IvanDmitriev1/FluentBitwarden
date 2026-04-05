@@ -1,4 +1,4 @@
-﻿namespace BitwardenApi.Shared.Cryptography;
+﻿namespace BitwardenApi.Cryptography;
 
 public enum KdfType
 {

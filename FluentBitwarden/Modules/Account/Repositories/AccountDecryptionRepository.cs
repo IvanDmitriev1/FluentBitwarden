@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Cryptography;
 using FluentBitwarden.Modules.Account.Abstractions;
 using Dapper;
 using FluentBitwarden.Data;
 using Microsoft.Data.Sqlite;
+using BitwardenApi.Cryptography;
 
 namespace FluentBitwarden.Modules.Account.Repositories;
 

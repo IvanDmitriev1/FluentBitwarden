@@ -1,4 +1,6 @@
-﻿namespace BitwardenApi.Modules.Vault.SyncParser;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+
+namespace BitwardenApi.Modules.Vault.SyncParser;
 
 public partial class SyncResponceParser
 {
@@ -10,26 +12,29 @@ public partial class SyncResponceParser
         public int ProcessedItems { get; set; }
     }
 
-    private struct ObjectCaptureState
+    private class ObjectCaptureState : IDisposable
     {
+        private MemoryOwner<byte> _payloadMemoryOwner = MemoryOwner<byte>.Allocate(1024 * 4);
+
         public bool IsActive { get; set; }
         public int Depth { get; set; }
-    }
+        public Span<byte> PayloadSpan => _payloadMemoryOwner.Span;
 
-    public void ForwardToken(ref Utf8JsonReader reader)
-    {
-        switch (reader.TokenType)
+
+        public void ResizePayloadMemoryOwner(int newSize)
         {
-            case JsonTokenType.StartObject: _captureWriter.WriteStartObject(); break;
-            case JsonTokenType.EndObject: _captureWriter.WriteEndObject(); break;
-            case JsonTokenType.StartArray: _captureWriter.WriteStartArray(); break;
-            case JsonTokenType.EndArray: _captureWriter.WriteEndArray(); break;
-            case JsonTokenType.PropertyName: _captureWriter.WritePropertyName(reader.ValueSpan); break;
-            case JsonTokenType.String: _captureWriter.WriteStringValue(reader.ValueSpan); break;
-            case JsonTokenType.Number: _captureWriter.WriteRawValue(reader.ValueSpan); break;
-            case JsonTokenType.True: _captureWriter.WriteBooleanValue(true); break;
-            case JsonTokenType.False: _captureWriter.WriteBooleanValue(false); break;
-            case JsonTokenType.Null: _captureWriter.WriteNullValue(); break;
+            ArgumentOutOfRangeException.ThrowIfNegative(newSize);
+
+            if (_payloadMemoryOwner.Length >= newSize)
+                return;
+
+            _payloadMemoryOwner.Dispose();
+            _payloadMemoryOwner = MemoryOwner<byte>.Allocate(newSize);
+        }
+
+        public void Dispose()
+        {
+            _payloadMemoryOwner.Dispose();
         }
     }
 }

@@ -49,6 +49,13 @@ internal sealed class VaultSyncService(
         }
     }
 
+    public void Test1(DecryptedUserKey decryptedUserKey)
+    {
+        using var unitOfWork = unitOfWorkFactory.Create();
+
+        unitOfWork.CipherRepository.GetCiphers(decryptedUserKey);
+    }
+
     private async Task<bool> HasRemoteChangesAsync(UnitOfWork unitOfWork, UserId currentUser)
     {
         var lastSync = unitOfWork.AccountRepository.GetLastSyncTime(currentUser);

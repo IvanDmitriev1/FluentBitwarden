@@ -18,7 +18,7 @@ public partial class SyncResponceParser
         public int? Type { get; set; }
     }
 
-    private static void ParseCollection(ref Utf8JsonReader reader, int depth, ref CollectionState state)
+    private static void ParseCollection(ref Utf8JsonReader reader, ObjectCaptureState objectCaptureState, ref CollectionState state)
     {
         if (reader.TokenType == JsonTokenType.PropertyName)
         {

@@ -5,7 +5,6 @@ using FluentBitwarden.Modules.Session.Models;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security;
-using FluentBitwarden.Modules.Security.Models.Unlock;
 
 namespace FluentBitwarden.Modules.Session.Services
 {
@@ -38,20 +37,20 @@ namespace FluentBitwarden.Modules.Session.Services
         }
 
         [field: MaybeNull]
-        public UserKeySession CurrentUserKeySession
+        public DecryptedUserKey CurrentDecryptedUserKey
         {
             get => field ?? throw new InvalidOperationException();
             private set;
         }
 
 
-        public void SetCurrentSession(StoredAccount account, SessionTokens sessionTokens, UserKeySession userKeySession)
+        public void SetCurrentSession(StoredAccount account, SessionTokens sessionTokens, DecryptedUserKey decryptedUserKey)
         {
             IsAuthenticated = true;
             CurrentUser = account.UserId;
             CurrentContext = new BitwardenClientContext(account.Environment, DeviceIdentity.DeviceInfo);
             CurrentSession = sessionTokens;
-            CurrentUserKeySession = userKeySession;
+            CurrentDecryptedUserKey = decryptedUserKey;
         }
 
         public void UpdateSession(UserId userId, SessionTokens sessionTokens)

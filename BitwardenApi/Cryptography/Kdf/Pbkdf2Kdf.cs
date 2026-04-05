@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace FluentBitwarden.Modules.Security.Crypto.Kdf;
+namespace BitwardenApi.Cryptography.Kdf;
 
 internal static class Pbkdf2Kdf
 {

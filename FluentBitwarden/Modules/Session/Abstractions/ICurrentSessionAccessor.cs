@@ -12,5 +12,5 @@ public interface ICurrentSessionAccessor
     BitwardenClientContext CurrentContext { get; }
     UserId CurrentUser { get; }
     SessionTokens CurrentSession { get; }
-    UserKeySession CurrentUserKeySession { get; }
+    DecryptedUserKey CurrentDecryptedUserKey { get; }
 }

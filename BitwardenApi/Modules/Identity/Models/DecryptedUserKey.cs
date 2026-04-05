@@ -1,9 +1,8 @@
 ﻿using System.Security.Cryptography;
-using BitwardenApi.Modules.Identity.Models;
 
-namespace FluentBitwarden.Modules.Security.Models.Unlock;
+namespace BitwardenApi.Modules.Identity.Models;
 
-public sealed class UserKeySession(UserId userId, UnlockMethod unlockedVia, byte[] userKey) : IDisposable
+public sealed class DecryptedUserKey(UserId userId, byte[] userKey) : IDisposable
 {
     private bool _disposed;
 
@@ -13,15 +12,6 @@ public sealed class UserKeySession(UserId userId, UnlockMethod unlockedVia, byte
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return userId;
-        }
-    }
-
-    public UnlockMethod UnlockedVia
-    {
-        get
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-            return unlockedVia;
         }
     }
 

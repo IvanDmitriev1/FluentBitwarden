@@ -14,6 +14,7 @@ using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using BitwardenApi.Modules.Identity.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 
 namespace FluentBitwarden.Views.Unlock;
@@ -66,9 +67,8 @@ public sealed partial class UnlockPageViewModel(
         var result = await unlockService.UnlockAsync(SelectedAccount!.UserId, new MasterPasswordUnlockRequest(Password));
         switch (result)
         {
-            case UnlockResult.Success:
-                _ = await vaultSyncService.SyncVaultAsync();
-                navigationService.NavigateTo<ShellPage>();
+            case UnlockResult.Success success:
+                await OnSuccessUnlock(success.userKey);
                 return;
 
             case UnlockResult.RequiresOnlineReauth:
@@ -90,6 +90,14 @@ public sealed partial class UnlockPageViewModel(
             default:
                 return;
         }
+    }
+
+    private async Task OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
+    {
+        _ = await vaultSyncService.SyncVaultAsync();
+        vaultSyncService.Test1(decryptedUserKey);
+
+        navigationService.NavigateTo<ShellPage>();
     }
 
     public static ValidationResult? ValidateMasterPassword(string? value, ValidationContext context)

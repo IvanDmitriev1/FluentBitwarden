@@ -1,5 +1,4 @@
-﻿using System.Buffers;
-using BitwardenApi.Modules.Vault.Abstractions;
+﻿using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
 using CommunityToolkit.HighPerformance.Buffers;
 using Wololo.Text.Json;
@@ -12,21 +11,16 @@ public sealed partial class SyncResponceParser : IDisposable
     {
         _dataWriter = dataWriter;
         _reader = new Utf8JsonStreamReader(BufferSize);
-
-        _captureBuffer = new ArrayPoolBufferWriter<byte>(ArrayPool<byte>.Shared, 1024);
-        _captureWriter = new Utf8JsonWriter(_captureBuffer);
     }
 
     private const int BufferSize = 1024 * 16;
 
     private readonly ISyncDataWriter _dataWriter;
     private readonly Utf8JsonStreamReader _reader;
-    private readonly ArrayPoolBufferWriter<byte> _captureBuffer;
-    private readonly Utf8JsonWriter _captureWriter;
 
     private RootProperty _pendingRootProperty;
+    private readonly ObjectCaptureState _objectCaptureState = new();
     private ArrayCaptureState _arrayCaptureState;
-    private ObjectCaptureState _objectCaptureState;
 
     private CipherState _cipherState;
     private int _parsedCiphers;
@@ -45,8 +39,7 @@ public sealed partial class SyncResponceParser : IDisposable
 
     public void Dispose()
     {
-        _captureWriter.Dispose();
-        _captureBuffer.Dispose();
+        _objectCaptureState.Dispose();
         _reader.Dispose();
     }
 
@@ -105,7 +98,7 @@ public sealed partial class SyncResponceParser : IDisposable
                         Id = state.Id!.Value,
                         FolderId = state.FolderId,
                         CipherType = state.Type!.Value,
-                        Payload = payload,
+                        Payload = payload[..state.PayloadLength].TrimEnd((byte)0),
                     }));
                 _parsedCiphers = int.Max(_parsedCiphers, _arrayCaptureState.ProcessedItems);
                 break;

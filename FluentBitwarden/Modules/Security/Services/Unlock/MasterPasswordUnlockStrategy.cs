@@ -1,4 +1,5 @@
-﻿using BitwardenApi.Modules.Identity.Models;
+﻿using BitwardenApi.Cryptography;
+using BitwardenApi.Modules.Identity.Models;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
@@ -18,13 +19,13 @@ internal sealed class MasterPasswordUnlockStrategy : IUnlockStrategy<MasterPassw
         try
         {
             var encryptedKey = decryption.EncryptedUserKey;
-            var decryptedKey = SessionCrypto.DecryptUserKey(
+            var decryptedKey = CryptographyService.DecryptUserKey(
                 encryptedKey,
                 request.Password,
                 decryption.Salt,
                 decryption.KdfConfig);
 
-            return ValueTask.FromResult<UnlockResult>(new UnlockResult.Success(new UserKeySession(decryption.UserId, Method, decryptedKey)));
+            return ValueTask.FromResult<UnlockResult>(new UnlockResult.Success(new DecryptedUserKey(decryption.UserId, decryptedKey)));
         }
         catch (CryptographicException e)
         {

@@ -1,6 +1,6 @@
-﻿namespace FluentBitwarden.Modules.Security.Crypto.Enc;
+﻿namespace BitwardenApi.Cryptography.Enc;
 
-internal enum EncStringType : byte
+public enum EncStringType : byte
 {
     AesCbc256_B64 = 0,
     AesCbc256_HmacSha256_B64 = 2,

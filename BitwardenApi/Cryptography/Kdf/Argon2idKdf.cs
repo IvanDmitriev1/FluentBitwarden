@@ -1,9 +1,9 @@
+using Org.BouncyCastle.Crypto.Generators;
 using System.Security.Cryptography;
 using System.Text;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace FluentBitwarden.Modules.Security.Crypto.Kdf;
+namespace BitwardenApi.Cryptography.Kdf;
 
 internal static class Argon2IdKdf
 {

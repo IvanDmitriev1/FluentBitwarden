@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Shared.Cryptography;
+﻿using BitwardenApi.Cryptography;
 using System.Globalization;
 
 namespace BitwardenApi.Modules.Identity.Internal;

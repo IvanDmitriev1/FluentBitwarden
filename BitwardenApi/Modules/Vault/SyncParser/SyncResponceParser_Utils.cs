@@ -6,7 +6,7 @@ public partial class SyncResponceParser
 {
     private delegate void CaptureVisitor<TState>(
         ref Utf8JsonReader reader,
-        int depth,
+        ObjectCaptureState captureState,
         ref TState state)
         where TState : struct;
 
@@ -15,7 +15,6 @@ public partial class SyncResponceParser
         ref TState state,
         ReadOnlySpan<byte> payload)
         where TState : struct;
-
 
     private void CaptureCurrentObject<TState>(
         ref Utf8JsonReader reader,
@@ -32,19 +31,17 @@ public partial class SyncResponceParser
 
             _objectCaptureState.IsActive = true;
             _objectCaptureState.Depth = 0;
+            _objectCaptureState.PayloadSpan.Clear();
 
             state = default;
-            _captureWriter.Reset();
         }
-
-        ForwardToken(ref reader);
 
         if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
         {
             _objectCaptureState.Depth++;
         }
 
-        visitor.Invoke(ref reader, _objectCaptureState.Depth, ref state);
+        visitor.Invoke(ref reader, _objectCaptureState, ref state);
 
         if (reader.TokenType is JsonTokenType.EndObject or JsonTokenType.EndArray)
         {
@@ -53,8 +50,7 @@ public partial class SyncResponceParser
 
         if (_objectCaptureState.Depth == 0)
         {
-            _captureWriter.Flush();
-            persist.Invoke(_dataWriter, ref state, _captureBuffer.WrittenSpan);
+            persist.Invoke(_dataWriter, ref state, _objectCaptureState.PayloadSpan);
             _objectCaptureState.IsActive = false;
         }
     }
@@ -63,7 +59,7 @@ public partial class SyncResponceParser
     private void CaptureArray<TState>(
         ref Utf8JsonReader reader,
         ref TState state,
-        CaptureVisitor<TState> visitor, 
+        CaptureVisitor<TState> visitor,
         PersistVisitor<TState> persist) where TState : struct
     {
         if (!_arrayCaptureState.IsActive)

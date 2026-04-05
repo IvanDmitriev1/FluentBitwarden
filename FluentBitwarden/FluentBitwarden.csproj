@@ -43,7 +43,6 @@
   </ItemGroup>
 
 	<ItemGroup>
-	<PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0-beta.98" />
 	<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 	<PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
