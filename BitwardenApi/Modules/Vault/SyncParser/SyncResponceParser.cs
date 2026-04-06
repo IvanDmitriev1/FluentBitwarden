@@ -67,11 +67,6 @@ public sealed partial class SyncResponseParser : IDisposable
             return;
         }
 
-        HandleRootValue(ref reader);
-    }
-
-    private void HandleRootValue(ref Utf8JsonReader reader)
-    {
         switch (_pendingRootProperty)
         {
             case RootProperty.Folders:
@@ -80,12 +75,12 @@ public sealed partial class SyncResponseParser : IDisposable
                     ref _folderDto,
                     ref _folderProperty,
                     ParseFolder,
-                    static (writer, ref dto) => writer.WriteFolder(EnsureFolderIsComplete(dto)));
+                    static (writer, ref dto) =>
+                    {
+                        EnsureFolderIsComplete(ref dto);
+                        writer.WriteFolder(ref dto);
+                    });
                 _parsedFolders = Math.Max(_parsedFolders, _arrayCaptureState.ProcessedItems);
-                if (!_arrayCaptureState.IsActive && reader.TokenType == JsonTokenType.EndArray)
-                {
-                    _pendingRootProperty = RootProperty.None;
-                }
                 return;
             case RootProperty.Collections:
                 CaptureArray(
@@ -93,12 +88,12 @@ public sealed partial class SyncResponseParser : IDisposable
                     ref _collectionDto,
                     ref _collectionProperty,
                     ParseCollection,
-                    static (writer, ref dto) => writer.WriteCollection(EnsureCollectionIsComplete(dto)));
+                    static (writer, ref dto) =>
+                    {
+                        EnsureCollectionIsComplete(ref dto);
+                        writer.WriteCollection(ref dto);
+                    });
                 _parsedCollections = Math.Max(_parsedCollections, _arrayCaptureState.ProcessedItems);
-                if (!_arrayCaptureState.IsActive && reader.TokenType == JsonTokenType.EndArray)
-                {
-                    _pendingRootProperty = RootProperty.None;
-                }
                 return;
             case RootProperty.Ciphers:
                 CaptureArray(
@@ -108,18 +103,10 @@ public sealed partial class SyncResponseParser : IDisposable
                     ParseCipher,
                     (writer, ref dto) =>
                     {
-                        if (!_cipherPayloadCapture.HasCapturedPayload)
-                        {
-                            throw new InvalidDataException("Cipher payload did not include the root data property.");
-                        }
-
-                        writer.WriteCipher(EnsureCipherIsComplete(dto), _cipherPayloadCapture.PayloadSpan);
+                        EnsureCipherIsComplete(ref dto);
+                        writer.WriteCipher(ref dto, _cipherPayloadCapture.PayloadSpan);
                     });
                 _parsedCiphers = Math.Max(_parsedCiphers, _arrayCaptureState.ProcessedItems);
-                if (!_arrayCaptureState.IsActive && reader.TokenType == JsonTokenType.EndArray)
-                {
-                    _pendingRootProperty = RootProperty.None;
-                }
                 return;
             case RootProperty.Ignore:
                 _pendingRootProperty = RootProperty.None;

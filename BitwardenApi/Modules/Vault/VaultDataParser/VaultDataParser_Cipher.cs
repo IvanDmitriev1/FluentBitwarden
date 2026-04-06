@@ -1,14 +1,14 @@
-using System.Diagnostics;
 using BitwardenApi.Cryptography;
+using BitwardenApi.Modules.Vault.Internal;
 using BitwardenApi.Modules.Vault.Models;
 
 namespace BitwardenApi.Modules.Vault.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    public static Cipher ParseAndDecryptCipher(in CipherDto dto, ReadOnlySpan<byte> payload, DecryptedUserKey decryptedUserKey)
+    public static Cipher ParseAndDecryptCipher(ref readonly CipherDto dto, ReadOnlySpan<byte> payload, DecryptedUserKey decryptedUserKey)
     {
-        var cipher = CreateCipher(dto);
+        var cipher = CreateCipher(in dto);
         var reader = CreateObjectReader(payload);
 
         Span<byte> keyBuffer = dto.EncryptedKey is null
@@ -55,13 +55,15 @@ public static partial class VaultDataParser
             }
 
             if (reader.ValueTextEquals("username"u8) || reader.ValueTextEquals("Username"u8))
-                cipher.Username = ReadDecryptField(ref reader, key);
+                cipher.Username = ReadRequiredDecryptField(ref reader, key, "Username");
             else if (reader.ValueTextEquals("password"u8) || reader.ValueTextEquals("Password"u8))
-                cipher.Password = ReadDecryptField(ref reader, key);
+                cipher.Password = ReadRequiredDecryptField(ref reader, key, "Password");
             else if (reader.ValueTextEquals("totp"u8) || reader.ValueTextEquals("Totp"u8))
                 cipher.Totp = ReadDecryptField(ref reader, key);
             else if (reader.ValueTextEquals("uris"u8) || reader.ValueTextEquals("Uris"u8))
                 cipher.Uris = ReadUris(ref reader, key);
+            else if (reader.ValueTextEquals("fido2Credentials"u8) || reader.ValueTextEquals("Fido2Credentials"u8))
+                cipher.Fido2Credentials = ReadFido2Credentials(ref reader, key);
             else
                 SkipValue(ref reader);
         }
@@ -223,69 +225,67 @@ public static partial class VaultDataParser
         return false;
     }
 
-    private static Cipher CreateCipher(in CipherDto dto)
+    private static Cipher CreateCipher(ref readonly CipherDto dto) => dto.CipherType switch
     {
-        return dto.CipherType switch
+        CipherType.Login => new LoginCipher
         {
-            CipherType.Login => new LoginCipher()
-            {
-                Id = dto.Id,
-                FolderId = dto.FolderId,
-                Name = string.Empty,
-                Favorite = dto.Favorite,
-                Reprompt = dto.Reprompt,
-                RevisionDate = dto.RevisionDate,
-                CreationDate = dto.CreationDate,
-                DeletedDate = dto.DeletedDate,
-                Uris = []
-            },
-            CipherType.SecureNote => new SecureNoteCipher()
-            {
-                Id = dto.Id,
-                FolderId = dto.FolderId,
-                Name = string.Empty,
-                Favorite = dto.Favorite,
-                Reprompt = dto.Reprompt,
-                RevisionDate = dto.RevisionDate,
-                CreationDate = dto.CreationDate,
-                DeletedDate = dto.DeletedDate
-            },
-            CipherType.Card => new CardCipher()
-            {
-                Id = dto.Id,
-                FolderId = dto.FolderId,
-                Name = string.Empty,
-                Favorite = dto.Favorite,
-                Reprompt = dto.Reprompt,
-                RevisionDate = dto.RevisionDate,
-                CreationDate = dto.CreationDate,
-                DeletedDate = dto.DeletedDate
-            },
-            CipherType.Identity => new IdentityCipher()
-            {
-                Id = dto.Id,
-                FolderId = dto.FolderId,
-                Name = string.Empty,
-                Favorite = dto.Favorite,
-                Reprompt = dto.Reprompt,
-                RevisionDate = dto.RevisionDate,
-                CreationDate = dto.CreationDate,
-                DeletedDate = dto.DeletedDate
-            },
-            CipherType.SshKey => new SshKeyCipher()
-            {
-                Id = dto.Id,
-                FolderId = dto.FolderId,
-                Name = string.Empty,
-                Favorite = dto.Favorite,
-                Reprompt = dto.Reprompt,
-                RevisionDate = dto.RevisionDate,
-                CreationDate = dto.CreationDate,
-                DeletedDate = dto.DeletedDate
-            },
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
+            Id = dto.Id,
+            FolderId = dto.FolderId,
+            Name = string.Empty,
+            Favorite = dto.Favorite,
+            Reprompt = dto.Reprompt,
+            RevisionDate = dto.RevisionDate,
+            CreationDate = dto.CreationDate,
+            DeletedDate = dto.DeletedDate,
+            Username = string.Empty,
+            Password = string.Empty,
+        },
+        CipherType.SecureNote => new SecureNoteCipher()
+        {
+            Id = dto.Id,
+            FolderId = dto.FolderId,
+            Name = string.Empty,
+            Favorite = dto.Favorite,
+            Reprompt = dto.Reprompt,
+            RevisionDate = dto.RevisionDate,
+            CreationDate = dto.CreationDate,
+            DeletedDate = dto.DeletedDate
+        },
+        CipherType.Card => new CardCipher()
+        {
+            Id = dto.Id,
+            FolderId = dto.FolderId,
+            Name = string.Empty,
+            Favorite = dto.Favorite,
+            Reprompt = dto.Reprompt,
+            RevisionDate = dto.RevisionDate,
+            CreationDate = dto.CreationDate,
+            DeletedDate = dto.DeletedDate
+        },
+        CipherType.Identity => new IdentityCipher()
+        {
+            Id = dto.Id,
+            FolderId = dto.FolderId,
+            Name = string.Empty,
+            Favorite = dto.Favorite,
+            Reprompt = dto.Reprompt,
+            RevisionDate = dto.RevisionDate,
+            CreationDate = dto.CreationDate,
+            DeletedDate = dto.DeletedDate
+        },
+        CipherType.SshKey => new SshKeyCipher()
+        {
+            Id = dto.Id,
+            FolderId = dto.FolderId,
+            Name = string.Empty,
+            Favorite = dto.Favorite,
+            Reprompt = dto.Reprompt,
+            RevisionDate = dto.RevisionDate,
+            CreationDate = dto.CreationDate,
+            DeletedDate = dto.DeletedDate
+        },
+        _ => throw new ArgumentOutOfRangeException()
+    };
 
     private static List<string> ReadUris(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
     {
@@ -328,5 +328,103 @@ public static partial class VaultDataParser
         }
 
         return uris;
+    }
+
+    private static List<Fido2Credential> ReadFido2Credentials(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    {
+        reader.Read();
+        if (reader.TokenType != JsonTokenType.StartArray)
+        {
+            throw new JsonException("Fido2Credentials must be a JSON array.");
+        }
+
+        var credentials = new List<Fido2Credential>();
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndArray)
+                break;
+
+            if (reader.TokenType != JsonTokenType.StartObject)
+            {
+                throw new JsonException("Each Fido2Credentials item must be a JSON object.");
+            }
+
+            credentials.Add(ReadFido2Credential(ref reader, key));
+        }
+
+        return credentials;
+    }
+
+    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    {
+        string? credentialId = null;
+        Fido2CredentialKeyType? keyType = null;
+        Fido2CredentialKeyAlgorithm? keyAlgorithm = null;
+        Fido2CredentialKeyCurve? keyCurve = null;
+        string? keyValue = null;
+        string? rpId = null;
+        string? rpName = null;
+        string? userHandle = null;
+        string? userName = null;
+        string? userDisplayName = null;
+        int? counter = null;
+        bool? discoverable = null;
+        DateTimeOffset? creationDate = null;
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+                break;
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                continue;
+
+            if (reader.ValueTextEquals("credentialId"u8) || reader.ValueTextEquals("CredentialId"u8))
+                credentialId = ReadRequiredDecryptField(ref reader, key, "CredentialId");
+            else if (reader.ValueTextEquals("keyType"u8) || reader.ValueTextEquals("KeyType"u8))
+                keyType = Fido2CredentialJsonMapper.ParseKeyType(ReadRequiredDecryptField(ref reader, key, "KeyType"));
+            else if (reader.ValueTextEquals("keyAlgorithm"u8) || reader.ValueTextEquals("KeyAlgorithm"u8))
+                keyAlgorithm = Fido2CredentialJsonMapper.ParseKeyAlgorithm(ReadRequiredDecryptField(ref reader, key, "KeyAlgorithm"));
+            else if (reader.ValueTextEquals("keyCurve"u8) || reader.ValueTextEquals("KeyCurve"u8))
+                keyCurve = Fido2CredentialJsonMapper.ParseKeyCurve(ReadRequiredDecryptField(ref reader, key, "KeyCurve"));
+            else if (reader.ValueTextEquals("keyValue"u8) || reader.ValueTextEquals("KeyValue"u8))
+                keyValue = ReadRequiredDecryptField(ref reader, key, "KeyValue");
+            else if (reader.ValueTextEquals("rpId"u8) || reader.ValueTextEquals("RpId"u8))
+                rpId = ReadRequiredDecryptField(ref reader, key, "RpId");
+            else if (reader.ValueTextEquals("rpName"u8) || reader.ValueTextEquals("RpName"u8))
+                rpName = ReadRequiredDecryptField(ref reader, key, "RpName");
+            else if (reader.ValueTextEquals("userHandle"u8) || reader.ValueTextEquals("UserHandle"u8))
+                userHandle = ReadRequiredDecryptField(ref reader, key, "UserHandle");
+            else if (reader.ValueTextEquals("userName"u8) || reader.ValueTextEquals("UserName"u8))
+                userName = ReadRequiredDecryptField(ref reader, key, "UserName");
+            else if (reader.ValueTextEquals("userDisplayName"u8) || reader.ValueTextEquals("UserDisplayName"u8))
+                userDisplayName = ReadRequiredDecryptField(ref reader, key, "UserDisplayName");
+            else if (reader.ValueTextEquals("counter"u8) || reader.ValueTextEquals("Counter"u8))
+                counter = ReadRequiredEncryptedInt32(ref reader, key, "Counter");
+            else if (reader.ValueTextEquals("discoverable"u8) || reader.ValueTextEquals("Discoverable"u8))
+                discoverable = ReadRequiredEncryptedBoolean(ref reader, key, "Discoverable");
+            else if (reader.ValueTextEquals("creationDate"u8) || reader.ValueTextEquals("CreationDate"u8))
+                creationDate = ReadRequiredDateTimeOffset(ref reader, "CreationDate");
+            else
+                SkipValue(ref reader);
+        }
+
+        return new Fido2Credential
+        {
+            CredentialId = credentialId!,
+            KeyType = keyType!.Value,
+            KeyAlgorithm = keyAlgorithm!.Value,
+            KeyCurve = keyCurve!.Value,
+            KeyValue = keyValue!,
+            RpId = rpId!,
+            RpName = rpName!,
+            UserHandle = userHandle!,
+            UserName = userName!,
+            UserDisplayName = userDisplayName!,
+            Counter = counter!.Value,
+            Discoverable = discoverable!.Value,
+            CreationDate = creationDate!.Value
+        };
     }
 }

@@ -219,7 +219,7 @@ public partial class SyncResponseParser
         };
     }
 
-    private static FolderDto EnsureFolderIsComplete(in FolderDto dto)
+    private static void EnsureFolderIsComplete(ref readonly FolderDto dto)
     {
         if (dto.Id == default)
         {
@@ -235,11 +235,9 @@ public partial class SyncResponseParser
         {
             throw new InvalidDataException("Folder payload did not include a name.");
         }
-
-        return dto;
     }
 
-    private static CollectionDto EnsureCollectionIsComplete(in CollectionDto dto)
+    private static void EnsureCollectionIsComplete(ref readonly CollectionDto dto)
     {
         if (dto.Id == default)
         {
@@ -250,11 +248,9 @@ public partial class SyncResponseParser
         {
             throw new InvalidDataException("Collection payload did not include a name.");
         }
-
-        return dto;
     }
 
-    private static CipherDto EnsureCipherIsComplete(in CipherDto dto)
+    private void EnsureCipherIsComplete(ref readonly CipherDto dto)
     {
         if (dto.Id == default)
         {
@@ -276,6 +272,9 @@ public partial class SyncResponseParser
             throw new InvalidDataException("Cipher payload did not include a creation date.");
         }
 
-        return dto;
+        if (!_cipherPayloadCapture.HasCapturedPayload)
+        {
+            throw new InvalidDataException("Cipher payload did not include the root data property.");
+        }
     }
 }

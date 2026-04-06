@@ -1,10 +1,11 @@
 ﻿using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Account.Repositories;
+using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Modules.Vault.Repositories;
+using FluentBitwarden.Modules.Vault.Services;
 using Microsoft.Data.Sqlite;
 using System.Transactions;
-using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Modules.Vault.Services;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace FluentBitwarden.Data;
@@ -18,7 +19,7 @@ public sealed class UnitOfWork : IUnitOfWork
 
         AccountRepository = new AccountRepository(Transaction);
         AccountDecryptionRepository = new AccountDecryptionRepository(Transaction);
-        CipherRepository = new CipherRepository(Transaction);
+        VaultRepository = new VaultRepository(Transaction);
     }
 
     private readonly SqliteConnection _connection;
@@ -28,7 +29,7 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public IAccountRepository AccountRepository { get; }
     public IAccountDecryptionRepository AccountDecryptionRepository { get; }
-    public ICipherRepository CipherRepository { get; }
+    public IVaultRepository VaultRepository { get; }
 
     public void SaveChanges()
     {

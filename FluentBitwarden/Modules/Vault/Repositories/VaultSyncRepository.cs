@@ -7,22 +7,17 @@ using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
-internal sealed class VaultSyncResponceRepository(SqliteTransaction transaction, UserId userId) : BaseRepository(transaction), ISyncDataWriter
+internal sealed class VaultSyncRepository : BaseRepository, ISyncDataWriter
 {
-    private readonly string _userIdStr = userId.ToString();
-
-    public void DeleteVaultData(UserId userId)
+    public VaultSyncRepository(SqliteTransaction transaction, UserId userId) : base(transaction)
     {
-        const string sql = """
-                           DELETE FROM ciphers     WHERE user_id = @UserId;
-                           DELETE FROM collections WHERE user_id = @UserId;
-                           DELETE FROM folders     WHERE user_id = @UserId;
-                           """;
-
-        Connection.Execute(sql, new { UserId = userId.ToString() }, transaction: Transaction);
+        DeleteVaultData();
+        _userIdStr = userId.ToString();
     }
 
-    public void WriteFolder(in FolderDto dto)
+    private readonly string _userIdStr;
+
+    public void WriteFolder(ref readonly FolderDto dto)
     {
         Connection.Execute(
             """
@@ -42,7 +37,7 @@ internal sealed class VaultSyncResponceRepository(SqliteTransaction transaction,
             transaction: Transaction);
     }
 
-    public void WriteCollection(in CollectionDto dto)
+    public void WriteCollection(ref readonly CollectionDto dto)
     {
         Connection.Execute(
             """
@@ -86,7 +81,7 @@ internal sealed class VaultSyncResponceRepository(SqliteTransaction transaction,
             transaction: Transaction);
     }
 
-    public void WriteCipher(in CipherDto dto, ReadOnlySpan<byte> payload)
+    public void WriteCipher(ref readonly CipherDto dto, ReadOnlySpan<byte> payload)
     {
         var rowId = Connection.ExecuteScalar<long>(
             """
@@ -165,5 +160,16 @@ internal sealed class VaultSyncResponceRepository(SqliteTransaction transaction,
     {
         using var blob = new SqliteBlob(Connection, table, "payload", rowId);
         blob.Write(data);
+    }
+
+    private void DeleteVaultData()
+    {
+        const string sql = """
+                           DELETE FROM ciphers     WHERE user_id = @UserId;
+                           DELETE FROM collections WHERE user_id = @UserId;
+                           DELETE FROM folders     WHERE user_id = @UserId;
+                           """;
+
+        Connection.Execute(sql, new { UserId = _userIdStr }, transaction: Transaction);
     }
 }

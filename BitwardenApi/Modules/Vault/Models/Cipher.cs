@@ -20,10 +20,11 @@ public abstract class Cipher
 
 public sealed class LoginCipher : Cipher
 {
-    public string? Username { get; set; }
-    public string? Password { get; set; }
+    public required string Username { get; set; }
+    public required string Password { get; set; }
     public string? Totp { get; set; }
-    public required List<string> Uris { get; set; }
+    public List<string> Uris { get; set; } = [];
+    public List<Fido2Credential> Fido2Credentials { get; set; } = [];
 }
 
 /// <remarks>Notes carries the secure note text via <see cref="Cipher.Notes"/>.</remarks>

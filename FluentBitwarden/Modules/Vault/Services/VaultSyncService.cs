@@ -1,5 +1,7 @@
 ﻿using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Modules.Vault.Abstractions;
+using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Modules.Vault.VaultDataParser;
 using BitwardenApi.Shared.Exceptions;
 using FluentBitwarden.Data;
 using FluentBitwarden.Data.Abstractions;
@@ -34,9 +36,7 @@ internal sealed class VaultSyncService(
 
             await using var syncPayload = await vaultApiClient.GetSyncAsync(sessionAccessor.CurrentContext.Environment);
 
-            var repository = new VaultSyncResponceRepository(unitOfWork.Transaction, currentUser);
-            repository.DeleteVaultData(currentUser);
-
+            var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUser);
             await syncPayload.ParseAsync(repository);
             unitOfWork.AccountRepository.UpdateSyncTime(currentUser, DateTimeOffset.UtcNow);
 
@@ -53,7 +53,18 @@ internal sealed class VaultSyncService(
     {
         using var unitOfWork = unitOfWorkFactory.Create();
 
-        unitOfWork.CipherRepository.GetCiphers(decryptedUserKey);
+        List<Cipher> ciphers = [];
+
+        unitOfWork.VaultRepository.ReadAllCiphers(
+            decryptedUserKey.UserId,
+            (ciphers, decryptedUserKey),
+            static (state, ref readonly dto, payload) =>
+            {
+                var (ciphers, userKey) = state;
+                ciphers.Add(VaultDataParser.ParseAndDecryptCipher(in dto, payload, userKey));
+            });
+
+
     }
 
     private async Task<bool> HasRemoteChangesAsync(UnitOfWork unitOfWork, UserId currentUser)

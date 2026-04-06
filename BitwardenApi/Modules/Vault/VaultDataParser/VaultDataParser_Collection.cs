@@ -5,7 +5,7 @@ namespace BitwardenApi.Modules.Vault.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    public static VaultCollection ParseAndDecryptCollection(in CollectionDto dto, DecryptedUserKey decryptedUserKey)
+    public static VaultCollection ParseAndDecryptCollection(ref readonly CollectionDto dto, DecryptedUserKey decryptedUserKey)
     {
         ArgumentNullException.ThrowIfNull(dto.EncryptedName);
 
