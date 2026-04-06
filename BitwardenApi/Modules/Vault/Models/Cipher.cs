@@ -20,8 +20,8 @@ public abstract class Cipher
 
 public sealed class LoginCipher : Cipher
 {
-    public required string Username { get; set; }
-    public required string Password { get; set; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
     public string? Totp { get; set; }
     public List<string> Uris { get; set; } = [];
     public List<Fido2Credential> Fido2Credentials { get; set; } = [];

@@ -237,8 +237,6 @@ public static partial class VaultDataParser
             RevisionDate = dto.RevisionDate,
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate,
-            Username = string.Empty,
-            Password = string.Empty,
         },
         CipherType.SecureNote => new SecureNoteCipher()
         {
