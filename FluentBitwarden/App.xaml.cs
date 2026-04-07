@@ -14,6 +14,7 @@ using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
+using Windows.ApplicationModel;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Modules.Session.Services.Authentication;
@@ -69,7 +70,7 @@ public partial class App : IXamlMetadataServiceProvider
         ValidationTrimDependencies.Preserve();
     }
 
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
 #if DEBUG
         if (!Debugger.IsAttached)

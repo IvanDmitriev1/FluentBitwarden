@@ -1,0 +1,4 @@
+LIBRARY webauthn.dll
+EXPORTS
+    WebAuthNPluginAddAuthenticator
+    WebAuthNPluginFreeAddAuthenticatorResponse

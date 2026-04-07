@@ -4,48 +4,87 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
-  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  IgnorableNamespaces="uap rescap systemai desktop">
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  IgnorableNamespaces="uap rescap com">
 
-  <Identity
-    Name="9364d1bf-9e77-4283-8e47-507c26e4b31c"
-    Publisher="CN=PC"
-    Version="0.1.0.0" />
+	<Identity
+	  Name="9364d1bf-9e77-4283-8e47-507c26e4b31c"
+	  Publisher="CN=PC"
+	  Version="0.1.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="9364d1bf-9e77-4283-8e47-507c26e4b31c" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+	<mp:PhoneIdentity
+	  PhoneProductId="9364d1bf-9e77-4283-8e47-507c26e4b31c"
+	  PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
-  <Properties>
-    <DisplayName>FluentBitwarden</DisplayName>
-    <PublisherDisplayName>PC</PublisherDisplayName>
-    <Logo>Assets\StoreLogo.png</Logo>
-  </Properties>
+	<Properties>
+		<DisplayName>FluentBitwarden</DisplayName>
+		<PublisherDisplayName>PC</PublisherDisplayName>
+		<Logo>Assets\StoreLogo.png</Logo>
+	</Properties>
 
-  <Dependencies>
-    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
-  </Dependencies>
+	<Dependencies>
+		<TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
+		<TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
+	</Dependencies>
 
-  <Resources>
-    <Resource Language="x-generate" />
-  </Resources>
+	<Resources>
+		<Resource Language="x-generate" />
+	</Resources>
 
-  <Applications>
-    <Application Id="App" Executable="FluentBitwarden.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements
-        DisplayName="FluentBitwarden"
-        Description="FluentBitwarden"
-        BackgroundColor="transparent"
-        Square150x150Logo="Images\Square150x150Logo.png"
-        Square44x44Logo="Images\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Images\SplashScreen.png" />
-      </uap:VisualElements>
-    </Application>
-  </Applications>
+	<Applications>
+		<!-- Main WinUI 3 app -->
+		<Application Id="MainApp"
+					 Executable="FluentBitwarden.exe"
+					 EntryPoint="windows.fullTrustApplication">
+			<uap:VisualElements
+			  DisplayName="FluentBitwarden"
+			  Description="FluentBitwarden"
+			  BackgroundColor="transparent"
+			  Square150x150Logo="Images\Square150x150Logo.png"
+			  Square44x44Logo="Images\Square44x44Logo.png">
+				<uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
+				<uap:SplashScreen Image="Images\SplashScreen.png" />
+			</uap:VisualElements>
 
-  <Capabilities>
-    <rescap:Capability Name="runFullTrust" />
-    <systemai:Capability Name="systemAIModels" />
-  </Capabilities>
+			<Extensions>
+				<uap:Extension Category="windows.protocol">
+					<uap:Protocol Name="fluent-bitwarden">
+						<uap:DisplayName>FluentBitwarden</uap:DisplayName>
+					</uap:Protocol>
+				</uap:Extension>
+			</Extensions>
+		</Application>
+
+		<!-- Native helper / COM server -->
+		<Application Id="ComServerApp"
+					 Executable="FluentBitwarden.ComServer.exe"
+					 EntryPoint="windows.fullTrustApplication">
+			<uap:VisualElements
+			  DisplayName="FluentBitwarden Passkey Plugin"
+			  Description="FluentBitwarden Passkey Plugin"
+			  BackgroundColor="transparent"
+			  Square150x150Logo="Images\Square150x150Logo.png"
+			  Square44x44Logo="Images\Square44x44Logo.png"
+			  AppListEntry="none" />
+
+			<Extensions>
+				<com:Extension Category="windows.comServer">
+					<com:ComServer>
+						<com:ExeServer
+						  Executable="FluentBitwarden.ComServer.exe"
+						  Arguments="-PluginActivated"
+						  DisplayName="FluentBitwarden Passkey Plugin">
+							<com:Class
+							  Id="6FA0E3E9-B255-48CF-8E2C-7D8B6E4A91F3"
+							  DisplayName="FluentBitwarden Passkey Plugin" />
+						</com:ExeServer>
+					</com:ComServer>
+				</com:Extension>
+			</Extensions>
+		</Application>
+	</Applications>
+
+	<Capabilities>
+		<rescap:Capability Name="runFullTrust" />
+	</Capabilities>
 </Package>
