@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Modules.Connectivity.Abstractions;
+namespace FluentBitwarden.Shared.Connectivity.Abstractions;
 
 public interface IConnectivityService
 {

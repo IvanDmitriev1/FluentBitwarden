@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Security.Services.Unlock;
@@ -16,6 +15,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Modules.Identity.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Shared.Connectivity.Abstractions;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -68,7 +68,7 @@ public sealed partial class UnlockPageViewModel(
         switch (result)
         {
             case UnlockResult.Success success:
-                await OnSuccessUnlock(success.userKey);
+                OnSuccessUnlock(success.userKey);
                 return;
 
             case UnlockResult.RequiresOnlineReauth:
@@ -92,11 +92,9 @@ public sealed partial class UnlockPageViewModel(
         }
     }
 
-    private async Task OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
+    private void OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
     {
-        _ = await vaultSyncService.SyncVaultAsync();
-        vaultSyncService.Test1(decryptedUserKey);
-
+        vaultSyncService.LoadAllFromDb(decryptedUserKey);
         navigationService.NavigateTo<ShellPage>();
     }
 

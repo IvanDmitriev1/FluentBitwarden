@@ -9,10 +9,23 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/ValidationFieldStyles.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherFieldChromeStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherTextField.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherPasswordFieldStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherTotpFieldStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/CountdownRingStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <converters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
             <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
+            <converters:EmptyObjectToObjectConverter
+                x:Key="EmptyObjectToVisibilityConverter"
+                EmptyValue="Collapsed"
+                NotEmptyValue="Visible" />
+            <converters:EmptyObjectToObjectConverter
+                x:Key="NullToBoolConverter"
+                EmptyValue="False"
+                NotEmptyValue="True" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,7 +1,7 @@
-using FluentBitwarden.Modules.Connectivity.Abstractions;
+using FluentBitwarden.Shared.Connectivity.Abstractions;
 using Windows.Networking.Connectivity;
 
-namespace FluentBitwarden.Modules.Connectivity.Services;
+namespace FluentBitwarden.Shared.Connectivity.Services;
 
 internal sealed class WindowsConnectivityService : IConnectivityService, IDisposable
 {

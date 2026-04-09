@@ -1,11 +1,11 @@
 ﻿using BitwardenApi.Shared.Context;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Shared.Connectivity.Abstractions;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;

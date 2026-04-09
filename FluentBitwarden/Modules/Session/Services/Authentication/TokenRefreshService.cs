@@ -2,10 +2,10 @@
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
-using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
+using FluentBitwarden.Shared.Connectivity.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services.Authentication;
 

@@ -6,8 +6,69 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:lifecycle="using:FluentBitwarden.Shared.Behaviors.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:FluentBitwarden.Views.Vault.Models"
+    xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
-    <Grid />
+    <lifecycle:LifecyclePage.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <templates:CipherListViewItemTemplates />
+                <templates:CipherDetailTemplates />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </lifecycle:LifecyclePage.Resources>
+
+    <Grid ColumnSpacing="16" RowSpacing="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="1" ColumnSpacing="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Left pane  -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Padding="16,16,16,8" Spacing="12">
+
+                    <ComboBox
+                        DisplayMemberPath="DisplayName"
+                        ItemsSource="{x:Bind models:CipherTypeOption.All}"
+                        PlaceholderText="Filter by type"
+                        SelectedItem="{x:Bind ViewModel.SelectedTypeOption, Mode=TwoWay}" />
+                </StackPanel>
+
+                <ListView
+                    Grid.Row="1"
+                    IsItemClickEnabled="False"
+                    ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
+                    ItemTemplateSelector="{StaticResource CipherListTemplateSelector}"
+                    ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
+                    SelectionMode="Single"
+                    SingleSelectionFollowsFocus="True"
+                    TabFocusNavigation="Once" />
+            </Grid>
+
+
+            <ScrollViewer
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto"
+                Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
+
+                <ContentControl Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" ContentTemplateSelector="{StaticResource CipherDetailsTemplateSelector}" />
+            </ScrollViewer>
+        </Grid>
+    </Grid>
 </lifecycle:LifecyclePage>

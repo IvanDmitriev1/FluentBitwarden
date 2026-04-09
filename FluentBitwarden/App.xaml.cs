@@ -5,7 +5,6 @@ using FluentBitwarden.Application.Tray;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.Connectivity;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Shared.Extensions;
@@ -22,6 +21,7 @@ using FluentBitwarden.Modules.Vault;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using FluentBitwarden.Shared.Connectivity;
 
 namespace FluentBitwarden;
 

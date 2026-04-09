@@ -1,7 +1,7 @@
 using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.Connectivity.Abstractions;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Shared.Connectivity.Abstractions;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup;

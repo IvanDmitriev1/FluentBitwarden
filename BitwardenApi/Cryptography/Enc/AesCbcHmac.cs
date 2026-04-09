@@ -103,8 +103,6 @@ internal static class AesCbcHmac
         ReadOnlySpan<byte> iv,
         Span<byte> destination)
     {
-        
-
         using var aes = Aes.Create();
         aes.SetKey(key);
 

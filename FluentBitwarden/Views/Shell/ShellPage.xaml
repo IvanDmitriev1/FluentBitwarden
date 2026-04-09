@@ -5,8 +5,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Loaded="ShellPage_OnLoaded"
-    Unloaded="ShellPage_OnUnloaded"
     mc:Ignorable="d">
 
     <NavigationView
@@ -32,8 +30,6 @@
                 Tag="send" />
         </NavigationView.MenuItems>
 
-        <ScrollViewer>
-            <Frame x:Name="ContentFrame" Padding="22" />
-        </ScrollViewer>
+        <Frame x:Name="ContentFrame" />
     </NavigationView>
 </Page>

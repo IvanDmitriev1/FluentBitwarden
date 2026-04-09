@@ -1,8 +1,8 @@
-using FluentBitwarden.Modules.Connectivity.Abstractions;
-using FluentBitwarden.Modules.Connectivity.Services;
+using FluentBitwarden.Shared.Connectivity.Abstractions;
+using FluentBitwarden.Shared.Connectivity.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.Modules.Connectivity;
+namespace FluentBitwarden.Shared.Connectivity;
 
 internal static class ServiceCollectionExtensions
 {

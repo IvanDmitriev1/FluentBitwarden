@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Views.Vault.Templates.CipherDetailTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentBitwarden.Resources.Controls"
+    xmlns:models="using:BitwardenApi.Modules.Vault.Models"
+    xmlns:templates="using:FluentBitwarden.Views.Vault.Templates">
+
+    <Style x:Key="SectionTitleTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <Style x:Key="FieldLabelTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <Style x:Key="FieldValueTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+
+    <Style x:Key="ReadOnlyMultiLineTextBoxStyle" TargetType="TextBox">
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MinHeight" Value="96" />
+        <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+
+    <Style x:Key="CipherListViewItemStyle" TargetType="ListViewItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="4,2" />
+    </Style>
+
+    <DataTemplate x:Key="CipherHeaderTemplate" x:DataType="models:Cipher">
+        <StackPanel Spacing="12">
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource TitleLargeTextBlockStyle}"
+                    Text="{x:Bind Name}"
+                    TextWrapping="Wrap" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind Notes}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid ColumnSpacing="24" RowSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Style="{StaticResource FieldLabelTextBlockStyle}"
+                    Text="Favorite" />
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Style="{StaticResource FieldValueTextBlockStyle}"
+                    Text="{x:Bind Favorite}" />
+
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Style="{StaticResource FieldLabelTextBlockStyle}"
+                    Text="Reprompt" />
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Style="{StaticResource FieldValueTextBlockStyle}"
+                    Text="{x:Bind Reprompt}" />
+
+                <TextBlock
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Style="{StaticResource FieldLabelTextBlockStyle}"
+                    Text="Created" />
+                <TextBlock
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Style="{StaticResource FieldValueTextBlockStyle}"
+                    Text="{x:Bind CreationDate}" />
+
+                <TextBlock
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Style="{StaticResource FieldLabelTextBlockStyle}"
+                    Text="Revised" />
+                <TextBlock
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    Style="{StaticResource FieldValueTextBlockStyle}"
+                    Text="{x:Bind RevisionDate}" />
+
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Style="{StaticResource FieldLabelTextBlockStyle}"
+                    Text="Folder Id" />
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Style="{StaticResource FieldValueTextBlockStyle}"
+                    Text="{x:Bind FolderId}" />
+
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="2"
+                    Style="{StaticResource FieldLabelTextBlockStyle}"
+                    Text="Deleted" />
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="3"
+                    Style="{StaticResource FieldValueTextBlockStyle}"
+                    Text="{x:Bind DeletedDate}" />
+            </Grid>
+
+            <Rectangle Height="1" Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
+        </StackPanel>
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="LoginCipherDetailsTemplate" x:DataType="models:LoginCipher">
+        <StackPanel Padding="20" Spacing="20">
+            <ContentPresenter Content="{x:Bind Mode=OneWay}" ContentTemplate="{StaticResource CipherHeaderTemplate}" />
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Login" />
+
+                <Border
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16">
+                    <ItemsControl>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <controls:DividedStackPanel DividerBrush="{ThemeResource CardStrokeColorDefaultBrush}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Items>
+                            <controls:CipherTextField Label="Username" Text="{x:Bind Username}" />
+                            <controls:CipherPasswordField Label="Password" Password="{x:Bind Password}" />
+                            <controls:CipherTotpField
+                                Label="TOTP"
+                                Totp="{x:Bind Totp}"
+                                Visibility="{x:Bind Totp, Converter={StaticResource EmptyObjectToVisibilityConverter}}" />
+                        </ItemsControl.Items>
+                    </ItemsControl>
+                </Border>
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Uris" />
+                <ItemsControl ItemsSource="{x:Bind Uris}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock
+                                Margin="0,0,0,8"
+                                Text="{x:Bind}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="FIDO2 credentials" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Fido2Credentials.Count}" />
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SecureNoteCipherDetailsTemplate" x:DataType="models:SecureNoteCipher">
+        <StackPanel Padding="20" Spacing="20">
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CipherHeaderTemplate}" />
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Secure note" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Contents" />
+                <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind Notes}" />
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="CardCipherDetailsTemplate" x:DataType="models:CardCipher">
+        <StackPanel Padding="20" Spacing="20">
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CipherHeaderTemplate}" />
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Card" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Cardholder name" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind CardholderName}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Brand" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Brand}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Number" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Number}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Security code" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Code}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Expiration month" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind ExpMonth}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Expiration year" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind ExpYear}" />
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="IdentityCipherDetailsTemplate" x:DataType="models:IdentityCipher">
+        <StackPanel Padding="20" Spacing="20">
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CipherHeaderTemplate}" />
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Identity" />
+
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Title" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Title}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="First name" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind FirstName}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Middle name" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind MiddleName}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Last name" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind LastName}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Company" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Company}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Email" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Email}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Phone" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Phone}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Username" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Username}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="SSN" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Ssn}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Address 1" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Address1}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Address 2" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Address2}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Address 3" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Address3}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="City" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind City}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="State" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind State}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Postal code" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind PostalCode}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Country" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Country}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Passport number" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind PassportNumber}" />
+
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="License number" />
+                        <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind LicenseNumber}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SshKeyCipherDetailsTemplate" x:DataType="models:SshKeyCipher">
+        <StackPanel Padding="20" Spacing="20">
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CipherHeaderTemplate}" />
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="SSH key" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Fingerprint" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind KeyFingerprint}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Public key" />
+                <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind PublicKey}" />
+
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Private key" />
+                <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind PrivateKey}" />
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <templates:CipherDetailsTemplateSelector
+        x:Key="CipherDetailsTemplateSelector"
+        CardTemplate="{StaticResource CardCipherDetailsTemplate}"
+        IdentityTemplate="{StaticResource IdentityCipherDetailsTemplate}"
+        LoginTemplate="{StaticResource LoginCipherDetailsTemplate}"
+        SecureNoteTemplate="{StaticResource SecureNoteCipherDetailsTemplate}"
+        SshKeyTemplate="{StaticResource SshKeyCipherDetailsTemplate}" />
+
+</ResourceDictionary>
