@@ -9,7 +9,7 @@ namespace BitwardenApi.Cryptography;
 
 public static class CryptographyService
 {
-    private const int MaxStackPlaintextByteCount = 512;
+    private const int MaxStackByteCount = 512;
 
     public static string HashMasterPassword(
         ReadOnlySpan<char> email,
@@ -54,15 +54,15 @@ public static class CryptographyService
         StretchMasterKey(masterPassword, salt, kdfConfig, stretchedMasterKey);
 
         ReadOnlySpan<char> encryptedValue = encryptedUserKey.Value;
-        int length = encryptedValue.Length;
-        bool useStackAlloc = length <= MaxStackPlaintextByteCount;
+        int encodedLength = encryptedValue.Length;
+        bool useStackAlloc = encodedLength <= MaxStackByteCount;
 
         using var bufferOwner = useStackAlloc
             ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(length);
+            : SpanOwner<byte>.Allocate(encodedLength);
 
         Span<byte> buffer = useStackAlloc
-            ? stackalloc byte[length]
+            ? stackalloc byte[encodedLength]
             : bufferOwner.Span;
 
         var status = Ascii.FromUtf16(encryptedValue, buffer, out int bytesWritten);
@@ -98,10 +98,80 @@ public static class CryptographyService
         }
     }
 
-    public static string DecryptString(in EncStringParts encString, ReadOnlySpan<byte> key)
+    public static string DecryptString(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+            throw new JsonException("Expected a JSON string.");
+
+        int length = reader.HasValueSequence
+            ? checked((int)reader.ValueSequence.Length)
+            : reader.ValueSpan.Length;
+        bool useStackAlloc = length <= MaxStackByteCount;
+
+        using var bufferOwner = useStackAlloc
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(length);
+
+        Span<byte> buffer = useStackAlloc
+            ? stackalloc byte[length]
+            : bufferOwner.Span;
+
+        int bytesWritten = reader.CopyString(buffer);
+        var encString = EncString.Parse(buffer[..bytesWritten]);
+        return DecryptString(encString, key);
+    }
+
+    public static int DecryptStringTo(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key, scoped Span<byte> destination)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+            throw new JsonException("Expected a JSON string.");
+
+        int length = reader.HasValueSequence
+            ? checked((int)reader.ValueSequence.Length)
+            : reader.ValueSpan.Length;
+        bool useStackAlloc = length <= MaxStackByteCount;
+
+        using var bufferOwner = useStackAlloc
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(length);
+
+        Span<byte> buffer = useStackAlloc
+            ? stackalloc byte[length]
+            : bufferOwner.Span;
+
+        int bytesWritten = reader.CopyString(buffer);
+        var encString = EncString.Parse(buffer[..bytesWritten]);
+
+        return AesCbcHmac.DecryptTo(encString, key, destination);
+    }
+
+    public static string DecryptString(ReadOnlySpan<char> encryptedValue, ReadOnlySpan<byte> key)
+    {
+        int charCount = encryptedValue.Length;
+        bool useStackAlloc = charCount <= MaxStackByteCount;
+
+        using var bufferOwner = useStackAlloc
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(charCount);
+
+        Span<byte> buffer = useStackAlloc
+            ? stackalloc byte[charCount]
+            : bufferOwner.Span;
+
+        var status = Ascii.FromUtf16(encryptedValue, buffer, out int bytesWritten);
+        if (status != OperationStatus.Done)
+        {
+            throw new FormatException("EncString contains non-ASCII characters.");
+        }
+
+        var encString = EncString.Parse(buffer[..bytesWritten]);
+        return DecryptString(encString, key);
+    }
+
+    private static string DecryptString(in EncStringParts encString, ReadOnlySpan<byte> key)
     {
         int maxPlaintextLength = encString.Data.Length;
-        bool useStack = maxPlaintextLength <= MaxStackPlaintextByteCount;
+        bool useStack = maxPlaintextLength <= MaxStackByteCount;
 
         using var plaintextOwner = useStack
             ? SpanOwner<byte>.Empty

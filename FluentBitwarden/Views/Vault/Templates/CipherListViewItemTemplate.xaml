@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="VaultCipherItemSelectedBrush" Color="#FF3774E3" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedPointerOverBrush" Color="#FF3F7CEC" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedPressedBrush" Color="#FF2F68CF" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedForegroundBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedBorderBrush" Color="#FF3774E3" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="VaultCipherItemSelectedBrush" Color="#FF3774E3" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedPointerOverBrush" Color="#FF3F7CEC" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedPressedBrush" Color="#FF2F68CF" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedForegroundBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="VaultCipherItemSelectedBorderBrush" Color="#FF3774E3" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <Style x:Key="VaultCipherListViewItemStyle" TargetType="ListViewItem">
+        <Setter Property="UseSystemFocusVisuals" Value="False" />
+        <Setter Property="IsTabStop" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="MinHeight" Value="60" />
+        <Setter Property="Margin" Value="4,2" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <ListViewItemPresenter
+                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                        Background="Transparent"
+                        CheckHintBrush="Transparent"
+                        Content="{TemplateBinding Content}"
+                        ContentMargin="{TemplateBinding Padding}"
+                        ContentTemplate="{TemplateBinding ContentTemplate}"
+                        ContentTransitions="{TemplateBinding ContentTransitions}"
+                        CornerRadius="6"
+                        FocusBorderBrush="Transparent"
+                        FocusSecondaryBorderBrush="Transparent"
+                        PointerOverBackground="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        PressedBackground="{ThemeResource SubtleFillColorTertiaryBrush}"
+                        ReorderHintOffset="0"
+                        SelectedBackground="{ThemeResource VaultCipherItemSelectedBrush}"
+                        SelectedBorderBrush="{ThemeResource VaultCipherItemSelectedBorderBrush}"
+                        SelectedBorderThickness="0"
+                        SelectedForeground="{ThemeResource VaultCipherItemSelectedForegroundBrush}"
+                        SelectedInnerBorderBrush="{ThemeResource VaultCipherItemSelectedBorderBrush}"
+                        SelectedPointerOverBackground="{ThemeResource VaultCipherItemSelectedPointerOverBrush}"
+                        SelectedPressedBackground="{ThemeResource VaultCipherItemSelectedPressedBrush}"
+                        SelectedPressedBorderBrush="{ThemeResource VaultCipherItemSelectedBorderBrush}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

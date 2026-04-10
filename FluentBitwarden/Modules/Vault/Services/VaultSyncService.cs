@@ -63,7 +63,7 @@ internal sealed class VaultSyncService(
             if (!await HasRemoteChangesAsync(unitOfWork, currentUser))
                 return VaultSyncResult.NoChanges;
 
-            await using var syncPayload = await vaultApiClient.GetSyncAsync(sessionAccessor.CurrentContext.Environment);
+            await using var syncPayload = await vaultApiClient.GetSyncAsync();
 
             var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUser);
             await syncPayload.ParseAsync(repository);
@@ -84,8 +84,7 @@ internal sealed class VaultSyncService(
     {
         var lastSync = unitOfWork.AccountRepository.GetLastSyncTime(currentUser);
 
-        var revisionDate = await vaultApiClient.GetRevisionDateAsync(
-            sessionAccessor.CurrentContext.Environment);
+        var revisionDate = await vaultApiClient.GetRevisionDateAsync();
 
         return lastSync < revisionDate;
     }

@@ -8,7 +8,7 @@ public sealed partial class CipherPasswordField : CipherFieldControlBase
 {
     private const string MaskPassword = "●●●●●●●●●●";
 
-    private bool _isRevealed = false;
+    private bool _isRevealed;
 
     public CipherPasswordField()
     {
@@ -33,7 +33,7 @@ public sealed partial class CipherPasswordField : CipherFieldControlBase
         {
             _isRevealed = !_isRevealed;
             DisplayText = _isRevealed
-                ? Password
+                ? Password ?? string.Empty
                 : MaskPassword;
         };
 

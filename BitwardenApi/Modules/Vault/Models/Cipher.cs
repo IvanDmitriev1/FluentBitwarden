@@ -22,7 +22,7 @@ public sealed class LoginCipher : Cipher
 {
     public string? Username { get; set; }
     public string? Password { get; set; }
-    public string? Totp { get; set; }
+    public TotpValue? Totp { get; set; }
     public List<string> Uris { get; set; } = [];
     public List<Fido2Credential> Fido2Credentials { get; set; } = [];
 }

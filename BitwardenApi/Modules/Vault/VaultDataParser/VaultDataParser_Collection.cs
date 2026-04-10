@@ -12,7 +12,7 @@ public static partial class VaultDataParser
         return new VaultCollection
         {
             Id = dto.Id,
-            Name = DecryptField(dto.EncryptedName, decryptedUserKey.Key),
+            Name = CryptographyService.DecryptString(dto.EncryptedName, decryptedUserKey.Key),
             HidePasswords = dto.HidePasswords,
             ReadOnly = dto.ReadOnly,
             Manage = dto.Manage

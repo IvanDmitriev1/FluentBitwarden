@@ -12,7 +12,7 @@ public static partial class VaultDataParser
         return new Folder
         {
             Id = dto.Id,
-            Name = DecryptField(dto.EncryptedName, decryptedUserKey.Key),
+            Name = CryptographyService.DecryptString(dto.EncryptedName, decryptedUserKey.Key),
             RevisionDate = dto.RevisionDate
         };
     }

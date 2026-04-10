@@ -1,6 +1,7 @@
-﻿using BitwardenApi.Modules.Notifications.Abstractions;
+using BitwardenApi.Modules.Notifications.Abstractions;
 using BitwardenApi.Modules.Notifications.Internal;
 using BitwardenApi.Modules.Notifications.Models;
+using BitwardenApi.Shared.Context;
 using BitwardenApi.Shared.Serialization;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,12 +10,12 @@ namespace BitwardenApi.Modules.Notifications.Services;
 
 internal sealed class NotificationsClient(
     ISignalRAccessTokenProvider accessTokenProvider,
-    INotificationDispatcher notificationDispatcher) : INotificationsClient
+    INotificationDispatcher notificationDispatcher,
+    IBitwardenEnvironmentAccessor environmentAccessor) : INotificationsClient
 {
     private HubConnection? _connection;
 
     public async Task ConnectAsync(
-        BitwardenEnvironment environment,
         CancellationToken cancellationToken = default)
     {
         if (_connection?.State is HubConnectionState.Connected
@@ -24,6 +25,7 @@ internal sealed class NotificationsClient(
             return;
         }
 
+        BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestedHubEndpoint = new(environment.NotificationsBase, "/hub");
         _connection = CreateConnection(requestedHubEndpoint);
 
@@ -68,7 +70,7 @@ internal sealed class NotificationsClient(
             .WithAutomaticReconnect()
             .Build();
 
-        connection.On<NotificationEnvelope>("ReceiveMessage", (payload) => notificationDispatcher.DispatchAsync(payload, CancellationToken.None));
+        connection.On<NotificationEnvelope>("ReceiveMessage", payload => notificationDispatcher.DispatchAsync(payload, CancellationToken.None));
 
         return connection;
     }

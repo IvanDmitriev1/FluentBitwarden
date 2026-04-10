@@ -1,4 +1,5 @@
-﻿using BitwardenApi.Modules.Notifications.Abstractions;
+using BitwardenApi.Modules.Notifications.Abstractions;
+using BitwardenApi.Shared.Context;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
 using FluentBitwarden.Modules.Session.Services.Authentication;
@@ -19,6 +20,7 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<CurrentSessionAccessor>();
         services.AddSingleton<ICurrentSessionAccessor>(static sp => sp.GetRequiredService<CurrentSessionAccessor>());
+        services.AddSingleton<IBitwardenEnvironmentAccessor>(static sp => sp.GetRequiredService<ICurrentSessionAccessor>());
 
         if (PackageHelper.IsPackaged)
             services.AddSingleton<ISessionTokensStore, PasswordVaultSessionTokensStore>();

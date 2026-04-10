@@ -1,14 +1,12 @@
 using BitwardenApi.Cryptography;
-using BitwardenApi.Cryptography.Enc;
-using CommunityToolkit.HighPerformance.Buffers;
-using System.Buffers;
-using System.Text;
+using BitwardenApi.Modules.Vault.Models;
 
 namespace BitwardenApi.Modules.Vault.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    private const int MaxStackEncStringByteCount = 512;
+    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, scoped ReadOnlySpan<byte> key) where T : Cipher;
+    private delegate T JsonArrayItemReader<out T>(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key);
 
     private static Utf8JsonReader CreateObjectReader(ReadOnlySpan<byte> payload)
     {
@@ -19,6 +17,27 @@ public static partial class VaultDataParser
         }
 
         return reader;
+    }
+
+    private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key,
+        CipherPropertyReader<T> readProperty) where T : Cipher
+    {
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+                break;
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                continue;
+
+            if (TryReadCommonCipherProperty(ref reader, cipher, key))
+                continue;
+
+            if (!readProperty.Invoke(ref reader, cipher, key))
+                SkipValue(ref reader);
+        }
+
+        return cipher;
     }
 
     private static void SkipValue(ref Utf8JsonReader reader)
@@ -36,45 +55,31 @@ public static partial class VaultDataParser
         if (reader.TokenType == JsonTokenType.Null)
             return null;
 
-        int length = reader.HasValueSequence
-            ? checked((int)reader.ValueSequence.Length)
-            : reader.ValueSpan.Length;
-        bool useStackAlloc = length <= MaxStackEncStringByteCount;
-
-        using var bufferOwner = useStackAlloc
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(length);
-
-        Span<byte> buffer = useStackAlloc
-            ? stackalloc byte[length]
-            : bufferOwner.Span;
-
-        int bytesWritten = reader.CopyString(buffer);
-        var parts = EncString.Parse(buffer[..bytesWritten]);
-
-        return CryptographyService.DecryptString(parts, key);
+        return CryptographyService.DecryptString(ref reader, key);
     }
 
-    private static string DecryptField(ReadOnlySpan<char> encryptedValue, scoped ReadOnlySpan<byte> key)
+    private static List<T> ReadJsonArray<T>(
+        ref Utf8JsonReader reader,
+        scoped ReadOnlySpan<byte> key,
+        JsonArrayItemReader<T> readItem)
     {
-        int length = encryptedValue.Length;
-        bool useStackAlloc = length <= MaxStackEncStringByteCount;
+        reader.Read();
 
-        using var bufferOwner = useStackAlloc
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(length);
-
-        Span<byte> buffer = useStackAlloc
-            ? stackalloc byte[length]
-            : bufferOwner.Span;
-
-        var status = Ascii.FromUtf16(encryptedValue, buffer, out int bytesWritten);
-        if (status != OperationStatus.Done)
+        if (reader.TokenType != JsonTokenType.StartArray)
         {
-            throw new FormatException("EncString contains non-ASCII characters.");
+            throw new JsonException("Expected a JSON array");
         }
 
-        var parts = EncString.Parse(buffer[..bytesWritten]);
-        return CryptographyService.DecryptString(parts, key);
+        var items = new List<T>();
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndArray)
+                break;
+
+            items.Add(readItem(ref reader, key));
+        }
+
+        return items;
     }
 }

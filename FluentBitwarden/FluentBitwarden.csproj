@@ -22,6 +22,10 @@
 		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <None Remove="Resources\UserControls\CipherDetailsHeader.xaml" />
+	</ItemGroup>
+
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -70,7 +74,6 @@
 	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
 	<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
-	<PackageReference Include="Otp.NET" Version="1.4.1" />
 	<PackageReference Include="StronglyTypedId" Version="1.0.0-beta08" PrivateAssets="all" ExcludeAssets="runtime" />
 	<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
 	<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
@@ -93,6 +96,16 @@
 	<TrimmerRootAssembly Include="Microsoft.WinUI" />
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
+</ItemGroup>
+<ItemGroup>
+  <Page Update="Resources\UserControls\CipherDetailsHeader.xaml">
+    <Generator>MSBuild:Compile</Generator>
+  </Page>
+</ItemGroup>
+<ItemGroup>
+  <Page Update="Resources\UserControls\CipherListItem.xaml">
+    <Generator>MSBuild:Compile</Generator>
+  </Page>
 </ItemGroup>
 
 </Project>

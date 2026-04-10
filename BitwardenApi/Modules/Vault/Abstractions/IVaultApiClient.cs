@@ -6,21 +6,17 @@ namespace BitwardenApi.Modules.Vault.Abstractions;
 
 public interface IVaultApiClient
 {
-     Task<DateTimeOffset> GetRevisionDateAsync(
-         BitwardenEnvironment environment,
-         CancellationToken cancellationToken = default);
+    Task<DateTimeOffset> GetRevisionDateAsync(
+        CancellationToken cancellationToken = default);
 
     Task<SyncPayload> GetSyncAsync(
-        BitwardenEnvironment environment,
         CancellationToken cancellationToken = default);
 
     Task<ApiStreamResponse> GetCipherAsync(
-        BitwardenEnvironment environment,
         CipherId cipherId,
         CancellationToken cancellationToken = default);
 
     Task DeleteCipherAsync(
-        BitwardenEnvironment environment,
         CipherId cipherId,
         CancellationToken cancellationToken = default);
 }

@@ -7,14 +7,16 @@
     xmlns:lifecycle="using:FluentBitwarden.Shared.Behaviors.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
+    xmlns:models1="using:BitwardenApi.Modules.Vault.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
+    xmlns:userControls="using:FluentBitwarden.Resources.UserControls"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
     <lifecycle:LifecyclePage.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <templates:CipherListViewItemTemplates />
+                <ResourceDictionary Source="ms-appx:///Views/Vault/Templates/CipherListViewItemTemplate.xaml" />
                 <templates:CipherDetailTemplates />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
@@ -52,22 +54,34 @@
                     Grid.Row="1"
                     IsItemClickEnabled="False"
                     ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
-                    ItemTemplateSelector="{StaticResource CipherListTemplateSelector}"
                     ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
                     SelectionMode="Single"
                     SingleSelectionFollowsFocus="True"
-                    TabFocusNavigation="Once" />
+                    TabFocusNavigation="Once">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models1:Cipher">
+                            <userControls:CipherListItem Cipher="{x:Bind}" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
             </Grid>
 
-
+            <!--  Right pane  -->
             <ScrollViewer
                 Grid.Column="1"
                 HorizontalScrollBarVisibility="Disabled"
                 VerticalScrollBarVisibility="Auto"
                 Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
 
-                <ContentControl Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" ContentTemplateSelector="{StaticResource CipherDetailsTemplateSelector}" />
+                <StackPanel Padding="20" Spacing="20">
+                    <userControls:CipherDetailsHeader Cipher="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" />
+
+                    <ContentControl
+                        HorizontalContentAlignment="Stretch"
+                        Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
+                        ContentTemplateSelector="{StaticResource CipherDetailsTemplateSelector}" />
+                </StackPanel>
             </ScrollViewer>
         </Grid>
     </Grid>

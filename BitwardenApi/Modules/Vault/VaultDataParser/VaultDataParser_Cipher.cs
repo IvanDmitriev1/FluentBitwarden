@@ -35,178 +35,113 @@ public static partial class VaultDataParser
         };
     }
 
-    private static LoginCipher ParseLoginCipher(LoginCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-    {
-        while (reader.Read())
-        {
-            if (reader.TokenType == JsonTokenType.EndObject)
+    private static LoginCipher ParseLoginCipher(LoginCipher cipher, ref Utf8JsonReader reader,
+        scoped ReadOnlySpan<byte> key)
+        => ParseCipherObject(cipher, ref reader, key,
+            static (ref r, c, scoped k) =>
             {
-                break;
-            }
+                if (r.ValueTextEquals("username"u8) || r.ValueTextEquals("Username"u8))
+                    c.Username = ReadRequiredDecryptField(ref r, k, "Username");
+                else if (r.ValueTextEquals("password"u8) || r.ValueTextEquals("Password"u8))
+                    c.Password = ReadRequiredDecryptField(ref r, k, "Password");
+                else if (r.ValueTextEquals("totp"u8) || r.ValueTextEquals("Totp"u8))
+                    c.Totp = ReadTotpCredential(ref r, k);
+                else if (r.ValueTextEquals("uris"u8) || r.ValueTextEquals("Uris"u8))
+                    c.Uris = ReadJsonArray(ref r, k, ReadUri);
+                else if (r.ValueTextEquals("fido2Credentials"u8) || r.ValueTextEquals("Fido2Credentials"u8))
+                    c.Fido2Credentials = ReadJsonArray(ref r, k, ReadFido2Credential);
+                else
+                    return false;
 
-            if (reader.TokenType != JsonTokenType.PropertyName)
-            {
-                continue;
-            }
+                return true;
+            });
 
-            if (TryReadCommonCipherProperty(ref reader, cipher, key))
-            {
-                continue;
-            }
-
-            if (reader.ValueTextEquals("username"u8) || reader.ValueTextEquals("Username"u8))
-                cipher.Username = ReadRequiredDecryptField(ref reader, key, "Username");
-            else if (reader.ValueTextEquals("password"u8) || reader.ValueTextEquals("Password"u8))
-                cipher.Password = ReadRequiredDecryptField(ref reader, key, "Password");
-            else if (reader.ValueTextEquals("totp"u8) || reader.ValueTextEquals("Totp"u8))
-                cipher.Totp = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("uris"u8) || reader.ValueTextEquals("Uris"u8))
-                cipher.Uris = ReadUris(ref reader, key);
-            else if (reader.ValueTextEquals("fido2Credentials"u8) || reader.ValueTextEquals("Fido2Credentials"u8))
-                cipher.Fido2Credentials = ReadFido2Credentials(ref reader, key);
-            else
-                SkipValue(ref reader);
-        }
-
-        return cipher;
-    }
 
     private static SecureNoteCipher ParseSecureNoteCipher(SecureNoteCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-    {
-        while (reader.Read())
-        {
-            if (reader.TokenType == JsonTokenType.EndObject)
-            {
-                break;
-            }
-
-            if (reader.TokenType != JsonTokenType.PropertyName)
-            {
-                continue;
-            }
-
-            if (TryReadCommonCipherProperty(ref reader, cipher, key))
-            {
-                continue;
-            }
-
-            SkipValue(ref reader);
-        }
-
-        return cipher;
-    }
+        => ParseCipherObject(cipher, ref reader, key, static (ref _, _, scoped _) => false);
 
     private static CardCipher ParseCardCipher(CardCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-    {
-        while (reader.Read())
+        => ParseCipherObject(cipher, ref reader, key, static (ref r, c, scoped k) =>
         {
-            if (reader.TokenType == JsonTokenType.EndObject)
-                break;
-
-            if (reader.TokenType != JsonTokenType.PropertyName)
-                continue;
-
-            if (TryReadCommonCipherProperty(ref reader, cipher, key))
-                continue;
-
-            if (reader.ValueTextEquals("cardholderName"u8) || reader.ValueTextEquals("CardholderName"u8))
-                cipher.CardholderName = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("brand"u8) || reader.ValueTextEquals("Brand"u8))
-                cipher.Brand = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("number"u8) || reader.ValueTextEquals("Number"u8))
-                cipher.Number = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("expMonth"u8) || reader.ValueTextEquals("ExpMonth"u8))
-                cipher.ExpMonth = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("expYear"u8) || reader.ValueTextEquals("ExpYear"u8))
-                cipher.ExpYear = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("code"u8) || reader.ValueTextEquals("Code"u8))
-                cipher.Code = ReadDecryptField(ref reader, key);
+            if (r.ValueTextEquals("cardholderName"u8) || r.ValueTextEquals("CardholderName"u8))
+                c.CardholderName = ReadDecryptField(ref r, k);
+            else if (r.ValueTextEquals("brand"u8) || r.ValueTextEquals("Brand"u8))
+                c.Brand = ReadDecryptField(ref r, k);
+            else if (r.ValueTextEquals("number"u8) || r.ValueTextEquals("Number"u8))
+                c.Number = ReadDecryptField(ref r, k);
+            else if (r.ValueTextEquals("expMonth"u8) || r.ValueTextEquals("ExpMonth"u8))
+                c.ExpMonth = ReadDecryptField(ref r, k);
+            else if (r.ValueTextEquals("expYear"u8) || r.ValueTextEquals("ExpYear"u8))
+                c.ExpYear = ReadDecryptField(ref r, k);
+            else if (r.ValueTextEquals("code"u8) || r.ValueTextEquals("Code"u8))
+                c.Code = ReadDecryptField(ref r, k);
             else
-                SkipValue(ref reader);
-        }
+                return false;
 
-        return cipher;
-    }
+            return true;
+        });
 
-    private static IdentityCipher ParseIdentityCipher(IdentityCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-    {
-        while (reader.Read())
-        {
-            if (reader.TokenType == JsonTokenType.EndObject)
-                break;
+    private static IdentityCipher ParseIdentityCipher(IdentityCipher cipher, ref Utf8JsonReader reader,
+        scoped ReadOnlySpan<byte> key)
+        => ParseCipherObject(cipher, ref reader, key,
+            static (ref r, c, scoped k) =>
+            {
+                if (r.ValueTextEquals("title"u8) || r.ValueTextEquals("Title"u8))
+                    c.Title = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("firstName"u8) || r.ValueTextEquals("FirstName"u8))
+                    c.FirstName = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("middleName"u8) || r.ValueTextEquals("MiddleName"u8))
+                    c.MiddleName = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("lastName"u8) || r.ValueTextEquals("LastName"u8))
+                    c.LastName = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("address1"u8) || r.ValueTextEquals("Address1"u8))
+                    c.Address1 = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("address2"u8) || r.ValueTextEquals("Address2"u8))
+                    c.Address2 = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("address3"u8) || r.ValueTextEquals("Address3"u8))
+                    c.Address3 = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("city"u8) || r.ValueTextEquals("City"u8))
+                    c.City = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("state"u8) || r.ValueTextEquals("State"u8))
+                    c.State = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("postalCode"u8) || r.ValueTextEquals("PostalCode"u8))
+                    c.PostalCode = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("country"u8) || r.ValueTextEquals("Country"u8))
+                    c.Country = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("company"u8) || r.ValueTextEquals("Company"u8))
+                    c.Company = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("email"u8) || r.ValueTextEquals("Email"u8))
+                    c.Email = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("phone"u8) || r.ValueTextEquals("Phone"u8))
+                    c.Phone = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("ssn"u8) || r.ValueTextEquals("Ssn"u8))
+                    c.Ssn = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("username"u8) || r.ValueTextEquals("Username"u8))
+                    c.Username = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("passportNumber"u8) || r.ValueTextEquals("PassportNumber"u8))
+                    c.PassportNumber = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("licenseNumber"u8) || r.ValueTextEquals("LicenseNumber"u8))
+                    c.LicenseNumber = ReadDecryptField(ref r, k);
+                else
+                    return false;
+                return true;
+            });
 
-            if (reader.TokenType != JsonTokenType.PropertyName)
-                continue;
-
-            if (TryReadCommonCipherProperty(ref reader, cipher, key))
-                continue;
-
-            if (reader.ValueTextEquals("title"u8) || reader.ValueTextEquals("Title"u8))
-                cipher.Title = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("firstName"u8) || reader.ValueTextEquals("FirstName"u8))
-                cipher.FirstName = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("middleName"u8) || reader.ValueTextEquals("MiddleName"u8))
-                cipher.MiddleName = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("lastName"u8) || reader.ValueTextEquals("LastName"u8))
-                cipher.LastName = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("address1"u8) || reader.ValueTextEquals("Address1"u8))
-                cipher.Address1 = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("address2"u8) || reader.ValueTextEquals("Address2"u8))
-                cipher.Address2 = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("address3"u8) || reader.ValueTextEquals("Address3"u8))
-                cipher.Address3 = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("city"u8) || reader.ValueTextEquals("City"u8))
-                cipher.City = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("state"u8) || reader.ValueTextEquals("State"u8))
-                cipher.State = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("postalCode"u8) || reader.ValueTextEquals("PostalCode"u8))
-                cipher.PostalCode = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("country"u8) || reader.ValueTextEquals("Country"u8))
-                cipher.Country = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("company"u8) || reader.ValueTextEquals("Company"u8))
-                cipher.Company = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("email"u8) || reader.ValueTextEquals("Email"u8))
-                cipher.Email = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("phone"u8) || reader.ValueTextEquals("Phone"u8))
-                cipher.Phone = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("ssn"u8) || reader.ValueTextEquals("Ssn"u8))
-                cipher.Ssn = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("username"u8) || reader.ValueTextEquals("Username"u8))
-                cipher.Username = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("passportNumber"u8) || reader.ValueTextEquals("PassportNumber"u8))
-                cipher.PassportNumber = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("licenseNumber"u8) || reader.ValueTextEquals("LicenseNumber"u8))
-                cipher.LicenseNumber = ReadDecryptField(ref reader, key);
-            else SkipValue(ref reader);
-        }
-
-        return cipher;
-    }
-
-    private static SshKeyCipher ParseSshKeyCipher(SshKeyCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-    {
-        while (reader.Read())
-        {
-            if (reader.TokenType == JsonTokenType.EndObject)
-                break;
-
-            if (reader.TokenType != JsonTokenType.PropertyName)
-                continue;
-
-            if (TryReadCommonCipherProperty(ref reader, cipher, key))
-                continue;
-
-            if (reader.ValueTextEquals("privateKey"u8) || reader.ValueTextEquals("PrivateKey"u8))
-                cipher.PrivateKey = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("publicKey"u8) || reader.ValueTextEquals("PublicKey"u8))
-                cipher.PublicKey = ReadDecryptField(ref reader, key);
-            else if (reader.ValueTextEquals("keyFingerprint"u8) || reader.ValueTextEquals("KeyFingerprint"u8))
-                cipher.KeyFingerprint = ReadDecryptField(ref reader, key);
-            else SkipValue(ref reader);
-        }
-
-        return cipher;
-    }
+    private static SshKeyCipher ParseSshKeyCipher(SshKeyCipher cipher, ref Utf8JsonReader reader,
+        scoped ReadOnlySpan<byte> key)
+        => ParseCipherObject(cipher, ref reader, key,
+            static (ref r, c, scoped k) =>
+            {
+                if (r.ValueTextEquals("privateKey"u8) || r.ValueTextEquals("PrivateKey"u8))
+                    c.PrivateKey = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("publicKey"u8) || r.ValueTextEquals("PublicKey"u8))
+                    c.PublicKey = ReadDecryptField(ref r, k);
+                else if (r.ValueTextEquals("keyFingerprint"u8) || r.ValueTextEquals("KeyFingerprint"u8))
+                    c.KeyFingerprint = ReadDecryptField(ref r, k);
+                else
+                    return false;
+                return true;
+            });
 
     private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, Cipher cipher, scoped ReadOnlySpan<byte> key)
     {
@@ -285,77 +220,36 @@ public static partial class VaultDataParser
         _ => throw new ArgumentOutOfRangeException()
     };
 
-    private static List<string> ReadUris(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    private static string ReadUri(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
     {
-        reader.Read();
-        if (reader.TokenType != JsonTokenType.StartArray)
-            return [];
+        if (reader.TokenType != JsonTokenType.StartObject)
+            return string.Empty;
 
-        var uris = new List<string>();
+        string? uri = null;
 
         while (reader.Read())
         {
-            if (reader.TokenType == JsonTokenType.EndArray)
+            if (reader.TokenType == JsonTokenType.EndObject)
                 break;
 
-            if (reader.TokenType != JsonTokenType.StartObject)
+            if (reader.TokenType != JsonTokenType.PropertyName)
                 continue;
 
-            string? uri = null;
-
-            while (reader.Read())
-            {
-                if (reader.TokenType == JsonTokenType.EndObject)
-                    break;
-
-                if (reader.TokenType != JsonTokenType.PropertyName)
-                    continue;
-
-                if (reader.ValueTextEquals("uri"u8) || reader.ValueTextEquals("Uri"u8))
-                {
-                    uri = ReadDecryptField(ref reader, key);
-                }
-                else
-                {
-                    SkipValue(ref reader);
-                }
-            }
-
-            ArgumentNullException.ThrowIfNull(uri);
-            uris.Add(uri);
+            if (reader.ValueTextEquals("uri"u8) || reader.ValueTextEquals("Uri"u8))
+                uri = ReadDecryptField(ref reader, key);
+            else
+                SkipValue(ref reader);
         }
 
-        return uris;
-    }
-
-    private static List<Fido2Credential> ReadFido2Credentials(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-    {
-        reader.Read();
-        if (reader.TokenType != JsonTokenType.StartArray)
-        {
-            throw new JsonException("Fido2Credentials must be a JSON array.");
-        }
-
-        var credentials = new List<Fido2Credential>();
-
-        while (reader.Read())
-        {
-            if (reader.TokenType == JsonTokenType.EndArray)
-                break;
-
-            if (reader.TokenType != JsonTokenType.StartObject)
-            {
-                throw new JsonException("Each Fido2Credentials item must be a JSON object.");
-            }
-
-            credentials.Add(ReadFido2Credential(ref reader, key));
-        }
-
-        return credentials;
+        ArgumentNullException.ThrowIfNull(uri);
+        return uri;
     }
 
     private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
     {
+        if (reader.TokenType != JsonTokenType.StartObject)
+            throw new JsonException("Each Fido2Credentials item must be a JSON object.");
+
         string? credentialId = null;
         Fido2CredentialKeyType? keyType = null;
         Fido2CredentialKeyAlgorithm? keyAlgorithm = null;
@@ -424,5 +318,20 @@ public static partial class VaultDataParser
             Discoverable = discoverable!.Value,
             CreationDate = creationDate!.Value
         };
+    }
+
+    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    {
+        reader.Read();
+
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+
+        Span<byte> decodedSpan = stackalloc byte[reader.ValueSpan.Length];
+        int bytesWritten = CryptographyService.DecryptStringTo(ref reader, key, decodedSpan);
+        Span<byte> decodedValue = decodedSpan[..bytesWritten];
+
+        TotpValue.TryParse(decodedValue, out var totpValue);
+        return totpValue;
     }
 }

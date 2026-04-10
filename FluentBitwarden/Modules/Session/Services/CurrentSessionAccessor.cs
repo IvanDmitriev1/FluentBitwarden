@@ -12,6 +12,8 @@ namespace FluentBitwarden.Modules.Session.Services
     {
         public bool IsAuthenticated { get; private set; }
 
+        public BitwardenEnvironment CurrentEnvironment => CurrentContext.Environment;
+
         public BitwardenClientContext CurrentContext
         {
             get => field == default

@@ -1,22 +1,18 @@
-﻿using FluentBitwarden.Shared.Totp;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using OtpNet;
-using System.Diagnostics;
-using CommunityToolkit.WinUI;
+﻿using Microsoft.UI.Xaml.Controls.Primitives;
+using BitwardenApi.Modules.Vault.Models;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Resources.Controls;
 
 [TemplatePart(Name = PartCountdownRing, Type = typeof(CountdownRing))]
-[DependencyProperty<string>("Totp", DefaultBindingMode = DefaultBindingMode.OneTime)]
-[DependencyProperty<string>("DisplayCode", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneWay)]
+[DependencyProperty<TotpValue>("Totp")]
+[DependencyProperty<string>("DisplayCode", DefaultValue = "")]
 public sealed partial class CipherTotpField : CipherFieldControlBase
 {
     private const string PartCountdownRing = "PART_CountdownRing";
 
     private CountdownRing? _countdownRing;
-    private Totp? _totp;
     private DispatcherQueueTimer? _timer;
     private long _visibilityRegistrationToken;
 
@@ -40,10 +36,10 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
 
     protected override void OnPrimaryAction()
     {
-        if (_totp is null)
+        if (Totp is null)
             return;
 
-        var code = _totp.ComputeTotp();
+        var code = Totp.ComputeTotp();
         CopyTextToClipboard(code);
     }
 
@@ -80,17 +76,9 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
         _countdownRing = GetTemplateChild("PART_CountdownRing") as CountdownRing;
     }
 
-    partial void OnTotpChanged(string? newValue)
-    {
-        if (string.IsNullOrWhiteSpace(newValue))
-            return;
-
-        _totp = CreateTopt(newValue);
-    }
-
     private void UpdateTotpDisplay()
     {
-        if (_countdownRing is null || _totp is null)
+        if (_countdownRing is null || Totp is null)
         {
             DisplayCode = string.Empty;
             _countdownRing?.Value = 0;
@@ -98,11 +86,11 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
             return;
         }
 
-        var utcNow = DateTime.UtcNow;
-        DisplayCode = FormatCode(_totp.ComputeTotp(utcNow));
+        DisplayCode = FormatCode(Totp.ComputeTotp());
 
-        int remainingSeconds = GetRemainingSeconds(utcNow, _totp.Step);
-        _countdownRing.Maximum = _totp.Step;
+        var utcNow = DateTime.UtcNow;
+        int remainingSeconds = GetRemainingSeconds(utcNow, Totp.Step);
+        _countdownRing.Maximum = Totp.Step;
         _countdownRing.Value = remainingSeconds;
     }
 
@@ -116,28 +104,6 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
         {
             _timer?.Start();
         }
-    }
-
-    private static Totp CreateTopt(string value)
-    {
-        if (OtpAuthUriParser.TryParse(value, out var otpAuth))
-        {
-            Debug.Assert(otpAuth.Type == OtpType.Totp);
-
-            var secretBytes = Base32Encoding.ToBytes(otpAuth.Secret);
-
-            return new Totp(
-                secretBytes,
-                step: otpAuth.PeriodSeconds,
-                mode: otpAuth.Algorithm,
-                totpSize: otpAuth.Digits);
-        }
-
-        return new Totp(
-            Base32Encoding.ToBytes(value),
-            step: 30,
-            mode: OtpHashMode.Sha1,
-            totpSize: 6);
     }
 
     private static int GetRemainingSeconds(DateTime utcNow, int periodSeconds)

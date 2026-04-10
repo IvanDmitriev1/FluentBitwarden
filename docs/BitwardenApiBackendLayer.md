@@ -72,6 +72,7 @@ Shared namespaces remain:
 - Shared context:
   - `BitwardenApi.Shared.Context.BitwardenClientContext`
   - `BitwardenApi.Shared.Context.BitwardenEnvironment`
+  - `BitwardenApi.Shared.Context.IBitwardenEnvironmentAccessor`
   - `BitwardenApi.Shared.Context.DeviceInfo`
 - `BitwardenApi.Modules.Identity.Abstractions.IIdentityApiClient`
 - `BitwardenApi.Modules.Identity.Services.IdentityApiClient`
@@ -91,7 +92,9 @@ DI entrypoint:
 
 ## Request DTO style
 
-All service methods use request DTOs that include `BitwardenApi.Shared.Context.BitwardenClientContext`.
+Login and setup-oriented service methods use request DTOs that include `BitwardenApi.Shared.Context.BitwardenClientContext`.
+
+Authenticated vault and notification operations resolve `BitwardenEnvironment` through `BitwardenApi.Shared.Context.IBitwardenEnvironmentAccessor`.
 
 The `Identity` module is grouped into:
 

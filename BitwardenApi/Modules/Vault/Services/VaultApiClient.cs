@@ -1,6 +1,7 @@
 using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
 using BitwardenApi.Modules.Vault.SyncParser;
+using BitwardenApi.Shared.Context;
 using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
 using System.Net.Http.Json;
@@ -8,12 +9,14 @@ using BitwardenApi.Shared.Exceptions;
 
 namespace BitwardenApi.Modules.Vault.Services;
 
-public sealed class VaultApiClient(HttpClient httpClient) : IVaultApiClient
+public sealed class VaultApiClient(
+    HttpClient httpClient,
+    IBitwardenEnvironmentAccessor environmentAccessor) : IVaultApiClient
 {
     public async Task<DateTimeOffset> GetRevisionDateAsync(
-        BitwardenEnvironment environment,
         CancellationToken cancellationToken = default)
     {
+        BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, "/accounts/revision-date");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         using var response = await httpClient.SendAsync(
@@ -32,9 +35,9 @@ public sealed class VaultApiClient(HttpClient httpClient) : IVaultApiClient
     }
 
     public async Task<SyncPayload> GetSyncAsync(
-        BitwardenEnvironment environment,
         CancellationToken cancellationToken = default)
     {
+        BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, "/sync?excludeDomains=true");
 
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -48,10 +51,10 @@ public sealed class VaultApiClient(HttpClient httpClient) : IVaultApiClient
     }
 
     public async Task<ApiStreamResponse> GetCipherAsync(
-        BitwardenEnvironment environment,
         CipherId cipherId,
         CancellationToken cancellationToken = default)
     {
+        BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, $"/ciphers/{cipherId.Value:D}");
         var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -64,10 +67,10 @@ public sealed class VaultApiClient(HttpClient httpClient) : IVaultApiClient
     }
 
     public async Task DeleteCipherAsync(
-        BitwardenEnvironment environment,
         CipherId cipherId,
         CancellationToken cancellationToken = default)
     {
+        BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, $"/ciphers/{cipherId.Value:D}");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);
 

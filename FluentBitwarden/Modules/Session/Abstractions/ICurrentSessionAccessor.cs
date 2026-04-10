@@ -5,7 +5,7 @@ using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Modules.Session.Abstractions;
 
-public interface ICurrentSessionAccessor
+public interface ICurrentSessionAccessor : IBitwardenEnvironmentAccessor
 {
     bool IsAuthenticated { get; }
 
