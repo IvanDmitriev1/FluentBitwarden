@@ -50,7 +50,6 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
             OnVisibilityChanged);
 
         _timer = DispatcherQueue.CreateTimer();
-        _timer = DispatcherQueue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.IsRepeating = true;
         _timer.Tick += (_, _) => UpdateTotpDisplay();
@@ -73,7 +72,7 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
     {
         base.OnApplyTemplate();
 
-        _countdownRing = GetTemplateChild("PART_CountdownRing") as CountdownRing;
+        _countdownRing = GetTemplateChild(PartCountdownRing) as CountdownRing;
     }
 
     private void UpdateTotpDisplay()
@@ -103,6 +102,7 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
         else
         {
             _timer?.Start();
+            UpdateTotpDisplay();
         }
     }
 

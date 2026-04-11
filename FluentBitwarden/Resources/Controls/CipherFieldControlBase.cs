@@ -1,7 +1,8 @@
 ﻿using Microsoft.UI.Xaml;
-using System.Windows.Input;
-using Windows.ApplicationModel.DataTransfer;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using System.Windows.Input;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace FluentBitwarden.Resources.Controls;
 
@@ -41,13 +42,16 @@ public abstract partial class CipherFieldControlBase : Control
         if (string.IsNullOrWhiteSpace(text))
             return;
 
-        DataPackage dataPackage = new DataPackage
-        {
-            RequestedOperation = DataPackageOperation.Copy,
-        };
+        DataPackage package = new DataPackage();
+        package.SetText(text);
 
-        dataPackage.SetText(text);
-        Clipboard.SetContent(dataPackage);
+        var options = new ClipboardContentOptions
+        {
+            IsAllowedInHistory = false,
+            IsRoamable = false,
+        };
+        
+        Clipboard.SetContentWithOptions(package, options);
     }
 
     private void Refresh()

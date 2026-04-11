@@ -22,6 +22,7 @@ using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using FluentBitwarden.Shared.Connectivity;
+using FluentBitwarden.Shared.SiteIcons;
 
 namespace FluentBitwarden;
 
@@ -37,6 +38,12 @@ public partial class App : IXamlMetadataServiceProvider
         .CreateDefaultBuilder()
         .ConfigureServices((ctx, services) =>
         {
+            services.AddHttpClient<ISiteIconCache, SiteIconCache>(client =>
+            {
+                client.DefaultRequestHeaders.Add("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
+            });
+
             services.AddSingleton<IAppActivationService, AppActivationService>();
             services.AddSingleton<ITrayIconService, TrayIconService>();
             services.AddSingleton<IAppRestartService, AppRestartService>();
@@ -57,6 +64,8 @@ public partial class App : IXamlMetadataServiceProvider
 
     public object GetRequiredService(Type type)
         => Host.Services.GetRequiredService(type);
+
+    public T GetRequiredService<T>() where T : notnull => Host.Services.GetRequiredService<T>();
 
     public App(SimpleSplashScreen fss)
     {

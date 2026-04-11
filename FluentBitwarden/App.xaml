@@ -14,6 +14,7 @@
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherPasswordFieldStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherTotpFieldStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/CountdownRingStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/SiteIconStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <converters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
