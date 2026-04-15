@@ -1,5 +1,4 @@
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -12,31 +11,31 @@ public static class Program
     private static Microsoft.Win32.SafeHandles.SafeFileHandle? _redirectEventHandle;
 
     [STAThread]
-    static int Main(string[] args)
+    static int Main()
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
-        bool isRedirect = DecideRedirection();
+        bool isRedirect = DecideRedirection(out var initialActivation);
 
         if (isRedirect)
             return 0;
 
         var fss = SimpleSplashScreen.ShowDefaultSplashScreen();
 
-        Microsoft.UI.Xaml.Application.Start(p =>
+        Microsoft.UI.Xaml.Application.Start(_ =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
-            _ = new App(fss);
+            var app = new App(fss, initialActivation);
         });
 
         return 0;
     }
 
-    private static bool DecideRedirection()
+    private static bool DecideRedirection(out AppActivationArguments initialActivation)
     {
         AppInstance keyInstance = AppInstance.FindOrRegisterForKey("FluentBitwardenSingleInstance");
-        AppActivationArguments args = AppInstance.GetCurrent().GetActivatedEventArgs();
+        initialActivation = AppInstance.GetCurrent().GetActivatedEventArgs();
 
         if (keyInstance.IsCurrent)
         {
@@ -44,7 +43,7 @@ public static class Program
             return false;
         }
 
-        RedirectActivationTo(args, keyInstance);
+        RedirectActivationTo(initialActivation, keyInstance);
         return true;
     }
 
@@ -67,9 +66,5 @@ public static class Program
         PInvoke.CoWaitForMultipleObjects(CWMO_DEFAULT, INFINITE, [rawHandle], out _);
     }
 
-    private static void OnActivated(object? sender, AppActivationArguments args)
-    {
-        App currentApp = App.Current;
-        currentApp.ReopenWindow();
-    }
+    private static void OnActivated(object? sender, AppActivationArguments args) => App.Current.HandleActivation(args);
 }

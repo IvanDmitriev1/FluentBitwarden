@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Windows.ApplicationModel;
 
 namespace FluentBitwarden.Application;
@@ -19,6 +20,39 @@ public static class PasskeyPluginSetupService
             return;
         }
 
-        await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppWithArgumentsAsync(arguments);
+        string executablePath = Path.Combine(
+            Package.Current.InstalledLocation.Path,
+            "FluentBitwarden.ComServer",
+            "FluentBitwarden.ComServer.exe");
+
+        if (!File.Exists(executablePath))
+        {
+            throw new FileNotFoundException(
+                "FluentBitwarden.ComServer.exe was not found in the installed package.",
+                executablePath);
+        }
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = executablePath,
+            WorkingDirectory = Path.GetDirectoryName(executablePath),
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add(arguments);
+
+        using var process = Process.Start(startInfo);
+
+        if (process is null)
+        {
+            throw new InvalidOperationException(
+                $"Failed to start '{executablePath}'.");
+        }
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"FluentBitwarden.ComServer exited with code {process.ExitCode} for '{arguments}'.");
+        }
     }
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
@@ -48,11 +48,6 @@
 			</uap:VisualElements>
 
 			<Extensions>
-				<uap:Extension Category="windows.protocol">
-					<uap:Protocol Name="fluent-bitwarden-passkey">
-						<uap:DisplayName>FluentBitwarden</uap:DisplayName>
-					</uap:Protocol>
-				</uap:Extension>
 
 				<desktop:Extension
 					Category="windows.fullTrustProcess"
@@ -70,13 +65,11 @@
 			  BackgroundColor="transparent"
 			  Square150x150Logo="Images\Square150x150Logo.png"
 			  Square44x44Logo="Images\Square44x44Logo.png"
-			  AppListEntry="none" />
+			  AppListEntry="none" >
+				<uap:DefaultTile/>
+			</uap:VisualElements>
 
 			<Extensions>
-				<desktop:Extension
-					Category="windows.fullTrustProcess"
-					Executable="FluentBitwarden.exe" />
-
 				<com:Extension Category="windows.comServer">
 					<com:ComServer>
 						<com:ExeServer

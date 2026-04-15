@@ -1,39 +1,21 @@
-﻿using FluentBitwarden.Views.Shell;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using WinUIEx;
+using Microsoft.Extensions.Logging;
+using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.Application.Lifetime;
 
-internal sealed class AppActivationService(MainWindow mainWindow) : IAppActivationService
+internal sealed class AppActivationService(
+    IMainWindowService mainWindowService,
+    ILogger<AppActivationService> logger) : IAppActivationService
 {
-    public void Activate(LaunchActivatedEventArgs args)
+    public Task InitializeAsync(AppActivationArguments initialActivation, CancellationToken cancellationToken = default)
     {
-        mainWindow.Activate();
-        mainWindow.BringToFront();
-
-        mainWindow.AppWindow.Closing += static (sender, args) =>
-        {
-            args.Cancel = true;
-            sender.Hide();
-        };
-
-        var wm = WindowManager.Get(mainWindow);
-        wm.WindowStateChanged += (s, state) =>
-        {
-            wm.AppWindow.IsShownInSwitchers = state != WindowState.Minimized;
-        };
-
-        if (mainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.Maximize();
-        }
+        mainWindowService.Show();
+        return Task.CompletedTask;
     }
 
-    public void ReopenMainWindow()
+    public Task HandleAsync(AppActivationArguments activation, CancellationToken cancellationToken = default)
     {
-        mainWindow.AppWindow.IsShownInSwitchers = true;
-        mainWindow.Activate();
-        mainWindow.BringToFront();
+        mainWindowService.Show();
+        return Task.CompletedTask;
     }
 }

@@ -25,6 +25,7 @@ public readonly record struct CipherTypeOption(
         CipherType.Card => All[3],
         CipherType.Identity => All[4],
         CipherType.SshKey => All[5],
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 
     public static string ToDisplayName(CipherType type) => type switch

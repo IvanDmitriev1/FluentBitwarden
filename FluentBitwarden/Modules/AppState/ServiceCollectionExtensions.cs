@@ -8,6 +8,7 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddAppStateModule(this IServiceCollection services)
     {
+        services.AddSingleton<IAppFirstRunService, AppFirstRunService>();
         services.AddSingleton<ISettingsService, SettingsService>();
 
         services.AddSingleton<ThemeService>();

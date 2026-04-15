@@ -3,6 +3,7 @@
 namespace FluentBitwarden.Modules.AppState.Models;
 
 public sealed record AppSettings(
+    bool FirstRun,
     ElementTheme ThemeMode,
     bool LockOnMinimize,
     bool LockOnSystemSuspend,
@@ -11,6 +12,7 @@ public sealed record AppSettings(
 {
 
     public static AppSettings CreateDefault() => new(
+        FirstRun: false,
         ThemeMode: ElementTheme.Default,
         LockOnMinimize: true,
         LockOnSystemSuspend: true,

@@ -1,10 +1,8 @@
 using BitwardenApi;
-using FluentBitwarden.Application;
 using FluentBitwarden.Application.Diagnostics;
 using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Application.Tray;
 using FluentBitwarden.Data;
-using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.AppState.Abstractions;
@@ -19,6 +17,7 @@ using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
 using WinUI.DependencyInjection;
 using WinUIEx;
@@ -33,6 +32,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly SimpleSplashScreen _fss;
+    private readonly AppActivationArguments _initialActivation;
 
     public IHost Host { get; } = Microsoft.Extensions.Hosting.Host
         .CreateDefaultBuilder()
@@ -47,6 +47,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddSingleton<IAppActivationService, AppActivationService>();
             services.AddSingleton<ITrayIconService, TrayIconService>();
             services.AddSingleton<IAppRestartService, AppRestartService>();
+            services.AddSingleton<IMainWindowService, MainWindowService>();
 
             services.AddShellServices();
             services.AddViews();
@@ -67,11 +68,12 @@ public partial class App : IXamlMetadataServiceProvider
 
     public T GetRequiredService<T>() where T : notnull => Host.Services.GetRequiredService<T>();
 
-    public App(SimpleSplashScreen fss)
+    public App(SimpleSplashScreen fss, AppActivationArguments initialActivation)
     {
         InitializeComponent();
 
         _fss = fss;
+        _initialActivation = initialActivation;
 
         UnhandledException += static (sender, args) => UnhandledExceptionLogger.WriteException(args.Exception);
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
@@ -88,18 +90,20 @@ public partial class App : IXamlMetadataServiceProvider
         }
 #endif
 
-        _ = Host.Services.GetRequiredService<ISettingsService>().Get();
-        Host.Services.GetRequiredService<IDataInitializationService>().Initialize();
+        await Host.Services.GetRequiredService<IAppFirstRunService>().InitializeAsync();
 
         _fss.Hide();
         _fss.Dispose();
 
-        Host.Services.GetRequiredService<IAppActivationService>().Activate(args);
+        await Host.Services.GetRequiredService<IAppActivationService>().InitializeAsync(_initialActivation);
         Host.Services.GetRequiredService<ITrayIconService>().EnsureCreated();
     }
 
-    public void ReopenWindow()
+    public void HandleActivation(AppActivationArguments args)
     {
-        _dispatcherQueue.TryEnqueue(() => Host.Services.GetRequiredService<IAppActivationService>().ReopenMainWindow());
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            _ = Host.Services.GetRequiredService<IAppActivationService>().HandleAsync(args);
+        });
     }
 }

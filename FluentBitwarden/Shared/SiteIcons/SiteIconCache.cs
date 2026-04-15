@@ -11,7 +11,7 @@ namespace FluentBitwarden.Shared.SiteIcons;
 internal sealed class SiteIconCache(HttpClient client) : ISiteIconCache
 {
     private static readonly string CacheDirectoryPath =
-        Path.Combine(ApplicationData.Current.LocalFolder.Path, "SiteIcons");
+        Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "SiteIcons");
 
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new(StringComparer.Ordinal);
 

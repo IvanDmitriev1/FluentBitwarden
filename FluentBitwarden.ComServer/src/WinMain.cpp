@@ -1,13 +1,21 @@
 ﻿#include "pch.h"
 #include "Authenticator/PluginAuthenticator.h"
 #include "Authenticator/PluginRegistrationManager.h"
+#include "Ipc/AppActivationLauncher.h"
 
 static void AttachDebugger()
 {
-    std::string cmd = "vsjitdebugger.exe -p " + std::to_string(GetCurrentProcessId());
-    system(cmd.c_str());
+    try
+    {
+        std::string cmd = "vsjitdebugger.exe -p " + std::to_string(GetCurrentProcessId());
+        system(cmd.c_str());
 
-    DebugBreak();
+        DebugBreak();
+    }
+    catch (...)
+    {
+
+    }
 }
 
 static int RunPluginComServer() noexcept
@@ -49,12 +57,12 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR pCmdLine, int)
 {
     winrt::init_apartment(winrt::apartment_type::single_threaded);
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
     if (!IsDebuggerPresent())
     {
         AttachDebugger();
     }
-#endif
+#endif*/
 
     std::wstring args = pCmdLine ? pCmdLine : L"";
     if (args.find(L"-PluginActivated") != std::wstring::npos)

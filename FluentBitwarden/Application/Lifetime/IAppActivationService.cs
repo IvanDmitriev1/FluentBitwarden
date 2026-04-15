@@ -1,9 +1,10 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.Application.Lifetime;
 
 public interface IAppActivationService
 {
-    void Activate(LaunchActivatedEventArgs args);
-    void ReopenMainWindow();
+    Task InitializeAsync(AppActivationArguments initialActivation, CancellationToken cancellationToken = default);
+
+    Task HandleAsync(AppActivationArguments activation, CancellationToken cancellationToken = default);
 }

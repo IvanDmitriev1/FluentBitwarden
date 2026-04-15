@@ -52,6 +52,7 @@ public sealed partial class SettingsPageViewModel(ISettingsService settingsServi
     }
 
     private AppSettings BuildSnapshot() => new(
+        FirstRun: settingsService.Get().FirstRun,
         ThemeMode: SelectedThemeOption.Value,
         LockOnMinimize: LockOnMinimize,
         LockOnSystemSuspend: LockOnSystemSuspend,

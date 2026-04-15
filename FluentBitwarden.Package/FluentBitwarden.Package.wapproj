@@ -29,7 +29,7 @@
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
   <PropertyGroup>
     <ProjectGuid>7dc711cb-4f28-45a8-9cfd-524e411d2031</ProjectGuid>
-    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <AssetTargetFallback>net10.0-windows$(TargetPlatformVersion);$(AssetTargetFallback)</AssetTargetFallback>
     <DefaultLanguage>en-US</DefaultLanguage>
@@ -60,11 +60,11 @@
       <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\FluentBitwarden.ComServer\bin\$(Platform)\$(Configuration)\FluentBitwarden.ComServer.exe">
-      <PackagePath>\</PackagePath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="..\FluentBitwarden.ComServer\bin\$(Platform)\$(Configuration)\FluentBitwarden.ComServer.exe">
+			<PackagePath>\FluentBitwarden.ComServer</PackagePath>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
