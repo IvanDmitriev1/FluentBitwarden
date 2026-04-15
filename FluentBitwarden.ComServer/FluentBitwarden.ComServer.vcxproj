@@ -5,14 +5,15 @@
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
     <CppWinRTGenerateWindowsMetadata>true</CppWinRTGenerateWindowsMetadata>
-    <CppWinRTProjectLanguage>C++/WinRT</CppWinRTProjectLanguage>
     <MinimalCoreWin>true</MinimalCoreWin>
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{215c28a8-1921-4bed-ae98-61df254f942c}</ProjectGuid>
+    <ProjectGuid>{3d215336-3b24-4e4e-9d57-868a7ad2b216}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>FluentBitwarden_ComServer</RootNamespace>
     <WindowsTargetPlatformVersion Condition=" '$(WindowsTargetPlatformVersion)' == '' ">10.0.26100.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.17134.0</WindowsTargetPlatformMinVersion>
+    <WindowsTargetPlatformMinVersion>10.0.26100.0</WindowsTargetPlatformMinVersion>
+    <CppWinRTProjectLanguage>C++/WinRT</CppWinRTProjectLanguage>
+    <CppWinRTLibs>false</CppWinRTLibs>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -24,14 +25,6 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|ARM64">
-      <Configuration>Debug</Configuration>
-      <Platform>ARM64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|ARM64">
-      <Configuration>Release</Configuration>
-      <Platform>ARM64</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -40,8 +33,6 @@
     <PlatformToolset Condition="'$(VisualStudioVersion)' == '15.0'">v141</PlatformToolset>
     <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>bin-init\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -51,6 +42,9 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -66,11 +60,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <WebAuthNPluginDefFile>$(MSBuildProjectDirectory)\webauthnplugin.def</WebAuthNPluginDefFile>
-    <WebAuthNPluginImportLibrary>$(IntDir)webauthnplugin.lib</WebAuthNPluginImportLibrary>
+    <WebAuthNPluginImportLibraryDir>$(MSBuildProjectDirectory)\bin-init\$(Platform)\$(Configuration)</WebAuthNPluginImportLibraryDir>
+    <WebAuthNPluginImportLibrary>$(WebAuthNPluginImportLibraryDir)\webauthnplugin.lib</WebAuthNPluginImportLibrary>
     <WebAuthNPluginLibTool>$(VCToolsInstallDir)bin\HostX64\$(Platform)\lib.exe</WebAuthNPluginLibTool>
     <WebAuthNPluginLibTool Condition="'$(PreferredToolArchitecture)' == 'x86'">$(VCToolsInstallDir)bin\HostX86\$(Platform)\lib.exe</WebAuthNPluginLibTool>
-    <WebAuthNPluginMachine Condition="'$(Platform)' == 'x64'">X64</WebAuthNPluginMachine>
-    <WebAuthNPluginMachine Condition="'$(Platform)' == 'ARM64'">ARM64</WebAuthNPluginMachine>
+    <WebAuthNPluginMachine>X64</WebAuthNPluginMachine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(MSBuildProjectDirectory)/bin/$(Platform)/$(Configuration)/</OutDir>
+    <IntDir>$(MSBuildProjectDirectory)/bin-init/$(Platform)/$(Configuration)/</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(MSBuildProjectDirectory)/bin/$(Platform)/$(Configuration)/</OutDir>
+    <IntDir>$(MSBuildProjectDirectory)/bin-init/$(Platform)/$(Configuration)/</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -79,23 +81,25 @@
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <PreprocessorDefinitions>_CONSOLE;WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
-      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>%(AdditionalOptions) /permissive- /bigobj</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>webauthnplugin.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WebAuthNPluginImportLibraryDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\src;$(MSBuildProjectDirectory)\vendor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp23</LanguageStandard>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</SDLCheck>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)/src;$(MSBuildProjectDirectory)/vendor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">OneCoreUAP.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
@@ -104,30 +108,37 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\src;$(MSBuildProjectDirectory)\vendor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp23</LanguageStandard>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)/src;$(MSBuildProjectDirectory)/vendor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">OneCoreUAP.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\PluginAuthenticator\PluginRegistrationManager.h" />
-    <ClInclude Include="src\PluginAuthenticator\PluginAuthenticator.h" />
+    <ClInclude Include="src\Ipc\AppActivationLauncher.h" />
+    <ClInclude Include="src\WebAuthn\OperationRequestVerifier.h" />
+    <ClInclude Include="src\Authenticator\AuthenticatorInfoBuilder.h" />
+    <ClInclude Include="src\Cbor\CborWriter.h" />
+    <ClInclude Include="src\Authenticator\PluginRegistrationManager.h" />
+    <ClInclude Include="src\Authenticator\PluginAuthenticator.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="vendor\cbor-lite\codec.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\PluginAuthenticator\PluginRegistrationManager.cpp" />
-    <ClCompile Include="src\PluginAuthenticator\PluginAuthenticator.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClInclude Include="resource.h" />
+    <ClCompile Include="src\Ipc\AppActivationLauncher.cpp" />
+    <ClCompile Include="src\WebAuthn\OperationRequestVerifier.cpp" />
+    <ClCompile Include="src\Authenticator\AuthenticatorInfoBuilder.cpp" />
+    <ClCompile Include="src\Authenticator\PluginRegistrationManager.cpp" />
+    <ClCompile Include="src\Authenticator\PluginAuthenticator.cpp" />
+    <ClCompile Include="src\Cbor\CborWriter.cpp" />
+    <ClCompile Include="src\WinMain.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="vendor\cbor-lite\codec.h" />
+    <ResourceCompile Include="FluentBitwarden_ComServer.rc" />
+    <Manifest Include="FluentBitwarden_ComServer.exe.manifest" />
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
     <None Include="webauthnplugin.def" />
@@ -137,21 +148,19 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
   </Target>
-  <Target Name="GenerateWebAuthNPluginImportLibrary"
-          BeforeTargets="Link"
-          Inputs="$(WebAuthNPluginDefFile)"
-          Outputs="$(WebAuthNPluginImportLibrary)"
-          Condition="Exists('$(WebAuthNPluginDefFile)') and '$(WebAuthNPluginMachine)' != ''">
-    <MakeDir Directories="$(IntDir)" />
+  <Target Name="GenerateWebAuthNPluginImportLibrary" BeforeTargets="Link" Inputs="$(WebAuthNPluginDefFile)" Outputs="$(WebAuthNPluginImportLibrary)" Condition="Exists('$(WebAuthNPluginDefFile)') and '$(WebAuthNPluginMachine)' != ''">
+    <MakeDir Directories="$(WebAuthNPluginImportLibraryDir)" />
     <Exec Command="&quot;$(WebAuthNPluginLibTool)&quot; /NOLOGO /DEF:&quot;$(WebAuthNPluginDefFile)&quot; /MACHINE:$(WebAuthNPluginMachine) /NAME:webauthn.dll /OUT:&quot;$(WebAuthNPluginImportLibrary)&quot;" />
   </Target>
 </Project>

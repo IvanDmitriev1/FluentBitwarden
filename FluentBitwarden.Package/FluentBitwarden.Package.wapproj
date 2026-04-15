@@ -36,6 +36,8 @@
     <EntryPointProjectUniqueName>..\FluentBitwarden\FluentBitwarden.csproj</EntryPointProjectUniqueName>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <NoWarn>$(NoWarn);NU1701</NoWarn>
+    <PluginAuthenticatorHeader>$(MSBuildProjectDirectory)\..\FluentBitwarden.ComServer\src\Authenticator\PluginAuthenticator.h</PluginAuthenticatorHeader>
+    <PluginClsidValidationScript>$(MSBuildProjectDirectory)\ValidatePluginClsid.ps1</PluginClsidValidationScript>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

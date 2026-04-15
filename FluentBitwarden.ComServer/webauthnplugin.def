@@ -2,3 +2,8 @@ LIBRARY webauthn.dll
 EXPORTS
     WebAuthNPluginAddAuthenticator
     WebAuthNPluginFreeAddAuthenticatorResponse
+    WebAuthNPluginGetAuthenticatorState
+    WebAuthNPluginGetOperationSigningPublicKey
+    WebAuthNPluginRemoveAuthenticator
+    WebAuthNPluginFreePublicKeyResponse
+    WebAuthNPluginUpdateAuthenticatorDetails

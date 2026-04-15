@@ -1,5 +1,21 @@
 namespace BitwardenApi.Modules.Vault.Models;
 
+public enum Fido2CredentialKeyType
+{
+    PublicKey = 1
+}
+
+public enum Fido2CredentialKeyAlgorithm
+{
+    Ecdsa = 1
+}
+
+public enum Fido2CredentialKeyCurve
+{
+    P256 = 1
+}
+
+
 public sealed class Fido2Credential
 {
     public required string CredentialId { get; init; }
@@ -15,19 +31,4 @@ public sealed class Fido2Credential
     public required int Counter { get; init; }
     public required bool Discoverable { get; init; }
     public required DateTimeOffset CreationDate { get; init; }
-}
-
-public enum Fido2CredentialKeyType
-{
-    PublicKey = 1
-}
-
-public enum Fido2CredentialKeyAlgorithm
-{
-    Ecdsa = 1
-}
-
-public enum Fido2CredentialKeyCurve
-{
-    P256 = 1
 }

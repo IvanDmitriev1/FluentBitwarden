@@ -1,28 +1,28 @@
 using BitwardenApi;
+using FluentBitwarden.Application;
 using FluentBitwarden.Application.Diagnostics;
 using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Application.Tray;
 using FluentBitwarden.Data;
+using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState;
+using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
+using FluentBitwarden.Modules.Session.Services.Authentication;
+using FluentBitwarden.Modules.Vault;
+using FluentBitwarden.Shared.Connectivity;
 using FluentBitwarden.Shared.Extensions;
+using FluentBitwarden.Shared.SiteIcons;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
-using Windows.ApplicationModel;
-using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.AppState.Abstractions;
-using FluentBitwarden.Modules.Session.Services.Authentication;
-using FluentBitwarden.Modules.Vault;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using FluentBitwarden.Shared.Connectivity;
-using FluentBitwarden.Shared.SiteIcons;
 
 namespace FluentBitwarden;
 

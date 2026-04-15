@@ -1,7 +1,20 @@
 ﻿#pragma once
+
+#include <wil/cppwinrt.h>
+#include <wil/resource.h>
+#include <wil/result.h>
+#include <wil/registry.h>
+#include <wil/win32_helpers.h>
+
+//Classic COM FIRST
 #include <windows.h>
 #include <unknwn.h>
+
+#include <webauthn.h>
+#include <pluginauthenticator.h>
+#include <webauthnplugin.h>
+
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
-
-std::vector<uint8_t> hexStringToBytes(const std::string& hex);
+#include <winrt/Windows.System.h>

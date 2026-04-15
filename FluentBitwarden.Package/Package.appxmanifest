@@ -5,7 +5,8 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
-  IgnorableNamespaces="uap rescap com">
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  IgnorableNamespaces="uap rescap com desktop">
 
 	<Identity
 	  Name="9364d1bf-9e77-4283-8e47-507c26e4b31c"
@@ -48,10 +49,14 @@
 
 			<Extensions>
 				<uap:Extension Category="windows.protocol">
-					<uap:Protocol Name="fluent-bitwarden">
+					<uap:Protocol Name="fluent-bitwarden-passkey">
 						<uap:DisplayName>FluentBitwarden</uap:DisplayName>
 					</uap:Protocol>
 				</uap:Extension>
+
+				<desktop:Extension
+					Category="windows.fullTrustProcess"
+					Executable="FluentBitwarden.ComServer.exe" />
 			</Extensions>
 		</Application>
 
@@ -68,6 +73,10 @@
 			  AppListEntry="none" />
 
 			<Extensions>
+				<desktop:Extension
+					Category="windows.fullTrustProcess"
+					Executable="FluentBitwarden.exe" />
+
 				<com:Extension Category="windows.comServer">
 					<com:ComServer>
 						<com:ExeServer
@@ -75,11 +84,13 @@
 						  Arguments="-PluginActivated"
 						  DisplayName="FluentBitwarden Passkey Plugin">
 							<com:Class
-							  Id="6FA0E3E9-B255-48CF-8E2C-7D8B6E4A91F3"
+							  Id="3C4F8D12-7A6B-4E91-9A37-C25D148FB670"
 							  DisplayName="FluentBitwarden Passkey Plugin" />
 						</com:ExeServer>
 					</com:ComServer>
 				</com:Extension>
+				
+				
 			</Extensions>
 		</Application>
 	</Applications>

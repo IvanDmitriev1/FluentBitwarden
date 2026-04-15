@@ -1,11 +1,10 @@
 #pragma once
 #include "pch.h"
-#include <pluginauthenticator.h>
 
-struct PluginAuthenticatorImpl : winrt::implements<PluginAuthenticatorImpl, IPluginAuthenticator>
+struct PluginAuthenticator : winrt::implements<PluginAuthenticator, IPluginAuthenticator>
 {
     static constexpr GUID CLSID =
-    { 0x6fa0e3e9, 0xb255, 0x48cf, { 0x8e, 0x2c, 0x7d, 0x8b, 0x6e, 0x4a, 0x91, 0xf3 } };
+    { 0x3c4f8d12, 0x7a6b, 0x4e91, { 0x9a, 0x37, 0xc2, 0x5d, 0x14, 0x8f, 0xb6, 0x70 } };
 
     IFACEMETHODIMP MakeCredential(
         PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request,
