@@ -5,3 +5,10 @@ CreateEvent
 SetEvent
 CoWaitForMultipleObjects
 SetForegroundWindow
+
+
+GetNamedPipeClientProcessId
+OpenProcess
+CloseHandle
+QueryFullProcessImageNameW
+GetPackageFamilyName

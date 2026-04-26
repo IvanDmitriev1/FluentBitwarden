@@ -3,5 +3,5 @@
 
 namespace FluentBitwarden::ComServer::Ipc::AppActivationLauncher
 {
-    IAsyncAction ActivateMainApp(std::wstring launchArguments);
+    void ActivateMainApp(std::wstring launchArguments);
 }

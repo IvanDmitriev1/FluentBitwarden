@@ -12,7 +12,7 @@ namespace
 		co_await winrt::resume_background();
 		namespace Ipc = FluentBitwarden::ComServer::Ipc;
 
-		co_await Ipc::AppActivationLauncher::ActivateMainApp(L"--passkey");
+		Ipc::AppActivationLauncher::ActivateMainApp(L"--passkey");
 
 		Ipc::NamedPipeClient m_pipeClient{ Ipc::Constants::PipePath };
 

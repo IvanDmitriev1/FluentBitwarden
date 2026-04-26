@@ -45,7 +45,6 @@ namespace FluentBitwarden::ComServer::Ipc
 		std::movable<T> &&
 		requires(const JsonObject& json)
 	{
-		{ T::MessageType } -> std::convertible_to<std::uint16_t>;
 		{ T::FromJson(json) } -> std::same_as<T>;
 	};
 }

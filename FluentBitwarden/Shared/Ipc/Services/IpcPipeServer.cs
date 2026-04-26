@@ -47,6 +47,12 @@ internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
 
             try
             {
+                if (!PipeClientVerifier.IsExpectedClient(_pipe))
+                {
+                    Debug.WriteLine("Rejected unauthorized IPC pipe client.");
+                    continue;
+                }
+
                 var header = PipeHeader.Read(_pipe);
                 if (!_invokers.TryGetValue(header.MessageType, out var invoker))
                     continue;

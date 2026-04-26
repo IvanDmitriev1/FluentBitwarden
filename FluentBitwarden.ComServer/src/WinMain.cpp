@@ -57,13 +57,13 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR pCmdLine, int)
 {
     winrt::init_apartment(winrt::apartment_type::single_threaded);
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
     if (!IsDebuggerPresent())
     {
         AttachDebugger();
     }
 #endif
-
+*/
     std::wstring args = pCmdLine ? pCmdLine : L"";
     if (args.find(L"-PluginActivated") != std::wstring::npos)
     {

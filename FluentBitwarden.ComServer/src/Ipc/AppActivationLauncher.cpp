@@ -84,14 +84,11 @@ namespace
 
 namespace FluentBitwarden::ComServer::Ipc::AppActivationLauncher
 {
-    IAsyncAction ActivateMainApp(std::wstring launchArguments)
+    void ActivateMainApp(std::wstring launchArguments)
 	{
-        co_await winrt::resume_background();
-
         const auto mainAppPath = GetMainAppPath();
         auto commandLineArgs = MakeCommandLineArgs(mainAppPath, launchArguments);
 
         CreateMainAppProcess(mainAppPath, commandLineArgs);
-        co_return;
 	}
 }
