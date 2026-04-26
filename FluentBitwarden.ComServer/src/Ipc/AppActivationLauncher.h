@@ -1,8 +1,7 @@
 #pragma once
+#include <pch.h>
 
-class AppActivationLauncher final
+namespace FluentBitwarden::ComServer::Ipc::AppActivationLauncher
 {
-public:
-    static HRESULT ActivateMainApp(const std::wstring& launchArguments) noexcept;
-};
-
+    IAsyncAction ActivateMainApp(std::wstring launchArguments);
+}

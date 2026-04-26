@@ -19,6 +19,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
+using FluentBitwarden.Shared.Ipc;
+using FluentBitwarden.Shared.Ipc.Abstractions;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
@@ -30,7 +32,8 @@ public partial class App : IXamlMetadataServiceProvider
 {
     public new static App Current => (App)Microsoft.UI.Xaml.Application.Current;
 
-    private readonly DispatcherQueue _dispatcherQueue;
+    public DispatcherQueue DispatcherQueue { get; private set; }
+
     private readonly SimpleSplashScreen _fss;
     private readonly AppActivationArguments _initialActivation;
 
@@ -49,6 +52,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddSingleton<IAppRestartService, AppRestartService>();
             services.AddSingleton<IMainWindowService, MainWindowService>();
 
+            services.AddNamedPipeIpc();
             services.AddShellServices();
             services.AddViews();
             services.AddDatabaseServices();
@@ -60,6 +64,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddSessionModule();
             services.AddAppStateModule();
             services.AddVaultServices();
+
         })
         .Build();
 
@@ -76,7 +81,7 @@ public partial class App : IXamlMetadataServiceProvider
         _initialActivation = initialActivation;
 
         UnhandledException += static (sender, args) => UnhandledExceptionLogger.WriteException(args.Exception);
-        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        DispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         ValidationTrimDependencies.Preserve();
     }
@@ -91,8 +96,8 @@ public partial class App : IXamlMetadataServiceProvider
 #endif
 
         await Host.Services.GetRequiredService<IAppFirstRunService>().InitializeAsync();
+        _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
 
-        _fss.Hide();
         _fss.Dispose();
 
         await Host.Services.GetRequiredService<IAppActivationService>().InitializeAsync(_initialActivation);
@@ -101,7 +106,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     public void HandleActivation(AppActivationArguments args)
     {
-        _dispatcherQueue.TryEnqueue(() =>
+        DispatcherQueue.TryEnqueue(() =>
         {
             _ = Host.Services.GetRequiredService<IAppActivationService>().HandleAsync(args);
         });

@@ -2,6 +2,34 @@
 #include "PluginAuthenticator.h"
 #include "WebAuthn/OperationRequestVerifier.h"
 #include "Ipc/AppActivationLauncher.h"
+#include "Ipc/NamedPipeClient.h"
+#include "Ipc/PingMessage.h"
+
+namespace
+{
+	IAsyncAction TestPipePingAsync()
+	{
+		co_await winrt::resume_background();
+		namespace Ipc = FluentBitwarden::ComServer::Ipc;
+
+		co_await Ipc::AppActivationLauncher::ActivateMainApp(L"--passkey");
+
+		Ipc::NamedPipeClient m_pipeClient{ Ipc::Constants::PipePath };
+
+		Ipc::PingRequest request
+		{
+			.Text = L"ping from WebAuthn COM server"
+		};
+
+		Ipc::PingResponse response = co_await m_pipeClient.SendAsync<Ipc::PingRequest, Ipc::PingResponse>(request);
+
+		if (!response.Ok)
+		{
+			throw winrt::hresult_error(E_FAIL, response.Text);
+		}
+
+	}
+}
 
 IFACEMETHODIMP PluginAuthenticatorFactory::CreateInstance(IUnknown* outer, REFIID iid, void** result) noexcept
 {
@@ -19,7 +47,12 @@ IFACEMETHODIMP PluginAuthenticator::MakeCredential(PCWEBAUTHN_PLUGIN_OPERATION_R
 
 	RETURN_IF_FAILED(OperationRequestVerifier::VerifyOperationRequest(*request));
 
-	AppActivationLauncher::ActivateMainApp(L"--passkey");
+	try
+	{
+		TestPipePingAsync().get();
+		return S_OK;
+	}
+	CATCH_RETURN();
 
 	return E_NOTIMPL;
 }

@@ -118,6 +118,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Ipc\PingMessage.h" />
+    <ClInclude Include="src\Utils\IBuffersHelpers.h" />
+    <ClInclude Include="src\Ipc\Internal\PipeWin32.h" />
+    <ClInclude Include="src\Ipc\Internal\IpcBinary.h" />
+    <ClInclude Include="src\Ipc\IpcProtocol.h" />
+    <ClInclude Include="src\Ipc\IpcConstants.h" />
+    <ClInclude Include="src\Ipc\NamedPipeClient.h" />
     <ClInclude Include="src\Ipc\AppActivationLauncher.h" />
     <ClInclude Include="src\WebAuthn\OperationRequestVerifier.h" />
     <ClInclude Include="src\Authenticator\AuthenticatorInfoBuilder.h" />
@@ -126,6 +133,10 @@
     <ClInclude Include="src\Authenticator\PluginAuthenticator.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
+    <ClCompile Include="src\Ipc\IpcProtocol.cpp" />
+    <ClCompile Include="src\Utils\IBuffersHelpers.cpp" />
+    <ClCompile Include="src\Ipc\Internal\PipeWin32.cpp" />
+    <ClCompile Include="src\Ipc\NamedPipeClient.cpp" />
     <ClCompile Include="src\Ipc\AppActivationLauncher.cpp" />
     <ClCompile Include="src\WebAuthn\OperationRequestVerifier.cpp" />
     <ClCompile Include="src\Authenticator\AuthenticatorInfoBuilder.cpp" />
