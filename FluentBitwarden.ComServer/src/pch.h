@@ -12,6 +12,9 @@
 #include <windows.h>
 #include <unknwn.h>
 
+// Re-include after Windows headers so wil::task::get() is defined.
+#include <wil/coroutine.h>
+
 #include <webauthn.h>
 #include <pluginauthenticator.h>
 #include <webauthnplugin.h>
@@ -22,7 +25,6 @@
 #include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.Storage.h>
-#include <winrt/Windows.Storage.Streams.h>
 
 #include <array>
 #include <filesystem>
@@ -34,10 +36,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <bit>
+#include <span>
+#include <stdexcept>
+#include <vector>
 
 using winrt::Windows::Data::Json::JsonObject;
 using winrt::Windows::Data::Json::JsonValue;
-using winrt::Windows::Foundation::IAsyncOperation;
-using winrt::Windows::Foundation::IAsyncAction;
 using winrt::Windows::Foundation::TimeSpan;
-using winrt::Windows::Storage::Streams::IBuffer;

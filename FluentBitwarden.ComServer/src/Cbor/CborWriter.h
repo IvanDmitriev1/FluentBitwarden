@@ -15,8 +15,8 @@ public:
 	CborWriter(const CborWriter&) = delete;
 	CborWriter& operator=(const CborWriter&) = delete;
 
-	CborWriter(CborWriter&&) = default;
-	CborWriter& operator=(CborWriter&&) = default;
+	CborWriter(CborWriter&&) = delete;
+	CborWriter& operator=(CborWriter&&) = delete;
 
 
 public:

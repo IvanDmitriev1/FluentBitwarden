@@ -2,7 +2,6 @@
 #include "NamedPipeClient.h"
 #include "Internal/PipeWin32.h"
 #include "IpcProtocol.h"
-#include "Utils/IBuffersHelpers.h"
 
 namespace FluentBitwarden::ComServer::Ipc
 {
@@ -11,21 +10,19 @@ namespace FluentBitwarden::ComServer::Ipc
 	{
 	}
 
-	IAsyncOperation<JsonObject> NamedPipeClient::SendJsonRequestAsync(uint16_t requestType, JsonObject request)
+	wil::task<JsonObject> NamedPipeClient::SendJsonRequestAsync(uint16_t requestType, JsonObject json)
 	{
-		co_await winrt::resume_background();
-
 		if (!m_pipe)
 			m_pipe = PipeWin32::OpenOverlappedPipe(m_pipePath, ConnectTimeout);
 		
-		co_await WritePayload(requestType, request);
-		auto result = co_await ReadJsonResponseAsync();
-		co_return result;
+		const std::string utf8 = winrt::to_string(json.Stringify());
+
+		co_await WritePayload(requestType, std::move(utf8));
+		co_return co_await ReadJsonResponseAsync();
 	}
 
-	IAsyncAction NamedPipeClient::WritePayload(uint16_t messageType, JsonObject json)
+	wil::task<void> NamedPipeClient::WritePayload(uint16_t messageType, std::string utf8)
 	{
-		const std::string utf8 = winrt::to_string(json.Stringify());
 		const auto payload = std::as_bytes(std::span{ utf8.data(), utf8.size() });
 
 		THROW_HR_IF(E_INVALIDARG, payload.size() > Constants::MaxPayloadLength);
@@ -40,20 +37,20 @@ namespace FluentBitwarden::ComServer::Ipc
 
 		co_await PipeWin32::WriteExactly(m_pipe.get(), headerBytes);
 		co_await PipeWin32::WriteExactly(m_pipe.get(), payload);
+		co_return;
 	}
 
-	IAsyncOperation<JsonObject> NamedPipeClient::ReadJsonResponseAsync()
+	wil::task<JsonObject> NamedPipeClient::ReadJsonResponseAsync()
 	{
 		const auto responseHeaderBuffer = co_await PipeWin32::ReadExactly(m_pipe.get(), PipeHeader::Size);
-		const auto responseHeader = PipeHeader::Parse(Utils::IBuffersHelpers::AsBytes(responseHeaderBuffer));
+		const auto responseHeader = PipeHeader::Parse(responseHeaderBuffer);
 
 		const auto responsePayload = co_await PipeWin32::ReadExactly(m_pipe.get(), responseHeader.PayloadLength);
-		const auto bytes = Utils::IBuffersHelpers::AsBytes(responsePayload);
 
 		const std::string_view utf8
 		{
-			reinterpret_cast<const char*>(bytes.data()),
-			bytes.size()
+			reinterpret_cast<const char*>(responsePayload.data()),
+			responsePayload.size()
 		};
 
 		co_return JsonObject::Parse(winrt::to_hstring(utf8));

@@ -62,8 +62,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR pCmdLine, int)
     {
         AttachDebugger();
     }
-#endif
-*/
+#endif*/
+
     std::wstring args = pCmdLine ? pCmdLine : L"";
     if (args.find(L"-PluginActivated") != std::wstring::npos)
     {

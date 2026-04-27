@@ -119,7 +119,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Ipc\PingMessage.h" />
-    <ClInclude Include="src\Utils\IBuffersHelpers.h" />
     <ClInclude Include="src\Ipc\Internal\PipeWin32.h" />
     <ClInclude Include="src\Ipc\Internal\IpcBinary.h" />
     <ClInclude Include="src\Ipc\IpcProtocol.h" />
@@ -134,7 +133,6 @@
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
     <ClCompile Include="src\Ipc\IpcProtocol.cpp" />
-    <ClCompile Include="src\Utils\IBuffersHelpers.cpp" />
     <ClCompile Include="src\Ipc\Internal\PipeWin32.cpp" />
     <ClCompile Include="src\Ipc\NamedPipeClient.cpp" />
     <ClCompile Include="src\Ipc\AppActivationLauncher.cpp" />

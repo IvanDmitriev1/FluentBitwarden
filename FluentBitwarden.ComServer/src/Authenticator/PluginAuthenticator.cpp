@@ -7,7 +7,7 @@
 
 namespace
 {
-	IAsyncAction TestPipePingAsync()
+	wil::task<void> TestPipePingAsync()
 	{
 		co_await winrt::resume_background();
 		namespace Ipc = FluentBitwarden::ComServer::Ipc;
@@ -28,6 +28,7 @@ namespace
 			throw winrt::hresult_error(E_FAIL, response.Text);
 		}
 
+		co_return;
 	}
 }
 

@@ -8,7 +8,7 @@ namespace FluentBitwarden::ComServer::Ipc
 {
 	class NamedPipeClient final
 	{
-		std::chrono::milliseconds ConnectTimeout = 2s;
+		std::chrono::milliseconds ConnectTimeout = 5s;
 
 	public:
 		NamedPipeClient(std::wstring_view pipeName);
@@ -25,10 +25,10 @@ namespace FluentBitwarden::ComServer::Ipc
 		[[nodiscard]] wil::task<TResponse> SendAsync(TRequest request);
 
 	private:
-		IAsyncOperation<JsonObject> SendJsonRequestAsync(uint16_t messageType, JsonObject request);
+		wil::task<JsonObject> SendJsonRequestAsync(uint16_t messageType, JsonObject json);
 
-		IAsyncAction WritePayload(uint16_t messageType, JsonObject json);
-		IAsyncOperation<JsonObject> ReadJsonResponseAsync();
+		wil::task<void> WritePayload(uint16_t messageType, std::string utf8);
+		wil::task<JsonObject> ReadJsonResponseAsync();
 
 	private:
 		wil::unique_hfile m_pipe;

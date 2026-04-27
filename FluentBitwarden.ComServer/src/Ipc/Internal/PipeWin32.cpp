@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "PipeWin32.h"
-#include "Utils/IBuffersHelpers.h"
 
 namespace
 {
@@ -16,18 +15,13 @@ namespace
         THROW_HR_IF(E_INVALIDARG, pipe == INVALID_HANDLE_VALUE);
     }
 
-    [[nodiscard]] wil::unique_handle CreateOverlappedEvent()
+    template <OverlappedStarter StartOperation>
+    wil::task<std::uint32_t> AwaitOverlappedAsync(HANDLE pipe, StartOperation operation)
     {
         wil::unique_handle event{ ::CreateEventW(nullptr, TRUE, FALSE, nullptr) };
         THROW_LAST_ERROR_IF(!event);
-        return event;
-    }
 
-    template <OverlappedStarter StartOperation>
-    IAsyncOperation<std::uint32_t>AwaitOverlappedAsync(HANDLE pipe, StartOperation operation)
-    {
         OVERLAPPED overlapped{};
-        auto event = CreateOverlappedEvent();
         overlapped.hEvent = event.get();
 
         const BOOL completedSynchronously = operation(overlapped);
@@ -84,12 +78,12 @@ namespace FluentBitwarden::ComServer::Ipc::PipeWin32
         }
 	}
 
-    IAsyncOperation<IBuffer> ReadExactly(HANDLE pipe, size_t count)
+    wil::task<std::vector<std::byte>> ReadExactly(HANDLE pipe, size_t count)
     {
         ValidatePipeHandle(pipe);
 
-        auto buffer = Utils::IBuffersHelpers::Allocate(count);
-        auto bytes = Utils::IBuffersHelpers::AsWritableBytes(buffer);
+        std::vector<std::byte> bytesOwner(count);
+        std::span<std::byte> bytes{ bytesOwner.data(), bytesOwner.size() };
 
         size_t offset = 0;
         while (offset < bytes.size())
@@ -114,10 +108,10 @@ namespace FluentBitwarden::ComServer::Ipc::PipeWin32
 			offset += read;
         }
 
-        co_return buffer;
+        co_return bytesOwner;
     }
 
-    IAsyncAction WriteExactly(HANDLE pipe, std::span<const std::byte> bytes)
+    wil::task<void> WriteExactly(HANDLE pipe, std::span<const std::byte> bytes)
     {
 		ValidatePipeHandle(pipe);
 
@@ -144,5 +138,7 @@ namespace FluentBitwarden::ComServer::Ipc::PipeWin32
 
             offset += written;
         }
+
+        co_return;
     }
 }

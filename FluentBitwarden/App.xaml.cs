@@ -88,12 +88,12 @@ public partial class App : IXamlMetadataServiceProvider
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-#if DEBUG
+/*#if DEBUG
         if (!Debugger.IsAttached)
         {
             Debugger.Launch();
         }
-#endif
+#endif*/
 
         await Host.Services.GetRequiredService<IAppFirstRunService>().InitializeAsync();
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
