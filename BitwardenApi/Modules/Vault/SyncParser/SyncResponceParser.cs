@@ -81,6 +81,7 @@ public sealed partial class SyncResponseParser : IDisposable
                         writer.WriteFolder(ref dto);
                     });
                 _parsedFolders = Math.Max(_parsedFolders, _arrayCaptureState.ProcessedItems);
+                ClearPendingRootPropertyIfArrayCompleted();
                 return;
             case RootProperty.Collections:
                 CaptureArray(
@@ -94,6 +95,7 @@ public sealed partial class SyncResponseParser : IDisposable
                         writer.WriteCollection(ref dto);
                     });
                 _parsedCollections = Math.Max(_parsedCollections, _arrayCaptureState.ProcessedItems);
+                ClearPendingRootPropertyIfArrayCompleted();
                 return;
             case RootProperty.Ciphers:
                 CaptureArray(
@@ -107,6 +109,7 @@ public sealed partial class SyncResponseParser : IDisposable
                         writer.WriteCipher(ref dto, _cipherPayloadCapture.PayloadSpan);
                     });
                 _parsedCiphers = Math.Max(_parsedCiphers, _arrayCaptureState.ProcessedItems);
+                ClearPendingRootPropertyIfArrayCompleted();
                 return;
             case RootProperty.Ignore:
                 _pendingRootProperty = RootProperty.None;
@@ -114,6 +117,14 @@ public sealed partial class SyncResponseParser : IDisposable
                 return;
             default:
                 return;
+        }
+    }
+
+    private void ClearPendingRootPropertyIfArrayCompleted()
+    {
+        if (!_arrayCaptureState.IsActive && !_objectCaptureState.IsActive)
+        {
+            _pendingRootProperty = RootProperty.None;
         }
     }
 

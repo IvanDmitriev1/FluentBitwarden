@@ -22,7 +22,7 @@ internal static class HttpResponseExtensions
         CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)
-            return ApiStreamResponse.CreateAsync(response);
+            return ApiStreamResponse.CreateAsync(response, cancellationToken);
 
         var exception = CreateFailureExceptionAsync(response, operation);
         response.Dispose();

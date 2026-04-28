@@ -5,8 +5,8 @@ namespace BitwardenApi.Modules.Vault.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, scoped ReadOnlySpan<byte> key) where T : Cipher;
-    private delegate T JsonArrayItemReader<out T>(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key);
+    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, scoped ReadOnlySpan<byte> decryptKey) where T : Cipher;
+    private delegate T JsonArrayItemReader<out T>(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey);
 
     private static Utf8JsonReader CreateObjectReader(ReadOnlySpan<byte> payload)
     {
@@ -19,7 +19,7 @@ public static partial class VaultDataParser
         return reader;
     }
 
-    private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key,
+    private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey,
         CipherPropertyReader<T> readProperty) where T : Cipher
     {
         while (reader.Read())
@@ -30,10 +30,10 @@ public static partial class VaultDataParser
             if (reader.TokenType != JsonTokenType.PropertyName)
                 continue;
 
-            if (TryReadCommonCipherProperty(ref reader, cipher, key))
+            if (TryReadCommonCipherProperty(ref reader, cipher, decryptKey))
                 continue;
 
-            if (!readProperty.Invoke(ref reader, cipher, key))
+            if (!readProperty.Invoke(ref reader, cipher, decryptKey))
                 SkipValue(ref reader);
         }
 
@@ -48,19 +48,19 @@ public static partial class VaultDataParser
             reader.Skip();
     }
 
-    private static string? ReadDecryptField(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    private static string? ReadDecryptField(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
         reader.Read();
 
         if (reader.TokenType == JsonTokenType.Null)
             return null;
 
-        return CryptographyService.DecryptString(ref reader, key);
+        return CryptographyService.DecryptString(ref reader, decryptKey);
     }
 
     private static List<T> ReadJsonArray<T>(
         ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> key,
+        scoped ReadOnlySpan<byte> decryptKey,
         JsonArrayItemReader<T> readItem)
     {
         reader.Read();
@@ -77,7 +77,7 @@ public static partial class VaultDataParser
             if (reader.TokenType == JsonTokenType.EndArray)
                 break;
 
-            items.Add(readItem(ref reader, key));
+            items.Add(readItem(ref reader, decryptKey));
         }
 
         return items;

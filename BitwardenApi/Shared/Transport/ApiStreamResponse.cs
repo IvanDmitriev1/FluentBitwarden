@@ -5,9 +5,11 @@ namespace BitwardenApi.Shared.Transport;
 
 public sealed class ApiStreamResponse : IDisposable
 {
-    public static async Task<ApiStreamResponse> CreateAsync(HttpResponseMessage response)
+    public static async Task<ApiStreamResponse> CreateAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken = default)
     {
-        var stream = await response.Content.ReadAsStreamAsync();
+        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         return new ApiStreamResponse(response, stream);
     }
 

@@ -2,10 +2,10 @@ using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
 using BitwardenApi.Modules.Vault.SyncParser;
 using BitwardenApi.Shared.Context;
+using BitwardenApi.Shared.Exceptions;
 using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
 using System.Net.Http.Json;
-using BitwardenApi.Shared.Exceptions;
 
 namespace BitwardenApi.Modules.Vault.Services;
 
@@ -24,7 +24,7 @@ public sealed class VaultApiClient(
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        response.EnsureSuccessStatusCode();
+        response.EnsureSuccess("Vault get revision date", cancellationToken);
 
         var rawValue = await response.Content.ReadFromJsonAsync(BitwardenApiJsonContext.ConfiguredDefault.Int64, cancellationToken);
         if (rawValue < 0)
@@ -45,6 +45,13 @@ public sealed class VaultApiClient(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var exception = HttpResponseExtensions.CreateFailureExceptionAsync(response, "Vault sync");
+            response.Dispose();
+            throw exception;
+        }
 
         var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         return new SyncPayload(response, stream);

@@ -2,29 +2,33 @@
 using BitwardenApi.Modules.Notifications.Models;
 using BitwardenApi.Shared.Serialization;
 using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization.Metadata;
 
 namespace BitwardenApi.Modules.Notifications.Services;
 
 internal sealed class NotificationDispatcher(IServiceProvider serviceProvider) : INotificationDispatcher
 {
-    [RequiresDynamicCode("Calls BitwardenApi.Modules.Notifications.Services.NotificationDispatcher.PublishAsync<TNotification>(JsonElement, CancellationToken)")]
-    [RequiresUnreferencedCode("Calls BitwardenApi.Modules.Notifications.Services.NotificationDispatcher.PublishAsync<TNotification>(JsonElement, CancellationToken)")]
     public Task DispatchAsync(in NotificationEnvelope notificationEnvelope, CancellationToken cancellationToken) =>
         notificationEnvelope.Type switch
         {
-            NotificationType.SyncCipherCreate => PublishAsync<CipherChangedNotification>(notificationEnvelope.Payload,
+            NotificationType.SyncCipherCreate => PublishAsync(notificationEnvelope.Payload,
+                BitwardenApiJsonContext.ConfiguredDefault.CipherChangedNotification,
                 cancellationToken),
-            NotificationType.SyncCipherUpdate => PublishAsync<CipherChangedNotification>(notificationEnvelope.Payload,
+            NotificationType.SyncCipherUpdate => PublishAsync(notificationEnvelope.Payload,
+                BitwardenApiJsonContext.ConfiguredDefault.CipherChangedNotification,
                 cancellationToken),
-            NotificationType.SyncCipherDelete => PublishAsync<CipherChangedNotification>(notificationEnvelope.Payload,
+            NotificationType.SyncCipherDelete => PublishAsync(notificationEnvelope.Payload,
+                BitwardenApiJsonContext.ConfiguredDefault.CipherChangedNotification,
                 cancellationToken),
 
-            NotificationType.SyncFolderCreate => PublishAsync<FolderChangedNotification>(notificationEnvelope.Payload,
+            NotificationType.SyncFolderCreate => PublishAsync(notificationEnvelope.Payload,
+                BitwardenApiJsonContext.ConfiguredDefault.FolderChangedNotification,
                 cancellationToken),
-            NotificationType.SyncFolderUpdate => PublishAsync<FolderChangedNotification>(notificationEnvelope.Payload,
+            NotificationType.SyncFolderUpdate => PublishAsync(notificationEnvelope.Payload,
+                BitwardenApiJsonContext.ConfiguredDefault.FolderChangedNotification,
                 cancellationToken),
-            NotificationType.SyncFolderDelete => PublishAsync<FolderChangedNotification>(notificationEnvelope.Payload,
+            NotificationType.SyncFolderDelete => PublishAsync(notificationEnvelope.Payload,
+                BitwardenApiJsonContext.ConfiguredDefault.FolderChangedNotification,
                 cancellationToken),
 
             NotificationType.SyncVault
@@ -35,19 +39,20 @@ internal sealed class NotificationDispatcher(IServiceProvider serviceProvider) :
                 or NotificationType.SyncOrganizationStatusChanged
                 or NotificationType.SyncOrganizationCollectionSettingChanged
                 or NotificationType.SyncPolicy =>
-                PublishAsync<VaultSyncRequestedNotification>(notificationEnvelope.Payload, cancellationToken),
+                PublishAsync(notificationEnvelope.Payload,
+                    BitwardenApiJsonContext.ConfiguredDefault.VaultSyncRequestedNotification,
+                    cancellationToken),
 
             _ => Task.CompletedTask,
         };
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(JsonElement, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(JsonElement, JsonSerializerOptions)")]
     private async Task PublishAsync<TNotification>(
         JsonElement json,
+        JsonTypeInfo<TNotification> jsonTypeInfo,
         CancellationToken cancellationToken)
     {
         var notification =
-            json.Deserialize<TNotification>(BitwardenApiJsonContext.ConfiguredDefault.Options) ??
+            JsonSerializer.Deserialize(json, jsonTypeInfo) ??
             throw new InvalidOperationException();
 
         var handlers = serviceProvider

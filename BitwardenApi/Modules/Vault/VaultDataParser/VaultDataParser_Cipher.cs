@@ -1,4 +1,3 @@
-using System.Buffers.Text;
 using BitwardenApi.Cryptography;
 using BitwardenApi.Modules.Vault.Internal;
 using BitwardenApi.Modules.Vault.Models;
@@ -37,8 +36,8 @@ public static partial class VaultDataParser
     }
 
     private static LoginCipher ParseLoginCipher(LoginCipher cipher, ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> key)
-        => ParseCipherObject(cipher, ref reader, key,
+        scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(cipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("username"u8) || r.ValueTextEquals("Username"u8))
@@ -58,11 +57,11 @@ public static partial class VaultDataParser
             });
 
 
-    private static SecureNoteCipher ParseSecureNoteCipher(SecureNoteCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-        => ParseCipherObject(cipher, ref reader, key, static (ref _, _, scoped _) => false);
+    private static SecureNoteCipher ParseSecureNoteCipher(SecureNoteCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(cipher, ref reader, decryptKey, static (ref _, _, scoped _) => false);
 
-    private static CardCipher ParseCardCipher(CardCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
-        => ParseCipherObject(cipher, ref reader, key, static (ref r, c, scoped k) =>
+    private static CardCipher ParseCardCipher(CardCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(cipher, ref reader, decryptKey, static (ref r, c, scoped k) =>
         {
             if (r.ValueTextEquals("cardholderName"u8) || r.ValueTextEquals("CardholderName"u8))
                 c.CardholderName = ReadDecryptField(ref r, k);
@@ -83,8 +82,8 @@ public static partial class VaultDataParser
         });
 
     private static IdentityCipher ParseIdentityCipher(IdentityCipher cipher, ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> key)
-        => ParseCipherObject(cipher, ref reader, key,
+        scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(cipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("title"u8) || r.ValueTextEquals("Title"u8))
@@ -129,8 +128,8 @@ public static partial class VaultDataParser
             });
 
     private static SshKeyCipher ParseSshKeyCipher(SshKeyCipher cipher, ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> key)
-        => ParseCipherObject(cipher, ref reader, key,
+        scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(cipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("privateKey"u8) || r.ValueTextEquals("PrivateKey"u8))
@@ -144,17 +143,17 @@ public static partial class VaultDataParser
                 return true;
             });
 
-    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, Cipher cipher, scoped ReadOnlySpan<byte> key)
+    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, Cipher cipher, scoped ReadOnlySpan<byte> decryptKey)
     {
         if (reader.ValueTextEquals("name"u8) || reader.ValueTextEquals("Name"u8))
         {
-            cipher.Name = ReadDecryptField(ref reader, key) ?? string.Empty;
+            cipher.Name = ReadDecryptField(ref reader, decryptKey) ?? string.Empty;
             return true;
         }
 
         if (reader.ValueTextEquals("notes"u8) || reader.ValueTextEquals("Notes"u8))
         {
-            cipher.Notes = ReadDecryptField(ref reader, key);
+            cipher.Notes = ReadDecryptField(ref reader, decryptKey);
             return true;
         }
 
@@ -221,7 +220,7 @@ public static partial class VaultDataParser
         _ => throw new ArgumentOutOfRangeException()
     };
 
-    private static string ReadUri(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    private static string ReadUri(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
             return string.Empty;
@@ -237,7 +236,7 @@ public static partial class VaultDataParser
                 continue;
 
             if (reader.ValueTextEquals("uri"u8) || reader.ValueTextEquals("Uri"u8))
-                uri = ReadDecryptField(ref reader, key);
+                uri = ReadDecryptField(ref reader, decryptKey);
             else
                 SkipValue(ref reader);
         }
@@ -246,7 +245,7 @@ public static partial class VaultDataParser
         return uri;
     }
 
-    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Each Fido2Credentials item must be a JSON object.");
@@ -274,29 +273,29 @@ public static partial class VaultDataParser
                 continue;
 
             if (reader.ValueTextEquals("credentialId"u8) || reader.ValueTextEquals("CredentialId"u8))
-                credentialId = Fido2CredentialJsonMapper.ParseCredentialId(ReadRequiredDecryptField(ref reader, key, "CredentialId"));
+                credentialId = Fido2CredentialJsonMapper.ReadCredentialId(ref reader, decryptKey, "CredentialId");
             else if (reader.ValueTextEquals("keyType"u8) || reader.ValueTextEquals("KeyType"u8))
-                keyType = Fido2CredentialJsonMapper.ParseKeyType(ReadRequiredDecryptField(ref reader, key, "KeyType"));
+                keyType = Fido2CredentialJsonMapper.ReadKeyType(ref reader, decryptKey, "KeyType");
             else if (reader.ValueTextEquals("keyAlgorithm"u8) || reader.ValueTextEquals("KeyAlgorithm"u8))
-                keyAlgorithm = Fido2CredentialJsonMapper.ParseKeyAlgorithm(ReadRequiredDecryptField(ref reader, key, "KeyAlgorithm"));
+                keyAlgorithm = Fido2CredentialJsonMapper.ReadKeyAlgorithm(ref reader, decryptKey, "KeyAlgorithm");
             else if (reader.ValueTextEquals("keyCurve"u8) || reader.ValueTextEquals("KeyCurve"u8))
-                keyCurve = Fido2CredentialJsonMapper.ParseKeyCurve(ReadRequiredDecryptField(ref reader, key, "KeyCurve"));
+                keyCurve = Fido2CredentialJsonMapper.ReadKeyCurve(ref reader, decryptKey, "KeyCurve");
             else if (reader.ValueTextEquals("keyValue"u8) || reader.ValueTextEquals("KeyValue"u8))
-                keyValue = Base64Url.DecodeFromChars(ReadRequiredDecryptField(ref reader, key, "KeyValue"));
+                keyValue = ReadBase64UrlBytes(ref reader, decryptKey, "KeyValue");
             else if (reader.ValueTextEquals("rpId"u8) || reader.ValueTextEquals("RpId"u8))
-                rpId = ReadRequiredDecryptField(ref reader, key, "RpId");
+                rpId = ReadRequiredDecryptField(ref reader, decryptKey, "RpId");
             else if (reader.ValueTextEquals("rpName"u8) || reader.ValueTextEquals("RpName"u8))
-                rpName = ReadRequiredDecryptField(ref reader, key, "RpName");
+                rpName = ReadRequiredDecryptField(ref reader, decryptKey, "RpName");
             else if (reader.ValueTextEquals("userHandle"u8) || reader.ValueTextEquals("UserHandle"u8))
-                userHandle = Base64Url.DecodeFromChars(ReadRequiredDecryptField(ref reader, key, "UserHandle"));
+                userHandle = ReadBase64UrlBytes(ref reader, decryptKey, "UserHandle");
             else if (reader.ValueTextEquals("userName"u8) || reader.ValueTextEquals("UserName"u8))
-                userName = ReadRequiredDecryptField(ref reader, key, "UserName");
+                userName = ReadRequiredDecryptField(ref reader, decryptKey, "UserName");
             else if (reader.ValueTextEquals("userDisplayName"u8) || reader.ValueTextEquals("UserDisplayName"u8))
-                userDisplayName = ReadRequiredDecryptField(ref reader, key, "UserDisplayName");
+                userDisplayName = ReadRequiredDecryptField(ref reader, decryptKey, "UserDisplayName");
             else if (reader.ValueTextEquals("counter"u8) || reader.ValueTextEquals("Counter"u8))
-                counter = ReadRequiredEncryptedInt32(ref reader, key, "Counter");
+                counter = ReadRequiredEncryptedInt32(ref reader, decryptKey, "Counter");
             else if (reader.ValueTextEquals("discoverable"u8) || reader.ValueTextEquals("Discoverable"u8))
-                discoverable = ReadRequiredEncryptedBoolean(ref reader, key, "Discoverable");
+                discoverable = ReadRequiredEncryptedBoolean(ref reader, decryptKey, "Discoverable");
             else if (reader.ValueTextEquals("creationDate"u8) || reader.ValueTextEquals("CreationDate"u8))
                 creationDate = ReadRequiredDateTimeOffset(ref reader, "CreationDate");
             else
@@ -305,23 +304,23 @@ public static partial class VaultDataParser
 
         return new Fido2Credential
         {
-            CredentialId = credentialId!,
-            KeyType = keyType!.Value,
-            KeyAlgorithm = keyAlgorithm!.Value,
-            KeyCurve = keyCurve!.Value,
-            KeyValue = keyValue!,
-            RpId = rpId!,
-            RpName = rpName!,
-            UserHandle = userHandle!,
-            UserName = userName!,
-            UserDisplayName = userDisplayName!,
-            Counter = counter!.Value,
-            Discoverable = discoverable!.Value,
-            CreationDate = creationDate!.Value
+            CredentialId = credentialId ?? throw new JsonException("FIDO2 credential is missing CredentialId."),
+            KeyType = keyType ?? throw new JsonException("FIDO2 credential is missing KeyType."),
+            KeyAlgorithm = keyAlgorithm ?? throw new JsonException("FIDO2 credential is missing KeyAlgorithm."),
+            KeyCurve = keyCurve ?? throw new JsonException("FIDO2 credential is missing KeyCurve."),
+            KeyValue = keyValue ?? throw new JsonException("FIDO2 credential is missing KeyValue."),
+            RpId = rpId ?? throw new JsonException("FIDO2 credential is missing RpId."),
+            RpName = rpName ?? throw new JsonException("FIDO2 credential is missing RpName."),
+            UserHandle = userHandle ?? throw new JsonException("FIDO2 credential is missing UserHandle."),
+            UserName = userName ?? throw new JsonException("FIDO2 credential is missing UserName."),
+            UserDisplayName = userDisplayName ?? throw new JsonException("FIDO2 credential is missing UserDisplayName."),
+            Counter = counter ?? throw new JsonException("FIDO2 credential is missing Counter."),
+            Discoverable = discoverable ?? throw new JsonException("FIDO2 credential is missing Discoverable."),
+            CreationDate = creationDate ?? throw new JsonException("FIDO2 credential is missing CreationDate.")
         };
     }
 
-    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> key)
+    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
         reader.Read();
 
@@ -329,7 +328,7 @@ public static partial class VaultDataParser
             return null;
 
         Span<byte> decodedSpan = stackalloc byte[reader.ValueSpan.Length];
-        int bytesWritten = CryptographyService.DecryptStringTo(ref reader, key, decodedSpan);
+        int bytesWritten = CryptographyService.DecryptStringTo(ref reader, decryptKey, decodedSpan);
         Span<byte> decodedValue = decodedSpan[..bytesWritten];
 
         TotpValue.TryParse(decodedValue, out var totpValue);
