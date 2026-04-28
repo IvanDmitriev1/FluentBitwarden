@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Shared.Ipc.Models;
+using FluentBitwarden.Shared.Ipc.Abstractions;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace FluentBitwarden.Shared.Ipc.Internal;
 
@@ -22,17 +22,34 @@ internal static class PipeProtocol
                throw new InvalidOperationException();
     }
 
-    public static async ValueTask WriteMessageAsync<TMessage>(
+    public static async ValueTask WriteResultMessageAsync<TMessage>(
         Stream stream,
         ushort messageType,
-        TMessage message,
+        IpcResult<TMessage> result,
         JsonTypeInfo<TMessage> jsonTypeInfo,
         CancellationToken cancellationToken)
         where TMessage : notnull
     {
         using ArrayPoolBufferWriter<byte> payloadWriter = new();
         using var jsonWriter = new Utf8JsonWriter(payloadWriter);
-        JsonSerializer.Serialize(jsonWriter, message, jsonTypeInfo);
+
+        jsonWriter.WriteStartObject();
+        jsonWriter.WriteBoolean("Success", result.Success);
+
+        if (result.Success)
+        {
+            jsonWriter.WritePropertyName("Value");
+            JsonSerializer.Serialize(
+                jsonWriter,
+                result.Value,
+                jsonTypeInfo);
+        }
+        else
+        {
+            jsonWriter.WriteString("Error", result.Error);
+        }
+
+        jsonWriter.WriteEndObject();
         jsonWriter.Flush();
 
         ReadOnlyMemory<byte> payload = payloadWriter.WrittenMemory;

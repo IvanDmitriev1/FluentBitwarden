@@ -118,10 +118,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\Ipc\PingMessage.h" />
+    <ClInclude Include="src\WebAuthn\AssertionResponseBuilder.h" />
+    <ClInclude Include="src\Utils\HashingFunctions.h" />
+    <ClInclude Include="src\WebAuthn\DecodedWebAuthnGetAssertionRequest.h" />
+    <ClInclude Include="src\WebAuthn\Messages\PasskeyAssertionMessage.h" />
+    <ClInclude Include="src\Ipc\Base64Url.h" />
     <ClInclude Include="src\Ipc\Internal\PipeWin32.h" />
     <ClInclude Include="src\Ipc\Internal\IpcBinary.h" />
     <ClInclude Include="src\Ipc\IpcProtocol.h" />
+    <ClInclude Include="src\Ipc\IpcResult.h" />
     <ClInclude Include="src\Ipc\IpcConstants.h" />
     <ClInclude Include="src\Ipc\NamedPipeClient.h" />
     <ClInclude Include="src\Ipc\AppActivationLauncher.h" />
@@ -132,6 +137,9 @@
     <ClInclude Include="src\Authenticator\PluginAuthenticator.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
+    <ClCompile Include="src\WebAuthn\AssertionResponseBuilder.cpp" />
+    <ClCompile Include="src\Utils\HashingFunctions.cpp" />
+    <ClCompile Include="src\WebAuthn\DecodedWebAuthnGetAssertionRequest.cpp" />
     <ClCompile Include="src\Ipc\IpcProtocol.cpp" />
     <ClCompile Include="src\Ipc\Internal\PipeWin32.cpp" />
     <ClCompile Include="src\Ipc\NamedPipeClient.cpp" />

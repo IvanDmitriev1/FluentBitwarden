@@ -6,6 +6,7 @@ using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.AppState.Abstractions;
+using FluentBitwarden.Modules.Passkey;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Modules.Session.Services.Authentication;
@@ -64,6 +65,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddSessionModule();
             services.AddAppStateModule();
             services.AddVaultServices();
+            services.AddPasskeyModule();
 
         })
         .Build();

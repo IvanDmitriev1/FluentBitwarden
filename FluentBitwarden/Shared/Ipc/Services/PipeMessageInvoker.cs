@@ -1,6 +1,7 @@
-﻿using System.Text.Json.Serialization.Metadata;
 using FluentBitwarden.Shared.Ipc.Abstractions;
 using FluentBitwarden.Shared.Ipc.Internal;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace FluentBitwarden.Shared.Ipc.Services;
 
@@ -17,9 +18,18 @@ public sealed class PipeMessageInvoker<TRequest, TResponse>(
 
     public async ValueTask InvokeAsync(Stream stream, int payloadLength, CancellationToken cancellationToken)
     {
-        var request = await PipeProtocol.ReadPayloadAsync(stream, payloadLength, requestTypeInfo, cancellationToken);
-        var response = await handler.HandleAsync(request, cancellationToken);
+        IpcResult<TResponse> response;
 
-        await PipeProtocol.WriteMessageAsync(stream, MessageType, response, responseTypeInfo, cancellationToken);
+        try
+        {
+            var request = await PipeProtocol.ReadPayloadAsync(stream, payloadLength, requestTypeInfo, cancellationToken);
+            response = await handler.HandleAsync(request, cancellationToken);
+        }
+        catch (Exception e) when (e is not OperationCanceledException and not EndOfStreamException and not IOException)
+        {
+            response = IpcResult<TResponse>.Fail(e.Message);
+        }
+
+        await PipeProtocol.WriteResultMessageAsync(stream, MessageType, response, responseTypeInfo, cancellationToken);
     }
 }

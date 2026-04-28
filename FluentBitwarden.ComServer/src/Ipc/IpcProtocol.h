@@ -34,7 +34,7 @@ namespace FluentBitwarden::ComServer::Ipc
 	template <typename T>
 	concept IpcJsonRequest =
 		std::movable<T> &&
-		requires(T const& value)
+		requires(const T& value)
 	{
 		{ T::MessageType } -> std::convertible_to<std::uint16_t>;
 		{ value.ToJson() } -> std::same_as<JsonObject>;
@@ -43,7 +43,7 @@ namespace FluentBitwarden::ComServer::Ipc
 	template <typename T>
 	concept IpcJsonResponse =
 		std::movable<T> &&
-		requires(const JsonObject& json)
+		requires(JsonObject json)
 	{
 		{ T::FromJson(json) } -> std::same_as<T>;
 	};

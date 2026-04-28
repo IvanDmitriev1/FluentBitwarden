@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.Shared.Ipc.Models;
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 
 namespace FluentBitwarden.Shared.Ipc.Internal;
 

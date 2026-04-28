@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Shared.Ipc.Models;
+﻿namespace FluentBitwarden.Shared.Ipc;
 
 public static class IpcConstants
 {

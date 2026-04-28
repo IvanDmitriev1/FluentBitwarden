@@ -6,13 +6,11 @@
 #include <wil/result_macros.h>
 #include <wil/registry.h>
 #include <wil/win32_helpers.h>
-#include <wil/coroutine.h>
 
 //Classic COM FIRST
 #include <windows.h>
 #include <unknwn.h>
 
-// Re-include after Windows headers so wil::task::get() is defined.
 #include <wil/coroutine.h>
 
 #include <webauthn.h>
@@ -25,6 +23,8 @@
 #include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Security.Cryptography.h>
+#include <winrt/Windows.Storage.Streams.h>
 
 #include <array>
 #include <filesystem>
@@ -39,6 +39,7 @@
 #include <span>
 #include <stdexcept>
 #include <vector>
+#include <ranges>
 
 using winrt::Windows::Data::Json::JsonObject;
 using winrt::Windows::Data::Json::JsonValue;
