@@ -45,7 +45,6 @@ IFACEMETHODIMP PluginAuthenticator::GetAssertion(PCWEBAUTHN_PLUGIN_OPERATION_REQ
 		PasskeyGetAssertionRequest ipcRequest{};
 		RETURN_IF_FAILED(decodedRequest.ToIpcRequest(ipcRequest));
 
-		Ipc::AppActivationLauncher::ActivateMainApp(L"--passkey");
 		Ipc::NamedPipeClient m_pipeClient{ Ipc::Constants::PipePath };
 
 		auto ipcResult = m_pipeClient.SendAsync<PasskeyGetAssertionRequest, PasskeyAssertionResponse>(std::move(ipcRequest)).get();
@@ -69,6 +68,8 @@ IFACEMETHODIMP PluginAuthenticator::CancelOperation(PCWEBAUTHN_PLUGIN_CANCEL_OPE
 IFACEMETHODIMP PluginAuthenticator::GetLockStatus(PLUGIN_LOCK_STATUS* lockStatus) noexcept
 {
 	RETURN_HR_IF(E_POINTER, !lockStatus);
+
+	Ipc::AppActivationLauncher::ActivateMainApp(L"--silent");
 
 	*lockStatus = PluginLocked;
 	return S_OK;

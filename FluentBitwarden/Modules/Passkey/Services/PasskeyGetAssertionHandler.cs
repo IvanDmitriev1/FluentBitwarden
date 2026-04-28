@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using BitwardenApi.Modules.Vault.Models;
+using FluentBitwarden.Modules.Passkey.Internal;
 using FluentBitwarden.Modules.Passkey.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Shared.Ipc.Abstractions;
@@ -22,7 +23,21 @@ internal class PasskeyGetAssertionHandler(IVaultSyncService service) : IPipeMess
             return ValueTask.FromResult(IpcResult<PasskeyAssertionResponse>.Fail("Credential not found."));
         }
 
-        return ValueTask.FromResult(
-            IpcResult<PasskeyAssertionResponse>.Fail("Passkey get assertion is not implemented."));
+        var authenticatorData = WebAuthnAssertion.BuildAuthenticatorData(request.RpIdHash, credential.Counter, true, true);
+        var signedPayload = WebAuthnAssertion.BuildSignedPayload(authenticatorData, request.ClientDataHash);
+
+        var signature = WebAuthnAssertion.SignEs256(
+            credential.KeyValue,
+            signedPayload);
+
+        var response = new PasskeyAssertionResponse
+        {
+            CredentialId = credential.CredentialId,
+            UserId = credential.UserHandle,
+            AuthenticatorData = authenticatorData,
+            Signature = signature
+        };
+
+        return ValueTask.FromResult(IpcResult<PasskeyAssertionResponse>.Ok(response));
     }
 }

@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using BitwardenApi.Cryptography;
 using BitwardenApi.Modules.Vault.Internal;
 using BitwardenApi.Modules.Vault.Models;
@@ -250,14 +251,14 @@ public static partial class VaultDataParser
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Each Fido2Credentials item must be a JSON object.");
 
-        string? credentialId = null;
+        byte[]? credentialId = null;
         Fido2CredentialKeyType? keyType = null;
         Fido2CredentialKeyAlgorithm? keyAlgorithm = null;
         Fido2CredentialKeyCurve? keyCurve = null;
-        string? keyValue = null;
+        byte[]? keyValue = null;
         string? rpId = null;
         string? rpName = null;
-        string? userHandle = null;
+        byte[]? userHandle = null;
         string? userName = null;
         string? userDisplayName = null;
         int? counter = null;
@@ -273,7 +274,7 @@ public static partial class VaultDataParser
                 continue;
 
             if (reader.ValueTextEquals("credentialId"u8) || reader.ValueTextEquals("CredentialId"u8))
-                credentialId = ReadRequiredDecryptField(ref reader, key, "CredentialId");
+                credentialId = Fido2CredentialJsonMapper.ParseCredentialId(ReadRequiredDecryptField(ref reader, key, "CredentialId"));
             else if (reader.ValueTextEquals("keyType"u8) || reader.ValueTextEquals("KeyType"u8))
                 keyType = Fido2CredentialJsonMapper.ParseKeyType(ReadRequiredDecryptField(ref reader, key, "KeyType"));
             else if (reader.ValueTextEquals("keyAlgorithm"u8) || reader.ValueTextEquals("KeyAlgorithm"u8))
@@ -281,13 +282,13 @@ public static partial class VaultDataParser
             else if (reader.ValueTextEquals("keyCurve"u8) || reader.ValueTextEquals("KeyCurve"u8))
                 keyCurve = Fido2CredentialJsonMapper.ParseKeyCurve(ReadRequiredDecryptField(ref reader, key, "KeyCurve"));
             else if (reader.ValueTextEquals("keyValue"u8) || reader.ValueTextEquals("KeyValue"u8))
-                keyValue = ReadRequiredDecryptField(ref reader, key, "KeyValue");
+                keyValue = Base64Url.DecodeFromChars(ReadRequiredDecryptField(ref reader, key, "KeyValue"));
             else if (reader.ValueTextEquals("rpId"u8) || reader.ValueTextEquals("RpId"u8))
                 rpId = ReadRequiredDecryptField(ref reader, key, "RpId");
             else if (reader.ValueTextEquals("rpName"u8) || reader.ValueTextEquals("RpName"u8))
                 rpName = ReadRequiredDecryptField(ref reader, key, "RpName");
             else if (reader.ValueTextEquals("userHandle"u8) || reader.ValueTextEquals("UserHandle"u8))
-                userHandle = ReadRequiredDecryptField(ref reader, key, "UserHandle");
+                userHandle = Base64Url.DecodeFromChars(ReadRequiredDecryptField(ref reader, key, "UserHandle"));
             else if (reader.ValueTextEquals("userName"u8) || reader.ValueTextEquals("UserName"u8))
                 userName = ReadRequiredDecryptField(ref reader, key, "UserName");
             else if (reader.ValueTextEquals("userDisplayName"u8) || reader.ValueTextEquals("UserDisplayName"u8))

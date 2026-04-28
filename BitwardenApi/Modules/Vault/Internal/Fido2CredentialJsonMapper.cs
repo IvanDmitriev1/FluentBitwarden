@@ -33,4 +33,14 @@ internal static class Fido2CredentialJsonMapper
 
         throw new JsonException($"Unsupported Fido2 credential key curve '{value}'.");
     }
+
+    public static byte[] ParseCredentialId(string value)
+    {
+        if (Guid.TryParse(value, out Guid guid))
+        {
+            return guid.ToByteArray(bigEndian: true);
+        }
+
+        throw new JsonException($"Invalid Fido2 credential ID '{value}'.");
+    }
 }
