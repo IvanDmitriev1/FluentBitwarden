@@ -1,7 +1,6 @@
 ﻿#include "pch.h"
 #include "Authenticator/PluginAuthenticator.h"
 #include "Authenticator/PluginRegistrationManager.h"
-#include "Ipc/AppActivationLauncher.h"
 
 static void AttachDebugger()
 {
@@ -18,51 +17,67 @@ static void AttachDebugger()
     }
 }
 
-static int RunPluginComServer() noexcept
+static HRESULT RunPluginComServer() noexcept
 {
-    winrt::check_hresult(
-        CoInitializeSecurity(
-        nullptr,
-        -1,
-        nullptr,
-        nullptr,
-        RPC_C_AUTHN_LEVEL_DEFAULT,
-        RPC_C_IMP_LEVEL_IMPERSONATE,
-        nullptr,
-        EOAC_NONE,
-        nullptr));
-
-    auto factory = winrt::make<PluginAuthenticatorFactory>();
-
-    DWORD registrationToken{};
-    winrt::check_hresult(CoRegisterClassObject(
-        PluginAuthenticator::CLSID,
-        factory.get(),
-        CLSCTX_LOCAL_SERVER,
-        REGCLS_MULTIPLEUSE,
-        &registrationToken));
-
-    MSG msg{};
-    while (GetMessageW(&msg, nullptr, 0, 0))
+    try
     {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
+        RETURN_IF_FAILED(
+            CoInitializeSecurity(
+            nullptr,
+            -1,
+            nullptr,
+            nullptr,
+            RPC_C_AUTHN_LEVEL_DEFAULT,
+            RPC_C_IMP_LEVEL_IMPERSONATE,
+            nullptr,
+            EOAC_NONE,
+            nullptr));
 
-    CoRevokeClassObject(registrationToken);
-    return 0;
+        auto factory = winrt::make<FluentBitwarden::ComServer::PluginAuthenticatorFactory>();
+
+        DWORD registrationToken{};
+        RETURN_IF_FAILED(CoRegisterClassObject(
+            FluentBitwarden::ComServer::PluginAuthenticator::CLSID,
+            factory.get(),
+            CLSCTX_LOCAL_SERVER,
+            REGCLS_MULTIPLEUSE,
+            &registrationToken));
+
+        auto revokeRegistration = wil::scope_exit([&]
+        {
+            CoRevokeClassObject(registrationToken);
+        });
+
+        MSG msg{};
+        BOOL getMessageResult = 0;
+
+        while ((getMessageResult = GetMessageW(&msg, nullptr, 0, 0)) > 0)
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+
+        RETURN_LAST_ERROR_IF(getMessageResult == -1);
+
+        const HRESULT revokeResult = CoRevokeClassObject(registrationToken);
+        revokeRegistration.release();
+        RETURN_IF_FAILED(revokeResult);
+
+        return S_OK;
+    }
+    CATCH_RETURN();
 }
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR pCmdLine, int)
 {
-    winrt::init_apartment(winrt::apartment_type::single_threaded);
+    winrt::init_apartment(winrt::apartment_type::multi_threaded);
 
-/*#ifdef _DEBUG
-    if (!IsDebuggerPresent())
-    {
-        AttachDebugger();
-    }
-#endif*/
+    /*#ifdef _DEBUG
+            if (!IsDebuggerPresent())
+            {
+                FluentBitwarden::ComServer::AttachDebugger();
+            }
+    #endif*/
 
     std::wstring args = pCmdLine ? pCmdLine : L"";
     if (args.find(L"-PluginActivated") != std::wstring::npos)
@@ -72,12 +87,14 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR pCmdLine, int)
 
     if (args.find(L"--register-plugin") != std::wstring::npos)
     {
-        return PluginRegistrationManager::EnsureRegistered();
+        FluentBitwarden::ComServer::PluginRegistrationManager::EnsureRegistered();
+        return 0;
     }
 
     if (args.find(L"--unregister-plugin") != std::wstring::npos)
     {
-        return PluginRegistrationManager::Unregister();
+        FluentBitwarden::ComServer::PluginRegistrationManager::Unregister();
+        return 0;
     }
 
     return 1;

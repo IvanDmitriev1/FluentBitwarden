@@ -44,3 +44,5 @@
 using winrt::Windows::Data::Json::JsonObject;
 using winrt::Windows::Data::Json::JsonValue;
 using winrt::Windows::Foundation::TimeSpan;
+
+using winrt::Windows::Security::Cryptography::CryptographicBuffer;

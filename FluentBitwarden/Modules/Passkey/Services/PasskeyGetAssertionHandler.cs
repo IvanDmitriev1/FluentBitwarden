@@ -12,7 +12,7 @@ internal class PasskeyGetAssertionHandler(IVaultSyncService service) : IPipeMess
 {
     public ushort MessageType => 2;
 
-    public ValueTask<IpcResult<PasskeyAssertionResponse>> HandleAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
+    public ValueTask<PasskeyAssertionResponse> HandleAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
         var credential = service.Ciphers.OfType<LoginCipher>()
             .SelectMany(static l => l.Fido2Credentials)
@@ -20,7 +20,7 @@ internal class PasskeyGetAssertionHandler(IVaultSyncService service) : IPipeMess
 
         if (credential is null)
         {
-            return ValueTask.FromResult(IpcResult<PasskeyAssertionResponse>.Fail("Credential not found."));
+            throw new InvalidOperationException("Credential not found.");
         }
 
         var authenticatorData = WebAuthnAssertion.BuildAuthenticatorData(request.RpIdHash, credential.Counter, true, true);
@@ -35,9 +35,11 @@ internal class PasskeyGetAssertionHandler(IVaultSyncService service) : IPipeMess
             CredentialId = credential.CredentialId,
             UserId = credential.UserHandle,
             AuthenticatorData = authenticatorData,
-            Signature = signature
+            Signature = signature,
+            UserName = credential.UserName,
+            UserDisplayName = credential.UserDisplayName
         };
 
-        return ValueTask.FromResult(IpcResult<PasskeyAssertionResponse>.Ok(response));
+        return ValueTask.FromResult(response);
     }
 }

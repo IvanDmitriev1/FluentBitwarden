@@ -1,10 +1,10 @@
 #include <pch.h>
 #include "IpcProtocol.h"
-#include "Internal/IpcBinary.h"
+#include "IpcBinary.h"
 
 namespace FluentBitwarden::ComServer::Ipc
 {
-	PipeHeader PipeHeader::Parse(std::span<const std::byte> bytes)
+	RequestHeader RequestHeader::Parse(std::span<const std::byte> bytes)
 	{
 		if (bytes.size() != Size)
 		{
@@ -26,21 +26,21 @@ namespace FluentBitwarden::ComServer::Ipc
 			bytes.subspan(PayloadLengthOffset, sizeof(std::uint32_t)));
 
 
-		if (payloadLength > Constants::MaxPayloadLength)
+		if (payloadLength == 0 || payloadLength > Constants::MaxPayloadLength)
 		{
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
 
-		return PipeHeader
+		return RequestHeader
 		{
 			.MessageType = messageType,
 			.PayloadLength = payloadLength
 		};
 	}
 
-	std::array<std::byte, PipeHeader::Size> PipeHeader::Write() const
+	std::array<std::byte, RequestHeader::Size> RequestHeader::Write() const
 	{
-		if (PayloadLength > Constants::MaxPayloadLength)
+		if (PayloadLength == 0 || PayloadLength > Constants::MaxPayloadLength)
 		{
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
@@ -61,5 +61,34 @@ namespace FluentBitwarden::ComServer::Ipc
 			PayloadLength);
 
 		return bytes;
+	}
+
+	ResponseHeader ResponseHeader::Parse(std::span<const std::byte> bytes)
+	{
+		if (bytes.size() != Size)
+		{
+			throw std::invalid_argument("Invalid IPC header size.");
+		}
+
+		const auto version = Binary::ReadLe<std::uint16_t>(
+			bytes.subspan(VersionOffset, sizeof(std::uint16_t)));
+
+		if (version != Constants::ProtocolVersion)
+		{
+			throw std::runtime_error("Incompatible IPC protocol version.");
+		}
+
+		const auto payloadLength = Binary::ReadLe<std::uint32_t>(
+			bytes.subspan(PayloadLengthOffset, sizeof(std::uint32_t)));
+
+		if (payloadLength == 0 || payloadLength > Constants::MaxPayloadLength)
+		{
+			throw std::runtime_error("Invalid IPC payload length.");
+		}
+
+		return ResponseHeader
+		{
+			.PayloadLength = payloadLength
+		};
 	}
 }

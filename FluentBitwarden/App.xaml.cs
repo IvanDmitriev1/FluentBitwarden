@@ -97,7 +97,7 @@ public partial class App : IXamlMetadataServiceProvider
         }
 #endif*/
 
-        await Host.Services.GetRequiredService<IAppFirstRunService>().InitializeAsync();
+        Host.Services.GetRequiredService<IAppFirstRunService>().Initialize();
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
 
         _fss.Dispose();

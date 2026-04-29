@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "NamedPipeClient.h"
-#include "Internal/PipeWin32.h"
+#include "PipeWin32.h"
 #include "IpcProtocol.h"
 
 namespace FluentBitwarden::ComServer::Ipc
@@ -27,7 +27,7 @@ namespace FluentBitwarden::ComServer::Ipc
 
 		THROW_HR_IF(E_INVALIDARG, payload.size() > Constants::MaxPayloadLength);
 
-		PipeHeader header
+		RequestHeader header
 		{
 			.MessageType = messageType,
 			.PayloadLength =  static_cast<std::uint32_t>(payload.size())
@@ -42,8 +42,8 @@ namespace FluentBitwarden::ComServer::Ipc
 
 	wil::task<JsonObject> NamedPipeClient::ReadJsonResponseAsync()
 	{
-		const auto responseHeaderBuffer = co_await PipeWin32::ReadExactly(m_pipe.get(), PipeHeader::Size);
-		const auto responseHeader = PipeHeader::Parse(responseHeaderBuffer);
+		const auto responseHeaderBuffer = co_await PipeWin32::ReadExactly(m_pipe.get(), ResponseHeader::Size);
+		const auto responseHeader = ResponseHeader::Parse(responseHeaderBuffer);
 
 		const auto responsePayload = co_await PipeWin32::ReadExactly(m_pipe.get(), responseHeader.PayloadLength);
 

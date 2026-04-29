@@ -4,6 +4,6 @@
 
 namespace FluentBitwarden::ComServer::WebAuthn::AssertionResponseBuilder
 {
-    HRESULT BuildResponse(const PasskeyAssertionResponse& assertion, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept;
+    void BuildResponse(const PasskeyAssertionResponse& assertion, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response);
 
 }

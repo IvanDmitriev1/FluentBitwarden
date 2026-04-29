@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "PipeWin32.h"
 
+namespace FluentBitwarden::ComServer::Ipc::PipeWin32
+{
+
 namespace
 {
     template <typename StartOperation>
@@ -40,8 +43,6 @@ namespace
     }
 }
 
-namespace FluentBitwarden::ComServer::Ipc::PipeWin32
-{
 	wil::unique_hfile OpenOverlappedPipe(const std::wstring& pipePath, TimeSpan timeout)
 	{
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::duration_cast<std::chrono::nanoseconds>(timeout);

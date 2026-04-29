@@ -3,12 +3,15 @@
 
 namespace FluentBitwarden::ComServer::WebAuthn::AssertionResponseBuilder
 {
-	HRESULT BuildResponse(const PasskeyAssertionResponse& assertion, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept
+	void BuildResponse(const PasskeyAssertionResponse& assertion, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response)
 	{
-		RETURN_HR_IF(E_INVALIDARG, assertion.CredentialId.empty());
-		RETURN_HR_IF(E_INVALIDARG, assertion.UserId.empty());
-		RETURN_HR_IF(E_INVALIDARG, assertion.AuthenticatorData.empty());
-		RETURN_HR_IF(E_INVALIDARG, assertion.Signature.empty());
+		THROW_HR_IF_NULL(E_POINTER, response);
+		THROW_HR_IF(E_INVALIDARG, assertion.CredentialId.empty());
+		THROW_HR_IF(E_INVALIDARG, assertion.UserId.empty());
+		THROW_HR_IF(E_INVALIDARG, assertion.AuthenticatorData.empty());
+		THROW_HR_IF(E_INVALIDARG, assertion.Signature.empty());
+		THROW_HR_IF(E_INVALIDARG, assertion.UserName.empty());
+		THROW_HR_IF(E_INVALIDARG, assertion.UserDisplayName.empty());
 
 		WEBAUTHN_CREDENTIAL credential{};
 		credential.dwVersion = WEBAUTHN_CREDENTIAL_CURRENT_VERSION;
@@ -35,8 +38,8 @@ namespace FluentBitwarden::ComServer::WebAuthn::AssertionResponseBuilder
 		userInfo.pbId = const_cast<PBYTE>(assertion.UserId.data());
 
 
-		userInfo.pwszName = L"Test name";
-		userInfo.pwszDisplayName = L"Test display name";
+		userInfo.pwszName = assertion.UserName.c_str();
+		userInfo.pwszDisplayName = assertion.UserDisplayName.c_str();
 		userInfo.pwszIcon = nullptr;
 
 		WEBAUTHN_CTAPCBOR_GET_ASSERTION_RESPONSE getAssertionResponse{};
@@ -55,16 +58,14 @@ namespace FluentBitwarden::ComServer::WebAuthn::AssertionResponseBuilder
 
 		DWORD cbEncodedResponse = 0;
 		BYTE* pbEncodedResponse = nullptr;
-		RETURN_IF_FAILED(WebAuthNEncodeGetAssertionResponse(
+		THROW_IF_FAILED(WebAuthNEncodeGetAssertionResponse(
 			&getAssertionResponse,
 			&cbEncodedResponse,
 			&pbEncodedResponse));
 
-		RETURN_HR_IF(E_UNEXPECTED, cbEncodedResponse == 0 || pbEncodedResponse == nullptr);
+		THROW_HR_IF(E_UNEXPECTED, cbEncodedResponse == 0 || pbEncodedResponse == nullptr);
 
 		response->cbEncodedResponse = cbEncodedResponse;
 		response->pbEncodedResponse = pbEncodedResponse;
-
-		return S_OK;
 	}
 }

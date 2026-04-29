@@ -1,20 +1,24 @@
 #pragma once
 #include <pch.h>
 
-class PluginRegistrationManager final
+namespace FluentBitwarden::ComServer
 {
-    static constexpr std::wstring_view kPluginName = L"FluentBitwarden";
-    static constexpr std::wstring_view kPluginRpId = L"fluentbitwarden.app";
 
-public:
-    static HRESULT EnsureRegistered() noexcept;
-    static HRESULT Unregister() noexcept;
+    class PluginRegistrationManager final
+    {
+        static constexpr std::wstring_view kPluginName = L"FluentBitwarden";
+        static constexpr std::wstring_view kPluginRpId = L"fluentbitwarden.app";
 
-    static HRESULT GetOperationSigningPublicKey(
-        std::vector<std::uint8_t>& publicKey) noexcept;
+    public:
+        static void EnsureRegistered();
+        static void Unregister();
 
-private:
-    static HRESULT RegisterNew() noexcept;
-    static HRESULT UpdateExisting() noexcept;
-    static HRESULT IsRegistered(bool& registered) noexcept;
-};
+        static std::vector<std::uint8_t> GetOperationSigningPublicKey();
+
+    private:
+        static void RegisterNew();
+        static void UpdateExisting();
+        static bool IsRegistered();
+    };
+
+}

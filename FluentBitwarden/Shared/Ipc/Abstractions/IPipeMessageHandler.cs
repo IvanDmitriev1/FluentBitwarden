@@ -6,7 +6,7 @@ public interface IPipeMessageHandler<in TRequest, TResponse>
 {
     UInt16 MessageType { get; }
 
-    ValueTask<IpcResult<TResponse>> HandleAsync(
+    ValueTask<TResponse> HandleAsync(
         TRequest request,
         CancellationToken cancellationToken);
 }

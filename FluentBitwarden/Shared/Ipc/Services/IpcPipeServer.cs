@@ -28,7 +28,8 @@ internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
         var cancellationToken = _cts.Token;
         await using var pipe = new NamedPipeServerStream(
             IpcConstants.PipeName, PipeDirection.InOut,
-            maxNumberOfServerInstances: 1, PipeTransmissionMode.Byte,
+            maxNumberOfServerInstances: 1,
+            PipeTransmissionMode.Byte,
             PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
             inBufferSize: 64 * 1024,
             outBufferSize: 64 * 1024);
@@ -47,7 +48,7 @@ internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
                     continue;
                 }
 
-                var header = PipeHeader.Read(pipe);
+                var header = RequestHeader.Read(pipe);
                 if (!_invokers.TryGetValue(header.MessageType, out var invoker))
                     continue;
 
@@ -59,7 +60,7 @@ internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
             }
             catch (OperationCanceledException)
             {
-                //
+                Debug.WriteLine("IPC pipe server cancellation requested.");
             }
             catch (Exception e)
             {

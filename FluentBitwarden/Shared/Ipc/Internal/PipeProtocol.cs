@@ -1,5 +1,4 @@
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Shared.Ipc.Abstractions;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
@@ -22,10 +21,9 @@ internal static class PipeProtocol
                throw new InvalidOperationException();
     }
 
-    public static async ValueTask WriteResultMessageAsync<TMessage>(
+    public static async ValueTask WriteResponseMessageAsync<TMessage>(
         Stream stream,
-        ushort messageType,
-        IpcResult<TMessage> result,
+        TMessage message,
         JsonTypeInfo<TMessage> jsonTypeInfo,
         CancellationToken cancellationToken)
         where TMessage : notnull
@@ -33,23 +31,7 @@ internal static class PipeProtocol
         using ArrayPoolBufferWriter<byte> payloadWriter = new();
         using var jsonWriter = new Utf8JsonWriter(payloadWriter);
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteBoolean("Success", result.Success);
-
-        if (result.Success)
-        {
-            jsonWriter.WritePropertyName("Value");
-            JsonSerializer.Serialize(
-                jsonWriter,
-                result.Value,
-                jsonTypeInfo);
-        }
-        else
-        {
-            jsonWriter.WriteString("Error", result.Error);
-        }
-
-        jsonWriter.WriteEndObject();
+        JsonSerializer.Serialize(jsonWriter, message, jsonTypeInfo);
         jsonWriter.Flush();
 
         ReadOnlyMemory<byte> payload = payloadWriter.WrittenMemory;
@@ -59,7 +41,7 @@ internal static class PipeProtocol
                 $"IPC payload too large: {payload.Length} bytes.");
         }
 
-        PipeHeader header = new(messageType, payload.Length);
+        ResponseHeader header = new(payload.Length);
         header.Write(stream);
 
         await stream.WriteAsync(payload, cancellationToken);

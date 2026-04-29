@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-namespace FluentBitwarden::PasskeyPlugin::Registration
+namespace FluentBitwarden::ComServer::PasskeyPlugin::Registration
 {
     struct AuthenticatorOption
     {

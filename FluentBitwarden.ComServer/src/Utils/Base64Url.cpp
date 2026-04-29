@@ -1,12 +1,11 @@
-#pragma once
 #include <pch.h>
+#include "Base64Url.h"
 
-namespace FluentBitwarden::ComServer::Ipc
+
+namespace FluentBitwarden::ComServer::Utils
 {
-	[[nodiscard]] inline winrt::hstring Base64UrlEncode(std::span<const std::uint8_t> bytes)
+	winrt::hstring Base64UrlEncode(std::span<const std::uint8_t> bytes)
 	{
-		using winrt::Windows::Security::Cryptography::CryptographicBuffer;
-
 		const auto base64 = CryptographicBuffer::EncodeToBase64String(
 			CryptographicBuffer::CreateFromByteArray(winrt::array_view<const std::uint8_t>{ bytes }));
 
@@ -31,10 +30,8 @@ namespace FluentBitwarden::ComServer::Ipc
 		return winrt::hstring{ base64Url };
 	}
 
-	[[nodiscard]] inline std::vector<std::uint8_t> Base64UrlDecode(winrt::hstring const& encoded)
+	std::vector<std::uint8_t> Base64UrlDecode(const winrt::hstring& encoded)
 	{
-		using winrt::Windows::Security::Cryptography::CryptographicBuffer;
-
 		const std::wstring_view base64Url{ encoded.c_str(), encoded.size() };
 
 		std::wstring base64;
@@ -67,8 +64,8 @@ namespace FluentBitwarden::ComServer::Ipc
 				base64.push_back(L'/');
 			}
 			else if ((value >= L'A' && value <= L'Z') ||
-				(value >= L'a' && value <= L'z') ||
-				(value >= L'0' && value <= L'9'))
+					 (value >= L'a' && value <= L'z') ||
+					 (value >= L'0' && value <= L'9'))
 			{
 				base64.push_back(value);
 			}
@@ -86,8 +83,8 @@ namespace FluentBitwarden::ComServer::Ipc
 
 		if (padding > 0 &&
 			(base64Url.size() % 4 != 0 ||
-				remainder == 0 ||
-				padding != 4 - remainder))
+			remainder == 0 ||
+			padding != 4 - remainder))
 		{
 			throw std::invalid_argument("Invalid Base64Url padding.");
 		}
@@ -98,7 +95,6 @@ namespace FluentBitwarden::ComServer::Ipc
 		}
 
 		const auto buffer = CryptographicBuffer::DecodeFromBase64String(winrt::hstring{ base64 });
-
 		winrt::com_array<std::uint8_t> bytes;
 		CryptographicBuffer::CopyToByteArray(buffer, bytes);
 

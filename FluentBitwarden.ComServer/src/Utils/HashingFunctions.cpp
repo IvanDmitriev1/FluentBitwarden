@@ -11,15 +11,13 @@ namespace FluentBitwarden::ComServer::Utils
 		BCryptDestroyHash>;
 
 
-	HRESULT ComputeSha256(std::span<const std::uint8_t> data, std::vector<std::uint8_t>& hash) noexcept
+	std::vector<std::uint8_t> ComputeSha256(std::span<const std::uint8_t> data)
 	{
-		hash.clear();
-
 		DWORD objectLength = 0;
 		DWORD hashLength = 0;
 		DWORD bytesRead = 0;
 
-		RETURN_IF_NTSTATUS_FAILED(BCryptGetProperty(
+		THROW_IF_NTSTATUS_FAILED(BCryptGetProperty(
 			BCRYPT_SHA256_ALG_HANDLE,
 			BCRYPT_OBJECT_LENGTH,
 			reinterpret_cast<PUCHAR>(&objectLength),
@@ -27,7 +25,7 @@ namespace FluentBitwarden::ComServer::Utils
 			&bytesRead,
 			0));
 
-		RETURN_IF_NTSTATUS_FAILED(BCryptGetProperty(
+		THROW_IF_NTSTATUS_FAILED(BCryptGetProperty(
 			BCRYPT_SHA256_ALG_HANDLE,
 			BCRYPT_HASH_LENGTH,
 			reinterpret_cast<PUCHAR>(&hashLength),
@@ -37,10 +35,10 @@ namespace FluentBitwarden::ComServer::Utils
 
 
 		auto hashObject = wil::make_unique_cotaskmem<std::uint8_t[]>(objectLength);
-		RETURN_HR_IF_NULL(E_OUTOFMEMORY, hashObject);
+		THROW_HR_IF_NULL(E_OUTOFMEMORY, hashObject);
 
 		unique_bcrypt_hash hashHandle{};
-		RETURN_IF_NTSTATUS_FAILED(BCryptCreateHash(
+		THROW_IF_NTSTATUS_FAILED(BCryptCreateHash(
 			BCRYPT_SHA256_ALG_HANDLE,
 			wil::out_param(hashHandle),
 			hashObject.get(),
@@ -49,20 +47,20 @@ namespace FluentBitwarden::ComServer::Utils
 			0,
 			0));
 
-		RETURN_IF_NTSTATUS_FAILED(BCryptHashData(
+		THROW_IF_NTSTATUS_FAILED(BCryptHashData(
 			hashHandle.get(),
 			const_cast<PUCHAR>(reinterpret_cast<const UCHAR*>(data.data())),
 			static_cast<ULONG>(data.size()),
 			0));
 
-		hash.resize(hashLength);
+		std::vector<std::uint8_t> hash(hashLength);
 
-		RETURN_IF_NTSTATUS_FAILED(BCryptFinishHash(
+		THROW_IF_NTSTATUS_FAILED(BCryptFinishHash(
 			hashHandle.get(),
 			reinterpret_cast<PUCHAR>(hash.data()),
 			hashLength,
 			0));
 
-		return S_OK;
+		return hash;
 	}
 }

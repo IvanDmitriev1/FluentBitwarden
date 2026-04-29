@@ -1,6 +1,6 @@
 #pragma once
 #include <pch.h>
-#include "Ipc/Base64Url.h"
+#include "Utils/Base64Url.h"
 #include "Ipc/IpcProtocol.h"
 
 namespace FluentBitwarden::ComServer::WebAuthn
@@ -17,8 +17,8 @@ namespace FluentBitwarden::ComServer::WebAuthn
 		{
 			JsonObject json;
 			json.SetNamedValue(L"RpId", JsonValue::CreateStringValue(RpId));
-			json.SetNamedValue(L"RpIdHash", JsonValue::CreateStringValue(Ipc::Base64UrlEncode(RpIdHash)));
-			json.SetNamedValue(L"ClientDataHash", JsonValue::CreateStringValue(Ipc::Base64UrlEncode(ClientDataHash)));
+			json.SetNamedValue(L"RpIdHash", JsonValue::CreateStringValue(Utils::Base64UrlEncode(RpIdHash)));
+			json.SetNamedValue(L"ClientDataHash", JsonValue::CreateStringValue(Utils::Base64UrlEncode(ClientDataHash)));
 			return json;
 		}
 	};
@@ -29,15 +29,19 @@ namespace FluentBitwarden::ComServer::WebAuthn
 		std::vector<std::uint8_t> UserId;
 		std::vector<std::uint8_t> AuthenticatorData;
 		std::vector<std::uint8_t> Signature;
+		winrt::hstring UserName;
+		winrt::hstring UserDisplayName;
 
 		[[nodiscard]] static PasskeyAssertionResponse FromJson(const JsonObject& json)
 		{
 			return PasskeyAssertionResponse
 			{
-				.CredentialId = Ipc::Base64UrlDecode(json.GetNamedString(L"CredentialId")),
-				.UserId = Ipc::Base64UrlDecode(json.GetNamedString(L"UserId")),
-				.AuthenticatorData = Ipc::Base64UrlDecode(json.GetNamedString(L"AuthenticatorData")),
-				.Signature = Ipc::Base64UrlDecode(json.GetNamedString(L"Signature"))
+				.CredentialId = Utils::Base64UrlDecode(json.GetNamedString(L"CredentialId")),
+				.UserId = Utils::Base64UrlDecode(json.GetNamedString(L"UserId")),
+				.AuthenticatorData = Utils::Base64UrlDecode(json.GetNamedString(L"AuthenticatorData")),
+				.Signature = Utils::Base64UrlDecode(json.GetNamedString(L"Signature")),
+				.UserName = json.GetNamedString(L"UserName"),
+				.UserDisplayName = json.GetNamedString(L"UserDisplayName")
 			};
 		}
 	};

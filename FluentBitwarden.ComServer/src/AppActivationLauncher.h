@@ -1,7 +1,7 @@
 #pragma once
 #include <pch.h>
 
-namespace FluentBitwarden::ComServer::Ipc::AppActivationLauncher
+namespace FluentBitwarden::ComServer::AppActivationLauncher
 {
     void ActivateMainApp(std::wstring launchArguments);
 }

@@ -20,4 +20,7 @@ internal sealed class PasskeyAssertionResponse
     // Signature over authenticatorData || clientDataHash.
     [JsonConverter(typeof(Base64UrlByteArrayJsonConverter))]
     public required byte[] Signature { get; init; }
+
+    public required string UserName { get; init; }
+    public required string UserDisplayName { get; init; }
 }

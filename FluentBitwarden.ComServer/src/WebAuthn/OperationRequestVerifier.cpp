@@ -17,26 +17,25 @@ using unique_ncrypt_key = wil::unique_any<
 
 namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
 {
-    HRESULT VerifyOperationRequest(
-        const WEBAUTHN_PLUGIN_OPERATION_REQUEST& request) noexcept
+    void VerifyOperationRequest(
+        const WEBAUTHN_PLUGIN_OPERATION_REQUEST& request)
     {
-        RETURN_HR_IF(
+        THROW_HR_IF(
             E_INVALIDARG,
             request.requestType != WEBAUTHN_PLUGIN_REQUEST_TYPE_CTAP2_CBOR);
 
-        RETURN_HR_IF(
+        THROW_HR_IF(
             E_INVALIDARG,
             request.cbEncodedRequest == 0 || request.pbEncodedRequest == nullptr);
 
-        RETURN_HR_IF(
+        THROW_HR_IF(
             E_INVALIDARG,
             request.cbRequestSignature == 0 || request.pbRequestSignature == nullptr);
 
-        std::vector<std::uint8_t> publicKeyBlob;
-        RETURN_IF_FAILED(
-            PluginRegistrationManager::GetOperationSigningPublicKey(publicKeyBlob));
+        std::vector<std::uint8_t> publicKeyBlob =
+            PluginRegistrationManager::GetOperationSigningPublicKey();
 
-        RETURN_HR_IF(E_INVALIDARG, publicKeyBlob.size() < sizeof(BCRYPT_KEY_BLOB));
+        THROW_HR_IF(E_INVALIDARG, publicKeyBlob.size() < sizeof(BCRYPT_KEY_BLOB));
 
         const auto signedBuffer = std::span<const std::uint8_t>(
             reinterpret_cast<const std::uint8_t*>(request.pbEncodedRequest),
@@ -47,13 +46,13 @@ namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
             request.cbRequestSignature);
 
         unique_ncrypt_prov provider;
-        RETURN_IF_FAILED(NCryptOpenStorageProvider(
+        THROW_IF_FAILED(NCryptOpenStorageProvider(
             &provider,
             nullptr,
             0));
 
         unique_ncrypt_key publicKey;
-        RETURN_IF_FAILED(NCryptImportKey(
+        THROW_IF_FAILED(NCryptImportKey(
             provider.get(),
             0,
             BCRYPT_PUBLIC_KEY_BLOB,
@@ -63,10 +62,9 @@ namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
             static_cast<DWORD>(publicKeyBlob.size()),
             0));
 
-        std::vector<std::uint8_t> hash;
-        RETURN_IF_FAILED(Utils::ComputeSha256(signedBuffer, hash));
+        std::vector<std::uint8_t> hash = Utils::ComputeSha256(signedBuffer);
 
-        RETURN_HR_IF(E_INVALIDARG, hash.size() != 32);
+        THROW_HR_IF(E_INVALIDARG, hash.size() != 32);
 
         const auto* keyBlob =
             reinterpret_cast<const BCRYPT_KEY_BLOB*>(publicKeyBlob.data());
@@ -79,7 +77,7 @@ namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
             keyBlob->Magic == BCRYPT_ECDSA_PUBLIC_P384_MAGIC ||
             keyBlob->Magic == BCRYPT_ECDSA_PUBLIC_P521_MAGIC;
 
-        RETURN_HR_IF(E_INVALIDARG, !isRsa && !isEcdsa);
+        THROW_HR_IF(E_INVALIDARG, !isRsa && !isEcdsa);
 
         void* paddingInfo = nullptr;
         DWORD flags = 0;
@@ -93,7 +91,7 @@ namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
             flags = BCRYPT_PAD_PKCS1;
         }
 
-        RETURN_IF_FAILED(NCryptVerifySignature(
+        THROW_IF_FAILED(NCryptVerifySignature(
             publicKey.get(),
             paddingInfo,
             hash.data(),
@@ -101,16 +99,6 @@ namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
             const_cast<PBYTE>(signature.data()),
             static_cast<DWORD>(signature.size()),
             flags));
-
-        return S_OK;
     }
-
-	HRESULT VerifyCancelRequest(const WEBAUTHN_PLUGIN_CANCEL_OPERATION_REQUEST& request) noexcept
-	{
-		RETURN_HR_IF(E_INVALIDARG, request.cbRequestSignature == 0 || request.pbRequestSignature == nullptr);
-
-		UNREFERENCED_PARAMETER(request);
-		return HRESULT_FROM_WIN32(ERROR_CALL_NOT_IMPLEMENTED);
-	}
 
 }

@@ -2,10 +2,10 @@
 #include "AuthenticatorInfoBuilder.h"
 #include "Cbor/CborWriter.h"
 
-namespace FluentBitwarden::PasskeyPlugin::Registration
+namespace FluentBitwarden::ComServer::PasskeyPlugin::Registration
 {
-	std::vector<uint8_t> BuildAuthenticatorGetInfoCbor()
-	{
+    std::vector<uint8_t> BuildAuthenticatorGetInfoCbor()
+    {
         constexpr std::array<std::uint8_t, 16> aaguid =
         {
             0x5a, 0x97, 0xbd, 0x16,
@@ -71,5 +71,5 @@ namespace FluentBitwarden::PasskeyPlugin::Registration
         writer.WriteText("public-key");
 
         return writer.Finish();
-	}
+    }
 }

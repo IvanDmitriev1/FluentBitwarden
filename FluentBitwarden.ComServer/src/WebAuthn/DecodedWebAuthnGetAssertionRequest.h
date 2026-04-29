@@ -23,9 +23,9 @@ namespace FluentBitwarden::ComServer::WebAuthn
         DecodedGetAssertionRequest& operator=(DecodedGetAssertionRequest&&) noexcept = default;
 
     public:
-        static HRESULT Decode(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request, DecodedGetAssertionRequest& result) noexcept;
+        static DecodedGetAssertionRequest Decode(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request);
 
-        HRESULT ToIpcRequest(PasskeyGetAssertionRequest& result) const noexcept;
+        PasskeyGetAssertionRequest ToIpcRequest() const;
 
     private:
         explicit DecodedGetAssertionRequest(PWEBAUTHN_CTAPCBOR_GET_ASSERTION_REQUEST request) noexcept;

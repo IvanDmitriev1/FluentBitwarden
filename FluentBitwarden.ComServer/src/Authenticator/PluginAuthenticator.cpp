@@ -1,76 +1,80 @@
 #include "pch.h"
 #include "PluginAuthenticator.h"
-#include "Ipc/AppActivationLauncher.h"
+#include "AppActivationLauncher.h"
 #include "Ipc/NamedPipeClient.h"
 
 #include "WebAuthn/OperationRequestVerifier.h"
 #include "WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
 #include "WebAuthn/AssertionResponseBuilder.h"
 
-using namespace FluentBitwarden::ComServer::WebAuthn;
-using namespace FluentBitwarden::ComServer;
-
-IFACEMETHODIMP PluginAuthenticatorFactory::CreateInstance(IUnknown* outer, REFIID iid, void** result) noexcept
+namespace FluentBitwarden::ComServer
 {
-	if (outer)
-		return CLASS_E_NOAGGREGATION;
-
-	auto obj = winrt::make<PluginAuthenticator>();
-	return obj->QueryInterface(iid, result);
-}
-
-IFACEMETHODIMP PluginAuthenticator::MakeCredential(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept
-{
-	RETURN_HR_IF(E_POINTER, !request || !response);
-	RETURN_IF_FAILED(OperationRequestVerifier::VerifyOperationRequest(*request));
-
-	return E_NOTIMPL;
-}
-
-IFACEMETHODIMP PluginAuthenticator::GetAssertion(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept
-{
-	RETURN_HR_IF(E_POINTER, !request || !response);
-	RETURN_IF_FAILED(OperationRequestVerifier::VerifyOperationRequest(*request));
-
-	if (response)
+	IFACEMETHODIMP PluginAuthenticatorFactory::CreateInstance(IUnknown* outer, REFIID iid, void** result) noexcept
 	{
-		*response = {};
-	}
+		RETURN_HR_IF(CLASS_E_NOAGGREGATION, outer != nullptr);
+		RETURN_HR_IF_NULL(E_POINTER, result);
+		*result = nullptr;
 
-	try
-	{
-		DecodedGetAssertionRequest decodedRequest;
-		RETURN_IF_FAILED(DecodedGetAssertionRequest::Decode(request, decodedRequest));
-
-		PasskeyGetAssertionRequest ipcRequest{};
-		RETURN_IF_FAILED(decodedRequest.ToIpcRequest(ipcRequest));
-
-		Ipc::NamedPipeClient m_pipeClient{ Ipc::Constants::PipePath };
-
-		auto ipcResult = m_pipeClient.SendAsync<PasskeyGetAssertionRequest, PasskeyAssertionResponse>(std::move(ipcRequest)).get();
-		RETURN_IF_FAILED(AssertionResponseBuilder::BuildResponse(ipcResult.ValueOrThrow(), response));
+		auto obj = winrt::make<PluginAuthenticator>();
+		RETURN_IF_FAILED(obj->QueryInterface(iid, result));
 
 		return S_OK;
 	}
-	CATCH_RETURN();
 
-	return E_NOTIMPL;
-}
+	IFACEMETHODIMP PluginAuthenticator::MakeCredential(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept
+	{
+		try
+		{
+			RETURN_HR_IF(E_POINTER, request == nullptr || response == nullptr);
+			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
 
-IFACEMETHODIMP PluginAuthenticator::CancelOperation(PCWEBAUTHN_PLUGIN_CANCEL_OPERATION_REQUEST request) noexcept
-{
-	RETURN_HR_IF(E_POINTER, !request);
+			RETURN_HR(E_NOTIMPL);
+		}
+		CATCH_RETURN();
+	}
 
+	IFACEMETHODIMP PluginAuthenticator::GetAssertion(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept
+	{
+		try
+		{
+			RETURN_HR_IF(E_POINTER, request == nullptr || response == nullptr);
+			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
 
-	return S_OK;
-}
+			*response = {};
 
-IFACEMETHODIMP PluginAuthenticator::GetLockStatus(PLUGIN_LOCK_STATUS* lockStatus) noexcept
-{
-	RETURN_HR_IF(E_POINTER, !lockStatus);
+			WebAuthn::DecodedGetAssertionRequest decodedRequest =
+				WebAuthn::DecodedGetAssertionRequest::Decode(request);
+			WebAuthn::PasskeyGetAssertionRequest ipcRequest = decodedRequest.ToIpcRequest();
 
-	Ipc::AppActivationLauncher::ActivateMainApp(L"--silent");
+			Ipc::NamedPipeClient m_pipeClient{ Ipc::Constants::PipePath };
 
-	*lockStatus = PluginLocked;
-	return S_OK;
+			auto assertion = m_pipeClient.SendAsync<WebAuthn::PasskeyGetAssertionRequest, WebAuthn::PasskeyAssertionResponse>(std::move(ipcRequest)).get();
+			WebAuthn::AssertionResponseBuilder::BuildResponse(assertion, response);
+
+			return S_OK;
+		}
+		CATCH_RETURN();
+	}
+
+	IFACEMETHODIMP PluginAuthenticator::CancelOperation(PCWEBAUTHN_PLUGIN_CANCEL_OPERATION_REQUEST request) noexcept
+	{
+		RETURN_HR_IF_NULL(E_POINTER, request);
+
+		return S_OK;
+	}
+
+	IFACEMETHODIMP PluginAuthenticator::GetLockStatus(PLUGIN_LOCK_STATUS* lockStatus) noexcept
+	{
+		try
+		{
+			RETURN_HR_IF_NULL(E_POINTER, lockStatus);
+
+			AppActivationLauncher::ActivateMainApp(L"--headless");
+
+			*lockStatus = PluginLocked;
+			return S_OK;
+		}
+		CATCH_RETURN();
+	}
+
 }
