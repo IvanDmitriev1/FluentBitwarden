@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;
@@ -19,14 +20,12 @@ public static class Program
         if (isRedirect)
             return 0;
 
-        var fss = SimpleSplashScreen.ShowDefaultSplashScreen();
-
         Microsoft.UI.Xaml.Application.Start(_ =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
-            var app = new App(fss, initialActivation);
+            var app = new App(initialActivation);
         });
 
         return 0;

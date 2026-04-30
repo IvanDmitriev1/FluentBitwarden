@@ -23,7 +23,7 @@ internal sealed class UnlockServices(
     public async Task<UnlockResult> UnlockAsync<TRequest>(UserId userId, TRequest request, CancellationToken cancellationToken = default) where TRequest : struct, IUnlockRequest
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var accountDecryption = await Task.Run(() => unitOfWork.AccountDecryptionRepository.GetById(userId), cancellationToken);
+        var accountDecryption = unitOfWork.AccountDecryptionRepository.GetById(userId);
 
         if (accountDecryption is null)
             return new UnlockResult.Failure("Account not found");

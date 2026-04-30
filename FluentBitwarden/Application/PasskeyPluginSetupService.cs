@@ -39,6 +39,7 @@ public static class PasskeyPluginSetupService
             WorkingDirectory = Path.GetDirectoryName(executablePath),
             UseShellExecute = false
         };
+
         startInfo.ArgumentList.Add(arguments);
 
         using var process = Process.Start(startInfo);
@@ -48,6 +49,7 @@ public static class PasskeyPluginSetupService
             throw new InvalidOperationException(
                 $"Failed to start '{executablePath}'.");
         }
+
         await process.WaitForExitAsync();
 
         if (process.ExitCode != 0)

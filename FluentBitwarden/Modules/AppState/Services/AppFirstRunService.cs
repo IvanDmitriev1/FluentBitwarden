@@ -9,10 +9,9 @@ internal sealed class AppFirstRunService(
     ISettingsService settingsService,
     IDataInitializationService dataInitializationService) : IAppFirstRunService
 {
-    public async void Initialize()
+    public void Initialize()
     {
-        await PasskeyPluginSetupService.UnregisterAsync();
-        await PasskeyPluginSetupService.EnsureRegisteredAsync();
+        _ = Task.Run(PasskeyPluginSetupService.EnsureRegisteredAsync);
 
         var settings = settingsService.Get();
         if (settings.FirstRun)

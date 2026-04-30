@@ -1,13 +1,12 @@
-using FluentBitwarden.Application.Lifetime;
 using WinUIEx;
 
-namespace FluentBitwarden.Application.Tray;
+namespace FluentBitwarden.Application.Lifetime;
 
-internal sealed class TrayIconService(IMainWindowService mainWindowService, IAppRestartService appRestartService) : ITrayIconService
+internal static class TrayIconService
 {
-    private TrayIcon? _trayIcon;
+    private static TrayIcon? _trayIcon;
 
-    public void EnsureCreated()
+    public static void EnsureCreated()
     {
         if (_trayIcon is not null)
             return;
@@ -15,21 +14,21 @@ internal sealed class TrayIconService(IMainWindowService mainWindowService, IApp
         _trayIcon = new TrayIcon(1, "Assets/Bitwarden_icon.ico", "FluentBitwarden");
         _trayIcon.IsVisible = true;
 
-        _trayIcon.Selected += (_, _) => mainWindowService.Show();
-        _trayIcon.LeftDoubleClick += (_, _) => mainWindowService.Show();
+        _trayIcon.Selected += (_, _) => WindowManager.ShowMainWindow();
+        _trayIcon.LeftDoubleClick += (_, _) => WindowManager.ShowMainWindow();
         _trayIcon.ContextMenu += OnContextMenu;
     }
 
-    private void OnContextMenu(TrayIcon sender, TrayIconEventArgs args)
+    private static void OnContextMenu(TrayIcon sender, TrayIconEventArgs args)
     {
         var flyout = new MenuFlyout();
 
         var showItem = new MenuFlyoutItem { Text = "Show" };
-        showItem.Click += (_, _) => mainWindowService.Show();
+        showItem.Click += (_, _) => WindowManager.ShowMainWindow();
         flyout.Items.Add(showItem);
 
         var lockItem = new MenuFlyoutItem { Text = "Lock" };
-        lockItem.Click += (_, _) => appRestartService.RestartForLockAsync();
+        lockItem.Click += (_, _) => AppLifetimeManager.RestartApp();
         flyout.Items.Add(lockItem);
 
         flyout.Items.Add(new MenuFlyoutSeparator());
