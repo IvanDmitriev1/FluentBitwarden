@@ -19,17 +19,24 @@ public static class BitwardenApiServiceCollectionExtensions
         where TAuthHandler : DelegatingHandler
     {
         services.AddTransient<BitwardenRequiredHeadersHandler>();
+        services.AddTransient<TAuthHandler>();
 
-        services.AddHttpClient<IIdentityApiClient, IdentityApiClient>()
-            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>();
-
-        services.AddHttpClient<IVaultApiClient, VaultApiClient>()
+        services.AddHttpClient("BitwardenApiIdentityHttpClient", client =>
+            {
+            })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<TAuthHandler>();
 
-        services.AddHttpClient<IAttachmentsApiClient, AttachmentsApiClient>()
+        services.AddHttpClient("BitwardenApiVaultHttpClient", client =>
+            {
+                
+            })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<TAuthHandler>();
+
+        services.AddSingleton<IIdentityApiClient, IdentityApiClient>();
+        services.AddSingleton<IVaultApiClient, VaultApiClient>();
+        services.AddSingleton<IAttachmentsApiClient, AttachmentsApiClient>();
 
         services.AddSingleton<INotificationsClient, NotificationsClient>();
         services.AddSingleton<INotificationDispatcher, NotificationDispatcher>();

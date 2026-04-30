@@ -15,21 +15,28 @@ internal sealed class BearerTokenHandler(
         if (!currentSessionAccessor.IsAuthenticated)
             throw new InvalidOperationException("Tried to request to authorized endpoint while unauthorized.");
 
-        var currentSession = currentSessionAccessor.CurrentSession;
-        var currentUser = currentSessionAccessor.CurrentUser;
-
-        if (currentSession.AccessToken == AccessToken.Empty || currentSession.ExpiresAt <= DateTimeOffset.UtcNow.AddMinutes(5))
+        try
         {
-            currentSession = await tokenRefreshService.RefreshAsync(
-                currentUser,
-                currentSessionAccessor.CurrentContext,
-                currentSession,
-                cancellationToken);
+            var currentSession = currentSessionAccessor.CurrentSession;
+            var currentUser = currentSessionAccessor.CurrentUser;
+
+            if (currentSession.AccessToken == AccessToken.Empty || currentSession.ExpiresAt <= DateTimeOffset.UtcNow.AddMinutes(5))
+            {
+                currentSession = await tokenRefreshService.RefreshAsync(
+                    currentUser,
+                    currentSessionAccessor.CurrentContext,
+                    currentSession,
+                    cancellationToken);
+            }
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", currentSession.AccessToken.Value);
+
+            return await base.SendAsync(request, cancellationToken);
         }
-
-        request.Headers.Authorization =
-            new AuthenticationHeaderValue("Bearer", currentSession.AccessToken.Value);
-
-        return await base.SendAsync(request, cancellationToken);
+        catch (Exception e) when(cancellationToken.IsCancellationRequested && e is TaskCanceledException or OperationCanceledException)
+        {
+            throw;
+        }
     }
 }

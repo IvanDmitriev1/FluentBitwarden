@@ -40,7 +40,7 @@
     </Style>
 
     <DataTemplate x:Key="LoginCipherDetailsTemplate" x:DataType="models:LoginCipher">
-        <StackPanel>
+        <StackPanel Spacing="6">
             <Border
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -63,20 +63,25 @@
                 </ItemsControl>
             </Border>
 
-            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Uris" />
-            <ItemsControl ItemsSource="{x:Bind Uris}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="x:String">
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            Text="{x:Bind}"
-                            TextWrapping="Wrap" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <StackPanel Orientation="Vertical">
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Uris" />
+                <ItemsControl ItemsSource="{x:Bind Uris}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock
+                                Margin="0,0,0,8"
+                                Text="{x:Bind}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="FIDO2 credentials" />
-            <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Fido2Credentials.Count}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Vertical">
+                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="FIDO2 credentials" />
+                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Fido2Credentials.Count}" />
+            </StackPanel>
         </StackPanel>
     </DataTemplate>
 

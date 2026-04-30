@@ -5,7 +5,7 @@ using BitwardenApi.Shared.Context;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
-using FluentBitwarden.Shared.Connectivity.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services.Authentication;
 

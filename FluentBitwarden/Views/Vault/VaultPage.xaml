@@ -68,7 +68,7 @@
                     TabFocusNavigation="Once">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="models1:Cipher">
-                            <userControls:CipherListItem Cipher="{x:Bind}" />
+                            <controls1:CipherListItem Cipher="{x:Bind}" />
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>

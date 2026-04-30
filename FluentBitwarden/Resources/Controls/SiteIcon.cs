@@ -1,8 +1,9 @@
-using System.Diagnostics;
-using FluentBitwarden.Shared.SiteIcons;
+using FluentBitwarden.Shared.Services.Abstractions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.UI.Dispatching;
 
 namespace FluentBitwarden.Resources.Controls;
 
@@ -11,15 +12,18 @@ namespace FluentBitwarden.Resources.Controls;
 [DependencyProperty<double>("Size", DefaultValue = 20)]
 public sealed partial class SiteIcon : ContentControl
 {
-    private static readonly Dictionary<(string AbsolutePath, int DecodeSize), BitmapImage> ImageCache = [];
+    [field: AllowNull, MaybeNull]
+    private ISiteIconCache SiteIconCache => field ??= App.Current.GetRequiredService<ISiteIconCache>();
 
-    private CancellationTokenSource? _cts;
+    private bool _isListeningForCacheUpdates;
 
     public SiteIcon()
     {
         DefaultStyleKey = typeof(SiteIcon);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+
+        Content = CreateFallbackContent();
     }
 
     partial void OnSizeChanged(double newValue)
@@ -32,71 +36,66 @@ public sealed partial class SiteIcon : ContentControl
     }
 
     partial void OnUriChanged()
-        => _ = RefreshAsync();
+    {
+        Content = CreateFallbackContent();
+        Refresh();
+    }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoaded;
-        _ = RefreshAsync();
+        Refresh();
+
+        if (!_isListeningForCacheUpdates)
+        {
+            SiteIconCache.IconCached += SiteIconCacheOnIconCached;
+            _isListeningForCacheUpdates = true;
+        }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         Unloaded -= OnUnloaded;
 
-        CancelPendingLoad();
+        if (_isListeningForCacheUpdates)
+        {
+            SiteIconCache.IconCached -= SiteIconCacheOnIconCached;
+            _isListeningForCacheUpdates = false;
+        }
     }
 
-    private async Task RefreshAsync()
+    private void SiteIconCacheOnIconCached(object? sender, SiteIconCachedEventArgs e)
     {
-        CancelPendingLoad();
-        Content = CreateFallbackContent();
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+        {
+            if (e.Host != Uri)
+                return;
 
+            Refresh();
+        });
+    }
+
+    private void Refresh()
+    {
         if (!IsLoaded)
         {
             return;
         }
 
-        var requestedUri = Uri;
-        if (requestedUri is null)
-        {
+        if (Uri is null || SiteIconCache.TryGetCachedFilePath(Uri) is not { } cachedFilePath)
             return;
-        }
 
-        _cts = new CancellationTokenSource();
+       
         int decodeSize = Math.Max(1, (int)Math.Ceiling(Size));
-
-        try
+        var bitmap = new BitmapImage
         {
-            var iconCache = App.Current.GetRequiredService<ISiteIconCache>();
-            string? absolutePath = await iconCache.GetOrFetchAsync(requestedUri, _cts.Token);
-            if (string.IsNullOrWhiteSpace(absolutePath))
-            {
-                return;
-            }
+            DecodePixelType = DecodePixelType.Logical,
+            DecodePixelWidth = decodeSize,
+            DecodePixelHeight = decodeSize,
+            UriSource = cachedFilePath
+        };
 
-            if (_cts.IsCancellationRequested)
-            {
-                return;
-            }
-
-            var cacheKey = (absolutePath, decodeSize);
-            if (!ImageCache.TryGetValue(cacheKey, out var bitmap))
-            {
-                bitmap = CreateBitmapImage(absolutePath, decodeSize);
-                ImageCache[cacheKey] = bitmap;
-            }
-
-            Content = CreateImageContent(bitmap);
-        }
-        catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
-        {
-            //
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex);
-        }
+        Content = CreateImageContent(bitmap);
     }
 
     private UIElement CreateFallbackContent()
@@ -126,35 +125,4 @@ public sealed partial class SiteIcon : ContentControl
                 IsHitTestVisible = false
             }
         };
-
-    private void CancelPendingLoad()
-    {
-        if (_cts is null)
-        {
-            return;
-        }
-
-        try
-        {
-            _cts.Cancel();
-        }
-        finally
-        {
-            _cts.Dispose();
-            _cts = null;
-        }
-    }
-
-    private static BitmapImage CreateBitmapImage(string absolutePath, int decodeSize)
-    {
-        var bitmap = new BitmapImage
-        {
-            DecodePixelType = DecodePixelType.Logical,
-            DecodePixelWidth = decodeSize,
-            DecodePixelHeight = decodeSize,
-            UriSource = new Uri(absolutePath, UriKind.Absolute)
-        };
-
-        return bitmap;
-    }
 }

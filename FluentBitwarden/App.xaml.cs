@@ -9,23 +9,20 @@ using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Modules.Session.Services.Authentication;
 using FluentBitwarden.Modules.Vault;
-using FluentBitwarden.Shared.Connectivity;
 using FluentBitwarden.Shared.Extensions;
-using FluentBitwarden.Shared.SiteIcons;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
-using CommunityToolkit.WinUI;
 using FluentBitwarden.Shared.Ipc;
 using FluentBitwarden.Shared.Ipc.Abstractions;
 using Microsoft.UI.Dispatching;
 using WinUI.DependencyInjection;
-using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using FluentBitwarden.Application.Lifetime;
+using FluentBitwarden.Shared.Services;
 
 namespace FluentBitwarden;
 
@@ -42,17 +39,11 @@ public partial class App : IXamlMetadataServiceProvider
         .CreateDefaultBuilder()
         .ConfigureServices((ctx, services) =>
         {
-            services.AddHttpClient<ISiteIconCache, SiteIconCache>(client =>
-            {
-                client.DefaultRequestHeaders.Add("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
-            });
-
             services.AddNamedPipeIpc();
             services.AddShellServices();
             services.AddViews();
             services.AddDatabaseServices();
-            services.AddConnectivityModule();
+            services.AddSharedServices();
 
             services.AddBitwardenApi<BearerTokenHandler>();
             services.AddAccountModule();

@@ -5,7 +5,7 @@ using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
-using FluentBitwarden.Shared.Connectivity.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;

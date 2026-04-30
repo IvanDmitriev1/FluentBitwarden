@@ -11,7 +11,7 @@ using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Repositories;
 using System.Net.Http;
-using FluentBitwarden.Shared.Connectivity.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions;
 
 namespace FluentBitwarden.Modules.Vault.Services;
 

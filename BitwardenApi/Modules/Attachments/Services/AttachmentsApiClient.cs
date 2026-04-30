@@ -1,21 +1,24 @@
+using BitwardenApi.Modules.Attachments.Abstractions;
+using BitwardenApi.Modules.Attachments.Models;
+using BitwardenApi.Shared.Extensions;
+using BitwardenApi.Shared.Serialization;
+using BitwardenApi.Shared.Transport;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using BitwardenApi.Modules.Attachments.Abstractions;
-using BitwardenApi.Modules.Attachments.Models;
-using BitwardenApi.Shared.Serialization;
-using BitwardenApi.Shared.Transport;
 
 namespace BitwardenApi.Modules.Attachments.Services;
 
-public sealed class AttachmentsApiClient(HttpClient httpClient) : IAttachmentsApiClient
+public sealed class AttachmentsApiClient(IHttpClientFactory httpClientFactory) : IAttachmentsApiClient
 {
     public async Task<AttachmentUploadInit> StartUploadV2Async(
         StartUploadV2Request request,
         CancellationToken cancellationToken = default)
     {
+        using var httpClient = httpClientFactory.CreateVaultClient();
+
         Uri requestUri = new(request.Context.Environment.ApiBase, $"/ciphers/{request.CipherId.Value:D}/attachment/v2");
-        using HttpRequestMessage requestMessage = new(HttpMethod.Post, requestUri);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.AccessToken.Value);
         StreamContent requestContent = new(request.AttachmentRequestJson);
         requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -49,6 +52,8 @@ public sealed class AttachmentsApiClient(HttpClient httpClient) : IAttachmentsAp
         RenewUploadRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var httpClient = httpClientFactory.CreateVaultClient();
+
         Uri requestUri = new(
             request.Context.Environment.ApiBase,
             $"/ciphers/{request.CipherId.Value:D}/attachment/{Uri.EscapeDataString((string)request.AttachmentId.Value)}/renew");
@@ -83,6 +88,8 @@ public sealed class AttachmentsApiClient(HttpClient httpClient) : IAttachmentsAp
         UploadMultipartRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var httpClient = httpClientFactory.CreateVaultClient();
+
         Uri requestUri = request.RequestUri.IsAbsoluteUri
             ? request.RequestUri
             : new Uri(request.Context.Environment.ApiBase, request.RequestUri);
@@ -116,6 +123,8 @@ public sealed class AttachmentsApiClient(HttpClient httpClient) : IAttachmentsAp
         DownloadByTokenRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var httpClient = httpClientFactory.CreateVaultClient();
+
         Uri requestUri = request.RequestUri.IsAbsoluteUri
             ? request.RequestUri
             : new Uri(request.Context.Environment.ApiBase, request.RequestUri);

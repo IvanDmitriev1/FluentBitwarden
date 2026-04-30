@@ -13,9 +13,11 @@ using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Shared.Connectivity.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -23,7 +25,8 @@ public sealed partial class UnlockPageViewModel(
     IUnlockService unlockService,
     INavigationService navigationService,
     IVaultSyncService vaultSyncService,
-    IConnectivityService connectivityService) : ObservableValidator, IPageLifecycleAware<UnlockPageParameter>
+    IConnectivityService connectivityService,
+    ISiteIconCache siteIconCache) : ObservableValidator, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
     public partial StoredAccount? SelectedAccount { get; private set; }
@@ -95,6 +98,21 @@ public sealed partial class UnlockPageViewModel(
     private void OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
     {
         vaultSyncService.LoadAllFromDb(decryptedUserKey);
+
+        if (connectivityService.HasInternetAccess)
+        {
+            var urls = vaultSyncService.Ciphers
+                .OfType<LoginCipher>()
+                .Select(static c => c.Uris.FirstOrDefault())
+                .Where(static s => !string.IsNullOrWhiteSpace(s))
+                .Select(static s => Uri.TryCreate(s, UriKind.Absolute, out var uri) ? uri : null)
+                .Where(static uri => uri is not null)
+                .Cast<Uri>()
+                .ToArray();
+
+            _ = Task.Run(() => siteIconCache.PreloadAsync(urls, CancellationToken.None));
+        }
+        
         navigationService.NavigateTo<ShellPage>();
     }
 

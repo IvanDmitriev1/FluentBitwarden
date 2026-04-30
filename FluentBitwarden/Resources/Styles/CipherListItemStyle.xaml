@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentBitwarden.Resources.Controls">
+
+    <Style TargetType="controls:CipherListItem">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:CipherListItem">
+                    <Grid VerticalAlignment="Center" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <controls:SiteIcon x:Name="PART_IconHost" />
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock
+                                x:Name="PART_TitleTextBlock"
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                TextTrimming="CharacterEllipsis" />
+
+                            <TextBlock
+                                x:Name="PART_SubtitleTextBlock"
+                                Opacity="0.72"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -3,12 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Internal;
+using BitwardenApi.Shared.Extensions;
 using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
 
 namespace BitwardenApi.Modules.Identity.Services;
 
-public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClient
+public sealed class IdentityApiClient(IHttpClientFactory httpClientFactory) : IIdentityApiClient
 {
     public Task<TokenExchangeOutcome> LoginWithPasswordAsync(
         PasswordLoginRequest request,
@@ -73,6 +74,7 @@ public sealed class IdentityApiClient(HttpClient httpClient) : IIdentityApiClien
         Func<TPayload, TokenExchangeOutcome> successFactory,
         CancellationToken cancellationToken)
     {
+        using var httpClient = httpClientFactory.CreateIdentityClient();
         Uri tokenEndpoint = new(context.Environment.IdentityBase, "/connect/token");
 
         using var content = new FormUrlEncodedContent(form);
