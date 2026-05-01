@@ -22,8 +22,6 @@ public sealed partial class SiteIcon : ContentControl
         DefaultStyleKey = typeof(SiteIcon);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-
-        Content = CreateFallbackContent();
     }
 
     partial void OnSizeChanged(double newValue)
@@ -31,8 +29,9 @@ public sealed partial class SiteIcon : ContentControl
         if (double.IsNaN(newValue) || double.IsInfinity(newValue) || newValue <= 0)
         {
             Size = 20;
-            return;
         }
+
+        Refresh();
     }
 
     partial void OnUriChanged()
@@ -83,8 +82,10 @@ public sealed partial class SiteIcon : ContentControl
         }
 
         if (Uri is null || SiteIconCache.TryGetCachedFilePath(Uri) is not { } cachedFilePath)
+        {
+            Content = CreateFallbackContent();
             return;
-
+        }
        
         int decodeSize = Math.Max(1, (int)Math.Ceiling(Size));
         var bitmap = new BitmapImage

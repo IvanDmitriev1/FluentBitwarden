@@ -6,7 +6,7 @@ public abstract record UnlockResult
 {
     private UnlockResult() {}
 
-    public sealed record Success(DecryptedUserKey userKey) : UnlockResult;
+    public sealed record Success(DecryptedUserKey UserKey) : UnlockResult;
     public sealed record PinLocked() : UnlockResult;
     public sealed record WindowsHelloCancelled() : UnlockResult;
     public sealed record RequiresOnlineReauth() : UnlockResult;

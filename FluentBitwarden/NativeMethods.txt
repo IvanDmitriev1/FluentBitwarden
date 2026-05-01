@@ -1,4 +1,8 @@
-﻿GetCurrentPackageFullName
+﻿SetWindowSubclass
+RemoveWindowSubclass
+DefSubclassProc
+
+GetCurrentPackageFullName
 GetCurrentPackageFamilyName
 
 CreateEvent

@@ -45,10 +45,10 @@ internal sealed class UnlockServices(
         if (session is null)
             return new UnlockResult.RequiresOnlineReauth();
 
-        var storedAccount = await Task.Run(() => unitOfWork.AccountRepository.GetById(userId), cancellationToken);
+        var storedAccount = unitOfWork.AccountRepository.GetById(userId);
         ArgumentNullException.ThrowIfNull(storedAccount);
 
-        currentSessionAccessor.SetCurrentSession(storedAccount, session, successUnlockResult.userKey);
+        currentSessionAccessor.SetCurrentSession(storedAccount, session, successUnlockResult.UserKey);
         return result;
     }
 }

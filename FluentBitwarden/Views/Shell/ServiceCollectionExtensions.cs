@@ -9,6 +9,7 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddShellServices(this IServiceCollection services)
     {
         services.AddTransient<MainWindow>();
+
         services.AddTransient<ShellPage>();
         services.AddSingleton<IMessenger>(StrongReferenceMessenger.Default);
 

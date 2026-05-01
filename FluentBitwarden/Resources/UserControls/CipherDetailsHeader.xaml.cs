@@ -3,6 +3,7 @@ using FluentBitwarden.Shared.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using System.Linq;
+using FluentBitwarden.Shared.Converters;
 
 namespace FluentBitwarden.Resources.UserControls;
 
@@ -29,7 +30,7 @@ public sealed partial class CipherDetailsHeader : UserControl
         if (Cipher is LoginCipher loginCipher)
         {
             var url = loginCipher.Uris.FirstOrDefault();
-            bool result = Uri.TryCreate(url, UriKind.Absolute, out iconUri);
+            StringToUriConverter.TryConvert(url, out iconUri);
         }
 
         IconHost.FallbackGlyph = iconGlyph;

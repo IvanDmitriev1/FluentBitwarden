@@ -1,4 +1,5 @@
 using BitwardenApi.Modules.Vault.Models;
+using FluentBitwarden.Shared.Converters;
 using FluentBitwarden.Shared.Extensions;
 using Microsoft.UI.Xaml;
 using System.Linq;
@@ -52,16 +53,8 @@ public sealed partial class CipherListItem : Control
             return;
         }
 
-        if (_titleTextBlock is not null)
-        {
-            _titleTextBlock.Text = Cipher.Name;
-        }
-
-        if (_subtitleTextBlock is not null)
-        {
-            _subtitleTextBlock.Text = BuildSubtitle(Cipher);
-        }
-
+        _titleTextBlock?.Text = Cipher.Name;
+        _subtitleTextBlock?.Text = BuildSubtitle(Cipher);
         RefreshIcon();
     }
 
@@ -85,7 +78,7 @@ public sealed partial class CipherListItem : Control
         if (Cipher is LoginCipher loginCipher)
         {
             string? url = loginCipher.Uris.FirstOrDefault();
-            _ = Uri.TryCreate(url, UriKind.Absolute, out iconUri);
+            StringToUriConverter.TryConvert(url, out iconUri);
         }
 
         _iconHost.FallbackGlyph = Cipher.GetGlyph();
@@ -95,16 +88,8 @@ public sealed partial class CipherListItem : Control
 
     private void Clear()
     {
-        if (_titleTextBlock is not null)
-        {
-            _titleTextBlock.Text = string.Empty;
-        }
-
-        if (_subtitleTextBlock is not null)
-        {
-            _subtitleTextBlock.Text = string.Empty;
-        }
-
+        _titleTextBlock?.Text = string.Empty;
+        _subtitleTextBlock?.Text = string.Empty;
         RefreshIcon();
     }
 

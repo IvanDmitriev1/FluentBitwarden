@@ -9,13 +9,15 @@ namespace FluentBitwarden.Shared.Ipc.Services;
 [Fody.ConfigureAwait(false)]
 internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
 {
-    public IpcPipeServer(IEnumerable<IPipeMessageInvoker> invokers)
+    public IpcPipeServer(IServiceProvider serviceProvider, IEnumerable<PipeMessageInvokerDescriptor> descriptors)
     {
-        _invokers = invokers.ToDictionary(static invoker => invoker.MessageType);
+        _serviceProvider = serviceProvider;
+        _invokers = descriptors.ToDictionary(static desc => desc.MessageType, static desc => desc);
     }
 
+    private readonly IServiceProvider _serviceProvider;
     private readonly CancellationTokenSource _cts = new();
-    private readonly Dictionary<ushort, IPipeMessageInvoker> _invokers;
+    private readonly Dictionary<ushort, PipeMessageInvokerDescriptor> _invokers;
 
     public async ValueTask DisposeAsync()
     {
@@ -49,9 +51,10 @@ internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
                 }
 
                 var header = RequestHeader.Read(pipe);
-                if (!_invokers.TryGetValue(header.MessageType, out var invoker))
+                if (!_invokers.TryGetValue(header.MessageType, out var descriptor))
                     continue;
 
+                var invoker = descriptor.CreateInvoker.Invoke(_serviceProvider);
                 await invoker.InvokeAsync(pipe, header.PayloadLength, cancellationToken);
             }
             catch (EndOfStreamException)

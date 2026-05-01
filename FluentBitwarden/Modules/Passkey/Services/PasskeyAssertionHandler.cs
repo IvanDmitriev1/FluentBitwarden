@@ -1,23 +1,18 @@
-﻿using System.Linq;
-using BitwardenApi.Modules.Vault.Models;
+﻿using FluentBitwarden.Modules.Passkey.Abstractions;
 using FluentBitwarden.Modules.Passkey.Internal;
 using FluentBitwarden.Modules.Passkey.Models;
-using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Shared.Ipc.Abstractions;
 
 namespace FluentBitwarden.Modules.Passkey.Services;
 
 [Fody.ConfigureAwait(false)]
-internal class PasskeyGetAssertionHandler(IVaultSyncService service) : IPipeMessageHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>
+internal class PasskeyAssertionHandler(IPasskeyOverlayService passkeyOverlayService) : IPipeMessageHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>
 {
-    public ushort MessageType => 2;
+    public static ushort MessageType => 2;
 
-    public ValueTask<PasskeyAssertionResponse> HandleAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
+    public async ValueTask<PasskeyAssertionResponse> HandleAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
-        var credential = service.Ciphers.OfType<LoginCipher>()
-            .SelectMany(static l => l.Fido2Credentials)
-            .FirstOrDefault(c => c.RpId == request.RpId);
-
+        var credential = await passkeyOverlayService.UnlockAndSelectAsync(request, cancellationToken);
         if (credential is null)
         {
             throw new InvalidOperationException("Credential not found.");
@@ -40,6 +35,6 @@ internal class PasskeyGetAssertionHandler(IVaultSyncService service) : IPipeMess
             UserDisplayName = credential.UserDisplayName
         };
 
-        return ValueTask.FromResult(response);
+        return response;
     }
 }

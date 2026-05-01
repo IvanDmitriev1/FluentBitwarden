@@ -3,9 +3,7 @@ using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Account.Repositories;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Repositories;
-using FluentBitwarden.Modules.Vault.Services;
 using Microsoft.Data.Sqlite;
-using System.Transactions;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace FluentBitwarden.Data;

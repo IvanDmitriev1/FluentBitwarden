@@ -21,20 +21,20 @@ public static class ServiceCollectionExtensions
         where TRequest : notnull
         where TResponse : notnull
     {
-        services.AddTransient<THandler>();
+        services.AddTransient<IPipeMessageHandler<TRequest, TResponse>, THandler>();
+        services.AddSingleton(new PipeMessageInvokerDescriptor(
+            THandler.MessageType,
+            sp =>
+            {
+                var handler =
+                    sp.GetRequiredService<IPipeMessageHandler<TRequest, TResponse>>();
 
-        services.AddTransient<IPipeMessageHandler<TRequest, TResponse>>(sp =>
-            sp.GetRequiredService<THandler>());
+                return new PipeMessageInvoker<TRequest, TResponse>(
+                    handler,
+                    requestTypeInfo,
+                    responseTypeInfo);
+            }));
 
-        services.AddTransient<IPipeMessageInvoker>(sp =>
-        {
-            var handler = sp.GetRequiredService<IPipeMessageHandler<TRequest, TResponse>>();
-
-            return new PipeMessageInvoker<TRequest, TResponse>(
-                handler,
-                requestTypeInfo,
-                responseTypeInfo);
-        });
 
         return services;
     }

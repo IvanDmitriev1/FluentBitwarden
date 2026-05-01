@@ -4,9 +4,7 @@ using System.Runtime.CompilerServices;
 namespace FluentBitwarden.Shared.AttachedProperties;
 
 [AttachedDependencyProperty<bool, PasswordBox>("BindPassword")]
-[AttachedDependencyProperty<string, PasswordBox>(
-    "BoundPassword",
-    DefaultBindingMode = DefaultBindingMode.TwoWay)]
+[AttachedDependencyProperty<string, PasswordBox>("BoundPassword", DefaultBindingMode = DefaultBindingMode.TwoWay)]
 public static partial class PasswordBoxBinding
 {
     private sealed class BindingState

@@ -1,5 +1,6 @@
 ﻿using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline;
+using FluentBitwarden.Views.Passkey;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Unlock;
@@ -10,13 +11,17 @@ namespace FluentBitwarden.Views;
 
 internal static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddViews(this IServiceCollection services) =>
-        services.AddView<LoadingPage, LoadingPageViewModel>()
+    public static IServiceCollection AddViews(this IServiceCollection services)
+    {
+        services.AddTransient<OverlayWindow>();
+
+        return services.AddView<LoadingPage, LoadingPageViewModel>()
             .AddView<OfflinePage, OfflinePageViewModel>()
             .AddView<SetupPage, SetupPageViewModel>()
             .AddView<UnlockPage, UnlockPageViewModel>()
             .AddView<SettingsPage, SettingsPageViewModel>()
             .AddView<VaultPage, VaultPageViewModel>();
+    }
 
     private static IServiceCollection AddView<TPage, TViewModel>(this IServiceCollection services)
         where TPage : Page

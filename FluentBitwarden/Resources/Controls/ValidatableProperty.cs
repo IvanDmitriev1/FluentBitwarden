@@ -22,7 +22,8 @@ public sealed class ValidatableProperty
     {
         if (propertyExpression.Body is not MemberExpression
             {
-                Expression: ParameterExpression, Member: PropertyInfo propertyInfo
+                Expression: ParameterExpression,
+                Member: PropertyInfo propertyInfo
             })
         {
             throw new ArgumentException(

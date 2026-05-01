@@ -7,7 +7,6 @@ public sealed partial class UnlockPage : LifecyclePage
     public UnlockPage(UnlockPageViewModel viewModel)
     {
         ViewModel = viewModel;
-        DataContext = viewModel;
         InitializeComponent();
     }
 
