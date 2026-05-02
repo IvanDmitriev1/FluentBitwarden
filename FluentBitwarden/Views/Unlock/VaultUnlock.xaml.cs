@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Input;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using Windows.System;
+using CommunityToolkit.Mvvm.Input;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -24,29 +25,25 @@ public sealed partial class VaultUnlock : ValidatingUserControl
     }
 
     private readonly IUnlockService _unlockService;
-    private bool _isUnlocking;
 
-    public string Password => PasswordBox?.Password ?? string.Empty;
+    public string Password => PasswordBox.Password;
 
     [field: AllowNull]
     public ValidatableProperty PasswordValidation
         => field ??= ValidatableProperty.Create(this, static state => state.Password);
 
-    private async void PasswordBox_OnKeyDown(object sender, KeyRoutedEventArgs e)
+    private async void KeyboardAccelerator_OnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
-        if (e.Key != VirtualKey.Enter)
-            return;
-
-        e.Handled = true;
+        args.Handled = true;
         await UnlockAsync();
     }
 
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task UnlockAsync()
     {
-        if (_isUnlocking)
-            return;
-
-        _isUnlocking = true;
+        PasswordBox.IsPasswordRevealed = false;
+        PasswordBox.IsEnabled = false;
 
         try
         {
@@ -84,7 +81,7 @@ public sealed partial class VaultUnlock : ValidatingUserControl
         }
         finally
         {
-            _isUnlocking = false;
+            PasswordBox.IsEnabled = true;
         }
     }
 }

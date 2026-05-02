@@ -19,10 +19,24 @@
     </interactivity:Interaction.Behaviors>
 
     <controls:ValidationField VerticalAlignment="Center" Property="{x:Bind PasswordValidation}">
-        <PasswordBox
+        <controls:PasswordBoxEx
             x:Name="PasswordBox"
+            ActionButtonCommand="{x:Bind UnlockCommand}"
+            ActionButtonToolTip="Unlock"
             Header="Master password"
-            KeyDown="PasswordBox_OnKeyDown" />
+            IsEnabled="True">
+
+            <controls:PasswordBoxEx.KeyboardAccelerators>
+                <KeyboardAccelerator Key="Enter" Invoked="KeyboardAccelerator_OnInvoked" />
+            </controls:PasswordBoxEx.KeyboardAccelerators>
+
+            <controls:PasswordBoxEx.ActionButtonContent>
+                <FontIcon
+                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                    FontSize="16"
+                    Glyph="&#xE8D7;" />
+            </controls:PasswordBoxEx.ActionButtonContent>
+        </controls:PasswordBoxEx>
     </controls:ValidationField>
 
 </userControls:ValidatingUserControl>
