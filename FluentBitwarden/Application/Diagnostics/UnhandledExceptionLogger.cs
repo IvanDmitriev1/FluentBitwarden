@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using FluentBitwarden.Shared.Extensions;
 
 namespace FluentBitwarden.Application.Diagnostics;
@@ -7,6 +8,8 @@ public static class UnhandledExceptionLogger
 {
     public static void WriteException(Exception e)
     {
+        Debug.WriteLine("Unhandled exception! {0}", e);
+
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string logFilePath = Path.Combine(localAppData, "FluentBitwarden", "Logs", "unhandled-exceptions.log");
         string? logDirectory = Path.GetDirectoryName(logFilePath);

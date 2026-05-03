@@ -13,7 +13,7 @@ public sealed class UnitOfWork : IUnitOfWork
     public UnitOfWork(SqliteConnection connection, IsolationLevel isolationLevel)
     {
         _connection = connection;
-        Transaction = connection.BeginTransaction(isolationLevel);
+        Transaction = connection.BeginTransaction(isolationLevel, deferred: true);
 
         AccountRepository = new AccountRepository(Transaction);
         AccountDecryptionRepository = new AccountDecryptionRepository(Transaction);

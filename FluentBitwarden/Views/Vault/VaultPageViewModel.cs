@@ -5,10 +5,13 @@ using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
+using FluentBitwarden.Shared.Services.Abstractions;
 
 namespace FluentBitwarden.Views.Vault;
 
-public sealed partial class VaultPageViewModel(IVaultSyncService vaultSyncService) : ObservableObject, IPageLifecycleAware
+public sealed partial class VaultPageViewModel(
+    IVaultSyncService vaultSyncService,
+    IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware
 {
     [ObservableProperty] 
     public partial ObservableCollection<Cipher> FilteredCiphers { get; private set; } = [];
@@ -26,13 +29,12 @@ public sealed partial class VaultPageViewModel(IVaultSyncService vaultSyncServic
 
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        if (!_hasInitialized)
-        {
-            RefreshCollections();
-            _hasInitialized = true;
-        }
+        if (_hasInitialized || !connectivityService.HasInternetAccess)
+            return;
 
-        var result = await vaultSyncService.SyncVaultAsync();
+        RefreshCollections();
+
+        var result = await vaultSyncService.SyncVaultAsync(cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
             RefreshCollections();
@@ -43,6 +45,8 @@ public sealed partial class VaultPageViewModel(IVaultSyncService vaultSyncServic
         {
             //
         }
+
+        _hasInitialized = true;
     }
 
     public void OnUnloading() {}

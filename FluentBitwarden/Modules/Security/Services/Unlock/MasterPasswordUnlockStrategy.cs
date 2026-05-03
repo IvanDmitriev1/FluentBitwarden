@@ -1,9 +1,7 @@
 ﻿using BitwardenApi.Cryptography;
 using BitwardenApi.Modules.Identity.Models;
-using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
-using FluentBitwarden.Modules.Session.Services;
 using System.Security.Cryptography;
 
 namespace FluentBitwarden.Modules.Security.Services.Unlock;

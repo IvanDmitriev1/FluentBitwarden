@@ -105,6 +105,7 @@ public sealed partial class PasswordBoxEx : Control
         }
     }
 
+
     private void OnTextBoxTextChanging(TextBox sender, TextBoxTextChangingEventArgs args)
     {
         if (_passwordTextBox is null)

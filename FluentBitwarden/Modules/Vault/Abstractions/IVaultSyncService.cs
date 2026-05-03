@@ -12,5 +12,5 @@ public interface IVaultSyncService
     IReadOnlyList<Folder> Folders { get; }
 
     void LoadAllFromDb(DecryptedUserKey decryptedUserKey);
-    Task<VaultSyncResult> SyncVaultAsync();
+    Task<VaultSyncResult> SyncVaultAsync(CancellationToken token);
 }

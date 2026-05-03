@@ -5,7 +5,7 @@ using BitwardenApi.Shared.Context;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
-using FluentBitwarden.Shared.Services.Abstractions;
+using System.Diagnostics;
 
 namespace FluentBitwarden.Modules.Session.Services.Authentication;
 
@@ -13,8 +13,7 @@ namespace FluentBitwarden.Modules.Session.Services.Authentication;
 internal sealed class TokenRefreshService(
     IIdentityApiClient identityApiClient,
     ISessionTokensStore sessionTokensStore,
-    CurrentSessionAccessor currentSessionAccessor,
-    IConnectivityService connectivityService) : ITokenRefreshService
+    CurrentSessionAccessor currentSessionAccessor) : ITokenRefreshService
 {
     private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _locks = new();
 
@@ -25,14 +24,22 @@ internal sealed class TokenRefreshService(
 
         try
         {
-            if (sessionTokensStore.Get(userId) is not { } retrievedSession ||
-                retrievedSession.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(5))
-                return current;
+            var refreshToken = current.RefreshToken;
+            if (sessionTokensStore.Get(userId) is { } retrievedSession)
+            {
+                if (retrievedSession.AccessToken != AccessToken.Empty &&
+                    retrievedSession.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(5))
+                {
+                    Debug.WriteLine("Using cached Bitwarden identity token from session store.");
+                    currentSessionAccessor.UpdateSession(userId, retrievedSession);
+                    return retrievedSession;
+                }
 
-            if (!connectivityService.HasInternetAccess)
-                return current;
+                refreshToken = retrievedSession.RefreshToken;
+            }
 
-            var result = await identityApiClient.RefreshAsync(new RefreshLoginRequest(context, current.RefreshToken), ct);
+            Debug.WriteLine("Start refreshing Bitwarden identity token.");
+            var result = await identityApiClient.RefreshAsync(new RefreshLoginRequest(context, refreshToken), ct);
             if (result is not TokenExchangeOutcome.SessionRefreshed success)
                 throw new SessionRefreshException(result);
 
@@ -45,6 +52,7 @@ internal sealed class TokenRefreshService(
 
             sessionTokensStore.Store(userId, newSession);
             currentSessionAccessor.UpdateSession(userId, newSession);
+            Debug.WriteLine($"Finished refreshing Bitwarden identity token. Expires at {newSession.ExpiresAt:O}.");
             return newSession;
         }
         finally

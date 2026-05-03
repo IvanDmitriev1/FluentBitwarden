@@ -3,15 +3,13 @@ using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
 using BitwardenApi.Modules.Vault.VaultDataParser;
-using BitwardenApi.Shared.Exceptions;
-using FluentBitwarden.Data;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Repositories;
-using System.Net.Http;
 using FluentBitwarden.Shared.Services.Abstractions;
+using System.Diagnostics;
 
 namespace FluentBitwarden.Modules.Vault.Services;
 
@@ -50,42 +48,42 @@ internal sealed class VaultSyncService(
         OnVaultChanged(new VaultChangedEventArgs(VaultChangeKind.FullReload));
     }
 
-    public async Task<VaultSyncResult> SyncVaultAsync()
+    public async Task<VaultSyncResult> SyncVaultAsync(CancellationToken token)
     {
         if (!connectivityService.HasInternetAccess)
             return VaultSyncResult.SkippedOffline;
 
         var currentUser = sessionAccessor.CurrentUser;
-        using var unitOfWork = unitOfWorkFactory.Create();
 
         try
         {
-            if (!await HasRemoteChangesAsync(unitOfWork, currentUser))
+            if (!await HasRemoteChangesAsync(currentUser, token))
                 return VaultSyncResult.NoChanges;
 
-            await using var syncPayload = await vaultApiClient.GetSyncAsync();
+            await using var syncPayload = await vaultApiClient.GetSyncAsync(token);
 
+            using var unitOfWork = unitOfWorkFactory.Create();
             var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUser);
-            await syncPayload.ParseAsync(repository);
-            unitOfWork.AccountRepository.UpdateSyncTime(currentUser, DateTimeOffset.UtcNow);
 
+            await syncPayload.ParseAsync(repository, token);
+            unitOfWork.AccountRepository.UpdateSyncTime(currentUser, DateTimeOffset.UtcNow);
             unitOfWork.SaveChanges();
 
-            LoadAllFromDb(sessionAccessor.CurrentDecryptedUserKey);
             return VaultSyncResult.Synced;
         }
         catch (Exception ex)
         {
+            Debug.WriteLine($"Vault sync failed: {ex}");
             return VaultSyncResult.Failed;
         }
     }
 
-    private async Task<bool> HasRemoteChangesAsync(UnitOfWork unitOfWork, UserId currentUser)
+    private async Task<bool> HasRemoteChangesAsync(UserId currentUser, CancellationToken token)
     {
+        using var unitOfWork = unitOfWorkFactory.Create();
         var lastSync = unitOfWork.AccountRepository.GetLastSyncTime(currentUser);
 
-        var revisionDate = await vaultApiClient.GetRevisionDateAsync();
-
+        var revisionDate = await vaultApiClient.GetRevisionDateAsync(token);
         return lastSync < revisionDate;
     }
 

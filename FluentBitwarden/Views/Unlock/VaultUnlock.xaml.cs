@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
@@ -8,8 +9,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
-using Windows.System;
-using CommunityToolkit.Mvvm.Input;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -42,46 +41,45 @@ public sealed partial class VaultUnlock : ValidatingUserControl
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task UnlockAsync()
     {
+        ClearError(nameof(Password));
+
+        if (Account is null)
+        {
+            SetError(nameof(Password), "No account selected.");
+            return;
+        }
+
+        if (!ValidateRequired(
+                nameof(Password),
+                Password,
+                "Enter your master password."))
+        {
+            PasswordBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
         PasswordBox.IsPasswordRevealed = false;
         PasswordBox.IsEnabled = false;
+        UnlockResult result;
 
         try
         {
-            ClearError(nameof(Password));
-
-            if (Account is null)
-            {
-                SetError(nameof(Password), "No account selected.");
-                return;
-            }
-
-            if (!ValidateRequired(
-                    nameof(Password),
-                    Password,
-                    "Enter your master password."))
-            {
-                PasswordBox.Focus(FocusState.Programmatic);
-                return;
-            }
-
-            var result = await _unlockService.UnlockAsync(
-                Account.UserId,
-                new MasterPasswordUnlockRequest(Password));
-
-            switch (result)
-            {
-                case UnlockResult.Failure failure:
-                    SetError(nameof(Password), failure.Reason);
-                    PasswordBox.Focus(FocusState.Programmatic);
-                    break;
-                default:
-                    ResultCommand?.Execute(result);
-                    break;
-            }
+            result = await _unlockService.UnlockAsync(Account.UserId, new MasterPasswordUnlockRequest(Password));
         }
         finally
         {
             PasswordBox.IsEnabled = true;
+        }
+
+        switch (result)
+        {
+            case UnlockResult.Failure failure:
+                SetError(nameof(Password), failure.Reason);
+                PasswordBox.Focus(FocusState.Programmatic);
+                break;
+            default:
+                ResultCommand?.Execute(result);
+                break;
         }
     }
 }

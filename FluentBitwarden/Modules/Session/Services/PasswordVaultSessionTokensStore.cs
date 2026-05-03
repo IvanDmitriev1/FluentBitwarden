@@ -30,7 +30,7 @@ internal sealed class PasswordVaultSessionTokensStore : ISessionTokensStore
         if (!TryRetrieveSecret(RefreshTokenResource, userIdStr, out var refreshToken))
             return null;
 
-        if (!TryRetrieveSecret(RefreshTokenResource, userIdStr, out var twoFactorToken))
+        if (!TryRetrieveSecret(TwoFactorSessionResource, userIdStr, out var twoFactorToken))
             return new SessionTokens(
                 new RefreshToken(refreshToken), 
                 null,

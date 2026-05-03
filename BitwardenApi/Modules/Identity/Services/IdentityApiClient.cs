@@ -81,10 +81,7 @@ public sealed class IdentityApiClient(IHttpClientFactory httpClientFactory) : II
         using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint);
         request.Content = content;
 
-        using var response = await httpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
+        using var response = await httpClient.SendAsync(request, cancellationToken);
 
         if (response is { IsSuccessStatusCode: false, StatusCode: HttpStatusCode.BadRequest })
         {

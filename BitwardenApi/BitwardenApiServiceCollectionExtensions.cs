@@ -8,6 +8,7 @@ using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Services;
 using BitwardenApi.Shared.Transport;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 [assembly: Fody.ConfigureAwait(false)]
 
@@ -15,7 +16,7 @@ namespace BitwardenApi;
 
 public static class BitwardenApiServiceCollectionExtensions
 {
-    public static IServiceCollection AddBitwardenApi<TAuthHandler>(this IServiceCollection services)
+    public static IServiceCollection AddBitwardenApi<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TAuthHandler>(this IServiceCollection services)
         where TAuthHandler : DelegatingHandler
     {
         services.AddTransient<BitwardenRequiredHeadersHandler>();
@@ -23,13 +24,13 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddHttpClient("BitwardenApiIdentityHttpClient", client =>
             {
+                client.Timeout = TimeSpan.FromSeconds(5);
             })
-            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
-            .AddHttpMessageHandler<TAuthHandler>();
+            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>();
 
         services.AddHttpClient("BitwardenApiVaultHttpClient", client =>
             {
-                
+                client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<TAuthHandler>();

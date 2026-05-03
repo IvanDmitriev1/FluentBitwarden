@@ -6,6 +6,7 @@ using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
 using System.Net.Http.Json;
 using BitwardenApi.Shared.Extensions;
+using System.Diagnostics;
 
 namespace BitwardenApi.Modules.Vault.Services;
 
@@ -21,14 +22,13 @@ public sealed class VaultApiClient(
         BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, "/accounts/revision-date");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        using var response = await httpClient.SendAsync(
-            requestMessage,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
+        using var response = await httpClient.SendAsync(requestMessage, cancellationToken);
 
         response.EnsureSuccess("Vault get revision date", cancellationToken);
 
         var rawValue = await response.Content.ReadFromJsonAsync(BitwardenApiJsonContext.ConfiguredDefault.Int64, cancellationToken);
+        Debug.WriteLine($"Vault revision-date raw value: {rawValue}.");
+
         if (rawValue < 0)
             throw new BitwardenAccountDeletedException();
 
