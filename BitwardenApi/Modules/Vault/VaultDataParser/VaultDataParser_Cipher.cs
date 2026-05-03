@@ -127,21 +127,23 @@ public static partial class VaultDataParser
                 return true;
             });
 
-    private static SshKeyCipher ParseSshKeyCipher(SshKeyCipher cipher, ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(cipher, ref reader, decryptKey,
+    private static SshKeyCipher ParseSshKeyCipher(SshKeyCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    {
+        return ParseCipherObject(cipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("privateKey"u8) || r.ValueTextEquals("PrivateKey"u8))
-                    c.PrivateKey = ReadDecryptField(ref r, k);
+                    c.PrivateKey = ReadRequiredDecryptField(ref r, k, "PrivateKey");
                 else if (r.ValueTextEquals("publicKey"u8) || r.ValueTextEquals("PublicKey"u8))
-                    c.PublicKey = ReadDecryptField(ref r, k);
+                    c.PublicKey = ReadRequiredDecryptField(ref r, k, "PublicKey");
                 else if (r.ValueTextEquals("keyFingerprint"u8) || r.ValueTextEquals("KeyFingerprint"u8))
-                    c.KeyFingerprint = ReadDecryptField(ref r, k);
+                    c.KeyFingerprint = ReadRequiredDecryptField(ref r, k, "KeyFingerprint");
                 else
                     return false;
+
                 return true;
             });
+    }
 
     private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, Cipher cipher, scoped ReadOnlySpan<byte> decryptKey)
     {

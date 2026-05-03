@@ -64,7 +64,7 @@ public sealed class IdentityCipher : Cipher
 
 public sealed class SshKeyCipher : Cipher
 {
-    public string? PrivateKey { get; set; }
-    public string? PublicKey { get; set; }
-    public string? KeyFingerprint { get; set; }
+    public string PrivateKey { get; set; } = string.Empty;
+    public string PublicKey { get; set; } = string.Empty;
+    public string KeyFingerprint { get; set; } = string.Empty;
 }

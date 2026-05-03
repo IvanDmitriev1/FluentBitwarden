@@ -1,5 +1,6 @@
 using BitwardenApi;
 using FluentBitwarden.Application.Diagnostics;
+using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState;
@@ -8,21 +9,22 @@ using FluentBitwarden.Modules.Passkey;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Modules.Session.Services.Authentication;
+using FluentBitwarden.Modules.SshAgent;
+using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.Vault;
 using FluentBitwarden.Shared.Extensions;
+using FluentBitwarden.Shared.Ipc;
+using FluentBitwarden.Shared.Ipc.Abstractions;
+using FluentBitwarden.Shared.Services;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
-using FluentBitwarden.Shared.Ipc;
-using FluentBitwarden.Shared.Ipc.Abstractions;
-using Microsoft.UI.Dispatching;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using FluentBitwarden.Application.Lifetime;
-using FluentBitwarden.Shared.Services;
 
 namespace FluentBitwarden;
 
@@ -52,6 +54,7 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddAppStateModule();
             services.AddVaultServices();
             services.AddPasskeyModule();
+            services.AddSshAgent();
 
         })
         .Build();
@@ -84,6 +87,7 @@ public partial class App : IXamlMetadataServiceProvider
     {
         Host.Services.GetRequiredService<IAppFirstRunService>().Initialize();
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
+        _ = Task.Run(() => Host.Services.GetRequiredService<ISshAgentServer>().RunAsync());
 
         AppLifetimeManager.Activate(_initialActivation);
     }
