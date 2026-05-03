@@ -8,7 +8,7 @@ namespace FluentBitwarden.Modules.SshAgent.Internal;
 [Fody.ConfigureAwait(false)]
 internal sealed class SshAgentProtocolWriter : IDisposable
 {
-    public SshAgentProtocolWriter(int payloadLength, SshAgentMessage message)
+    public SshAgentProtocolWriter(int payloadLength, SshAgentMessageReplies message)
     {
         int packetLength = 4 + payloadLength;
         _owner = MemoryOwner<byte>.Allocate(packetLength);
@@ -21,13 +21,13 @@ internal sealed class SshAgentProtocolWriter : IDisposable
     private int _offset;
     private bool _isDisposed;
 
-    private Span<byte> Span => _owner.Span;
+    public Span<byte> Remaining => _owner.Span[_offset..];
 
     public static async Task WriteFailureAsync(Stream stream, CancellationToken ct)
     {
         using var writer = new SshAgentProtocolWriter(
             payloadLength: 1,
-            message: SshAgentMessage.Failure);
+            message: SshAgentMessageReplies.Failure);
 
         await writer.WriteToAsync(stream, ct);
     }
@@ -50,7 +50,7 @@ internal sealed class SshAgentProtocolWriter : IDisposable
         const int length = sizeof(uint);
         EnsureRemaining(length);
 
-        BinaryPrimitives.WriteUInt32BigEndian(Span.Slice(_offset, length), parsedValue);
+        BinaryPrimitives.WriteUInt32BigEndian(Remaining, parsedValue);
         _offset += length;
     }
 
@@ -67,7 +67,7 @@ internal sealed class SshAgentProtocolWriter : IDisposable
         WriteUInt32(value.Length);
         EnsureRemaining(value.Length);
 
-        value.CopyTo(_owner.Span[_offset..]);
+        value.CopyTo(Remaining);
         _offset += value.Length;
     }
 
@@ -77,7 +77,7 @@ internal sealed class SshAgentProtocolWriter : IDisposable
         WriteUInt32(byteCount);
         EnsureRemaining(byteCount);
 
-        int written = Encoding.UTF8.GetBytes(value, _owner.Span.Slice(_offset, byteCount));
+        int written = Encoding.UTF8.GetBytes(value, Remaining);
         _offset += written;
     }
 

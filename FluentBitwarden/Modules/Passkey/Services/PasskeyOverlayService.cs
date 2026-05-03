@@ -57,7 +57,7 @@ internal class PasskeyOverlayService(
                     account,
                     cts.Token);
 
-                vaultSyncService.LoadAllFromDb(userKey);
+                vaultSyncService.LoadAllFromDb();
             }
 
             var credentials = GetMatchingCredentials(request);

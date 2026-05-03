@@ -1,11 +1,12 @@
 ﻿using BitwardenApi.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
+using FluentBitwarden.Modules.Vault.Services;
 using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
-using FluentBitwarden.Shared.Services.Abstractions;
 
 namespace FluentBitwarden.Views.Vault;
 
@@ -37,6 +38,7 @@ public sealed partial class VaultPageViewModel(
         var result = await vaultSyncService.SyncVaultAsync(cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
+            vaultSyncService.LoadAllFromDb();
             RefreshCollections();
             return;
         }

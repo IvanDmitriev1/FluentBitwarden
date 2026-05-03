@@ -34,35 +34,7 @@ internal static class SshAgentProtocolReader
             return false;
 
         byte rawType = frame.Span[0];
-        if (!TryGetMessage(rawType, out SshAgentMessage message)) 
-            return false;
-
-        packet = new SshAgentPacket(message, frame[1..]);
+        packet = new SshAgentPacket((SshAgentMessageRequests)rawType, frame[1..]);
         return true;
-    }
-
-    private static bool TryGetMessage(byte value, out SshAgentMessage message)
-    {
-        switch (value)
-        {
-            case (byte)SshAgentMessage.Failure:
-            case (byte)SshAgentMessage.Success:
-            case (byte)SshAgentMessage.IdentitiesAnswer:
-            case (byte)SshAgentMessage.SignResponse:
-            case (byte)SshAgentMessage.ExtensionFailure:
-            case (byte)SshAgentMessage.ExtensionResponse:
-
-            case (byte)SshAgentMessage.RequestIdentities:
-            case (byte)SshAgentMessage.SignRequest:
-            case (byte)SshAgentMessage.Lock:
-            case (byte)SshAgentMessage.Unlock:
-            case (byte)SshAgentMessage.Extension:
-                message = (SshAgentMessage)value;
-                return true;
-
-            default:
-                message = default;
-                return false;
-        }
     }
 }

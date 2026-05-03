@@ -70,7 +70,7 @@ public sealed partial class UnlockPageViewModel(
 
     private void OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
     {
-        vaultSyncService.LoadAllFromDb(decryptedUserKey);
+        vaultSyncService.LoadAllFromDb();
         navigationService.NavigateTo<ShellPage>();
     }
 }

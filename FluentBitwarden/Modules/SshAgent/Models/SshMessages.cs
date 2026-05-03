@@ -1,21 +1,56 @@
-﻿namespace FluentBitwarden.Modules.SshAgent.Models;
+﻿using FluentBitwarden.Modules.SshAgent.Internal;
+
+namespace FluentBitwarden.Modules.SshAgent.Models;
 
 internal readonly record struct SshAgentPacket(
-    SshAgentMessage Message,
+    SshAgentMessageRequests Message,
     ReadOnlyMemory<byte> Payload);
 
-internal readonly record struct SshPublicIdentity(
-    OpenSshPublicKey PublicKey,
+internal readonly record struct SshPublicIdentityResponce(
+    byte[] PublicKey,
     string Comment);
+
+internal readonly record struct SshAgentExtensionRequest(
+    ReadOnlyMemory<byte> ExtensionType,
+    ReadOnlyMemory<byte> Payload)
+{
+    public static SshAgentExtensionRequest Parse(ReadOnlyMemory<byte> payload)
+    {
+        var reader = new SshAgentPayloadReader(payload);
+
+        var extensionType = reader.ReadString();
+        var extensionPayload = payload[^reader.Remaining..];
+
+        return new SshAgentExtensionRequest(extensionType, extensionPayload);
+    }
+}
 
 internal readonly record struct SshSignRequest(
     ReadOnlyMemory<byte> PublicKeyBlob,
     ReadOnlyMemory<byte> Data,
-    SshAgentSignFlags Flags);
+    SshAgentSignatureFlags Flags)
+{
+    public static SshSignRequest Parse(ReadOnlyMemory<byte> payload)
+    {
+        var reader = new SshAgentPayloadReader(payload);
+
+        ReadOnlyMemory<byte> publicKeyBlob = reader.ReadString();
+        ReadOnlyMemory<byte> data = reader.ReadString();
+        int rawFlags = reader.ReadUInt32();
+
+        if (!reader.End)
+            throw new ArgumentException("Unexpected bytes while parsing SshSignRequest");
+
+        return new SshSignRequest(
+            publicKeyBlob,
+            data,
+            (SshAgentSignatureFlags)rawFlags);
+    }
+}
 
 internal readonly record struct SshSignatureResult(
     string AlgorithmName,
-    ReadOnlyMemory<byte> RawSignature)
+    byte[] Signature)
 {
-    public static SshSignatureResult Empty { get; } = new(string.Empty, ReadOnlyMemory<byte>.Empty);
-};
+    public static SshSignatureResult Failed { get; } = new(string.Empty, []);
+}

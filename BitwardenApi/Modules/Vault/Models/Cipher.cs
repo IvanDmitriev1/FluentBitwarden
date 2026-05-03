@@ -1,4 +1,6 @@
-﻿namespace BitwardenApi.Modules.Vault.Models;
+﻿using BitwardenApi.OpenSsh;
+
+namespace BitwardenApi.Modules.Vault.Models;
 
 /// <summary>
 /// Common vault cipher fields.
@@ -10,11 +12,11 @@ public abstract class Cipher
     public FolderId? FolderId { get; set; }
     public required string Name { get; set; }
     public string? Notes { get; set; }
-    public bool Favorite { get; set; }
-    public bool Reprompt { get; set; }
-    public DateTimeOffset RevisionDate { get; set; }
-    public DateTimeOffset CreationDate { get; set; }
-    public DateTimeOffset? DeletedDate { get; set; }
+    public required bool Favorite { get; set; }
+    public required bool Reprompt { get; set; }
+    public required DateTimeOffset RevisionDate { get; set; }
+    public required DateTimeOffset CreationDate { get; set; }
+    public required DateTimeOffset? DeletedDate { get; set; }
 }
 
 
@@ -64,7 +66,7 @@ public sealed class IdentityCipher : Cipher
 
 public sealed class SshKeyCipher : Cipher
 {
+    public OpenSshPublicKey PublicKey { get; set; } = OpenSshPublicKey.Empty;
     public string PrivateKey { get; set; } = string.Empty;
-    public string PublicKey { get; set; } = string.Empty;
     public string KeyFingerprint { get; set; } = string.Empty;
 }

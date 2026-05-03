@@ -10,6 +10,11 @@ public static class UnhandledExceptionLogger
     {
         Debug.WriteLine("Unhandled exception! {0}", e);
 
+        if (Debugger.IsAttached)
+        {
+            Debugger.Break();
+        }
+
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string logFilePath = Path.Combine(localAppData, "FluentBitwarden", "Logs", "unhandled-exceptions.log");
         string? logDirectory = Path.GetDirectoryName(logFilePath);

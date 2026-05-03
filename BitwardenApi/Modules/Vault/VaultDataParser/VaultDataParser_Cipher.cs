@@ -1,6 +1,7 @@
 using BitwardenApi.Cryptography;
 using BitwardenApi.Modules.Vault.Internal;
 using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.OpenSsh;
 
 namespace BitwardenApi.Modules.Vault.VaultDataParser;
 
@@ -133,11 +134,24 @@ public static partial class VaultDataParser
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("privateKey"u8) || r.ValueTextEquals("PrivateKey"u8))
+                {
                     c.PrivateKey = ReadRequiredDecryptField(ref r, k, "PrivateKey");
+                }
                 else if (r.ValueTextEquals("publicKey"u8) || r.ValueTextEquals("PublicKey"u8))
-                    c.PublicKey = ReadRequiredDecryptField(ref r, k, "PublicKey");
+                {
+                    var rawKey = ReadRequiredDecryptField(ref r, k, "publicKey");
+                    if (!OpenSshPublicKey.TryParse(rawKey, out var key))
+                    {
+                        //TODO Remove later
+                        c.PublicKey = OpenSshPublicKey.CreateUnparsed(rawKey);
+                    }
+
+                    c.PublicKey = key;
+                }
                 else if (r.ValueTextEquals("keyFingerprint"u8) || r.ValueTextEquals("KeyFingerprint"u8))
+                {
                     c.KeyFingerprint = ReadRequiredDecryptField(ref r, k, "KeyFingerprint");
+                }
                 else
                     return false;
 
@@ -149,7 +163,7 @@ public static partial class VaultDataParser
     {
         if (reader.ValueTextEquals("name"u8) || reader.ValueTextEquals("Name"u8))
         {
-            cipher.Name = ReadDecryptField(ref reader, decryptKey) ?? string.Empty;
+            cipher.Name = ReadRequiredDecryptField(ref reader, decryptKey, "name");
             return true;
         }
 

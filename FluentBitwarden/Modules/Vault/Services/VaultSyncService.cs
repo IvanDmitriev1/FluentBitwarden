@@ -24,9 +24,10 @@ internal sealed class VaultSyncService(
     public IReadOnlyList<Cipher> Ciphers { get; private set; } = [];
     public IReadOnlyList<Folder> Folders { get; private set; } = [];
 
-    public void LoadAllFromDb(DecryptedUserKey decryptedUserKey)
+    public void LoadAllFromDb()
     {
         using var unitOfWork = unitOfWorkFactory.Create();
+        var decryptedUserKey = sessionAccessor.CurrentDecryptedUserKey;
 
         List<Cipher> ciphers = [];
 

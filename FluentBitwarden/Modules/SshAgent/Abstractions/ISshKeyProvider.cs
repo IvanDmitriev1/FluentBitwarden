@@ -4,6 +4,6 @@ namespace FluentBitwarden.Modules.SshAgent.Abstractions;
 
 internal interface ISshKeyProvider
 {
-    IReadOnlyList<SshPublicIdentity> ListIdentities();
-    SshSignatureResult SignAsync(SshSignRequest request);
+    IReadOnlyList<SshPublicIdentityResponce> ListIdentities();
+    ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token);
 }
