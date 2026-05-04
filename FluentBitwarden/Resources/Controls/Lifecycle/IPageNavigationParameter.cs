@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
+﻿namespace FluentBitwarden.Resources.Controls.Lifecycle;
 
 public interface IPageNavigationParameter
 {

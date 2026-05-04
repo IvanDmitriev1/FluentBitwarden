@@ -1,7 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.AppState.Abstractions;
+using FluentBitwarden.Shared.Services.Implementations;
 using FluentBitwarden.Views.Loading;
-using FluentBitwarden.Views.Shell.Navigation;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using WinUIEx;
@@ -10,8 +11,16 @@ namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 {
+    [field: MaybeNull]
+    public static MainWindow Instance
+    {
+        get => field ?? throw new InvalidOperationException("MainWindow instance is not initialized");
+        private set;
+    }
+
     public MainWindow(NavigationService navigationService)
     {
+        Instance = this;
         InitializeComponent();
 
         Closed += OnClosed;
@@ -22,11 +31,19 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 
         Set(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
         ContentFrame.Navigate(typeof(LoadingPage));
+
     }
 
     public void Set(ElementTheme themeMode)
     {
         RootElement.RequestedTheme = themeMode;
+    }
+
+    public void RequestExit()
+    {
+        Closed -= OnClosed;
+
+        App.Current.Exit();
     }
 
     public void ShowWindow()

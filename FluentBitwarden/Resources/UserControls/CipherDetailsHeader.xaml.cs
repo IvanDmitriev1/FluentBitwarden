@@ -3,7 +3,7 @@ using FluentBitwarden.Shared.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using System.Linq;
-using FluentBitwarden.Shared.Converters;
+using FluentBitwarden.Resources.Converters;
 
 namespace FluentBitwarden.Resources.UserControls;
 

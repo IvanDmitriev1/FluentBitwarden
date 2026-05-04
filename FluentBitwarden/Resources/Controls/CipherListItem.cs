@@ -1,5 +1,5 @@
 using BitwardenApi.Modules.Vault.Models;
-using FluentBitwarden.Shared.Converters;
+using FluentBitwarden.Resources.Converters;
 using FluentBitwarden.Shared.Extensions;
 using Microsoft.UI.Xaml;
 using System.Linq;

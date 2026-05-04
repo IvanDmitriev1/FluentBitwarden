@@ -1,6 +1,6 @@
-using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Resources.Controls.Lifecycle;
 
-namespace FluentBitwarden.Views.Shell.Navigation;
+namespace FluentBitwarden.Shared.Services.Abstractions;
 
 public interface INavigationService
 {

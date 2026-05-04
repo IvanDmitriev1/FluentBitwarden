@@ -2,7 +2,7 @@ using FluentBitwarden.Application.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
+namespace FluentBitwarden.Resources.Controls.Lifecycle;
 
 public abstract class LifecyclePage : Page
 {

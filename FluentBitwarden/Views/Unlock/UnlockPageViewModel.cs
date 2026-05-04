@@ -1,17 +1,16 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security.Models.Unlock;
-using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Shell;
-using FluentBitwarden.Views.Shell.Navigation;
 using FluentBitwarden.Views.Unlock.Models;
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Modules.Identity.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Shared.Services.Abstractions;
+using FluentBitwarden.Resources.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Unlock;
 

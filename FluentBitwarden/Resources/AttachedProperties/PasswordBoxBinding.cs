@@ -1,7 +1,7 @@
-﻿using Microsoft.UI.Xaml;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Shared.AttachedProperties;
+namespace FluentBitwarden.Resources.AttachedProperties;
 
 [AttachedDependencyProperty<bool, PasswordBox>("BindPassword")]
 [AttachedDependencyProperty<string, PasswordBox>("BoundPassword", DefaultBindingMode = DefaultBindingMode.TwoWay)]
@@ -21,13 +21,13 @@ public static partial class PasswordBoxBinding
         if (newValue)
         {
             passwordBox.PasswordChanged += OnPasswordChanged;
-            SyncPasswordBox(passwordBox, GetBoundPassword(passwordBox) ?? string.Empty);
+            SyncPasswordBox(passwordBox, PasswordBoxBinding.GetBoundPassword(passwordBox) ?? string.Empty);
         }
     }
 
     static partial void OnBoundPasswordChanged(PasswordBox passwordBox, string? oldValue, string? newValue)
     {
-        if (GetBindPassword(passwordBox) && !GetState(passwordBox).IsUpdating)
+        if (PasswordBoxBinding.GetBindPassword(passwordBox) && !GetState(passwordBox).IsUpdating)
         {
             SyncPasswordBox(passwordBox, newValue ?? string.Empty);
         }
@@ -42,7 +42,7 @@ public static partial class PasswordBoxBinding
 
         BindingState state = GetState(passwordBox);
         state.IsUpdating = true;
-        PasswordBoxBinding.SetBoundPassword(passwordBox, passwordBox.Password);
+        SetBoundPassword(passwordBox, passwordBox.Password);
         state.IsUpdating = false;
     }
 

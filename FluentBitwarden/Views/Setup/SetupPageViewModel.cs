@@ -4,14 +4,13 @@ using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models.Authentication;
-using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup.Models;
 using FluentBitwarden.Views.Setup.States;
-using FluentBitwarden.Views.Shell.Navigation;
 
 namespace FluentBitwarden.Views.Setup;
 

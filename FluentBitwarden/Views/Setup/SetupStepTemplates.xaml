@@ -3,7 +3,7 @@
     x:Class="FluentBitwarden.Views.Setup.SetupStepTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:attachedProperties="using:FluentBitwarden.Shared.AttachedProperties"
+    xmlns:attachedProperties1="using:FluentBitwarden.Resources.AttachedProperties"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:controls1="using:FluentBitwarden.Resources.Controls"
     xmlns:models="using:FluentBitwarden.Views.Setup.Models"
@@ -80,8 +80,8 @@
             <StackPanel Spacing="12">
                 <controls1:ValidationField Property="{x:Bind MasterPasswordValidation}">
                     <PasswordBox
-                        attachedProperties:PasswordBoxBinding.BindPassword="True"
-                        attachedProperties:PasswordBoxBinding.BoundPassword="{x:Bind MasterPassword, Mode=TwoWay}"
+                        attachedProperties1:PasswordBoxBinding.BindPassword="True"
+                        attachedProperties1:PasswordBoxBinding.BoundPassword="{x:Bind MasterPassword, Mode=TwoWay}"
                         Header="Master password" />
                 </controls1:ValidationField>
 

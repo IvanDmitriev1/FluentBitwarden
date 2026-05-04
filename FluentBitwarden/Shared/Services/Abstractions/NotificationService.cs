@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Views.Shell.Notifications;
+﻿namespace FluentBitwarden.Shared.Services.Abstractions;
 
 internal sealed class NotificationService : INotificationService
 {

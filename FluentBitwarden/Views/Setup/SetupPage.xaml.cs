@@ -1,4 +1,4 @@
-using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Resources.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Setup;
 

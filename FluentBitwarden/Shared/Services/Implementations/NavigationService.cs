@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Shared.Behaviors.Lifecycle;
+using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.Shared.Services.Abstractions;
 
-namespace FluentBitwarden.Views.Shell.Navigation;
+namespace FluentBitwarden.Shared.Services.Implementations;
 
 public sealed class NavigationService : INavigationService
 {

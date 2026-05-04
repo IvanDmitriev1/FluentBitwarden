@@ -3,6 +3,7 @@ using FluentBitwarden.Application.Diagnostics;
 using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
+using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Modules.Passkey;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
@@ -41,8 +42,11 @@ public partial class App : IXamlMetadataServiceProvider
         {
             services.AddTransient<IAppSetupService, AppSetupService>();
 
+            services.AddSingleton<MainWindow>();
+            services.AddTransient<ShellPage>();
+            services.AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>());
+
             services.AddNamedPipeIpc();
-            services.AddShellServices();
             services.AddViews();
             services.AddDatabaseServices();
             services.AddSharedServices();

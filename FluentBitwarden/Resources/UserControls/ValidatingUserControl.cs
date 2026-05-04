@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Linq;
 
-namespace FluentBitwarden.Shared.UserControls;
+namespace FluentBitwarden.Resources.UserControls;
 
 public abstract class ValidatingUserControl : UserControl, INotifyDataErrorInfo
 {

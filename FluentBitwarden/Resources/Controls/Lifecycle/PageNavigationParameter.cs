@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Shared.Behaviors.Lifecycle;
+﻿namespace FluentBitwarden.Resources.Controls.Lifecycle;
 
 public sealed class PageNavigationParameter<TParam>(TParam value) : IPageNavigationParameter
     where TParam : class

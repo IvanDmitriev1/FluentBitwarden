@@ -18,6 +18,12 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IConnectivityService, WindowsConnectivityService>();
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
 
+
+        services.AddSingleton<INotificationService, NotificationService>();
+
+        services.AddSingleton<NavigationService>();
+        services.AddSingleton<INavigationService>(static sp => sp.GetRequiredService<NavigationService>());
+
         return services;
     }
 }

@@ -1,3 +1,4 @@
+using FluentBitwarden.Views.Shell;
 using WinUIEx;
 
 namespace FluentBitwarden.Application.Lifetime;
@@ -34,7 +35,10 @@ internal static class TrayIconService
         flyout.Items.Add(new MenuFlyoutSeparator());
 
         var exitItem = new MenuFlyoutItem { Text = "Exit" };
-        exitItem.Click += (_, _) => App.Current.Exit();
+        exitItem.Click += (_, _) =>
+        {
+            MainWindow.Instance.RequestExit();
+        };
         flyout.Items.Add(exitItem);
 
         args.Flyout = flyout;

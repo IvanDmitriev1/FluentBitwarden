@@ -6,7 +6,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:controls1="using:FluentBitwarden.Resources.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:lifecycle="using:FluentBitwarden.Shared.Behaviors.Lifecycle"
+    xmlns:lifecycle="using:FluentBitwarden.Resources.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
     xmlns:models1="using:BitwardenApi.Modules.Vault.Models"

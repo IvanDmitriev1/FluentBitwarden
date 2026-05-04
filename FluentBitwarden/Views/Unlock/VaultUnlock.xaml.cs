@@ -4,7 +4,7 @@ using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Modules.Security.Services.Unlock;
 using FluentBitwarden.Resources.Controls;
-using FluentBitwarden.Shared.UserControls;
+using FluentBitwarden.Resources.UserControls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System.Diagnostics.CodeAnalysis;
