@@ -9,7 +9,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 {
     public SettingsPageViewModel(IThemeService themeService)
     {
-        Theme = AppSettingKeys.Appearance.ThemeKey.Create(themeService.Set);
+        Theme = AppSettingKeys.Appearance.ThemeKey.Create(themeService.Apply);
     }
 
     public SettingValue<ElementTheme> Theme { get; }

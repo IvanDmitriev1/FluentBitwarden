@@ -4,13 +4,17 @@ using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions.Dialog;
+using FluentBitwarden.Shared.Services.Implementations;
 using System.Linq;
+using FluentBitwarden.Resources.Dialogs.Models;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
     ICurrentSessionAccessor sessionAccessor,
-    IVaultSyncService vaultSyncService) : ISshKeyProvider
+    IVaultSyncService vaultSyncService,
+    IContentDialogService contentDialogService) : ISshKeyProvider
 {
     public IReadOnlyList<SshPublicIdentityResponce> ListIdentities()
     {
@@ -31,6 +35,16 @@ internal sealed class SshKeyProvider(
             .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(request.PublicKeyBlob.Span));
 
         if (cipher is null)
+            return SshSignatureResult.Failed;
+
+
+        var userAction = await contentDialogService.ShowUserActionAsync(new SshUserActionRequestViewModel(
+            KeyName: cipher.Name,
+            KeyFingerprint: cipher.KeyFingerprint,
+            IsForwarded: false
+        ));
+
+        if (userAction == UserActionDialogOutcome.Denied)
             return SshSignatureResult.Failed;
 
         var privateKey = OpenSshEd25519Key.Parse(cipher.PrivateKey.AsMemory());

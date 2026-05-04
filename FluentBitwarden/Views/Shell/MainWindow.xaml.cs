@@ -1,23 +1,17 @@
-using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.AppState.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 using FluentBitwarden.Shared.Services.Implementations;
 using FluentBitwarden.Views.Loading;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using System.Diagnostics.CodeAnalysis;
 using WinUIEx;
 
 namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 {
-    [field: MaybeNull]
-    public static MainWindow Instance
-    {
-        get => field ?? throw new InvalidOperationException("MainWindow instance is not initialized");
-        private set;
-    }
-
     public MainWindow(NavigationService navigationService)
     {
         Instance = this;
@@ -29,12 +23,21 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-        Set(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
+        Apply(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
         ContentFrame.Navigate(typeof(LoadingPage));
 
     }
 
-    public void Set(ElementTheme themeMode)
+    public XamlRoot XamlRoot => RootElement.XamlRoot;
+
+    [field: MaybeNull]
+    public static MainWindow Instance
+    {
+        get => field ?? throw new InvalidOperationException("MainWindow instance is not initialized");
+        private set;
+    }
+
+    public void Apply(ElementTheme themeMode)
     {
         RootElement.RequestedTheme = themeMode;
     }

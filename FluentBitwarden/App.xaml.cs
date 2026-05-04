@@ -24,6 +24,7 @@ using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 
 namespace FluentBitwarden;
 
@@ -88,6 +89,8 @@ public partial class App : IXamlMetadataServiceProvider
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        _ = Host.Services.GetRequiredService<MainWindow>();
+
         Host.Services.GetRequiredService<IAppSetupService>().Initialize();
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
         _ = Task.Run(() => Host.Services.GetRequiredService<ISshAgentServer>().RunAsync());

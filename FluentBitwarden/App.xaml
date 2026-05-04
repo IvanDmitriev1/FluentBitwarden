@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:FluentBitwarden.Resources.Converters"
+    xmlns:dialogs="using:FluentBitwarden.Resources.Dialogs"
     xmlns:toolkitConverters="using:CommunityToolkit.WinUI.Converters">
     <Application.Resources>
         <ResourceDictionary>
@@ -18,6 +19,9 @@
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/SiteIconStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherListItemStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/PasswordBoxExStyle.xaml" />
+
+
+                <dialogs:SshUserActionRequestViewModelTemplate />
             </ResourceDictionary.MergedDictionaries>
 
             <toolkitConverters:StringVisibilityConverter x:Key="StringVisibilityConverter" />

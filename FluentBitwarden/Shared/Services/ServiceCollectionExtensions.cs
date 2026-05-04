@@ -1,4 +1,5 @@
 using FluentBitwarden.Shared.Services.Abstractions;
+using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 using FluentBitwarden.Shared.Services.Implementations;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +24,8 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(static sp => sp.GetRequiredService<NavigationService>());
+
+        services.AddSingleton<IContentDialogService, ContentDialogService>();
 
         return services;
     }

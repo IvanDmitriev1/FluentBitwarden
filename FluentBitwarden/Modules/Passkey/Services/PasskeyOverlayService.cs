@@ -39,7 +39,7 @@ internal class PasskeyOverlayService(
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        var overlayWindow = App.Current.GetRequiredService<OverlayWindow>();
+        var overlayWindow = new OverlayWindow();
         await using var _ =
             cancellationToken.Register(() => overlayWindow.DispatcherQueue.TryEnqueue(overlayWindow.Close));
 
