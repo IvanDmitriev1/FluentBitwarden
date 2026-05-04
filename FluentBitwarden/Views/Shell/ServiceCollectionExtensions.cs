@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Views.Shell.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +9,8 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddShellServices(this IServiceCollection services)
     {
-        services.AddTransient<MainWindow>();
+        services.AddSingleton<MainWindow>();
+        services.AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>());
 
         services.AddTransient<ShellPage>();
         services.AddSingleton<IMessenger>(StrongReferenceMessenger.Default);

@@ -8,11 +8,11 @@
     xmlns:lifecycle="using:FluentBitwarden.Shared.Behaviors.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Settings.Models"
-    Margin="22"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
     <lifecycle:LifecyclePage.Resources>
+        <models:ThemeOptionConverter x:Name="ThemeOptionConverter" />
         <x:Double x:Key="SettingsCardSpacing">4</x:Double>
 
         <Style
@@ -23,7 +23,7 @@
         </Style>
     </lifecycle:LifecyclePage.Resources>
 
-    <Grid>
+    <ScrollView Padding="22">
         <StackPanel
             MaxWidth="960"
             HorizontalAlignment="Stretch"
@@ -38,7 +38,7 @@
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Appearance" />
 
             <controls:SettingsCard Description="Choose how the app looks." Header="Theme">
-                <ComboBox ItemsSource="{x:Bind models:ThemeOption.Options}" SelectedItem="{x:Bind ViewModel.SelectedThemeOption, Mode=TwoWay}">
+                <ComboBox ItemsSource="{x:Bind models:ThemeOption.Options}" SelectedItem="{x:Bind ViewModel.Theme.Value, Mode=TwoWay, Converter={StaticResource ThemeOptionConverter}}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="models:ThemeOption">
                             <TextBlock Text="{x:Bind Title}" />
@@ -50,17 +50,9 @@
             <!--  Security  -->
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Security" />
 
-            <controls:SettingsCard Description="Lock the vault when the main window is minimized." Header="Lock on minimize">
-                <ToggleSwitch IsOn="{x:Bind ViewModel.LockOnMinimize, Mode=TwoWay}" />
-            </controls:SettingsCard>
-
-            <controls:SettingsCard Description="Lock the vault when Windows goes to sleep." Header="Lock on system suspend">
-                <ToggleSwitch IsOn="{x:Bind ViewModel.LockOnSystemSuspend, Mode=TwoWay}" />
-            </controls:SettingsCard>
+            <controls:SettingsCard Description="Lock the vault when Windows goes to sleep." Header="Lock on system suspend" />
 
             <controls:SettingsCard Description="Minutes before the unlocked vault is locked automatically." Header="Vault timeout" />
-
-            <controls:SettingsCard Description="Seconds before copied secrets are removed from the clipboard." Header="Clear clipboard" />
 
             <!--  About  -->
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="About" />
@@ -89,5 +81,5 @@
                 </controls:SettingsExpander.Items>
             </controls:SettingsExpander>
         </StackPanel>
-    </Grid>
+    </ScrollView>
 </lifecycle:LifecyclePage>

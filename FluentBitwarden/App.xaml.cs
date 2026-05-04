@@ -3,8 +3,6 @@ using FluentBitwarden.Application.Diagnostics;
 using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
-using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Modules.Passkey;
 using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
@@ -41,6 +39,8 @@ public partial class App : IXamlMetadataServiceProvider
         .CreateDefaultBuilder()
         .ConfigureServices((ctx, services) =>
         {
+            services.AddTransient<IAppSetupService, AppSetupService>();
+
             services.AddNamedPipeIpc();
             services.AddShellServices();
             services.AddViews();
@@ -51,7 +51,6 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddAccountModule();
             services.AddSecurityModule();
             services.AddSessionModule();
-            services.AddAppStateModule();
             services.AddVaultServices();
             services.AddPasskeyModule();
             services.AddSshAgent();
@@ -85,7 +84,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        Host.Services.GetRequiredService<IAppFirstRunService>().Initialize();
+        Host.Services.GetRequiredService<IAppSetupService>().Initialize();
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
         _ = Task.Run(() => Host.Services.GetRequiredService<ISshAgentServer>().RunAsync());
 

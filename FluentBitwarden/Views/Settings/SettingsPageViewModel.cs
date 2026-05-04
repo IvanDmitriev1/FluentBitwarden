@@ -1,61 +1,16 @@
 ﻿using FluentBitwarden.Modules.AppState.Abstractions;
-using FluentBitwarden.Modules.AppState.Models;
-using FluentBitwarden.Shared.Behaviors.Lifecycle;
 using FluentBitwarden.Views.Settings.Models;
 using Microsoft.UI.Xaml;
-using System.ComponentModel;
+using FluentBitwarden.Modules.AppState;
 
 namespace FluentBitwarden.Views.Settings;
 
-public sealed partial class SettingsPageViewModel(ISettingsService settingsService, IThemeService themeService) : ObservableObject, IPageLifecycleAware
+public sealed partial class SettingsPageViewModel : ObservableObject
 {
-    [ObservableProperty]
-    public partial ThemeOption SelectedThemeOption { get; set; }
-
-    [ObservableProperty]
-    public partial bool LockOnSystemSuspend { get; set; }
-
-    [ObservableProperty]
-    public partial bool LockOnMinimize { get; set; }
-
-    [ObservableProperty]
-    public partial int LockTimeoutMinutes { get; set; }
-
-    [ObservableProperty]
-    public partial int ClearClipboardAfterSeconds { get; set; }
-
-    public Task OnLoadingAsync(CancellationToken cancellationToken)
+    public SettingsPageViewModel(IThemeService themeService)
     {
-        var settings = settingsService.Get();
-
-        SelectedThemeOption = ThemeOption.Create(settings.ThemeMode);
-        LockOnSystemSuspend = settings.LockOnSystemSuspend;
-        LockOnMinimize = settings.LockOnMinimize;
-        LockTimeoutMinutes = settings.LockTimeoutMinutes;
-        ClearClipboardAfterSeconds = settings.ClearClipboardAfterSeconds;
-
-        return Task.CompletedTask;
+        Theme = AppSettingKeys.Appearance.ThemeKey.Create(themeService.Set);
     }
 
-    public void OnUnloading() { }
-
-    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
-    {
-        base.OnPropertyChanged(e);
-
-        settingsService.Save(BuildSnapshot());
-    }
-
-    partial void OnSelectedThemeOptionChanged(ThemeOption value)
-    {
-        themeService.Set(value.Value);
-    }
-
-    private AppSettings BuildSnapshot() => new(
-        FirstRun: settingsService.Get().FirstRun,
-        ThemeMode: SelectedThemeOption.Value,
-        LockOnMinimize: LockOnMinimize,
-        LockOnSystemSuspend: LockOnSystemSuspend,
-        LockTimeoutMinutes: LockTimeoutMinutes,
-        ClearClipboardAfterSeconds: ClearClipboardAfterSeconds);
+    public SettingValue<ElementTheme> Theme { get; }
 }
