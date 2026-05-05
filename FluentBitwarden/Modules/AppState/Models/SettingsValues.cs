@@ -38,5 +38,4 @@ public enum SensitiveActionPolicy : byte
 {
     AllowWhenUnlocked = 0,
     RequireUserAction = 1,
-    RequireMasterPassword = 2,
 }

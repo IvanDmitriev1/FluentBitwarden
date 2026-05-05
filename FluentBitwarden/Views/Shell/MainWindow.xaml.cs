@@ -1,10 +1,11 @@
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.AppState.Abstractions;
-using FluentBitwarden.Shared.Services.Abstractions.Dialog;
+using FluentBitwarden.Resources.AttachedProperties;
 using FluentBitwarden.Shared.Services.Implementations;
 using FluentBitwarden.Views.Loading;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Navigation;
 using System.Diagnostics.CodeAnalysis;
 using WinUIEx;
 
@@ -12,30 +13,31 @@ namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 {
-    public MainWindow(NavigationService navigationService)
-    {
-        Instance = this;
-        InitializeComponent();
-
-        Closed += OnClosed;
-
-        navigationService.Initialize(ContentFrame);
-        ExtendsContentIntoTitleBar = true;
-        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
-
-        Apply(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
-        ContentFrame.Navigate(typeof(LoadingPage));
-
-    }
-
-    public XamlRoot XamlRoot => RootElement.XamlRoot;
-
     [field: MaybeNull]
     public static MainWindow Instance
     {
         get => field ?? throw new InvalidOperationException("MainWindow instance is not initialized");
         private set;
     }
+
+    public MainWindow(NavigationService navigationService)
+    {
+        Instance = this;
+        InitializeComponent();
+
+        TitlebarProperties.SetTargetTitleBar(AppTitleBar);
+        navigationService.Initialize(RootFrame);
+        ExtendsContentIntoTitleBar = true;
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+
+        Apply(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
+        RootFrame.Navigate(typeof(LoadingPage));
+
+        Closed += OnClosed;
+    }
+
+    public bool IsHidden => !AppWindow.IsVisible;
+    public XamlRoot XamlRoot => RootElement.XamlRoot;
 
     public void Apply(ElementTheme themeMode)
     {
@@ -67,16 +69,21 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 
     private void ReleaseWindowResources()
     {
-        ContentFrame.BackStack.Clear();
-        ContentFrame.ForwardStack.Clear();
-        ContentFrame.Content = null;
+        RootFrame.BackStack.Clear();
+        RootFrame.ForwardStack.Clear();
+        RootFrame.Content = null;
     }
 
     private void RestoreResources()
     {
-        if (ContentFrame.Content is not null)
+        if (RootFrame.Content is not null)
             return;
 
-        ContentFrame.Navigate(typeof(LoadingPage));
+        RootFrame.Navigate(typeof(LoadingPage));
+    }
+
+    private void RootFrame_OnNavigated(object sender, NavigationEventArgs e)
+    {
+        
     }
 }

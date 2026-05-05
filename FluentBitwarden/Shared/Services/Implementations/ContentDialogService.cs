@@ -5,25 +5,38 @@ using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 using FluentBitwarden.Views.Shell;
 using Microsoft.UI.Xaml;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.UI.Dispatching;
+using WinUIEx;
 
 namespace FluentBitwarden.Shared.Services.Implementations;
 
 internal sealed class ContentDialogService : IContentDialogService
 {
-    public Task<UserActionDialogOutcome> ShowUserActionAsync(IContentDialogViewModel viewModel) =>
-        App.Current.DispatcherQueue.EnqueueAsync(() =>
+    public Task<UserActionDialogOutcome> ShowUserActionAsync(object viewModel, ContentDialogOptions options) =>
+        App.Current.DispatcherQueue.EnqueueAsync(async () =>
         {
-            if (!TryFindResource(viewModel.DataTemplateKey, out var template))
-                throw new InvalidOperationException($"DataTemplate with key '{viewModel.DataTemplateKey}' not found.");
+            if (!TryFindResource(options.DataTemplateKey, out var template))
+                throw new InvalidOperationException($"DataTemplate with key '{options.DataTemplateKey}' not found.");
 
             var dialog = new UserActionContentDialog(viewModel, template)
             {
                 XamlRoot = MainWindow.Instance.XamlRoot,
+                Title = options.Title,
+                PrimaryButtonText = options.PrimaryButtonText,
+                SecondaryButtonText = options.SecondaryButtonText,
+                DefaultButton = options.DefaultButton,
             };
 
+            bool wasHidden = MainWindow.Instance.IsHidden;
+
             MainWindow.Instance.ShowWindow();
-            return dialog.ShowAsync();
-        });
+            var result = await dialog.ShowAsync();
+
+            if (wasHidden)
+                MainWindow.Instance.Hide();
+
+            return result;
+        }, DispatcherQueuePriority.High);
 
     private static bool TryFindResource(string key, [MaybeNullWhen(false)] out DataTemplate dataTemplate)
     {

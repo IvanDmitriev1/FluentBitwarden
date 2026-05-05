@@ -4,5 +4,5 @@ namespace FluentBitwarden.Shared.Services.Abstractions.Dialog;
 
 internal interface IContentDialogService
 {
-    Task<UserActionDialogOutcome> ShowUserActionAsync(IContentDialogViewModel viewModel);
+    Task<UserActionDialogOutcome> ShowUserActionAsync(object viewModel, ContentDialogOptions options);
 }

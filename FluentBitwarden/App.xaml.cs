@@ -44,7 +44,6 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddTransient<IAppSetupService, AppSetupService>();
 
             services.AddSingleton<MainWindow>();
-            services.AddTransient<ShellPage>();
             services.AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>());
 
             services.AddNamedPipeIpc();

@@ -1,31 +1,81 @@
-﻿using FluentBitwarden.Views.Settings;
+﻿using System.Linq;
+using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 
 namespace FluentBitwarden.Views.Shell;
 
-public sealed partial class ShellPage : Page
+public sealed partial class ShellPage : LifecyclePage
 {
-   public ShellPage()
+    static ShellPage()
     {
-        InitializeComponent();
-        Nav.SelectedItem = Nav.MenuItems[0];
+        var pageByTag = new Dictionary<string, Type>
+        {
+            ["vault"] = typeof(VaultPage),
+        };
+
+        PageByTag = pageByTag;
+        TagByPage = pageByTag.ToDictionary(static pair => pair.Value, static pair => pair.Key);
     }
 
-    private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    public ShellPage(ShellPageViewModel viewModel)
     {
-        if (args.IsSettingsSelected)
+        DataContext = viewModel;
+        ViewModel = viewModel;
+
+        InitializeComponent();
+        ContentFrame.Navigate(typeof(VaultPage));
+    }
+
+    private static readonly IReadOnlyDictionary<string, Type> PageByTag;
+    private static readonly IReadOnlyDictionary<Type, string> TagByPage;
+
+
+    public ShellPageViewModel ViewModel { get; }
+
+
+    [RelayCommand]
+    private void PaneToggle()
+    {
+        Nav.IsPaneOpen = !Nav.IsPaneOpen;
+    }
+
+    private void Nav_OnItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        var pageType = args.IsSettingsInvoked
+            ? typeof(SettingsPage)
+            : PageByTag.GetValueOrDefault((string)args.InvokedItemContainer!.Tag!, typeof(VaultPage));
+
+        ContentFrame.Navigate(pageType);
+    }
+
+    private void ContentFrame_OnNavigated(object sender, NavigationEventArgs e)
+    {
+        if (e.SourcePageType == typeof(SettingsPage))
         {
-            ContentFrame.Navigate(typeof(SettingsPage));
+            Nav.SelectedItem = Nav.SettingsItem;
             return;
         }
 
-        NavigationViewItem navItem = (NavigationViewItem)args.SelectedItem;
-        Type navType = navItem.Tag switch
+        if (!TagByPage.TryGetValue(e.SourcePageType, out string? tag))
         {
-            "vault" => typeof(VaultPage),
-            _ => typeof(VaultPage)
-        };
+            Nav.SelectedItem = null;
+            return;
+        }
 
-        ContentFrame.Navigate(navType);
+        Nav.SelectedItem = Nav.MenuItems
+            .Cast<NavigationViewItem>()
+            .FirstOrDefault(item => (string)item.Tag == tag);
+
+    }
+
+    private void SearchKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        AutoSuggestBox.Focus(FocusState.Programmatic);
+        args.Handled = true;
     }
 }

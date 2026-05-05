@@ -2,6 +2,7 @@
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Setup;
+using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Unlock;
 using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,8 @@ internal static class ServiceCollectionExtensions
             .AddView<SetupPage, SetupPageViewModel>()
             .AddView<UnlockPage, UnlockPageViewModel>()
             .AddView<SettingsPage, SettingsPageViewModel>()
-            .AddView<VaultPage, VaultPageViewModel>();
+            .AddView<VaultPage, VaultPageViewModel>()
+            .AddView<ShellPage, ShellPageViewModel>();
     }
 
     private static IServiceCollection AddView<TPage, TViewModel>(this IServiceCollection services)

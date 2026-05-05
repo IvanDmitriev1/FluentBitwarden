@@ -23,11 +23,8 @@
         </Style>
     </lifecycle:LifecyclePage.Resources>
 
-    <ScrollView Padding="22">
-        <StackPanel
-            MaxWidth="960"
-            HorizontalAlignment="Stretch"
-            Spacing="{StaticResource SettingsCardSpacing}">
+    <ScrollViewer Padding="22">
+        <StackPanel Spacing="{StaticResource SettingsCardSpacing}">
 
             <TextBlock
                 Margin="0,0,0,12"
@@ -81,5 +78,5 @@
                 </controls:SettingsExpander.Items>
             </controls:SettingsExpander>
         </StackPanel>
-    </ScrollView>
+    </ScrollViewer>
 </lifecycle:LifecyclePage>
