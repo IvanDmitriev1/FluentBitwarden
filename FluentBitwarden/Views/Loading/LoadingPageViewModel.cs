@@ -1,9 +1,9 @@
 using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
-using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup;

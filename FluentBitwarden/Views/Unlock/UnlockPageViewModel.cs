@@ -8,8 +8,8 @@ using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Unlock.Models;
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Modules.Identity.Models;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Unlock;

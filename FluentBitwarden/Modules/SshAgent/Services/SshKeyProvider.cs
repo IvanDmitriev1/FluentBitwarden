@@ -6,8 +6,8 @@ using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Resources.Dialogs.Models;
-using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 using System.Linq;
+using FluentBitwarden.Infrastructure.Services.Abstractions.Dialog;
 using FluentBitwarden.Modules.AppState.Models;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;

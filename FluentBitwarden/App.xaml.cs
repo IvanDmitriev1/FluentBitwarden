@@ -11,10 +11,6 @@ using FluentBitwarden.Modules.Session.Services.Authentication;
 using FluentBitwarden.Modules.SshAgent;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.Vault;
-using FluentBitwarden.Shared.Extensions;
-using FluentBitwarden.Shared.Ipc;
-using FluentBitwarden.Shared.Ipc.Abstractions;
-using FluentBitwarden.Shared.Services;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,9 +18,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
+using FluentBitwarden.Infrastructure.Extensions;
+using FluentBitwarden.Infrastructure.Ipc;
+using FluentBitwarden.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Infrastructure.Services;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 
 namespace FluentBitwarden;
 

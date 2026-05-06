@@ -1,7 +1,7 @@
-﻿using FluentBitwarden.Modules.Passkey.Abstractions;
+﻿using FluentBitwarden.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Modules.Passkey.Abstractions;
 using FluentBitwarden.Modules.Passkey.Internal;
 using FluentBitwarden.Modules.Passkey.Models;
-using FluentBitwarden.Shared.Ipc.Abstractions;
 
 namespace FluentBitwarden.Modules.Passkey.Services;
 

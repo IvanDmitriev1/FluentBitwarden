@@ -1,12 +1,12 @@
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Resources.AttachedProperties;
-using FluentBitwarden.Shared.Services.Implementations;
 using FluentBitwarden.Views.Loading;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Infrastructure.Services.Implementations;
 using WinUIEx;
 
 namespace FluentBitwarden.Views.Shell;

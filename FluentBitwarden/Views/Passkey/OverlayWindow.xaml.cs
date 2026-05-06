@@ -1,4 +1,4 @@
-using FluentBitwarden.Shared.Extensions;
+using FluentBitwarden.Infrastructure.Extensions;
 using Microsoft.UI.Xaml.Input;
 using WinUIEx;
 

@@ -1,9 +1,7 @@
-using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using WinUIEx;
 
 namespace FluentBitwarden;
 

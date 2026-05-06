@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
-using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup;
 using Microsoft.UI.Dispatching;

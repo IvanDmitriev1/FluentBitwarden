@@ -3,10 +3,10 @@ using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Services;
 using FluentBitwarden.Resources.Controls.Lifecycle;
-using FluentBitwarden.Shared.Services.Abstractions;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 
 namespace FluentBitwarden.Views.Vault;
 
