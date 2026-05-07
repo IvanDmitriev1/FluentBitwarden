@@ -1,6 +1,6 @@
 ﻿namespace FluentBitwarden.Infrastructure.Security.Tmp;
 
-public sealed class TpmUiOptions
+public sealed class TpmCngUiOptions
 {
     public required string FriendlyName { get; init; }
     public required string Description { get; init; }

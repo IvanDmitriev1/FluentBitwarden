@@ -13,7 +13,8 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             api_base TEXT NOT NULL,
             identity_base TEXT NOT NULL,
             notifications_base TEXT NOT NULL,
-            last_sync_at_unix_ms INTEGER NOT NULL
+            last_sync_at_unix_ms INTEGER NOT NULL,
+            available_unlock_methods INTEGER NOT NULL DEFAULT 1
         );
         
         CREATE TABLE IF NOT EXISTS account_key_material (
@@ -25,6 +26,16 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             kdf_iterations INTEGER NOT NULL,
             kdf_memory_mib INTEGER,
             kdf_parallelism INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS account_session_tokens (
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE,
+            protected_refresh_token BLOB NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS account_tpm_cng_unlock_keys (
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE,
+            protected_user_key BLOB NOT NULL
         );
         
         CREATE TABLE IF NOT EXISTS folders (
@@ -87,6 +98,9 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         using var connection = connectionFactory.OpenConnection();
         connection.Execute("""
                            PRAGMA foreign_keys = ON;
+                           PRAGMA journal_mode = WAL;
+                           PRAGMA synchronous = NORMAL;
+                           PRAGMA busy_timeout = 5000;
                            """);
 
         using var transaction = connection.BeginTransaction();

@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Resources.UserControls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -30,15 +30,15 @@ public sealed partial class VaultUnlock : ValidatingUserControl
     public ValidatableProperty PasswordValidation
         => field ??= ValidatableProperty.Create(this, static state => state.Password);
 
-    private async void KeyboardAccelerator_OnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    private void KeyboardAccelerator_OnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         args.Handled = true;
-        await UnlockAsync();
+        Unlock();
     }
 
 
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    private async Task UnlockAsync()
+    [RelayCommand]
+    private void Unlock()
     {
         ClearError(nameof(Password));
 
@@ -63,7 +63,7 @@ public sealed partial class VaultUnlock : ValidatingUserControl
 
         try
         {
-            result = await _accountSessionManager.UnlockAsync(new AccountUnlockRequest.MasterPasswordRequest(Account, Password), CancellationToken.None);
+            result = _accountSessionManager.Unlock(new AccountUnlockRequest.MasterPasswordRequest(Account, Password));
         }
         finally
         {

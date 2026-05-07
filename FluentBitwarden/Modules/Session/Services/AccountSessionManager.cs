@@ -1,6 +1,5 @@
 ﻿using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Modules.Identity.Services;
 using BitwardenApi.Shared.Context;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Security;
@@ -16,7 +15,8 @@ internal sealed class AccountSessionManager(
     IUnitOfWorkFactory unitOfWorkFactory,
     IIdentityApiClient identityApiClient,
     IAccountSignInService accountSignInService,
-    IAccountSessionTokensStore sessionTokensStore) : IAccountSessionManager, IBitwardenEnvironmentAccessor
+    IAccountSessionTokensStore sessionTokensStore,
+    TpmCngAccountUnlockMethod tpmCngAccountUnlockMethod) : IAccountSessionManager, IBitwardenEnvironmentAccessor
 {
     public AccountSession? ActiveSession { get; private set; }
     public AccountSession RequireActiveSession => ActiveSession ?? throw new InvalidOperationException("No active session.");
@@ -24,6 +24,7 @@ internal sealed class AccountSessionManager(
 
     private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
     private readonly MasterPasswordAccountUnlockMethod _masterPasswordAccountUnlockMethod = new();
+    private readonly TpmCngAccountUnlockMethod _tpmCngAccountUnlockMethod = tpmCngAccountUnlockMethod;
 
     public async ValueTask<AccountSessionTokens> GetValidActiveSessionTokensAsync(CancellationToken cancellationToken)
     {
@@ -40,7 +41,7 @@ internal sealed class AccountSessionManager(
                 return sessionTokens;
 
             var newSession = await RefreshSession(sessionTokens.RefreshToken, currentUser.Context, cancellationToken);
-            sessionTokensStore.Store(currentUser.UserId, newSession.RefreshToken);
+            sessionTokensStore.Store(currentUser.Profile.UserId, newSession.RefreshToken);
             ActiveSession = RequireActiveSession with { AccountSessionTokens = newSession };
             return newSession;
         }
@@ -65,18 +66,20 @@ internal sealed class AccountSessionManager(
             return result;
 
         var accountSignIn = successOutcome.AccountSignInSuccess;
-        using var unitOfWork = unitOfWorkFactory.Create();
+        using (var unitOfWork = unitOfWorkFactory.Create())
+        {
+            unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
+                accountSignIn.UserId,
+                accountSignIn.Email,
+                accountSignIn.Environment,
+                LastSyncAt: DateTimeOffset.MinValue,
+                AvailableUnlockMethods: UnlockMethodType.MasterPassword));
 
-        unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
-            accountSignIn.UserId,
-            accountSignIn.Email,
-            accountSignIn.Environment,
-            LastSyncAt: DateTimeOffset.MinValue));
+            unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
+            unitOfWork.SaveChanges();
+        }
 
-        unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
         sessionTokensStore.Store(accountSignIn.UserId, accountSignIn.SessionTokens.RefreshToken);
-
-        unitOfWork.SaveChanges();
         return result;
     }
 
@@ -86,7 +89,7 @@ internal sealed class AccountSessionManager(
         return unitOfWork.AccountProfileRepository.GetAccounts();
     }
 
-    public async ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request, CancellationToken cancellationToken)
+    public AccountUnlockOutcome Unlock(AccountUnlockRequest request)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
         var account = request.Account;
@@ -98,6 +101,7 @@ internal sealed class AccountSessionManager(
         AccountUnlockOutcome outcome = request switch
         {
             AccountUnlockRequest.MasterPasswordRequest masterPasswordRequest => _masterPasswordAccountUnlockMethod.Unlock(accountKeyMaterial, masterPasswordRequest.MasterPassword),
+            AccountUnlockRequest.TpmCngRequest => _tpmCngAccountUnlockMethod.Unlock(accountKeyMaterial),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
 
@@ -105,7 +109,7 @@ internal sealed class AccountSessionManager(
             return outcome;
 
         ActiveSession = new AccountSession(
-            account.UserId,
+            account,
             new BitwardenClientContext(account.Environment, DeviceIdentity.DeviceInfo),
             AccountSessionTokens.Create(refreshToken), success.UserKey, DateTime.UtcNow);
 

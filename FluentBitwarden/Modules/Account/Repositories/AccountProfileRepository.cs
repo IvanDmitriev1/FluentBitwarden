@@ -4,6 +4,7 @@ using Dapper;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Session.Models;
 using Microsoft.Data.Sqlite;
 using System.Linq;
 
@@ -18,7 +19,8 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
         string ApiBase,
         string IdentityBase,
         string NotificationsBase,
-        long LastSyncAtUnixMs);
+        long LastSyncAtUnixMs,
+        byte AvailableUnlockMethods);
 
     public IReadOnlyList<AccountProfile> GetAccounts()
     {
@@ -29,7 +31,8 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base,
                                identity_base,
                                notifications_base,
-                               last_sync_at_unix_ms
+                               last_sync_at_unix_ms,
+                               available_unlock_methods
                            FROM account_profiles
                            ORDER BY last_sync_at_unix_ms DESC;
                            """;
@@ -50,7 +53,8 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base,
                                identity_base,
                                notifications_base,
-                               last_sync_at_unix_ms
+                               last_sync_at_unix_ms,
+                               available_unlock_methods
                            FROM account_profiles
                            WHERE user_id = @UserId COLLATE NOCASE;
                            """;
@@ -108,6 +112,24 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
             transaction: Transaction);
     }
 
+    public void SetUnlockMethods(UserId accountId, UnlockMethodType availableUnlockMethods)
+    {
+        const string sql = """
+                           UPDATE account_profiles
+                           SET available_unlock_methods = @AvailableUnlockMethods
+                           WHERE user_id = @UserId COLLATE NOCASE;
+                           """;
+
+        Connection.Execute(
+            sql,
+            new
+            {
+                UserId = accountId.ToString(),
+                AvailableUnlockMethods = (byte)availableUnlockMethods
+            },
+            transaction: Transaction);
+    }
+
     public void Upsert(AccountProfile accountProfile)
     {
         const string sql = """
@@ -117,7 +139,8 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base,
                                identity_base,
                                notifications_base,
-                               last_sync_at_unix_ms
+                               last_sync_at_unix_ms,
+                               available_unlock_methods
                            )
                            VALUES (
                                @UserId,
@@ -125,14 +148,16 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                @ApiBase,
                                @IdentityBase,
                                @NotificationsBase,
-                               @LastSyncAtUnixMs
+                               @LastSyncAtUnixMs,
+                               @AvailableUnlockMethods
                            )
                            ON CONFLICT(user_id) DO UPDATE SET
                                email                = excluded.email,
                                api_base             = excluded.api_base,
                                identity_base        = excluded.identity_base,
                                notifications_base   = excluded.notifications_base,
-                               last_sync_at_unix_ms = excluded.last_sync_at_unix_ms;
+                               last_sync_at_unix_ms = excluded.last_sync_at_unix_ms,
+                               available_unlock_methods = excluded.available_unlock_methods;
                            """;
 
         Connection.Execute(
@@ -144,7 +169,8 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                 ApiBase = accountProfile.Environment.ApiBase.ToString(),
                 IdentityBase = accountProfile.Environment.IdentityBase.ToString(),
                 NotificationsBase = accountProfile.Environment.NotificationsBase.ToString(),
-                LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds()
+                LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds(),
+                AvailableUnlockMethods = (byte)accountProfile.AvailableUnlockMethods
             },
             transaction: Transaction);
     }
@@ -172,5 +198,6 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
             ApiBase: new Uri(row.ApiBase, UriKind.Absolute),
             IdentityBase: new Uri(row.IdentityBase, UriKind.Absolute),
             NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute)),
-        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs));
+        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs),
+        AvailableUnlockMethods: (UnlockMethodType)row.AvailableUnlockMethods);
 }

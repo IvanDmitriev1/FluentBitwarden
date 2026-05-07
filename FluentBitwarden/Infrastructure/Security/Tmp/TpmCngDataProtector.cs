@@ -2,15 +2,19 @@
 
 namespace FluentBitwarden.Infrastructure.Security.Tmp;
 
-public static class TpmDataProtector
+public static class TpmCngDataProtector
 {
-    public const string PlatformCryptoProviderName = "Microsoft Platform Crypto Provider";
-    private static readonly CngProvider TpmProvider = new(PlatformCryptoProviderName);
+    private static readonly CngProvider TpmProvider = CngProvider.MicrosoftPlatformCryptoProvider;
 
-    private const int RsaKeySizeBits = 3072;
+    private const int RsaKeySizeBits = 2048;
     private const string CngLengthPropertyName = "Length";
 
-    public static void CreateOrReplaceKey(string keyName, TpmUiOptions uiOptions, IntPtr ownerWindowHandle)
+    public static bool IsSupported()
+    {
+        return false;
+    }
+
+    public static void CreateOrReplaceKey(string keyName, TpmCngUiOptions cngUiOptions, IntPtr ownerWindowHandle)
     {
         var creationParameters = new CngKeyCreationParameters
         {
@@ -21,10 +25,10 @@ public static class TpmDataProtector
             ParentWindowHandle = ownerWindowHandle,
             UIPolicy = new CngUIPolicy(
                 CngUIProtectionLevels.ForceHighProtection,
-                uiOptions.FriendlyName,
-                uiOptions.Description,
-                uiOptions.UseContext,
-                uiOptions.CreationTitle)
+                cngUiOptions.FriendlyName,
+                cngUiOptions.Description,
+                cngUiOptions.UseContext,
+                cngUiOptions.CreationTitle)
         };
 
         creationParameters.Parameters.Add(
@@ -44,7 +48,10 @@ public static class TpmDataProtector
     public static byte[] ProtectData(string keyName, ReadOnlySpan<byte> data, IntPtr ownerWindowHandle)
     {
         using var key = OpenExistingKey(keyName, ownerWindowHandle);
-        int maxPlaintextLength = data.Length / 8;
+
+        const int Sha256HashSizeBytes = 32;
+        int keySizeBytes = key.KeySize / 8;
+        int maxPlaintextLength = keySizeBytes - (2 * Sha256HashSizeBytes) - 2;
 
         if (data.Length > maxPlaintextLength)
         {

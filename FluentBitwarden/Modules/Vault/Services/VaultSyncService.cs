@@ -54,7 +54,7 @@ internal sealed class VaultSyncService(
         if (!connectivityService.HasInternetAccess)
             return VaultSyncResult.SkippedOffline;
 
-        var currentUserId = accountSessionManager.RequireActiveSession.UserId;
+        var currentUserId = accountSessionManager.RequireActiveSession.Profile.UserId;
 
         try
         {

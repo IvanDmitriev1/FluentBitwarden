@@ -59,6 +59,7 @@
 
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard
+                        Command="{x:Bind ViewModel.TestCommand}"
                         Description="Open the local application data folder."
                         Header="Open data folder"
                         IsClickEnabled="True" />

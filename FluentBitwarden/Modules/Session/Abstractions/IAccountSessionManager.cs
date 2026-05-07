@@ -13,7 +13,7 @@ public interface IAccountSessionManager
     Task<AccountSignInOutcome> SignInAsync(AccountSignInRequest request, CancellationToken cancellationToken);
 
     IReadOnlyList<AccountProfile> GetAccounts();
-    ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request, CancellationToken cancellationToken);
+    AccountUnlockOutcome Unlock(AccountUnlockRequest request);
 
     void Lock();
     void Logout();

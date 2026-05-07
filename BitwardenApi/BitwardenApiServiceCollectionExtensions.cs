@@ -26,14 +26,14 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddHttpClient("BitwardenApiIdentityHttpClient", client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(5);
+                //client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddBitwardenReadRetry();
 
         services.AddHttpClient("BitwardenApiVaultHttpClient", client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(5);
+                //client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<TAuthHandler>()
@@ -56,9 +56,9 @@ public static class BitwardenApiServiceCollectionExtensions
             HttpRetryStrategyOptions retryOptions = new()
             {
                 MaxRetryAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500),
+                Delay = TimeSpan.FromMilliseconds(200),
                 BackoffType = DelayBackoffType.Exponential,
-                UseJitter = true,
+                UseJitter = true
             };
 
             retryOptions.DisableForUnsafeHttpMethods();

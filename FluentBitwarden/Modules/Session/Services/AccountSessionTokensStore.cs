@@ -1,27 +1,18 @@
-﻿using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Modules.Identity.Models;
+using Dapper;
+using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using System.Security.Cryptography;
 using System.Text;
-using Windows.Storage;
-using Path = System.IO.Path;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
-internal sealed class AccountSessionTokensStore : IAccountSessionTokensStore
+internal sealed class AccountSessionTokensStore(ISqliteConnectionFactory connectionFactory) : IAccountSessionTokensStore
 {
-    private static readonly string SessionsDirectoryPath =
-        Path.Combine(ApplicationData.Current.LocalFolder.Path, "Sessions");
-
     private static byte[] Entropy => "fbw_session_v1"u8.ToArray();
-
-    public AccountSessionTokensStore()
-    {
-        Directory.CreateDirectory(SessionsDirectoryPath);
-    }
 
     public void Store(UserId userId, RefreshToken token)
     {
-        string filePath = CreateSessionPath(userId);
         byte[] plaintext = Encoding.UTF8.GetBytes(token.ToString());
 
         try
@@ -31,8 +22,25 @@ internal sealed class AccountSessionTokensStore : IAccountSessionTokensStore
                 optionalEntropy: Entropy,
                 scope: DataProtectionScope.CurrentUser);
 
-            using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            fileStream.Write(protectedBytes);
+            using var connection = connectionFactory.OpenConnection();
+            connection.Execute(
+                """
+                INSERT INTO account_session_tokens (
+                    user_id,
+                    protected_refresh_token
+                )
+                VALUES (
+                    @UserId,
+                    @ProtectedRefreshToken
+                )
+                ON CONFLICT(user_id) DO UPDATE SET
+                    protected_refresh_token = excluded.protected_refresh_token;
+                """,
+                new
+                {
+                    UserId = userId.ToString(),
+                    ProtectedRefreshToken = protectedBytes
+                });
         }
         finally
         {
@@ -42,12 +50,21 @@ internal sealed class AccountSessionTokensStore : IAccountSessionTokensStore
 
     public RefreshToken Get(UserId userId)
     {
-        string filePath = CreateSessionPath(userId);
+        using var connection = connectionFactory.OpenConnection();
+        byte[]? protectedBytes = connection.QuerySingleOrDefault<byte[]>(
+            """
+            SELECT protected_refresh_token
+            FROM account_session_tokens
+            WHERE user_id = @UserId COLLATE NOCASE;
+            """,
+            new
+            {
+                UserId = userId.ToString()
+            });
 
-        if (!File.Exists(filePath))
+        if (protectedBytes is null)
             return RefreshToken.Empty;
 
-        byte[] protectedBytes = File.ReadAllBytes(filePath);
         byte[] plaintext = [];
 
         try
@@ -71,19 +88,15 @@ internal sealed class AccountSessionTokensStore : IAccountSessionTokensStore
 
     public void Remove(UserId userId)
     {
-        string filePath = CreateSessionPath(userId);
-
-        try
-        {
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-        }
-        catch (Exception e)
-        {
-            //
-        }
+        using var connection = connectionFactory.OpenConnection();
+        connection.Execute(
+            """
+            DELETE FROM account_session_tokens
+            WHERE user_id = @UserId COLLATE NOCASE;
+            """,
+            new
+            {
+                UserId = userId.ToString()
+            });
     }
-
-    private static string CreateSessionPath(UserId userId) =>
-        Path.Combine(SessionsDirectoryPath, $"{userId}.session");
 }
