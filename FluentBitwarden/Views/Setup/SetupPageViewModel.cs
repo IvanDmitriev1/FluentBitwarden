@@ -1,7 +1,8 @@
 ﻿using BitwardenApi.Shared.Context;
-using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Infrastructure.Security;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline;
@@ -14,23 +15,17 @@ namespace FluentBitwarden.Views.Setup;
 public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
 {
     private readonly INavigationService _navigationService;
-    private readonly IAuthenticationService _authenticationService;
-    private readonly ISessionTokensStore _sessionTokensStore;
-    private readonly IUnitOfWorkFactory _unitOfWorkFactory;
+    private readonly IAccountSessionManager _accountSessionManager;
     private readonly IConnectivityService _connectivityService;
     private readonly SetupLoginContext _loginContext;
 
     public SetupPageViewModel(
         INavigationService navigationService,
-        IAuthenticationService authenticationService,
-        ISessionTokensStore sessionTokensStore,
-        IUnitOfWorkFactory unitOfWorkFactory,
+        IAccountSessionManager accountSessionManager,
         IConnectivityService connectivityService)
     {
         _navigationService = navigationService;
-        _authenticationService = authenticationService;
-        _sessionTokensStore = sessionTokensStore;
-        _unitOfWorkFactory = unitOfWorkFactory;
+        _accountSessionManager = accountSessionManager;
         _connectivityService = connectivityService;
         _loginContext = new SetupLoginContext(DeviceIdentity.DeviceInfo, BitwardenEnvironment.UnitedStates);
 
@@ -52,34 +47,31 @@ public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
     {
         CurrentState = new PasswordSignInStepState(
             _loginContext,
-            _authenticationService,
-            GoTo2Fa);
+            _accountSessionManager,
+            OnPasswordSignIn);
     }
 
-    private void GoTo2Fa(PasswordSignInOutcome.TwoFactorRequired twoFactorRequired)
+    private void OnPasswordSignIn(AccountSignInOutcome outcome)
     {
-        CurrentState = new TwoFactorStepState(
-            _loginContext,
-            twoFactorRequired,
-            _authenticationService,
-            OnCompleteSetup);
+        switch (outcome)
+        {
+            case AccountSignInOutcome.Success:
+                OnCompleteSetup();
+                return;
+            case AccountSignInOutcome.TwoFactorRequired twoFactorRequired:
+                CurrentState = new TwoFactorStepState(
+                    _loginContext,
+                    twoFactorRequired,
+                    _accountSessionManager,
+                    OnCompleteSetup);
+                return;
+            default:
+                throw new InvalidOperationException("Unsupported password sign-in outcome.");
+        }
     }
 
-    private void OnCompleteSetup(AuthenticationSuccess success)
+    private void OnCompleteSetup()
     {
-        using var unitOfWork = _unitOfWorkFactory.Create();
-
-        unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
-            success.UserId,
-            success.Email,
-            _loginContext.DeviceInfoEnvironment,
-            LastSyncAt: DateTimeOffset.MinValue));
-
-        unitOfWork.AccountKeyMaterialRepository.Upsert(success.AccountDecryption);
-
-        _sessionTokensStore.Store(success.UserId, success.SessionTokens);
-        unitOfWork.SaveChanges();
-
         _navigationService.NavigateTo<LoadingPage>();
     }
 

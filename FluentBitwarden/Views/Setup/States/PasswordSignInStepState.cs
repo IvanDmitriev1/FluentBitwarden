@@ -1,18 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Views.Setup.Models;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Views.Setup.States;
 
 public partial class PasswordSignInStepState(
     SetupLoginContext context,
-    IAuthenticationService authenticationService,
-    Action<PasswordSignInOutcome.TwoFactorRequired> onComplete) : ObservableValidator
+    IAccountSessionManager accountSessionManager,
+    Action<AccountSignInOutcome> onComplete) : ObservableValidator
 {
     public string Email => context.Email;
 
@@ -60,21 +59,23 @@ public partial class PasswordSignInStepState(
         }
 
         var result =
-            await authenticationService.SignInWithPasswordAsync(context.BitwardenClientContext, Email, MasterPassword);
+            await accountSessionManager.SignInAsync(
+                new AccountSignInWithPasswordRequest(context.BitwardenClientContext, Email, MasterPassword),
+                CancellationToken.None);
 
         switch (result)
         {
-            case PasswordSignInOutcome.Success:
-                Debugger.Break();
+            case AccountSignInOutcome.Success:
+                onComplete.Invoke(result);
                 break;
 
-            case PasswordSignInOutcome.DeviceVerificationRequired:
-            case PasswordSignInOutcome.InvalidCredentials:
+            case AccountSignInOutcome.DeviceVerificationRequired:
+            case AccountSignInOutcome.InvalidCredentials:
                 HasInvalidCredentials = true;
                 break;
 
-            case PasswordSignInOutcome.TwoFactorRequired twoFactorRequired:
-                onComplete.Invoke(twoFactorRequired);
+            case AccountSignInOutcome.TwoFactorRequired:
+                onComplete.Invoke(result);
                 break;
 
             default:

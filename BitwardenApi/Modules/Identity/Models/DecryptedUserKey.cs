@@ -15,16 +15,14 @@ public sealed class DecryptedUserKey(UserId userId, byte[] userKey) : IDisposabl
         }
     }
 
-    public DateTimeOffset UnlockedAt
+    public ReadOnlySpan<byte> Key
     {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            return field;
+            return userKey;
         }
-    } = DateTimeOffset.UtcNow;
-
-    public ReadOnlySpan<byte> Key => userKey;
+    }
 
     public void Dispose()
     {

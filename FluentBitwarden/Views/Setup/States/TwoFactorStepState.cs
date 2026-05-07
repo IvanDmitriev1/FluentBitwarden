@@ -1,31 +1,32 @@
 ﻿using BitwardenApi.Modules.Identity.Models;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Views.Setup.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using BitwardenApi.Shared.Context;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Views.Setup.States;
 
 public partial class TwoFactorStepState : ObservableValidator
 {
     private readonly SetupLoginContext _context;
-    private readonly IAuthenticationService _authenticationService;
-    private readonly Action<AuthenticationSuccess> _onSuccess;
+    private readonly IAccountSessionManager _accountSessionManager;
+    private readonly Action _onSuccess;
     private readonly string _email;
     private readonly string _serverAuthorizationHash;
 
     public TwoFactorStepState(
         SetupLoginContext context,
-        PasswordSignInOutcome.TwoFactorRequired twoFactorRequired,
-        IAuthenticationService authenticationService,
-        Action<AuthenticationSuccess> onSuccess)
+        AccountSignInOutcome.TwoFactorRequired twoFactorRequired,
+        IAccountSessionManager accountSessionManager,
+        Action onSuccess)
     {
         _context = context;
-        _authenticationService = authenticationService;
+        _accountSessionManager = accountSessionManager;
         _onSuccess = onSuccess;
         _email = twoFactorRequired.Email;
         _serverAuthorizationHash = twoFactorRequired.ServerAuthorizationHash;
@@ -86,20 +87,19 @@ public partial class TwoFactorStepState : ObservableValidator
         if (HasErrors)
             return;
 
-        var result = await _authenticationService.ContinueTwoFactorAsync(
-            _context.BitwardenClientContext,
+        var result = await _accountSessionManager.SignInAsync(new AccountSignInWithTwoFactorRequest(_context.BitwardenClientContext,
             _email,
             _serverAuthorizationHash,
-            new TwoFactorProof(Code, SelectedProvider.Provider), CancellationToken.None);
+            new TwoFactorProof(Code, SelectedProvider.Provider)), CancellationToken.None);
 
         switch (result)
         {
-            case PasswordSignInOutcome.Success success:
-                _onSuccess.Invoke(success.AuthenticationSuccess);
+            case AccountSignInOutcome.Success:
+                _onSuccess.Invoke();
                 return;
 
-            case PasswordSignInOutcome.InvalidCredentials:
-            case PasswordSignInOutcome.DeviceVerificationRequired:
+            case AccountSignInOutcome.InvalidCredentials:
+            case AccountSignInOutcome.DeviceVerificationRequired:
                 HasInvalidCode = true;
                 return;
 
