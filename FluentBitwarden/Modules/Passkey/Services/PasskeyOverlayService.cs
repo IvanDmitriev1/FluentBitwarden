@@ -21,11 +21,11 @@ internal class PasskeyOverlayService(
 {
     public Task<Fido2Credential> UnlockAndSelectAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
-        IReadOnlyList<StoredAccount> accounts;
+        IReadOnlyList<AccountProfile> accounts;
 
         using (var unitOfWork = unitOfWorkFactory.Create())
         {
-            accounts = unitOfWork.AccountRepository.GetAccounts();
+            accounts = unitOfWork.AccountProfileRepository.GetAccounts();
         }
 
         return App.Current.DispatcherQueue.EnqueueAsync(() =>
@@ -34,7 +34,7 @@ internal class PasskeyOverlayService(
 
     private async Task<Fido2Credential> RunOverlayFlowAsync(
         PasskeyGetAssertionRequest request,
-        StoredAccount account,
+        AccountProfile accountProfile,
         CancellationToken cancellationToken)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -54,7 +54,7 @@ internal class PasskeyOverlayService(
             {
                 var userKey = await ShowUnlockPageAsync(
                     overlayWindow,
-                    account,
+                    accountProfile,
                     cts.Token);
 
                 vaultSyncService.LoadAllFromDb();
@@ -72,13 +72,13 @@ internal class PasskeyOverlayService(
 
     private static async Task<DecryptedUserKey> ShowUnlockPageAsync(
         OverlayWindow overlayWindow,
-        StoredAccount account,
+        AccountProfile accountProfile,
         CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<DecryptedUserKey>(TaskCreationOptions.RunContinuationsAsynchronously);
         await using var _ = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
 
-        var page = new OverlayUnlockPage(account, key => tcs.SetResult(key));
+        var page = new OverlayUnlockPage(accountProfile, key => tcs.SetResult(key));
         overlayWindow.SetContent(page);
 
         return await tcs.Task;

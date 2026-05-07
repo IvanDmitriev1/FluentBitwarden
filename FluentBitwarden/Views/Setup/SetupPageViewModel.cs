@@ -2,9 +2,6 @@
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models.Authentication;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline;
@@ -72,13 +69,13 @@ public partial class SetupPageViewModel : ObservableObject, IPageLifecycleAware
     {
         using var unitOfWork = _unitOfWorkFactory.Create();
 
-        unitOfWork.AccountRepository.Upsert(new StoredAccount(
+        unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
             success.UserId,
             success.Email,
             _loginContext.DeviceInfoEnvironment,
             LastSyncAt: DateTimeOffset.MinValue));
 
-        unitOfWork.AccountDecryptionRepository.Upsert(success.AccountDecryption);
+        unitOfWork.AccountKeyMaterialRepository.Upsert(success.AccountDecryption);
 
         _sessionTokensStore.Store(success.UserId, success.SessionTokens);
         unitOfWork.SaveChanges();

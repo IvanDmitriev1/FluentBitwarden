@@ -23,10 +23,10 @@ public partial class LoadingPageViewModel(
 {
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<StoredAccount> accounts;
+        IReadOnlyList<AccountProfile> accounts;
         using (var unitOfWork = unitOfWorkFactory.Create())
         {
-            accounts = unitOfWork.AccountRepository.GetAccounts();
+            accounts = unitOfWork.AccountProfileRepository.GetAccounts();
         }
 
         if (accounts.Count <= 0)

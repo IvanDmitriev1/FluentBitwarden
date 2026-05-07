@@ -38,13 +38,13 @@
             <TextBlock
                 Opacity="0.7"
                 Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="{x:Bind SelectedAccount.Email, FallbackValue=''}"
+                Text="{x:Bind SelectedAccountProfile.Email, FallbackValue=''}"
                 TextAlignment="Center" />
         </StackPanel>
 
         <unlock:VaultUnlock
             Grid.Row="2"
-            Account="{x:Bind SelectedAccount}"
+            Account="{x:Bind SelectedAccountProfile}"
             ResultCommand="{x:Bind VaultUnlockResultCommand}" />
 
         <Button

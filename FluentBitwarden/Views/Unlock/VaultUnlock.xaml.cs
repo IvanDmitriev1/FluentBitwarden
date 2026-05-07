@@ -1,8 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security.Abstractions;
-using FluentBitwarden.Modules.Security.Models.Unlock;
-using FluentBitwarden.Modules.Security.Services.Unlock;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Resources.UserControls;
 using Microsoft.UI.Xaml;
@@ -12,7 +9,7 @@ using System.Windows.Input;
 
 namespace FluentBitwarden.Views.Unlock;
 
-[DependencyProperty<StoredAccount>("Account")]
+[DependencyProperty<AccountProfile>("Account")]
 [DependencyProperty<ICommand>("ResultCommand")]
 public sealed partial class VaultUnlock : ValidatingUserControl
 {

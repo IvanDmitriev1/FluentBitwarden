@@ -15,8 +15,8 @@ public sealed class UnitOfWork : IUnitOfWork
         _connection = connection;
         Transaction = connection.BeginTransaction(isolationLevel, deferred: true);
 
-        AccountRepository = new AccountRepository(Transaction);
-        AccountDecryptionRepository = new AccountDecryptionRepository(Transaction);
+        AccountProfileRepository = new AccountProfileRepository(Transaction);
+        AccountKeyMaterialRepository = new AccountKeyMaterialRepository(Transaction);
         VaultRepository = new VaultRepository(Transaction);
     }
 
@@ -25,8 +25,8 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public SqliteTransaction Transaction { get; }
 
-    public IAccountRepository AccountRepository { get; }
-    public IAccountDecryptionRepository AccountDecryptionRepository { get; }
+    public IAccountProfileRepository AccountProfileRepository { get; }
+    public IAccountKeyMaterialRepository AccountKeyMaterialRepository { get; }
     public IVaultRepository VaultRepository { get; }
 
     public void SaveChanges()

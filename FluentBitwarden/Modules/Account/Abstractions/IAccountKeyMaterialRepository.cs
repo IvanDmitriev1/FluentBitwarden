@@ -3,8 +3,8 @@ using FluentBitwarden.Modules.Account.Models;
 
 namespace FluentBitwarden.Modules.Account.Abstractions;
 
-public interface IAccountDecryptionRepository
+public interface IAccountKeyMaterialRepository
 {
-    AccountDecryption? GetById(UserId userId);
-    void Upsert(AccountDecryption accountDecryption);
+    AccountKeyMaterial? GetById(UserId userId);
+    void Upsert(AccountKeyMaterial accountKeyMaterial);
 }

@@ -67,7 +67,7 @@ internal sealed class VaultSyncService(
             var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUser);
 
             await syncPayload.ParseAsync(repository, token);
-            unitOfWork.AccountRepository.UpdateSyncTime(currentUser, DateTimeOffset.UtcNow);
+            unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUser, DateTimeOffset.UtcNow);
             unitOfWork.SaveChanges();
 
             return VaultSyncResult.Synced;
@@ -82,7 +82,7 @@ internal sealed class VaultSyncService(
     private async Task<bool> HasRemoteChangesAsync(UserId currentUser, CancellationToken token)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var lastSync = unitOfWork.AccountRepository.GetLastSyncTime(currentUser);
+        var lastSync = unitOfWork.AccountProfileRepository.GetLastSyncTime(currentUser);
 
         var revisionDate = await vaultApiClient.GetRevisionDateAsync(token);
         return lastSync < revisionDate;

@@ -3,7 +3,7 @@ using BitwardenApi.Shared.Context;
 
 namespace FluentBitwarden.Modules.Account.Models;
 
-public sealed record StoredAccount(
+public sealed record AccountProfile(
     UserId UserId,
     string Email,
     BitwardenEnvironment Environment,

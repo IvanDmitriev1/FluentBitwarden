@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security.Models.Unlock;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Setup;
@@ -20,7 +19,7 @@ public sealed partial class UnlockPageViewModel(
     IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
-    public partial StoredAccount? SelectedAccount { get; private set; }
+    public partial AccountProfile? SelectedAccount { get; private set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasUnlockMethods))]
@@ -32,7 +31,7 @@ public sealed partial class UnlockPageViewModel(
     [MemberNotNull(nameof(SelectedAccount))]
     public Task OnLoadingAsync(UnlockPageParameter param, CancellationToken cancellationToken)
     {
-        SelectedAccount = param.FavoriteAccount;
+        SelectedAccount = param.FavoriteAccountProfile;
         UnlockMethods = UnlockOption.CreateUnlockOptions(param.FavoriteAccountUnlockCapabilities);
 
         return Task.CompletedTask;
