@@ -14,7 +14,7 @@ using WinUIEx;
 namespace FluentBitwarden.Modules.Passkey.Services;
 
 internal class PasskeyOverlayService(
-    ICurrentSessionAccessor currentSessionAccessor,
+    IAccountSessionManager accountSessionManager,
     IVaultSyncService vaultSyncService,
     IUnitOfWorkFactory unitOfWorkFactory)
     : IPasskeyOverlayService
@@ -50,7 +50,7 @@ internal class PasskeyOverlayService(
 
         try
         {
-            if (!currentSessionAccessor.IsAuthenticated)
+            if (accountSessionManager.ActiveSession is not null)
             {
                 var userKey = await ShowUnlockPageAsync(
                     overlayWindow,

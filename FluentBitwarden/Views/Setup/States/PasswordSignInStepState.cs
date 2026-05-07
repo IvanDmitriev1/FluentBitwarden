@@ -60,7 +60,7 @@ public partial class PasswordSignInStepState(
 
         var result =
             await accountSessionManager.SignInAsync(
-                new AccountSignInWithPasswordRequest(context.BitwardenClientContext, Email, MasterPassword),
+                new AccountSignInRequest.PasswordRequest(context.BitwardenClientContext, Email, MasterPassword),
                 CancellationToken.None);
 
         switch (result)

@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.Modules.Session.Models;
+﻿using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Modules.Session.Abstractions;
 
@@ -10,7 +11,9 @@ public interface IAccountSessionManager
 
 
     Task<AccountSignInOutcome> SignInAsync(AccountSignInRequest request, CancellationToken cancellationToken);
-    Task UnlockAsync(CancellationToken cancellationToken);
+
+    IReadOnlyList<AccountProfile> GetAccounts();
+    ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request, CancellationToken cancellationToken);
 
     void Lock();
     void Logout();

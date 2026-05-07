@@ -5,10 +5,10 @@ namespace FluentBitwarden.Modules.Session.Abstractions;
 internal interface IAccountSignInService
 {
     Task<AccountSignInOutcome> SignInWithPasswordAsync(
-        AccountSignInWithPasswordRequest request,
+        AccountSignInRequest.PasswordRequest request,
         CancellationToken cancellationToken = default);
 
     Task<AccountSignInOutcome> SignInWithTwoFactorAsync(
-        AccountSignInWithTwoFactorRequest request,
+        AccountSignInRequest.TwoFactorRequest request,
         CancellationToken cancellationToken);
 }

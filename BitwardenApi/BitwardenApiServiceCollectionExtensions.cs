@@ -8,6 +8,8 @@ using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Services;
 using BitwardenApi.Shared.Transport;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: Fody.ConfigureAwait(false)]
@@ -26,14 +28,16 @@ public static class BitwardenApiServiceCollectionExtensions
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
             })
-            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>();
+            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
+            .AddBitwardenReadRetry();
 
         services.AddHttpClient("BitwardenApiVaultHttpClient", client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
-            .AddHttpMessageHandler<TAuthHandler>();
+            .AddHttpMessageHandler<TAuthHandler>()
+            .AddBitwardenReadRetry();
 
         services.AddSingleton<IIdentityApiClient, IdentityApiClient>();
         services.AddSingleton<IVaultApiClient, VaultApiClient>();
@@ -43,5 +47,24 @@ public static class BitwardenApiServiceCollectionExtensions
         services.AddSingleton<INotificationDispatcher, NotificationDispatcher>();
 
         return services;
+    }
+
+    private static IHttpClientBuilder AddBitwardenReadRetry(this IHttpClientBuilder builder)
+    {
+        builder.AddResilienceHandler("BitwardenReadRetry", static resilienceBuilder =>
+        {
+            HttpRetryStrategyOptions retryOptions = new()
+            {
+                MaxRetryAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500),
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+            };
+
+            retryOptions.DisableForUnsafeHttpMethods();
+            resilienceBuilder.AddRetry(retryOptions);
+        });
+
+        return builder;
     }
 }

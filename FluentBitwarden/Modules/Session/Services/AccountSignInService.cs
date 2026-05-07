@@ -12,7 +12,7 @@ namespace FluentBitwarden.Modules.Session.Services;
 
 internal sealed class AccountSignInService(IIdentityApiClient identityApiClient) : IAccountSignInService
 {
-    public async Task<AccountSignInOutcome> SignInWithPasswordAsync(AccountSignInWithPasswordRequest request, CancellationToken cancellationToken = default)
+    public async Task<AccountSignInOutcome> SignInWithPasswordAsync(AccountSignInRequest.PasswordRequest request, CancellationToken cancellationToken = default)
     {
         string serverAuthorizationHash =
             CryptographyService.HashMasterPassword(request.Email, request.MasterPassword, new KdfConfig.Pbkdf2(600000));
@@ -23,7 +23,7 @@ internal sealed class AccountSignInService(IIdentityApiClient identityApiClient)
         return ParseTokenOutcome(request.Email, serverAuthorizationHash, result, request.Context.Environment);
     }
 
-    public async Task<AccountSignInOutcome> SignInWithTwoFactorAsync(AccountSignInWithTwoFactorRequest request, CancellationToken cancellationToken)
+    public async Task<AccountSignInOutcome> SignInWithTwoFactorAsync(AccountSignInRequest.TwoFactorRequest request, CancellationToken cancellationToken)
     {
         var result = await identityApiClient.LoginWithPasswordAndTwoFactorAsync(
             new PasswordTwoFactorLoginRequest(request.Context,

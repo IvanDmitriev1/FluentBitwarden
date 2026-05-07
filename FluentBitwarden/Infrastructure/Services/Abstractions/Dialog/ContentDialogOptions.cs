@@ -1,4 +1,4 @@
-﻿snamespace FluentBitwarden.Infrastructure.Services.Abstractions.Dialog;
+﻿namespace FluentBitwarden.Infrastructure.Services.Abstractions.Dialog;
 
 public sealed record ContentDialogOptions(
     string Title,

@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -17,10 +19,10 @@ public sealed partial class VaultUnlock : ValidatingUserControl
     {
         InitializeComponent();
 
-        _unlockService = App.Current.GetRequiredService<IUnlockService>();
+        _accountSessionManager = App.Current.GetRequiredService<IAccountSessionManager>();
     }
 
-    private readonly IUnlockService _unlockService;
+    private readonly IAccountSessionManager _accountSessionManager;
 
     public string Password => PasswordBox.Password;
 
@@ -57,11 +59,11 @@ public sealed partial class VaultUnlock : ValidatingUserControl
 
         PasswordBox.IsPasswordRevealed = false;
         PasswordBox.IsEnabled = false;
-        UnlockResult result;
+        AccountUnlockOutcome result;
 
         try
         {
-            result = await _unlockService.UnlockAsync(Account.UserId, new MasterPasswordUnlockRequest(Password));
+            result = await _accountSessionManager.UnlockAsync(new AccountUnlockRequest.MasterPasswordRequest(Account, Password), CancellationToken.None);
         }
         finally
         {
@@ -70,7 +72,7 @@ public sealed partial class VaultUnlock : ValidatingUserControl
 
         switch (result)
         {
-            case UnlockResult.Failure failure:
+            case AccountUnlockOutcome.Failure failure:
                 SetError(nameof(Password), failure.Reason);
                 PasswordBox.Focus(FocusState.Programmatic);
                 break;

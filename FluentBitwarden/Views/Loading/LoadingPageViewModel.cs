@@ -1,7 +1,4 @@
-using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
@@ -15,19 +12,13 @@ namespace FluentBitwarden.Views.Loading;
 
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
-    ICurrentSessionAccessor currentSessionAccessor,
-    IUnlockService unlockService,
-    IUnitOfWorkFactory unitOfWorkFactory,
+    IAccountSessionManager accountSessionManager,
     IConnectivityService connectivityService)
     : ObservableObject, IPageLifecycleAware
 {
-    public async Task OnLoadingAsync(CancellationToken cancellationToken)
+    public Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        IReadOnlyList<AccountProfile> accounts;
-        using (var unitOfWork = unitOfWorkFactory.Create())
-        {
-            accounts = unitOfWork.AccountProfileRepository.GetAccounts();
-        }
+        var accounts = accountSessionManager.GetAccounts();
 
         if (accounts.Count <= 0)
         {
@@ -35,24 +26,24 @@ public partial class LoadingPageViewModel(
             {
                 navigationService.NavigateTo<OfflinePage>(
                     PageNavigationParameter.From(new OfflinePageParameter(OfflinePageReason.FirstSignInRequiresInternet)));
-                return;
+                return Task.CompletedTask;
             }
 
             navigationService.NavigateTo<SetupPage>();
-            return;
+            return Task.CompletedTask;
         }
 
         var favoriteAccount = accounts[0];
-        if (currentSessionAccessor.IsAuthenticated)
+        if (accountSessionManager.ActiveSession is not null)
         {
             navigationService.NavigateTo<ShellPage>();
-            return;
+            return Task.CompletedTask;
         }
 
-        var favoriteAccountCapabilities = await unlockService.GetCapabilitiesAsync(favoriteAccount.UserId, cancellationToken);
         navigationService.NavigateTo<UnlockPage>(
-            PageNavigationParameter.From(
-                new UnlockPageParameter(accounts, favoriteAccount, favoriteAccountCapabilities)));
+            PageNavigationParameter.From(new UnlockPageParameter(accounts, favoriteAccount)));
+
+        return Task.CompletedTask;
     }
 
     public void OnUnloading() { }

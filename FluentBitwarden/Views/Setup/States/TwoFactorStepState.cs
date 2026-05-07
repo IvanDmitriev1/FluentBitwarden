@@ -87,7 +87,7 @@ public partial class TwoFactorStepState : ObservableValidator
         if (HasErrors)
             return;
 
-        var result = await _accountSessionManager.SignInAsync(new AccountSignInWithTwoFactorRequest(_context.BitwardenClientContext,
+        var result = await _accountSessionManager.SignInAsync(new AccountSignInRequest.TwoFactorRequest(_context.BitwardenClientContext,
             _email,
             _serverAuthorizationHash,
             new TwoFactorProof(Code, SelectedProvider.Provider)), CancellationToken.None);

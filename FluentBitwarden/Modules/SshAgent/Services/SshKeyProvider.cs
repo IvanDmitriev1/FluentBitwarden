@@ -13,7 +13,7 @@ using FluentBitwarden.Modules.AppState.Models;
 namespace FluentBitwarden.Modules.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
-    ICurrentSessionAccessor sessionAccessor,
+    IAccountSessionManager accountSessionManager,
     IVaultSyncService vaultSyncService,
     IContentDialogService contentDialogService) : ISshKeyProvider
 {
@@ -27,7 +27,7 @@ internal sealed class SshKeyProvider(
 
     public IReadOnlyList<SshPublicIdentityResponce> ListIdentities()
     {
-        if (!sessionAccessor.IsAuthenticated)
+        if (accountSessionManager.ActiveSession is null)
             return [];
 
         return vaultSyncService.Ciphers.OfType<SshKeyCipher>()
@@ -37,7 +37,7 @@ internal sealed class SshKeyProvider(
 
     public async ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!sessionAccessor.IsAuthenticated)
+        if (accountSessionManager.ActiveSession is null)
             return SshSignatureResult.Failed;
 
         var cipher = vaultSyncService.Ciphers.OfType<SshKeyCipher>()

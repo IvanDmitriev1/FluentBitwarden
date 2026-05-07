@@ -16,7 +16,7 @@ namespace FluentBitwarden.Modules.Vault.Services;
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultSyncService(
     IUnitOfWorkFactory unitOfWorkFactory,
-    ICurrentSessionAccessor sessionAccessor,
+    IAccountSessionManager accountSessionManager,
     IVaultApiClient vaultApiClient,
     IConnectivityService connectivityService) : IVaultSyncService
 {
@@ -27,7 +27,7 @@ internal sealed class VaultSyncService(
     public void LoadAllFromDb()
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var decryptedUserKey = sessionAccessor.CurrentDecryptedUserKey;
+        var decryptedUserKey = accountSessionManager.RequireActiveSession.DecryptedUserKey;
 
         List<Cipher> ciphers = [];
 
@@ -54,20 +54,20 @@ internal sealed class VaultSyncService(
         if (!connectivityService.HasInternetAccess)
             return VaultSyncResult.SkippedOffline;
 
-        var currentUser = sessionAccessor.CurrentUser;
+        var currentUserId = accountSessionManager.RequireActiveSession.UserId;
 
         try
         {
-            if (!await HasRemoteChangesAsync(currentUser, token))
+            if (!await HasRemoteChangesAsync(currentUserId, token))
                 return VaultSyncResult.NoChanges;
 
             await using var syncPayload = await vaultApiClient.GetSyncAsync(token);
 
             using var unitOfWork = unitOfWorkFactory.Create();
-            var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUser);
+            var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUserId);
 
             await syncPayload.ParseAsync(repository, token);
-            unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUser, DateTimeOffset.UtcNow);
+            unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUserId, DateTimeOffset.UtcNow);
             unitOfWork.SaveChanges();
 
             return VaultSyncResult.Synced;

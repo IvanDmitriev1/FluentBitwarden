@@ -9,7 +9,7 @@ using BitwardenApi.Shared.Transport;
 
 namespace BitwardenApi.Modules.Identity.Services;
 
-public sealed class IdentityApiClient(IHttpClientFactory httpClientFactory) : IIdentityApiClient
+internal sealed class IdentityApiClient(IHttpClientFactory httpClientFactory) : IIdentityApiClient
 {
     public Task<TokenExchangeOutcome> LoginWithPasswordAsync(
         PasswordLoginRequest request,

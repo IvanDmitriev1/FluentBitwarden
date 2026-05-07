@@ -79,7 +79,7 @@ internal sealed partial class VaultRepository(SqliteTransaction transaction) : B
             transaction: Transaction);
 
 
-        int bufferLength = Connection.ExecuteScalar<int>(
+        int? bufferLength = Connection.ExecuteScalar<int?>(
             """
             SELECT MAX(length(payload))
             FROM ciphers
@@ -87,8 +87,11 @@ internal sealed partial class VaultRepository(SqliteTransaction transaction) : B
             """,
             new { UserId = userId.ToString() },
             transaction: Transaction);
+
+        if (bufferLength is null)
+            return;
         
-        using var bufferOwner = SpanOwner<byte>.Allocate(bufferLength);
+        using var bufferOwner = SpanOwner<byte>.Allocate(bufferLength.Value);
 
         foreach (var row in cipherRows)
         {
