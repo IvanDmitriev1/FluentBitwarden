@@ -42,7 +42,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
         CurrentStep = new LogInPasswordStepViewModel(this);
     }
 
-    internal void Show2FStep(AccountSignInOutcome.TwoFactorRequired twoFactorRequired)
+    internal void Show2FStep(AccountLoginnOutcome.TwoFactorRequired twoFactorRequired)
     {
         CurrentStep = new LogIn2FStepViewModel(twoFactorRequired, this);
     }

@@ -2,6 +2,8 @@
 using BitwardenApi.Modules.Identity.Abstractions;
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Shared.Context;
+using FluentBitwarden.Infrastructure.Security;
+using FluentBitwarden.Infrastructure.Security.WebAuthn;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
@@ -10,9 +12,11 @@ using System.Linq;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
-internal sealed class AccountSignInService(IIdentityApiClient identityApiClient) : IAccountSignInService
+[Fody.ConfigureAwait(false)]
+internal sealed class AccountLoginService(
+    IIdentityApiClient identityApiClient) : IAccountLoginService
 {
-    public async Task<AccountSignInOutcome> SignInWithPasswordAsync(AccountSignInRequest.PasswordRequest request, CancellationToken cancellationToken = default)
+    public async Task<AccountLoginnOutcome> LoginWithPasswordAsync(AccountLoginRequest.PasswordRequest request, CancellationToken cancellationToken = default)
     {
         string serverAuthorizationHash =
             CryptographyService.HashMasterPassword(request.Email, request.MasterPassword, new KdfConfig.Pbkdf2(600000));
@@ -23,7 +27,35 @@ internal sealed class AccountSignInService(IIdentityApiClient identityApiClient)
         return ParseTokenOutcome(request.Email, serverAuthorizationHash, result, request.Context.Environment);
     }
 
-    public async Task<AccountSignInOutcome> SignInWithTwoFactorAsync(AccountSignInRequest.TwoFactorRequest request, CancellationToken cancellationToken)
+    public async Task<AccountLoginnOutcome> LoginWithPasskeyAsync(
+        AccountLoginRequest.PasskeyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var assertionOptions = await identityApiClient.GetWebAuthnLoginAssertionOptionsAsync(
+                request.Context,
+                cancellationToken);
+
+            var deviceResponse = WebAuthnLoginAssertionHelper.GetAssertion(assertionOptions.Options);
+
+            var result = await identityApiClient.LoginWithWebAuthnAsync(
+                new WebAuthnLoginRequest(request.Context, assertionOptions.Token, deviceResponse),
+                cancellationToken);
+
+            return ParseTokenOutcome(string.Empty, string.Empty, result, request.Context.Environment);
+        }
+        catch (OperationCanceledException)
+        {
+            return new AccountLoginnOutcome.InvalidCredentials("Passkey sign in was canceled.");
+        }
+        catch (WebAuthnLoginException ex)
+        {
+            return new AccountLoginnOutcome.InvalidCredentials(ex.Message);
+        }
+    }
+
+    public async Task<AccountLoginnOutcome> LoginWithTwoFactorAsync(AccountLoginRequest.TwoFactorRequest request, CancellationToken cancellationToken)
     {
         var result = await identityApiClient.LoginWithPasswordAndTwoFactorAsync(
             new PasswordTwoFactorLoginRequest(request.Context,
@@ -32,18 +64,18 @@ internal sealed class AccountSignInService(IIdentityApiClient identityApiClient)
         return ParseTokenOutcome(request.Email, request.ServerAuthorizationHash, result, request.Context.Environment);
     }
 
-    private static AccountSignInOutcome ParseTokenOutcome(
+    private static AccountLoginnOutcome ParseTokenOutcome(
         string email,
         string serverAuthorizationHash,
         TokenExchangeOutcome outcome,
         BitwardenEnvironment environment) => outcome switch
     {
-        TokenExchangeOutcome.Authenticated success => new AccountSignInOutcome.Success(
+        TokenExchangeOutcome.Authenticated success => new AccountLoginnOutcome.Success(
             CreateAuthenticationSuccess(success.AuthenticatedModel, environment)),
         TokenExchangeOutcome.DeviceVerificationRequired dv =>
-            new AccountSignInOutcome.DeviceVerificationRequired(dv.Message),
-        TokenExchangeOutcome.InvalidCredentials ic => new AccountSignInOutcome.InvalidCredentials(ic.Message),
-        TokenExchangeOutcome.TwoFactorRequired twoFactorRequired => new AccountSignInOutcome.TwoFactorRequired(
+            new AccountLoginnOutcome.DeviceVerificationRequired(dv.Message),
+        TokenExchangeOutcome.InvalidCredentials ic => new AccountLoginnOutcome.InvalidCredentials(ic.Message),
+        TokenExchangeOutcome.TwoFactorRequired twoFactorRequired => new AccountLoginnOutcome.TwoFactorRequired(
             twoFactorRequired.Challenge, email, serverAuthorizationHash),
         _ => throw new InvalidOperationException("Unsupported password token outcome.")
     };

@@ -10,6 +10,14 @@ public interface IIdentityApiClient
         PasswordTwoFactorLoginRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<WebAuthnLoginAssertionOptionsResult> GetWebAuthnLoginAssertionOptionsAsync(
+        BitwardenClientContext context,
+        CancellationToken cancellationToken = default);
+
+    Task<TokenExchangeOutcome> LoginWithWebAuthnAsync(
+        WebAuthnLoginRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<TokenExchangeOutcome> RefreshAsync(
         RefreshLoginRequest request,
         CancellationToken cancellationToken = default);

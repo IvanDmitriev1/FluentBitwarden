@@ -9,8 +9,7 @@ public interface IAccountSessionManager
     AccountSession RequireActiveSession { get; }
     ValueTask<AccountSessionTokens> GetValidActiveSessionTokensAsync(CancellationToken cancellationToken);
 
-
-    Task<AccountSignInOutcome> SignInAsync(AccountSignInRequest request, CancellationToken cancellationToken);
+    Task<AccountLoginnOutcome> SignInAsync(AccountLoginRequest request, CancellationToken cancellationToken);
 
     IReadOnlyList<AccountProfile> GetAccounts();
     AccountUnlockOutcome Unlock(AccountUnlockRequest request);

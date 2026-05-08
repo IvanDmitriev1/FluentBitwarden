@@ -14,7 +14,7 @@ namespace FluentBitwarden.Views.LogIn.States;
 internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 {
     public LogIn2FStepViewModel(
-        AccountSignInOutcome.TwoFactorRequired twoFactorRequired,
+        AccountLoginnOutcome.TwoFactorRequired twoFactorRequired,
         LogInFlowPageViewModel flow)
     {
         _twoFactorRequired = twoFactorRequired;
@@ -30,7 +30,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
         ServerDisplayName = flow.Context.BitwardenContext.Environment.ToServerDisplayName();
     }
 
-    private readonly AccountSignInOutcome.TwoFactorRequired _twoFactorRequired;
+    private readonly AccountLoginnOutcome.TwoFactorRequired _twoFactorRequired;
     private readonly LogInFlowPageViewModel _flow;
 
     public string Email { get; }
@@ -69,7 +69,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 
         var context = _flow.Context;
 
-        var outcome  = await _flow.AccountSessionManager.SignInAsync(new AccountSignInRequest.TwoFactorRequest(
+        var outcome  = await _flow.AccountSessionManager.SignInAsync(new AccountLoginRequest.TwoFactorRequest(
             context.BitwardenContext,
             _twoFactorRequired.Email,
             _twoFactorRequired.ServerAuthorizationHash,
@@ -77,11 +77,11 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 
         switch (outcome)
         {
-            case AccountSignInOutcome.Success success:
+            case AccountLoginnOutcome.Success success:
                 _flow.OnSuccessLogIn(success.AccountSignInSuccess);
                 return;
 
-            case AccountSignInOutcome.InvalidCredentials invalidCredentials:
+            case AccountLoginnOutcome.InvalidCredentials invalidCredentials:
                 SetError(nameof(Code), invalidCredentials.Message);
                 return;
 

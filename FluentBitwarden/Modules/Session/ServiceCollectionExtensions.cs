@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<AccountSessionManager>();
         services.AddSingleton<TpmCngAccountUnlockMethod>();
-        services.AddSingleton<IAccountSignInService, AccountSignInService>();
+        services.AddSingleton<IAccountLoginService, AccountLoginService>();
         services.AddSingleton<IAccountSessionTokensStore, AccountSessionTokensStore>();
 
         services.AddSingleton<IAccountSessionManager>(static sp => sp.GetRequiredService<AccountSessionManager>());

@@ -14,7 +14,7 @@ namespace FluentBitwarden.Modules.Session.Services;
 internal sealed class AccountSessionManager(
     IUnitOfWorkFactory unitOfWorkFactory,
     IIdentityApiClient identityApiClient,
-    IAccountSignInService accountSignInService,
+    IAccountLoginService accountLoginService,
     IAccountSessionTokensStore sessionTokensStore,
     TpmCngAccountUnlockMethod tpmCngAccountUnlockMethod) : IAccountSessionManager, IBitwardenEnvironmentAccessor
 {
@@ -22,9 +22,8 @@ internal sealed class AccountSessionManager(
     public AccountSession RequireActiveSession => ActiveSession ?? throw new InvalidOperationException("No active session.");
     public BitwardenEnvironment CurrentEnvironment => RequireActiveSession.Context.Environment;
 
-    private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly MasterPasswordAccountUnlockMethod _masterPasswordAccountUnlockMethod = new();
-    private readonly TpmCngAccountUnlockMethod _tpmCngAccountUnlockMethod = tpmCngAccountUnlockMethod;
 
     public async ValueTask<AccountSessionTokens> GetValidActiveSessionTokensAsync(CancellationToken cancellationToken)
     {
@@ -51,18 +50,19 @@ internal sealed class AccountSessionManager(
         }
     }
 
-    public async Task<AccountSignInOutcome> SignInAsync(AccountSignInRequest request, CancellationToken cancellationToken)
+    public async Task<AccountLoginnOutcome> SignInAsync(AccountLoginRequest request, CancellationToken cancellationToken)
     {
-        Task<AccountSignInOutcome> signInTask = request switch
+        Task<AccountLoginnOutcome> signInTask = request switch
         {
-            AccountSignInRequest.PasswordRequest passwordRequest => accountSignInService.SignInWithPasswordAsync(passwordRequest, cancellationToken),
-            AccountSignInRequest.TwoFactorRequest twoFactorRequest => accountSignInService.SignInWithTwoFactorAsync(twoFactorRequest, cancellationToken),
+            AccountLoginRequest.PasswordRequest passwordRequest => accountLoginService.LoginWithPasswordAsync(passwordRequest, cancellationToken),
+            AccountLoginRequest.PasskeyRequest passkeyRequest => accountLoginService.LoginWithPasskeyAsync(passkeyRequest, cancellationToken),
+            AccountLoginRequest.TwoFactorRequest twoFactorRequest => accountLoginService.LoginWithTwoFactorAsync(twoFactorRequest, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
 
         var result = await signInTask;
 
-        if (result is not AccountSignInOutcome.Success successOutcome)
+        if (result is not AccountLoginnOutcome.Success successOutcome)
             return result;
 
         var accountSignIn = successOutcome.AccountSignInSuccess;
@@ -101,7 +101,7 @@ internal sealed class AccountSessionManager(
         AccountUnlockOutcome outcome = request switch
         {
             AccountUnlockRequest.MasterPasswordRequest masterPasswordRequest => _masterPasswordAccountUnlockMethod.Unlock(accountKeyMaterial, masterPasswordRequest.MasterPassword),
-            AccountUnlockRequest.TpmCngRequest => _tpmCngAccountUnlockMethod.Unlock(accountKeyMaterial),
+            AccountUnlockRequest.TpmCngRequest => tpmCngAccountUnlockMethod.Unlock(accountKeyMaterial),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
 

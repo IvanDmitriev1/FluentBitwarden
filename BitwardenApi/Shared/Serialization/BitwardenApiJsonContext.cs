@@ -13,6 +13,8 @@ namespace BitwardenApi.Shared.Serialization;
 [JsonSerializable(typeof(TokenAuthenticatedResponse))]
 [JsonSerializable(typeof(TokenRefreshSessionResponse))]
 [JsonSerializable(typeof(TokenFailureResponse))]
+[JsonSerializable(typeof(WebAuthnLoginAssertionOptionsResponse))]
+[JsonSerializable(typeof(WebAuthnLoginAssertionResponseRequest))]
 [JsonSerializable(typeof(PreloginRequest))]
 [JsonSerializable(typeof(NotificationEnvelope))]
 [JsonSerializable(typeof(CipherChangedNotification))]
@@ -32,6 +34,7 @@ internal sealed partial class BitwardenApiJsonContext : JsonSerializerContext
         options.Converters.Add(new TwoFactorToken.TwoFactorTokenSystemTextJsonConverter());
         options.Converters.Add(new EncryptedPrivateKey.EncryptedPrivateKeySystemTextJsonConverter());
         options.Converters.Add(new EncryptedUserKey.EncryptedUserKeySystemTextJsonConverter());
+        options.Converters.Add(new WebAuthnLoginAssertionOptionsToken.WebAuthnLoginAssertionOptionsTokenSystemTextJsonConverter());
         options.Converters.Add(new UserId.UserIdSystemTextJsonConverter());
         options.Converters.Add(new AuthRequestId.AuthRequestIdSystemTextJsonConverter());
         options.Converters.Add(new DeviceIdentifier.DeviceIdentifierSystemTextJsonConverter());

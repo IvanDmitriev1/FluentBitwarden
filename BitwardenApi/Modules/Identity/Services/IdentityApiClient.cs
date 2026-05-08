@@ -33,6 +33,37 @@ internal sealed class IdentityApiClient(IHttpClientFactory httpClientFactory) : 
             static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
+    public async Task<WebAuthnLoginAssertionOptionsResult> GetWebAuthnLoginAssertionOptionsAsync(
+        BitwardenClientContext context,
+        CancellationToken cancellationToken = default)
+    {
+        using var httpClient = httpClientFactory.CreateIdentityClient();
+        Uri endpoint = new(context.Environment.IdentityBase, "/accounts/webauthn/assertion-options");
+
+        using var response = await httpClient.GetAsync(endpoint, cancellationToken);
+        response.EnsureSuccess("Identity get WebAuthn assertion options", cancellationToken);
+
+        WebAuthnLoginAssertionOptionsResponse? payload = await response.Content.ReadFromJsonAsync(
+            BitwardenApiJsonContext.ConfiguredDefault.WebAuthnLoginAssertionOptionsResponse,
+            cancellationToken);
+
+        if (payload is null)
+            throw new InvalidDataException("Response JSON payload was empty.");
+
+        return new WebAuthnLoginAssertionOptionsResult(payload.Options, payload.Token);
+    }
+
+    public Task<TokenExchangeOutcome> LoginWithWebAuthnAsync(
+        WebAuthnLoginRequest request,
+        CancellationToken cancellationToken = default)
+        => SendTokenRequestAsync(
+            request.Context,
+            request.CreateWebAuthnGrant(),
+            "Identity login with passkey",
+            BitwardenApiJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
+            cancellationToken);
+
     public Task<TokenExchangeOutcome> RefreshAsync(
         RefreshLoginRequest request,
         CancellationToken cancellationToken = default)

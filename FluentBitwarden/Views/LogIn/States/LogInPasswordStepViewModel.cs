@@ -43,19 +43,19 @@ internal sealed partial class LogInPasswordStepViewModel(LogInFlowPageViewModel 
         }
 
         var outcome = await flow.AccountSessionManager.SignInAsync(
-            new AccountSignInRequest.PasswordRequest(flow.Context.BitwardenContext, flow.Context.Email, MasterPassword),
+            new AccountLoginRequest.PasswordRequest(flow.Context.BitwardenContext, flow.Context.Email, MasterPassword),
             CancellationToken.None);
 
         switch (outcome)
         {
-            case AccountSignInOutcome.Success success:
+            case AccountLoginnOutcome.Success success:
                 flow.OnSuccessLogIn(success.AccountSignInSuccess);
                 return;
-            case AccountSignInOutcome.InvalidCredentials e:
+            case AccountLoginnOutcome.InvalidCredentials e:
                 SetError(nameof(MasterPassword), e.Message);
                 return;
 
-            case AccountSignInOutcome.TwoFactorRequired twoFactorRequired:
+            case AccountLoginnOutcome.TwoFactorRequired twoFactorRequired:
                 flow.Show2FStep(twoFactorRequired);
                 return;
             default:

@@ -112,7 +112,7 @@
                         Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                 </Grid>
 
-                <Button HorizontalAlignment="Stretch">
+                <Button HorizontalAlignment="Stretch" Command="{x:Bind LogInWithPasskeyCommand}">
                     <StackPanel
                         HorizontalAlignment="Center"
                         Orientation="Horizontal"
@@ -122,6 +122,13 @@
                         <TextBlock Text="Sign in with passkey" />
                     </StackPanel>
                 </Button>
+
+                <InfoBar
+                    IsClosable="False"
+                    IsOpen="True"
+                    Message="{x:Bind PasskeyErrorMessage, Mode=OneWay}"
+                    Severity="Error"
+                    Visibility="{x:Bind PasskeyErrorMessage, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
             </StackPanel>
         </StackPanel>
     </DataTemplate>

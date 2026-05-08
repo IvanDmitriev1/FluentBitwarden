@@ -19,6 +19,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
         string ApiBase,
         string IdentityBase,
         string NotificationsBase,
+        string VaultBase,
         long LastSyncAtUnixMs,
         byte AvailableUnlockMethods);
 
@@ -31,6 +32,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base,
                                identity_base,
                                notifications_base,
+                               vault_base,
                                last_sync_at_unix_ms,
                                available_unlock_methods
                            FROM account_profiles
@@ -53,6 +55,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base,
                                identity_base,
                                notifications_base,
+                               vault_base,
                                last_sync_at_unix_ms,
                                available_unlock_methods
                            FROM account_profiles
@@ -139,6 +142,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base,
                                identity_base,
                                notifications_base,
+                               vault_base,
                                last_sync_at_unix_ms,
                                available_unlock_methods
                            )
@@ -148,6 +152,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                @ApiBase,
                                @IdentityBase,
                                @NotificationsBase,
+                               @VaultBase,
                                @LastSyncAtUnixMs,
                                @AvailableUnlockMethods
                            )
@@ -156,6 +161,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                api_base             = excluded.api_base,
                                identity_base        = excluded.identity_base,
                                notifications_base   = excluded.notifications_base,
+                               vault_base           = excluded.vault_base,
                                last_sync_at_unix_ms = excluded.last_sync_at_unix_ms,
                                available_unlock_methods = excluded.available_unlock_methods;
                            """;
@@ -169,6 +175,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                 ApiBase = accountProfile.Environment.ApiBase.ToString(),
                 IdentityBase = accountProfile.Environment.IdentityBase.ToString(),
                 NotificationsBase = accountProfile.Environment.NotificationsBase.ToString(),
+                VaultBase = accountProfile.Environment.VaultBase.ToString(),
                 LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds(),
                 AvailableUnlockMethods = (byte)accountProfile.AvailableUnlockMethods
             },
@@ -197,7 +204,8 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
         Environment: new BitwardenEnvironment(
             ApiBase: new Uri(row.ApiBase, UriKind.Absolute),
             IdentityBase: new Uri(row.IdentityBase, UriKind.Absolute),
-            NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute)),
+            NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute),
+            VaultBase: new Uri(row.VaultBase, UriKind.Absolute)),
         LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs),
         AvailableUnlockMethods: (UnlockMethodType)row.AvailableUnlockMethods);
 }

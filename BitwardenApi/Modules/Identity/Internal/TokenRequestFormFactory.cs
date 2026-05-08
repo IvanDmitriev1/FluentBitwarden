@@ -1,4 +1,5 @@
 using System.Globalization;
+using BitwardenApi.Shared.Serialization;
 
 namespace BitwardenApi.Modules.Identity.Internal;
 
@@ -22,6 +23,17 @@ internal static class TokenRequestFormFactory
         form["twoFactorToken"] = request.TwoFactor.Code;
         form["twoFactorProvider"] = ((int)request.TwoFactor.Provider).ToString(CultureInfo.InvariantCulture);
         form["twoFactorRemember"] = "1";
+        return form;
+    }
+
+    public static IReadOnlyDictionary<string, string> CreateWebAuthnGrant(this WebAuthnLoginRequest request)
+    {
+        Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
+        form["grant_type"] = "webauthn";
+        form["token"] = request.Token.Value;
+        form["deviceResponse"] = JsonSerializer.Serialize(
+            request.DeviceResponse,
+            BitwardenApiJsonContext.ConfiguredDefault.WebAuthnLoginAssertionResponseRequest);
         return form;
     }
 

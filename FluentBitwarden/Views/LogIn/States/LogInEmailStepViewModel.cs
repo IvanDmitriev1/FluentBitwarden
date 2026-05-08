@@ -1,14 +1,16 @@
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Modules.Session.Models;
+using FluentBitwarden.Resources;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Views.LogIn.Models;
 using FluentBitwarden.Views.LogIn.ValidationAttributes;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Shared.Context;
+using System.Linq;
 
 namespace FluentBitwarden.Views.LogIn.States;
 
-public sealed partial class LogInEmailStepViewModel : ObservableValidator
+internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
 {
     public LogInEmailStepViewModel(LogInFlowPageViewModel flow)
     {
@@ -29,10 +31,14 @@ public sealed partial class LogInEmailStepViewModel : ObservableValidator
     public LogInEnvironmentOption[] Environments { get; }
 
     [ObservableProperty]
+    public partial string? PasskeyErrorMessage { get; set; }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCustomEnvironmentSelected))]
     public partial LogInEnvironmentOption? SelectedEnvironment { get; set; }
 
     public bool IsCustomEnvironmentSelected => SelectedEnvironment?.Title == "Custom";
+
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
@@ -55,6 +61,8 @@ public sealed partial class LogInEmailStepViewModel : ObservableValidator
     public partial string CustomServerUrl { get; set; } = string.Empty;
 
 
+
+
     [field: AllowNull]
     public ValidatableProperty EmailValidation
         => field ??= ValidatableProperty.Create(this,
@@ -73,23 +81,50 @@ public sealed partial class LogInEmailStepViewModel : ObservableValidator
         if (HasErrors || SelectedEnvironment is null)
             return;
 
-        BitwardenEnvironment environment;
-        if (SelectedEnvironment == LogInEnvironmentOption.Eu)
-        {
-            environment = BitwardenEnvironment.Europe;
-        }
-        else if (SelectedEnvironment == LogInEnvironmentOption.Us)
-        {
-            environment = BitwardenEnvironment.UnitedStates;
-        }
-        else
-        {
-            environment = new BitwardenEnvironment(new Uri($"{CustomServerUrl}/api"),
-                new Uri($"{CustomServerUrl}/identity"), new Uri($"{CustomServerUrl}/notifications"));
-        }
-
         _flow.Context.Email = Email;
-        _flow.Context.ChangeEnvironment(environment);
+        _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
         _flow.ShowPasswordStep();
     }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task LogInWithPasskeyAsync()
+    {
+        PasskeyErrorMessage = null;
+        ClearErrors(nameof(Email));
+        ValidateProperty(CustomServerUrl, nameof(CustomServerUrl));
+
+        if (SelectedEnvironment is null || HasValidationErrors(nameof(CustomServerUrl)))
+            return;
+
+        _flow.Context.Email = Email.Trim();
+        _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
+
+        var outcome = await _flow.AccountSessionManager.SignInAsync(
+            new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext), CancellationToken.None);
+
+        switch (outcome)
+        {
+            case AccountLoginnOutcome.Success success:
+                _flow.OnSuccessLogIn(success.AccountSignInSuccess);
+                return;
+
+            case AccountLoginnOutcome.TwoFactorRequired:
+                PasskeyErrorMessage = "This account requires two-step verification. Sign in with your master password instead.";
+                return;
+
+            case AccountLoginnOutcome.DeviceVerificationRequired deviceVerificationRequired:
+                PasskeyErrorMessage = deviceVerificationRequired.Message;
+                return;
+
+            case AccountLoginnOutcome.InvalidCredentials invalidCredentials:
+                PasskeyErrorMessage = invalidCredentials.Message;
+                return;
+
+            default:
+                throw new InvalidOperationException("Unsupported passkey sign-in outcome.");
+        }
+    }
+
+    private bool HasValidationErrors(string propertyName) =>
+        GetErrors(propertyName).Cast<object>().Any();
 }

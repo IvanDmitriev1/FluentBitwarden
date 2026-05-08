@@ -1,5 +1,7 @@
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
+using Microsoft.Data.Sqlite;
+using System.Linq;
 
 namespace FluentBitwarden.Data.Implementations;
 
@@ -13,6 +15,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             api_base TEXT NOT NULL,
             identity_base TEXT NOT NULL,
             notifications_base TEXT NOT NULL,
+            vault_base TEXT NOT NULL,
             last_sync_at_unix_ms INTEGER NOT NULL,
             available_unlock_methods INTEGER NOT NULL DEFAULT 1
         );

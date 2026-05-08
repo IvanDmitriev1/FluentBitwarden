@@ -15,6 +15,9 @@ public readonly partial struct EncryptedUserKey;
 [StronglyTypedId(Template.String)]
 public readonly partial struct EncryptedPrivateKey;
 
+[StronglyTypedId(Template.String)]
+public readonly partial struct WebAuthnLoginAssertionOptionsToken;
+
 
 [StronglyTypedId(Template.Guid)]
 public readonly partial struct UserId;
