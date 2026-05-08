@@ -30,13 +30,6 @@ public sealed partial class VaultUnlock : ValidatingUserControl
     public ValidatableProperty PasswordValidation
         => field ??= ValidatableProperty.Create(this, static state => state.Password);
 
-    private void KeyboardAccelerator_OnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        args.Handled = true;
-        Unlock();
-    }
-
-
     [RelayCommand]
     private void Unlock()
     {

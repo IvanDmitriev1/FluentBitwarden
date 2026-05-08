@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BitwardenApi.Modules.Identity.Models;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
@@ -7,7 +8,6 @@ using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
-using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Unlock.Models;
 using System.Diagnostics.CodeAnalysis;
@@ -51,7 +51,8 @@ public sealed partial class UnlockPageViewModel(
     {
         if (connectivityService.HasInternetAccess)
         {
-            navigationService.NavigateTo<SetupPage>();
+            throw new NotSupportedException();
+            //navigationService.NavigateTo<SetupPage>();
             return;
         }
 

@@ -23,13 +23,9 @@
             x:Name="PasswordBox"
             ActionButtonCommand="{x:Bind UnlockCommand}"
             ActionButtonToolTip="Unlock"
+            Command="{x:Bind UnlockCommand}"
             Header="Master password"
             IsEnabled="True">
-
-            <controls:PasswordBoxEx.KeyboardAccelerators>
-                <KeyboardAccelerator Key="Enter" Invoked="KeyboardAccelerator_OnInvoked" />
-            </controls:PasswordBoxEx.KeyboardAccelerators>
-
             <controls:PasswordBoxEx.ActionButtonContent>
                 <FontIcon
                     FontFamily="{ThemeResource SymbolThemeFontFamily}"

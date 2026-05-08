@@ -3,8 +3,8 @@ using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
-using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.LogIn;
 using FluentBitwarden.Views.Unlock;
 using FluentBitwarden.Views.Unlock.Models;
 
@@ -29,7 +29,7 @@ public partial class LoadingPageViewModel(
                 return Task.CompletedTask;
             }
 
-            navigationService.NavigateTo<SetupPage>();
+            navigationService.NavigateTo<LogInFlowPage>();
             return Task.CompletedTask;
         }
 

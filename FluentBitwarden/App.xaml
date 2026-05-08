@@ -19,8 +19,9 @@
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/SiteIconStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherListItemStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///Resources/Styles/PasswordBoxExStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/TextBoxExStyle.xaml" />
 
-
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/MyStyles.xaml" />
                 <dialogs:SshUserActionRequestViewModelTemplate />
             </ResourceDictionary.MergedDictionaries>
 

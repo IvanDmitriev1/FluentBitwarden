@@ -1,9 +1,9 @@
-﻿using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Modules.Identity.Models;
 using System.Text.Json;
 
-namespace FluentBitwarden.Views.Setup.Models;
+namespace FluentBitwarden.Views.LogIn.Models;
 
-internal static class TwoFactorProviderExtensions
+internal static class LogIn2FProviderExtensions
 {
     public static string GetTitle(this TwoFactorProviderType provider) => provider switch
     {

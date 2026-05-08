@@ -1,9 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline.Models;
-using FluentBitwarden.Views.Setup;
-using Microsoft.UI.Dispatching;
 
 namespace FluentBitwarden.Views.Offline;
 
@@ -12,8 +11,6 @@ public sealed partial class OfflinePageViewModel(
     IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware<OfflinePageParameter>
 {
     private bool _isActive;
-    private bool _navigationRequested;
-    private DispatcherQueue? _dispatcherQueue;
 
     [ObservableProperty]
     public partial string Title { get; private set; } = string.Empty;
@@ -26,13 +23,11 @@ public sealed partial class OfflinePageViewModel(
         ApplyReasonText(param.Reason);
 
         _isActive = true;
-        _navigationRequested = false;
-        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         connectivityService.ConnectivityChanged += OnConnectivityChanged;
 
         if (connectivityService.HasInternetAccess)
-            NavigateToSetupWhenOnline();
+            navigationService.NavigateTo<LoadingPage>();
 
         return Task.CompletedTask;
     }
@@ -40,8 +35,6 @@ public sealed partial class OfflinePageViewModel(
     public void OnUnloading()
     {
         _isActive = false;
-        _navigationRequested = false;
-        _dispatcherQueue = null;
         connectivityService.ConnectivityChanged -= OnConnectivityChanged;
     }
 
@@ -51,7 +44,7 @@ public sealed partial class OfflinePageViewModel(
         if (!connectivityService.HasInternetAccess)
             return;
 
-        NavigateToSetupWhenOnline();
+        navigationService.NavigateTo<LoadingPage>();
     }
 
     private void ApplyReasonText(OfflinePageReason reason)
@@ -78,21 +71,12 @@ public sealed partial class OfflinePageViewModel(
         if (!e.HasInternetAccess || !_isActive)
             return;
 
-        if (_dispatcherQueue is null || _dispatcherQueue.HasThreadAccess)
+        if (App.Current.DispatcherQueue.HasThreadAccess)
         {
-            NavigateToSetupWhenOnline();
+            navigationService.NavigateTo<LoadingPage>();
             return;
         }
 
-        _ = _dispatcherQueue.TryEnqueue(NavigateToSetupWhenOnline);
-    }
-
-    private void NavigateToSetupWhenOnline()
-    {
-        if (!_isActive || _navigationRequested || !connectivityService.HasInternetAccess)
-            return;
-
-        _navigationRequested = true;
-        navigationService.NavigateTo<SetupPage>();
+        _ = App.Current.DispatcherQueue.TryEnqueue(() => navigationService.NavigateTo<LoadingPage>());
     }
 }
