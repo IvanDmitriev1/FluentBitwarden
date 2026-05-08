@@ -1,7 +1,5 @@
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
-using Microsoft.Data.Sqlite;
-using System.Linq;
 
 namespace FluentBitwarden.Data.Implementations;
 

@@ -1,0 +1,43 @@
+using System.Security.Cryptography;
+
+namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+
+internal static class WindowsHelloNcryptStatus
+{
+    public const int NteBadData = unchecked((int)0x80090005);
+
+    private const int ErrorSuccess = 0;
+    private const int NteNoKey = unchecked((int)0x8009000D);
+    private const int NteBadKeyset = unchecked((int)0x80090016);
+    private const int NteUserCancelled = unchecked((int)0x80090036);
+    private const int ErrorCancelled = unchecked((int)0x800704C7);
+
+    /// <summary>
+    /// Converts NCrypt status codes into the unlock exceptions handled by the account unlock flow.
+    /// </summary>
+    public static void ThrowIfFailed(int status, string operation, int? ignoredStatus = null)
+    {
+        if (status == ErrorSuccess || status == ignoredStatus)
+            return;
+
+        switch (status)
+        {
+            case NteUserCancelled:
+            case ErrorCancelled:
+                throw new WindowsHelloAuthenticationCanceledException();
+
+            case NteNoKey:
+            case NteBadKeyset:
+                throw new WindowsHelloKeyUnavailableException();
+
+            default:
+                throw new CryptographicException(
+                    $"{operation} failed with security status 0x{unchecked((uint)status):X8}.");
+        }
+    }
+
+    /// <summary>
+    /// Returns whether an NCrypt call completed successfully.
+    /// </summary>
+    public static bool Succeeded(int status) => status == ErrorSuccess;
+}

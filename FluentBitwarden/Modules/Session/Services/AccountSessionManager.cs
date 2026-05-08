@@ -16,7 +16,7 @@ internal sealed class AccountSessionManager(
     IIdentityApiClient identityApiClient,
     IAccountLoginService accountLoginService,
     IAccountSessionTokensStore sessionTokensStore,
-    TpmCngAccountUnlockMethod tpmCngAccountUnlockMethod) : IAccountSessionManager, IBitwardenEnvironmentAccessor
+    WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod) : IAccountSessionManager, IBitwardenEnvironmentAccessor
 {
     public AccountSession? ActiveSession { get; private set; }
     public AccountSession RequireActiveSession => ActiveSession ?? throw new InvalidOperationException("No active session.");
@@ -101,7 +101,7 @@ internal sealed class AccountSessionManager(
         AccountUnlockOutcome outcome = request switch
         {
             AccountUnlockRequest.MasterPasswordRequest masterPasswordRequest => _masterPasswordAccountUnlockMethod.Unlock(accountKeyMaterial, masterPasswordRequest.MasterPassword),
-            AccountUnlockRequest.TpmCngRequest => tpmCngAccountUnlockMethod.Unlock(accountKeyMaterial),
+            AccountUnlockRequest.WindowsHelloRequest => windowsHelloAccountUnlockMethod.Unlock(accountKeyMaterial),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
 

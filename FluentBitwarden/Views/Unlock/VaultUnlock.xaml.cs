@@ -5,7 +5,6 @@ using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources.Controls;
 using FluentBitwarden.Resources.UserControls;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 

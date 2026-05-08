@@ -20,3 +20,13 @@ OpenProcess
 CloseHandle
 QueryFullProcessImageNameW
 GetPackageFamilyName
+
+NCryptOpenStorageProvider
+NCryptCreatePersistedKey
+NCryptOpenKey
+NCryptSetProperty
+NCryptFinalizeKey
+NCryptEncrypt
+NCryptDecrypt
+NCryptDeleteKey
+NCryptFreeObject

@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddSessionModule(this IServiceCollection services)
     {
         services.AddSingleton<AccountSessionManager>();
-        services.AddSingleton<TpmCngAccountUnlockMethod>();
+        services.AddSingleton<WindowsHelloAccountUnlockMethod>();
         services.AddSingleton<IAccountLoginService, AccountLoginService>();
         services.AddSingleton<IAccountSessionTokensStore, AccountSessionTokensStore>();
 

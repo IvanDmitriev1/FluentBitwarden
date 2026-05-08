@@ -14,17 +14,17 @@ public sealed partial class SettingsPageViewModel : ObservableObject
 {
     private readonly IAccountSessionManager _accountSessionManager;
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
-    private readonly TpmCngAccountUnlockMethod _tpmCngAccountUnlockMethod;
+    private readonly WindowsHelloAccountUnlockMethod _windowsHelloAccountUnlockMethod;
 
     public SettingsPageViewModel(
         IThemeService themeService,
         IAccountSessionManager accountSessionManager,
         IUnitOfWorkFactory unitOfWorkFactory,
-        TpmCngAccountUnlockMethod tpmCngAccountUnlockMethod)
+        WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod)
     {
         _accountSessionManager = accountSessionManager;
         _unitOfWorkFactory = unitOfWorkFactory;
-        _tpmCngAccountUnlockMethod = tpmCngAccountUnlockMethod;
+        _windowsHelloAccountUnlockMethod = windowsHelloAccountUnlockMethod;
         Theme = AppSettingKeys.Appearance.ThemeKey.Create(themeService.Apply);
     }
 
@@ -36,7 +36,7 @@ public sealed partial class SettingsPageViewModel : ObservableObject
         using var unitOfWork = _unitOfWorkFactory.Create();
 
         var accountSession = _accountSessionManager.RequireActiveSession;
-        _tpmCngAccountUnlockMethod.EnableTmpCngUnlock(accountSession);
+        _windowsHelloAccountUnlockMethod.EnableWindowsHelloUnlock(accountSession);
 
         unitOfWork.AccountProfileRepository.SetUnlockMethods(accountSession.Profile.UserId,
             UnlockMethodType.MasterPassword | UnlockMethodType.WindowsHello);
@@ -48,6 +48,6 @@ public sealed partial class SettingsPageViewModel : ObservableObject
     private void Test2()
     {
         var accountSession = _accountSessionManager.RequireActiveSession;
-        var f = _accountSessionManager.Unlock(new AccountUnlockRequest.TpmCngRequest(accountSession.Profile));
+        var f = _accountSessionManager.Unlock(new AccountUnlockRequest.WindowsHelloRequest(accountSession.Profile));
     }
 }
