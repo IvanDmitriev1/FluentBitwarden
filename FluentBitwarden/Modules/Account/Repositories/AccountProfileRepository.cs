@@ -20,8 +20,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
         string IdentityBase,
         string NotificationsBase,
         string VaultBase,
-        long LastSyncAtUnixMs,
-        byte AvailableUnlockMethods);
+        long LastSyncAtUnixMs);
 
     public IReadOnlyList<AccountProfile> GetAccounts()
     {
@@ -33,8 +32,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                identity_base,
                                notifications_base,
                                vault_base,
-                               last_sync_at_unix_ms,
-                               available_unlock_methods
+                               last_sync_at_unix_ms
                            FROM account_profiles
                            ORDER BY last_sync_at_unix_ms DESC;
                            """;
@@ -56,8 +54,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                identity_base,
                                notifications_base,
                                vault_base,
-                               last_sync_at_unix_ms,
-                               available_unlock_methods
+                               last_sync_at_unix_ms
                            FROM account_profiles
                            WHERE user_id = @UserId COLLATE NOCASE;
                            """;
@@ -143,8 +140,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                identity_base,
                                notifications_base,
                                vault_base,
-                               last_sync_at_unix_ms,
-                               available_unlock_methods
+                               last_sync_at_unix_ms
                            )
                            VALUES (
                                @UserId,
@@ -153,8 +149,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                @IdentityBase,
                                @NotificationsBase,
                                @VaultBase,
-                               @LastSyncAtUnixMs,
-                               @AvailableUnlockMethods
+                               @LastSyncAtUnixMs
                            )
                            ON CONFLICT(user_id) DO UPDATE SET
                                email                = excluded.email,
@@ -162,8 +157,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                                identity_base        = excluded.identity_base,
                                notifications_base   = excluded.notifications_base,
                                vault_base           = excluded.vault_base,
-                               last_sync_at_unix_ms = excluded.last_sync_at_unix_ms,
-                               available_unlock_methods = excluded.available_unlock_methods;
+                               last_sync_at_unix_ms = excluded.last_sync_at_unix_ms
                            """;
 
         Connection.Execute(
@@ -176,8 +170,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
                 IdentityBase = accountProfile.Environment.IdentityBase.ToString(),
                 NotificationsBase = accountProfile.Environment.NotificationsBase.ToString(),
                 VaultBase = accountProfile.Environment.VaultBase.ToString(),
-                LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds(),
-                AvailableUnlockMethods = (byte)accountProfile.AvailableUnlockMethods
+                LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds()
             },
             transaction: Transaction);
     }
@@ -206,6 +199,5 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
             IdentityBase: new Uri(row.IdentityBase, UriKind.Absolute),
             NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute),
             VaultBase: new Uri(row.VaultBase, UriKind.Absolute)),
-        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs),
-        AvailableUnlockMethods: (UnlockMethodType)row.AvailableUnlockMethods);
+        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs));
 }

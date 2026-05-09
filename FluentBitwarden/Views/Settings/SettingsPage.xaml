@@ -48,8 +48,18 @@
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Security" />
 
             <controls:SettingsCard Description="Lock the vault when Windows goes to sleep." Header="Lock on system suspend" />
-
             <controls:SettingsCard Description="Minutes before the unlocked vault is locked automatically." Header="Vault timeout" />
+
+            <controls:SettingsCard
+                Description="Use Windows Hello to unlock your vault without entering your master password."
+                Header="Windows Hello"
+                Visibility="{x:Bind ViewModel.IsWindowsHelloSupported, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE72E;" />
+                </controls:SettingsCard.HeaderIcon>
+
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsWindowsHelloEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
 
             <!--  About  -->
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="About" />
@@ -59,7 +69,6 @@
 
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard
-                        Command="{x:Bind ViewModel.TestCommand}"
                         Description="Open the local application data folder."
                         Header="Open data folder"
                         IsClickEnabled="True" />

@@ -28,25 +28,6 @@ public static class WindowsHelloTpmKeyProtector
     }
 
     /// <summary>
-    /// Returns whether the persisted Windows Hello wrapping key exists for the current Windows user.
-    /// </summary>
-    public static bool KeyExists(string keyName)
-    {
-        try
-        {
-            string persistentKeyName = WindowsHelloKeyName.Create(keyName);
-
-            using var provider = WindowsHelloNcryptKeyStore.OpenProvider();
-            using var key = WindowsHelloNcryptKeyStore.OpenKey(provider, persistentKeyName);
-            return !key.IsInvalid;
-        }
-        catch (WindowsHelloKeyUnavailableException)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
     /// Deletes the persisted Windows Hello wrapping key when it exists.
     /// </summary>
     public static void DeleteWrappingKey(string keyName)
@@ -54,7 +35,7 @@ public static class WindowsHelloTpmKeyProtector
         string persistentKeyName = WindowsHelloKeyName.Create(keyName);
 
         using var provider = WindowsHelloNcryptKeyStore.OpenProvider();
-        using var key = WindowsHelloNcryptKeyStore.OpenKey(provider, persistentKeyName, silent: true);
+        using var key = WindowsHelloNcryptKeyStore.OpenKey(provider, persistentKeyName);
 
         WindowsHelloNcryptKeyStore.DeleteKey(key);
     }

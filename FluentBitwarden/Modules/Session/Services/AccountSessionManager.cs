@@ -72,8 +72,7 @@ internal sealed class AccountSessionManager(
                 accountSignIn.UserId,
                 accountSignIn.Email,
                 accountSignIn.Environment,
-                LastSyncAt: DateTimeOffset.MinValue,
-                AvailableUnlockMethods: UnlockMethodType.MasterPassword));
+                LastSyncAt: DateTimeOffset.MinValue));
 
             unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
             unitOfWork.SaveChanges();

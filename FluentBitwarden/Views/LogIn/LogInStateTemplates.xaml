@@ -145,14 +145,16 @@
             <controls1:ValidationField Property="{x:Bind MasterPasswordValidation}">
                 <controls1:PasswordBoxEx
                     x:Name="MasterPasswordBox"
+                    ActionButtonCommand="{x:Bind LogInWithPasswordCommand}"
+                    ActionButtonCommandParameter="{x:Bind MasterPasswordBox.Password, Mode=OneWay}"
                     Command="{x:Bind LogInWithPasswordCommand}"
                     Header="Master password">
-                    <controls1:PasswordBoxEx.Icon>
+                    <controls1:PasswordBoxEx.ActionButtonContent>
                         <FontIcon
                             FontSize="16"
                             Glyph="&#xE8D7;"
                             Style="{StaticResource IconStyle}" />
-                    </controls1:PasswordBoxEx.Icon>
+                    </controls1:PasswordBoxEx.ActionButtonContent>
                 </controls1:PasswordBoxEx>
             </controls1:ValidationField>
 

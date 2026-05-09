@@ -7,47 +7,54 @@ using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Services;
+using FluentBitwarden.Resources.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Settings;
 
-public sealed partial class SettingsPageViewModel : ObservableObject
+public sealed partial class SettingsPageViewModel(
+    IThemeService themeService,
+    IAccountSessionManager accountSessionManager,
+    IUnitOfWorkFactory unitOfWorkFactory,
+    WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod)
+    : ObservableObject, IPageLifecycleAware
 {
-    private readonly IAccountSessionManager _accountSessionManager;
-    private readonly IUnitOfWorkFactory _unitOfWorkFactory;
-    private readonly WindowsHelloAccountUnlockMethod _windowsHelloAccountUnlockMethod;
+    public SettingValue<ElementTheme> Theme { get; } = AppSettingKeys.Appearance.ThemeKey.Create(themeService.Apply);
 
-    public SettingsPageViewModel(
-        IThemeService themeService,
-        IAccountSessionManager accountSessionManager,
-        IUnitOfWorkFactory unitOfWorkFactory,
-        WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod)
+    [ObservableProperty]
+    public partial bool IsWindowsHelloSupported { get; private set; }
+
+    [ObservableProperty]
+    public partial bool IsWindowsHelloEnabled { get; set; }
+
+    private bool _isLoading = true;
+
+    public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        _accountSessionManager = accountSessionManager;
-        _unitOfWorkFactory = unitOfWorkFactory;
-        _windowsHelloAccountUnlockMethod = windowsHelloAccountUnlockMethod;
-        Theme = AppSettingKeys.Appearance.ThemeKey.Create(themeService.Apply);
+        IsWindowsHelloSupported = await windowsHelloAccountUnlockMethod.IsSupportedAsync();
+        if (IsWindowsHelloSupported)
+        {
+            IsWindowsHelloEnabled =
+                windowsHelloAccountUnlockMethod.IsEnabled(accountSessionManager.RequireActiveSession.Profile.UserId);
+        }
+
+        _isLoading = false;
     }
 
-    public SettingValue<ElementTheme> Theme { get; }
-
-    [RelayCommand]
-    private void Test()
+    public void OnUnloading() { }
+    
+    partial void OnIsWindowsHelloEnabledChanged(bool value)
     {
-        using var unitOfWork = _unitOfWorkFactory.Create();
+        if (_isLoading)
+            return;
 
-        var accountSession = _accountSessionManager.RequireActiveSession;
-        _windowsHelloAccountUnlockMethod.EnableWindowsHelloUnlock(accountSession);
-
-        unitOfWork.AccountProfileRepository.SetUnlockMethods(accountSession.Profile.UserId,
-            UnlockMethodType.MasterPassword | UnlockMethodType.WindowsHello);
-
-        unitOfWork.SaveChanges();
-    }
-
-    [RelayCommand]
-    private void Test2()
-    {
-        var accountSession = _accountSessionManager.RequireActiveSession;
-        var f = _accountSessionManager.Unlock(new AccountUnlockRequest.WindowsHelloRequest(accountSession.Profile));
+        var accountSession = accountSessionManager.RequireActiveSession;
+        if (value)
+        {
+            windowsHelloAccountUnlockMethod.Enable(accountSession);
+        }
+        else
+        {
+            windowsHelloAccountUnlockMethod.Disable(accountSession.Profile.UserId);
+        }
     }
 }

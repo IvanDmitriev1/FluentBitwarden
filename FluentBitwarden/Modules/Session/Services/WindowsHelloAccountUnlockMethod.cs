@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using BitwardenApi.Modules.Identity.Models;
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
@@ -6,6 +5,8 @@ using FluentBitwarden.Infrastructure.Security.WindowsHello;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Views.Shell;
+using System.Security.Cryptography;
+using Windows.System;
 using WinUIEx;
 
 namespace FluentBitwarden.Modules.Session.Services;
@@ -14,12 +15,12 @@ public sealed class WindowsHelloAccountUnlockMethod(ISqliteConnectionFactory con
 {
     public UnlockMethodType UnlockMethod => UnlockMethodType.WindowsHello;
 
-    public async Task<bool> IsSupportedAsync() => await WindowsHelloTpmKeyProtector.IsSupportedAsync();
+    public Task<bool> IsSupportedAsync() => WindowsHelloTpmKeyProtector.IsSupportedAsync();
 
     /// <summary>
     /// Stores the currently decrypted Bitwarden user key wrapped by a Windows Hello Passport key.
     /// </summary>
-    public void EnableWindowsHelloUnlock(AccountSession accountSession)
+    public void Enable(AccountSession accountSession)
     {
         var keyName = accountSession.Profile.UserId.ToString();
         var ownerWindowHandle = MainWindow.Instance.GetWindowHandle();
@@ -45,6 +46,25 @@ public sealed class WindowsHelloAccountUnlockMethod(ISqliteConnectionFactory con
                 ProtectedUserKey = protectedBytes
             });
     }
+
+    public bool IsEnabled(UserId userId)
+    {
+        using var connection = connectionFactory.OpenConnection();
+
+        return connection.ExecuteScalar<bool>("""
+                                              SELECT EXISTS(
+                                                  SELECT 1
+                                                  FROM account_tpm_cng_unlock_keys
+                                                  WHERE user_id = @UserId COLLATE NOCASE
+                                              );
+                                              """,
+            new
+            {
+                UserId = userId.ToString()
+            });
+    }
+
+    public void Disable(UserId userId) => RemoveWindowsHelloUnlock(userId.ToString());
 
     /// <summary>
     /// Restores the Bitwarden user key with Windows Hello and returns the account unlock result.

@@ -5,12 +5,10 @@ using Windows.System;
 
 namespace FluentBitwarden.Resources.Controls;
 
-[TemplatePart(Name = PartIconPresenter, Type = typeof(ContentPresenter))]
-[TemplatePart(Name = PartIconDivider, Type = typeof(Border))]
 [TemplatePart(Name = PartPasswordTextBox, Type = typeof(TextBox))]
 [TemplatePart(Name = PartRevealButton, Type = typeof(Button))]
 [TemplatePart(Name = PartActionButton, Type = typeof(Button))]
-[TemplatePart(Name = PartActionDivider, Type = typeof(Border))]
+[TemplatePart(Name = PartHeaderContentPresenter, Type = typeof(ContentPresenter))]
 [DependencyProperty<string>("PlaceholderText", DefaultValue = "Enter your password")]
 [DependencyProperty<object>("ActionButtonContent")]
 [DependencyProperty<string>("ActionButtonToolTip")]
@@ -20,64 +18,65 @@ namespace FluentBitwarden.Resources.Controls;
 [DependencyProperty<object>("Header")]
 [DependencyProperty<DataTemplate>("HeaderTemplate")]
 [DependencyProperty<ICommand>("Command")]
-[DependencyProperty<IconElement>("Icon")]
 public sealed partial class PasswordBoxEx : Control
 {
-    private const string PartIconPresenter = "PART_IconPresenter";
-    private const string PartIconDivider = "PART_IconDivider";
-
     private const string PartPasswordTextBox = "PART_PasswordTextBox";
     private const string PartRevealButton = "PART_RevealButton";
     private const string PartActionButton = "PART_ActionButton";
-    private const string PartActionDivider = "PART_ActionDivider";
+    private const string PartHeaderContentPresenter = "HeaderContentPresenter";
 
     private const string RevealGlyph = "\uE890"; // Eye open
     private const string HideGlyph = "\uED1A"; // Eye closed
     private const char PasswordBullet = '\u2022'; // Bullet character
 
-    private ContentControl? _iconPresenter;
-    private Border? _iconDivider;
-
     private TextBox? _passwordTextBox;
     private Button? _revealButton;
     private FontIcon? _revealIcon;
-
-    private Border? _actionDivider;
     private Button? _actionButton;
+    private ContentPresenter? _headerContentPresenter;
 
     private bool _isPointerOver;
 
     private bool HasInnerFocus =>
         _passwordTextBox?.FocusState != FocusState.Unfocused ||
-        _revealButton?.FocusState != FocusState.Unfocused;
+        _revealButton?.FocusState != FocusState.Unfocused ||
+        _actionButton?.FocusState != FocusState.Unfocused;
 
-    public string Password { get; private set; } = string.Empty;
+    public string Password
+    {
+        get => field;
+        private set
+        {
+            field = value;
+            PasswordChanged?.Invoke(this, value);
+        }
+    } = string.Empty;
+
+    public EventHandler<PasswordBoxEx, string>? PasswordChanged;
 
     public PasswordBoxEx()
     {
         DefaultStyleKey = typeof(PasswordBoxEx);
     }
 
-
-    partial void OnIconChanged()
-    {
-        if (_iconPresenter is null || _iconDivider is null)
-            return;
-
-        Visibility visibility = Icon is null ? Visibility.Collapsed : Visibility.Visible;
-        _iconPresenter.Visibility = visibility;
-        _iconDivider.Visibility = visibility;
-    }
-
     partial void OnActionButtonContentChanged()
     {
-        if (_actionButton is null || _actionDivider is null)
+        if (_actionButton is null)
             return;
 
         Visibility visibility = ActionButtonContent is null ? Visibility.Collapsed : Visibility.Visible;
         _actionButton.Visibility = visibility;
-        _actionDivider.Visibility = visibility;
     }
+
+    partial void OnHeaderChanged()
+    {
+        if (_headerContentPresenter is null)
+            return;
+
+        Visibility visibility = Header is null ? Visibility.Collapsed : Visibility.Visible;
+        _headerContentPresenter.Visibility = visibility;
+    }
+
 
     partial void OnIsPasswordRevealedChanged()
     {
@@ -97,22 +96,26 @@ public sealed partial class PasswordBoxEx : Control
 
         if (_revealButton is not null)
         {
+            _revealButton.GotFocus -= OnButtonFocusChanged;
+            _revealButton.LostFocus -= OnButtonFocusChanged;
             _revealButton.Click -= OnRevealButtonClick;
+        }
+
+        if (_actionButton is not null)
+        {
+            _actionButton.GotFocus -= OnButtonFocusChanged;
+            _actionButton.LostFocus -= OnButtonFocusChanged;
         }
 
         IsEnabledChanged -= OnIsEnabledChanged;
         PointerEntered -= OnControlPointerEntered;
         PointerExited -= OnControlPointerExited;
 
-        _iconPresenter = GetTemplateChild(PartIconPresenter) as ContentControl;
-        _iconDivider = GetTemplateChild(PartIconDivider) as Border;
-
         _passwordTextBox = GetTemplateChild(PartPasswordTextBox) as TextBox;
         _revealButton = GetTemplateChild(PartRevealButton) as Button;
         _revealIcon = _revealButton?.Content as FontIcon;
-
         _actionButton = GetTemplateChild(PartActionButton) as Button;
-        _actionDivider = GetTemplateChild(PartActionDivider) as Border;
+        _headerContentPresenter = GetTemplateChild(PartHeaderContentPresenter) as ContentPresenter;
 
         if (_passwordTextBox is not null)
         {
@@ -123,7 +126,15 @@ public sealed partial class PasswordBoxEx : Control
 
         if (_revealButton is not null)
         {
+            _revealButton.GotFocus += OnButtonFocusChanged;
+            _revealButton.LostFocus += OnButtonFocusChanged;
             _revealButton.Click += OnRevealButtonClick;
+        }
+
+        if (_actionButton is not null)
+        {
+            _actionButton.GotFocus += OnButtonFocusChanged;
+            _actionButton.LostFocus += OnButtonFocusChanged;
         }
 
         IsEnabledChanged += OnIsEnabledChanged;
@@ -131,11 +142,11 @@ public sealed partial class PasswordBoxEx : Control
         PointerExited += OnControlPointerExited;
 
         SyncRevealDisplay();
+        OnHeaderChanged();
+        OnActionButtonContentChanged();
+
         UpdateVisualState(false);
         UpdatePasswordState(false);
-
-        OnIconChanged();
-        OnActionButtonContentChanged();
     }
 
     protected override void OnGotFocus(RoutedEventArgs e)
@@ -189,12 +200,15 @@ public sealed partial class PasswordBoxEx : Control
 
     private void OnRevealButtonClick(object sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrEmpty(Password))
+            return;
+
         IsPasswordRevealed = !IsPasswordRevealed;
         _passwordTextBox?.Focus(FocusState.Programmatic);
-        SyncRevealDisplay();
     }
 
     private void OnTextBoxFocusChanged(object sender, RoutedEventArgs e) => UpdateVisualState();
+    private void OnButtonFocusChanged(object sender, RoutedEventArgs e) => UpdateVisualState();
     private void OnIsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e) => UpdateVisualState();
 
     private void OnControlPointerEntered(object sender, PointerRoutedEventArgs e)
@@ -232,6 +246,7 @@ public sealed partial class PasswordBoxEx : Control
 
         VisualStateManager.GoToState(this, state, useTransitions);
     }
+
 
     private void SyncRevealDisplay()
     {

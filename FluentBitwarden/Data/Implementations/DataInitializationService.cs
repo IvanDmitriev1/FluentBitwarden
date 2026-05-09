@@ -14,8 +14,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             identity_base TEXT NOT NULL,
             notifications_base TEXT NOT NULL,
             vault_base TEXT NOT NULL,
-            last_sync_at_unix_ms INTEGER NOT NULL,
-            available_unlock_methods INTEGER NOT NULL DEFAULT 1
+            last_sync_at_unix_ms INTEGER NOT NULL
         );
         
         CREATE TABLE IF NOT EXISTS account_key_material (

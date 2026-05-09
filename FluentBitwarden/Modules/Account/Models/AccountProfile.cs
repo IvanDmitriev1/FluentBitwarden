@@ -8,5 +8,4 @@ public sealed record AccountProfile(
     UserId UserId,
     string Email,
     BitwardenEnvironment Environment,
-    DateTimeOffset LastSyncAt,
-    UnlockMethodType AvailableUnlockMethods);
+    DateTimeOffset LastSyncAt);
