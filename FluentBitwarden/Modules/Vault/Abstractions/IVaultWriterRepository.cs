@@ -1,10 +1,11 @@
 ﻿using BitwardenApi.Modules.Vault.Models;
 
-namespace BitwardenApi.Modules.Vault.Abstractions;
+namespace FluentBitwarden.Modules.Vault.Abstractions;
 
-public interface ISyncDataWriter
+internal interface IVaultWriterRepository
 {
     void WriteFolder(ref readonly FolderDto dto);
     void WriteCollection(ref readonly CollectionDto dto);
     void WriteCipher(ref readonly CipherDto dto, ReadOnlySpan<byte> payload);
+    void DeleteVaultData();
 }

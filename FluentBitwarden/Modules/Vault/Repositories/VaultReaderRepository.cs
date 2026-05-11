@@ -6,11 +6,11 @@ using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using Microsoft.Data.Sqlite;
 using System.Linq;
-using static FluentBitwarden.Modules.Vault.Abstractions.IVaultRepository;
+using static FluentBitwarden.Modules.Vault.Abstractions.IVaultReaderRepository;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
-internal sealed partial class VaultRepository(SqliteTransaction transaction) : BaseRepository(transaction), IVaultRepository
+internal sealed partial class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction), IVaultReaderRepository
 {
     public IEnumerable<FolderDto> GetAllFolders(UserId userId)
     {

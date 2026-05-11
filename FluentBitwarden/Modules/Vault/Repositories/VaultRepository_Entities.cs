@@ -3,7 +3,7 @@ using BitwardenApi.Modules.Vault.Models;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
-internal partial class VaultRepository
+internal partial class VaultReaderRepository
 {
     private readonly record struct FolderRow(
         string FolderId,

@@ -1,9 +1,9 @@
-using BitwardenApi.Modules.Vault.Models;
 using System.Text.Json;
+using BitwardenApi.Modules.Vault.Models;
 
-namespace BitwardenApi.Modules.Vault.SyncParser;
+namespace FluentBitwarden.Modules.Vault.Internal.SyncParser;
 
-public partial class SyncResponseParser
+internal partial class VaultSyncResponseParser
 {
     private enum FolderProperty
     {

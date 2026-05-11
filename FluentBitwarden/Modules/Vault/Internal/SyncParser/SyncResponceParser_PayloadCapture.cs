@@ -1,7 +1,7 @@
-using CommunityToolkit.HighPerformance.Buffers;
 using System.Text.Json;
+using CommunityToolkit.HighPerformance.Buffers;
 
-namespace BitwardenApi.Modules.Vault.SyncParser;
+namespace FluentBitwarden.Modules.Vault.Internal.SyncParser;
 
 internal sealed class CipherPayloadCapture : IDisposable
 {

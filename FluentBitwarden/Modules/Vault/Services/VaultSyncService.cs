@@ -2,7 +2,6 @@
 using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
-using BitwardenApi.Modules.Vault.VaultDataParser;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
@@ -10,6 +9,8 @@ using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Repositories;
 using System.Diagnostics;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
+using FluentBitwarden.Modules.Vault.Internal.SyncParser;
+using FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 namespace FluentBitwarden.Modules.Vault.Services;
 
@@ -31,7 +32,7 @@ internal sealed class VaultSyncService(
 
         List<Cipher> ciphers = [];
 
-        unitOfWork.VaultRepository.ReadAllCiphers(
+        unitOfWork.VaultReaderRepository.ReadAllCiphers(
             decryptedUserKey.UserId,
             (ciphers, decryptedUserKey),
             static (state, ref readonly dto, payload) =>
@@ -40,7 +41,7 @@ internal sealed class VaultSyncService(
                 ciphers.Add(VaultDataParser.ParseAndDecryptCipher(in dto, payload, userKey));
             });
 
-        var folders = unitOfWork.VaultRepository.GetAllFolders(decryptedUserKey.UserId)
+        var folders = unitOfWork.VaultReaderRepository.GetAllFolders(decryptedUserKey.UserId)
             .Select(dto => VaultDataParser.ParseAndDecryptFolder(ref dto, decryptedUserKey)).ToList();
 
         Ciphers = ciphers;
@@ -61,14 +62,20 @@ internal sealed class VaultSyncService(
             if (!await HasRemoteChangesAsync(currentUserId, token))
                 return VaultSyncResult.NoChanges;
 
-            await using var syncPayload = await vaultApiClient.GetSyncAsync(token);
 
-            using var unitOfWork = unitOfWorkFactory.Create();
-            var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUserId);
+            await vaultApiClient.GetSyncAsync(async stream =>
+            {
+                using var unitOfWork = unitOfWorkFactory.Create();
 
-            await syncPayload.ParseAsync(repository, token);
-            unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUserId, DateTimeOffset.UtcNow);
-            unitOfWork.SaveChanges();
+                var repository = new VaultSyncRepository(unitOfWork.Transaction, currentUserId);
+                repository.DeleteVaultData();
+
+                await VaultSyncResponseParser.ParseAsync(repository, stream, token);
+
+                unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUserId, DateTimeOffset.UtcNow);
+                unitOfWork.SaveChanges();
+            }, token);
+
 
             return VaultSyncResult.Synced;
         }

@@ -16,19 +16,6 @@ internal static class HttpResponseExtensions
         throw CreateFailureExceptionAsync(response, operation);
     }
 
-    public static Task<ApiStreamResponse> CreateStreamResponseAsync(
-        this HttpResponseMessage response,
-        string operation,
-        CancellationToken cancellationToken)
-    {
-        if (response.IsSuccessStatusCode)
-            return ApiStreamResponse.CreateAsync(response, cancellationToken);
-
-        var exception = CreateFailureExceptionAsync(response, operation);
-        response.Dispose();
-        throw exception;
-    }
-
     public static BitwardenApiException CreateFailureExceptionAsync(
         HttpResponseMessage response,
         string operation)

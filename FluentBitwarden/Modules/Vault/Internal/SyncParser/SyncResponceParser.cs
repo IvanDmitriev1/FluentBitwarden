@@ -1,16 +1,17 @@
-using BitwardenApi.Modules.Vault.Abstractions;
+using System.Text.Json;
 using BitwardenApi.Modules.Vault.Models;
+using FluentBitwarden.Modules.Vault.Abstractions;
 using Wololo.Text.Json;
 
-namespace BitwardenApi.Modules.Vault.SyncParser;
+namespace FluentBitwarden.Modules.Vault.Internal.SyncParser;
 
-public sealed partial class SyncResponseParser : IDisposable
+[Fody.ConfigureAwait(false)]
+internal sealed partial class VaultSyncResponseParser(IVaultWriterRepository dataWriter) : IDisposable
 {
     private const int BufferSize = 1024 * 16;
 
-    private readonly ISyncDataWriter _dataWriter;
-    private readonly CipherPayloadCapture _cipherPayloadCapture;
-    private readonly Utf8JsonStreamReader _reader;
+    private readonly CipherPayloadCapture _cipherPayloadCapture = new();
+    private readonly Utf8JsonStreamReader _reader = new(BufferSize);
     private ObjectCaptureState _objectCaptureState;
 
     private ArrayCaptureState _arrayCaptureState;
@@ -28,16 +29,9 @@ public sealed partial class SyncResponseParser : IDisposable
     private FolderProperty _folderProperty;
     private int _parsedFolders;
 
-    public SyncResponseParser(ISyncDataWriter dataWriter)
+    public static async Task<SyncParserReport> ParseAsync(IVaultWriterRepository dataWriter, Stream stream, CancellationToken token)
     {
-        _dataWriter = dataWriter;
-        _cipherPayloadCapture = new CipherPayloadCapture();
-        _reader = new Utf8JsonStreamReader(BufferSize);
-    }
-
-    public static async Task<SyncParserReport> ParseAsync(ISyncDataWriter dataWriter, Stream stream, CancellationToken token)
-    {
-        using var parser = new SyncResponseParser(dataWriter);
+        using var parser = new VaultSyncResponseParser(dataWriter);
         return await parser.ParseAsyncCore(stream, token);
     }
 

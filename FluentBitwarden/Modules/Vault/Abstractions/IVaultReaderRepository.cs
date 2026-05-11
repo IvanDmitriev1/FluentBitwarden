@@ -3,7 +3,7 @@ using BitwardenApi.Modules.Vault.Models;
 
 namespace FluentBitwarden.Modules.Vault.Abstractions;
 
-public interface IVaultRepository
+public interface IVaultReaderRepository
 {
     public delegate void CipherVisitor<in TState>(
         TState state,

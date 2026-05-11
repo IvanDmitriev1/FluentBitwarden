@@ -17,7 +17,7 @@ public sealed class UnitOfWork : IUnitOfWork
 
         AccountProfileRepository = new AccountProfileRepository(Transaction);
         AccountKeyMaterialRepository = new AccountKeyMaterialRepository(Transaction);
-        VaultRepository = new VaultRepository(Transaction);
+        VaultReaderRepository = new VaultReaderRepository(Transaction);
     }
 
     private readonly SqliteConnection _connection;
@@ -27,7 +27,7 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public IAccountProfileRepository AccountProfileRepository { get; }
     public IAccountKeyMaterialRepository AccountKeyMaterialRepository { get; }
-    public IVaultRepository VaultRepository { get; }
+    public IVaultReaderRepository VaultReaderRepository { get; }
 
     public void SaveChanges()
     {

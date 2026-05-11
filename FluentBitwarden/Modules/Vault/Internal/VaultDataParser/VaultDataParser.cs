@@ -1,7 +1,8 @@
+using System.Text.Json;
 using BitwardenApi.Cryptography;
 using BitwardenApi.Modules.Vault.Models;
 
-namespace BitwardenApi.Modules.Vault.VaultDataParser;
+namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 public static partial class VaultDataParser
 {

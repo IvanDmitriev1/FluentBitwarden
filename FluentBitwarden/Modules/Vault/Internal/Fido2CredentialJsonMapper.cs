@@ -1,7 +1,8 @@
 using System.Text;
+using System.Text.Json;
 using BitwardenApi.Modules.Vault.Models;
 
-namespace BitwardenApi.Modules.Vault.Internal;
+namespace FluentBitwarden.Modules.Vault.Internal;
 
 internal static class Fido2CredentialJsonMapper
 {

@@ -1,11 +1,8 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.AppState.Abstractions;
+﻿using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Views.Settings.Models;
 using Microsoft.UI.Xaml;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Services;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 
@@ -14,7 +11,6 @@ namespace FluentBitwarden.Views.Settings;
 public sealed partial class SettingsPageViewModel(
     IThemeService themeService,
     IAccountSessionManager accountSessionManager,
-    IUnitOfWorkFactory unitOfWorkFactory,
     WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod)
     : ObservableObject, IPageLifecycleAware
 {

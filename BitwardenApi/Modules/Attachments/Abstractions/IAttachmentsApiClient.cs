@@ -17,7 +17,8 @@ public interface IAttachmentsApiClient
         UploadMultipartRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<ApiStreamResponse> DownloadByTokenAsync(
+    Task DownloadByTokenAsync(
         DownloadByTokenRequest request,
+        Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default);
 }

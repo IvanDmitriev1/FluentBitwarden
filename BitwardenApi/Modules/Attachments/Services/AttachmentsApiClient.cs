@@ -9,7 +9,9 @@ using System.Text;
 
 namespace BitwardenApi.Modules.Attachments.Services;
 
-public sealed class AttachmentsApiClient(IHttpClientFactory httpClientFactory) : IAttachmentsApiClient
+public sealed class AttachmentsApiClient(
+    IHttpClientFactory httpClientFactory,
+    IBitwardenEnvironmentAccessor environmentAccessor) : IAttachmentsApiClient
 {
     public async Task<AttachmentUploadInit> StartUploadV2Async(
         StartUploadV2Request request,
@@ -17,14 +19,13 @@ public sealed class AttachmentsApiClient(IHttpClientFactory httpClientFactory) :
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
-        Uri requestUri = new(request.Context.Environment.ApiBase, $"/ciphers/{request.CipherId.Value:D}/attachment/v2");
+        Uri requestUri = new(environmentAccessor.CurrentEnvironment.ApiBase, $"/ciphers/{request.CipherId.Value:D}/attachment/v2");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.AccessToken.Value);
-        StreamContent requestContent = new(request.AttachmentRequestJson);
+        using var requestContent = new StreamContent(request.AttachmentRequestJson);
         requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         requestMessage.Content = requestContent;
 
-        using HttpResponseMessage response = await httpClient.SendAsync(
+        using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
@@ -55,12 +56,11 @@ public sealed class AttachmentsApiClient(IHttpClientFactory httpClientFactory) :
         using var httpClient = httpClientFactory.CreateVaultClient();
 
         Uri requestUri = new(
-            request.Context.Environment.ApiBase,
-            $"/ciphers/{request.CipherId.Value:D}/attachment/{Uri.EscapeDataString((string)request.AttachmentId.Value)}/renew");
-        using HttpRequestMessage requestMessage = new(HttpMethod.Get, requestUri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.AccessToken.Value);
+            environmentAccessor.CurrentEnvironment.ApiBase,
+            $"/ciphers/{request.CipherId.Value:D}/attachment/{Uri.EscapeDataString(request.AttachmentId.Value)}/renew");
 
-        using HttpResponseMessage response = await httpClient.SendAsync(
+        using HttpRequestMessage requestMessage = new(HttpMethod.Get, requestUri);
+        using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
@@ -90,23 +90,17 @@ public sealed class AttachmentsApiClient(IHttpClientFactory httpClientFactory) :
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
-        Uri requestUri = request.RequestUri.IsAbsoluteUri
-            ? request.RequestUri
-            : new Uri(request.Context.Environment.ApiBase, request.RequestUri);
-
+        Uri requestUri = new Uri(environmentAccessor.CurrentEnvironment.ApiBase, request.RequestUri);
         using MultipartFormDataContent multipart = new();
 
-        if (request.FormFields is not null)
+        foreach (var field in request.FormFields)
         {
-            foreach (KeyValuePair<string, string> field in request.FormFields)
-            {
-                multipart.Add(new StringContent(field.Value, Encoding.UTF8), field.Key);
-            }
+            multipart.Add(new StringContent(field.Value, Encoding.UTF8), field.Key);
         }
 
-        StreamContent fileContent = new(request.File);
+        using var fileContent = new StreamContent(request.File);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(request.ContentType);
-        multipart.Add(fileContent, request.FilePartName, request.FileName);
+        multipart.Add(fileContent, "data", request.FileName);
 
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
         requestMessage.Content = multipart;
@@ -119,24 +113,22 @@ public sealed class AttachmentsApiClient(IHttpClientFactory httpClientFactory) :
         response.EnsureSuccess("Attachments multipart upload", cancellationToken);
     }
 
-    public async Task<ApiStreamResponse> DownloadByTokenAsync(
+    public async Task DownloadByTokenAsync(
         DownloadByTokenRequest request,
+        Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
-        Uri requestUri = request.RequestUri.IsAbsoluteUri
-            ? request.RequestUri
-            : new Uri(request.Context.Environment.ApiBase, request.RequestUri);
+        Uri requestUri =  new Uri(environmentAccessor.CurrentEnvironment.ApiBase, request.RequestUri);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
-        HttpRequestMessage requestMessage = new(HttpMethod.Get, requestUri);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.DownloadToken.Value);
-
-        var response = await httpClient.SendAsync(
+        using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        return await response.CreateStreamResponseAsync("Attachments download by token", cancellationToken);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await streamHandler.Invoke(stream);
     }
 }

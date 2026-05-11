@@ -1,8 +1,9 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using BitwardenApi.Cryptography;
 using CommunityToolkit.HighPerformance.Buffers;
-using System.Security.Cryptography;
 
-namespace BitwardenApi.Modules.Vault.Internal;
+namespace FluentBitwarden.Modules.Vault.Internal;
 
 internal delegate T DecryptedJsonValueParser<out T>(scoped ReadOnlySpan<byte> value, string propertyName);
 

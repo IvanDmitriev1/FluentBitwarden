@@ -1,12 +1,10 @@
 using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
-using BitwardenApi.Modules.Vault.SyncParser;
 using BitwardenApi.Shared.Exceptions;
 using BitwardenApi.Shared.Serialization;
 using BitwardenApi.Shared.Transport;
 using System.Net.Http.Json;
 using BitwardenApi.Shared.Extensions;
-using System.Diagnostics;
 
 namespace BitwardenApi.Modules.Vault.Services;
 
@@ -27,56 +25,52 @@ public sealed class VaultApiClient(
         response.EnsureSuccess("Vault get revision date", cancellationToken);
 
         var rawValue = await response.Content.ReadFromJsonAsync(BitwardenApiJsonContext.ConfiguredDefault.Int64, cancellationToken);
-        Debug.WriteLine($"Vault revision-date raw value: {rawValue}.");
-
         if (rawValue < 0)
-            throw new BitwardenAccountDeletedException();
+            throw new BitwardenAuthorizationException();
 
         var revision = DateTimeOffset.FromUnixTimeMilliseconds(rawValue);
         return revision;
     }
 
-    public async Task<SyncPayload> GetSyncAsync(
+    public async Task GetSyncAsync(
+        Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
         BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, "/sync?excludeDomains=true");
-
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        var response = await httpClient.SendAsync(
+
+        using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var exception = HttpResponseExtensions.CreateFailureExceptionAsync(response, "Vault sync");
-            response.Dispose();
-            throw exception;
-        }
-
-        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        return new SyncPayload(response, stream);
+        response.EnsureSuccess("Vault sync", cancellationToken);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await streamHandler.Invoke(stream);
     }
 
-    public async Task<ApiStreamResponse> GetCipherAsync(
+    public async Task GetCipherAsync(
         CipherId cipherId,
+        Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
         BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
         Uri requestUri = new(environment.ApiBase, $"/ciphers/{cipherId.Value:D}");
-        var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
-        HttpResponseMessage response = await httpClient.SendAsync(
+        using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        return await response.CreateStreamResponseAsync("Vault get cipher", cancellationToken);
+        response.EnsureSuccess("Vault get cipher", cancellationToken);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await streamHandler.Invoke(stream);
     }
 
     public async Task DeleteCipherAsync(
@@ -89,10 +83,7 @@ public sealed class VaultApiClient(
         Uri requestUri = new(environment.ApiBase, $"/ciphers/{cipherId.Value:D}");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);
 
-        using var response = await httpClient.SendAsync(
-            requestMessage,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
+        using var response = await httpClient.SendAsync(requestMessage, cancellationToken);
 
         response.EnsureSuccess("Vault delete cipher", cancellationToken);
     }

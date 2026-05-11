@@ -3,19 +3,15 @@ using BitwardenApi.Modules.Vault.Abstractions;
 using BitwardenApi.Modules.Vault.Models;
 using Dapper;
 using FluentBitwarden.Data;
+using FluentBitwarden.Modules.Vault.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
-internal sealed class VaultSyncRepository : BaseRepository, ISyncDataWriter
+internal sealed class VaultSyncRepository(SqliteTransaction transaction, UserId userId)
+    : BaseRepository(transaction), IVaultWriterRepository
 {
-    public VaultSyncRepository(SqliteTransaction transaction, UserId userId) : base(transaction)
-    {
-        DeleteVaultData();
-        _userIdStr = userId.ToString();
-    }
-
-    private readonly string _userIdStr;
+    private readonly string _userIdStr = userId.ToString();
 
     public void WriteFolder(ref readonly FolderDto dto)
     {
@@ -162,7 +158,7 @@ internal sealed class VaultSyncRepository : BaseRepository, ISyncDataWriter
         blob.Write(data);
     }
 
-    private void DeleteVaultData()
+    public void DeleteVaultData()
     {
         const string sql = """
                            DELETE FROM ciphers     WHERE user_id = @UserId;

@@ -1,9 +1,11 @@
-using BitwardenApi.Modules.Vault.Abstractions;
+using BitwardenApi.Modules.Identity.Models;
 using BitwardenApi.Modules.Vault.Models;
+using FluentBitwarden.Modules.Vault.Abstractions;
+using System.Text.Json;
 
-namespace BitwardenApi.Modules.Vault.SyncParser;
+namespace FluentBitwarden.Modules.Vault.Internal.SyncParser;
 
-public partial class SyncResponseParser
+internal partial class VaultSyncResponseParser
 {
     private delegate void CaptureVisitor<TState, TProperty>(
         ref Utf8JsonReader reader,
@@ -14,7 +16,7 @@ public partial class SyncResponseParser
         where TProperty : struct;
 
     private delegate void PersistVisitor<TState>(
-        ISyncDataWriter writer,
+        IVaultWriterRepository writer,
         ref TState state)
         where TState : struct;
 
@@ -55,7 +57,7 @@ public partial class SyncResponseParser
 
         if (_objectCaptureState.Depth == 0)
         {
-            persist.Invoke(_dataWriter, ref state);
+            persist.Invoke(dataWriter, ref state);
             _objectCaptureState.IsActive = false;
         }
     }

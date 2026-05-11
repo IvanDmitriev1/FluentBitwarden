@@ -1,6 +1,4 @@
 using BitwardenApi.Modules.Vault.Models;
-using BitwardenApi.Modules.Vault.SyncParser;
-using BitwardenApi.Shared.Transport;
 
 namespace BitwardenApi.Modules.Vault.Abstractions;
 
@@ -9,11 +7,13 @@ public interface IVaultApiClient
     Task<DateTimeOffset> GetRevisionDateAsync(
         CancellationToken cancellationToken = default);
 
-    Task<SyncPayload> GetSyncAsync(
+    Task GetSyncAsync(
+        Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default);
 
-    Task<ApiStreamResponse> GetCipherAsync(
+    Task GetCipherAsync(
         CipherId cipherId,
+        Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default);
 
     Task DeleteCipherAsync(
