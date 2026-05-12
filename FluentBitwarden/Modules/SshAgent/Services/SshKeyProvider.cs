@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
@@ -6,15 +6,14 @@ using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Resources.Dialogs.Models;
-using FluentBitwarden.Shared.Services.Abstractions.Dialog;
-using System.Linq;
+using FluentBitwarden.Infrastructure.Services.Abstractions.Dialog;
 using FluentBitwarden.Modules.AppState.Models;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
-    ICurrentSessionAccessor sessionAccessor,
-    IVaultSyncService vaultSyncService,
+    IAccountSessionManager accountSessionManager,
+    IVaultService vaultService,
     IContentDialogService contentDialogService) : ISshKeyProvider
 {
     private static readonly ContentDialogOptions DialogOptions = new(
@@ -25,25 +24,12 @@ internal sealed class SshKeyProvider(
         DataTemplateKey: "SshUserActionRequestViewModelTemplateKey"
     );
 
-    public IReadOnlyList<SshPublicIdentityResponce> ListIdentities()
-    {
-        if (!sessionAccessor.IsAuthenticated)
-            return [];
-
-        return vaultSyncService.Ciphers.OfType<SshKeyCipher>()
-            .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
-            .ToList();
-    }
+    public IReadOnlyList<SshPublicIdentityResponce> ListIdentities() =>
+        accountSessionManager.ActiveSession is null ? [] : vaultService.GetAvailableSshKeys();
 
     public async ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!sessionAccessor.IsAuthenticated)
-            return SshSignatureResult.Failed;
-
-        var cipher = vaultSyncService.Ciphers.OfType<SshKeyCipher>()
-            .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(request.PublicKeyBlob.Span));
-
-        if (cipher is null)
+        if (accountSessionManager.ActiveSession is null || vaultService.GetSsh(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);

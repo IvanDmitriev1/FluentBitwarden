@@ -22,6 +22,11 @@
 		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <None Remove="Resources\Styles\MyStyles.xaml" />
+	  <None Remove="Views\LogIn\LoginAccountSummary.xaml" />
+	</ItemGroup>
+
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -99,5 +104,14 @@
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
 </ItemGroup>
-
+<ItemGroup>
+  <Page Update="Resources\Styles\MyStyles.xaml">
+    <Generator>MSBuild:Compile</Generator>
+  </Page>
+</ItemGroup>
+<ItemGroup>
+  <Page Update="Views\LogIn\LoginAccountSummary.xaml">
+    <Generator>MSBuild:Compile</Generator>
+  </Page>
+</ItemGroup>
 </Project>

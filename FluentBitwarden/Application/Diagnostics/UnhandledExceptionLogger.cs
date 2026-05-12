@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using FluentBitwarden.Shared.Extensions;
+using FluentBitwarden.Infrastructure.Extensions;
 
 namespace FluentBitwarden.Application.Diagnostics;
 

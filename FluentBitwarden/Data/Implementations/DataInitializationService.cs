@@ -1,7 +1,5 @@
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
-using System.Data;
-using System.Linq;
 
 namespace FluentBitwarden.Data.Implementations;
 
@@ -9,24 +7,35 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
 {
     private const string CreateTableSql =
         """
-        CREATE TABLE IF NOT EXISTS accounts (
+        CREATE TABLE IF NOT EXISTS account_profiles (
             user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE,
             email TEXT NOT NULL,
             api_base TEXT NOT NULL,
             identity_base TEXT NOT NULL,
             notifications_base TEXT NOT NULL,
+            vault_base TEXT NOT NULL,
             last_sync_at_unix_ms INTEGER NOT NULL
         );
         
-        CREATE TABLE IF NOT EXISTS account_decryption (
-            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES accounts(user_id) ON DELETE CASCADE,
-            salt                 TEXT NOT NULL,
-            encrypted_user_key   TEXT NOT NULL,
+        CREATE TABLE IF NOT EXISTS account_key_material (
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE,
+            salt TEXT NOT NULL,
+            encrypted_user_key TEXT NOT NULL,
             encrypted_private_key TEXT NOT NULL,
-            kdf_type             INTEGER NOT NULL,
-            kdf_iterations       INTEGER NOT NULL,
-            kdf_memory_mib       INTEGER NULL,
-            kdf_parallelism      INTEGER NULL
+            kdf_type INTEGER NOT NULL,
+            kdf_iterations INTEGER NOT NULL,
+            kdf_memory_mib INTEGER,
+            kdf_parallelism INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS account_session_tokens (
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE,
+            protected_refresh_token BLOB NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS account_tpm_cng_unlock_keys (
+            user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE,
+            protected_user_key BLOB NOT NULL
         );
         
         CREATE TABLE IF NOT EXISTS folders (
@@ -38,7 +47,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         
             UNIQUE (user_id, folder_id),
         
-            FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES account_profiles(user_id) ON DELETE CASCADE
         );
         
         CREATE TABLE IF NOT EXISTS collections (
@@ -54,7 +63,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         
             UNIQUE (user_id, collection_id),
         
-            FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES account_profiles(user_id) ON DELETE CASCADE
         );
         
         CREATE TABLE IF NOT EXISTS ciphers (
@@ -77,10 +86,8 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         
             UNIQUE (user_id, cipher_id),
         
-            FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id, folder_id) REFERENCES folders(user_id, folder_id)
-                ON DELETE SET NULL
-                DEFERRABLE INITIALLY DEFERRED
+            FOREIGN KEY (user_id) REFERENCES account_profiles(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id, folder_id) REFERENCES folders(user_id, folder_id) DEFERRABLE INITIALLY DEFERRED
         );
         """;
 
@@ -89,48 +96,13 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         using var connection = connectionFactory.OpenConnection();
         connection.Execute("""
                            PRAGMA foreign_keys = ON;
+                           PRAGMA journal_mode = WAL;
+                           PRAGMA synchronous = NORMAL;
+                           PRAGMA busy_timeout = 5000;
                            """);
 
         using var transaction = connection.BeginTransaction();
         connection.Execute(CreateTableSql, transaction: transaction);
-        EnsureVaultMetadataColumns(connection, transaction);
         transaction.Commit();
     }
-
-    private static void EnsureVaultMetadataColumns(IDbConnection connection, IDbTransaction transaction)
-    {
-        EnsureColumn(connection, transaction, "folders", "revision_date_unix_ms", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "folders", "encrypted_name", "TEXT NOT NULL DEFAULT ''");
-
-        EnsureColumn(connection, transaction, "collections", "organization_id", "TEXT NULL");
-        EnsureColumn(connection, transaction, "collections", "read_only", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "collections", "manage", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "collections", "hide_passwords", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "collections", "collection_type", "INTEGER NULL");
-        EnsureColumn(connection, transaction, "collections", "encrypted_name", "TEXT NOT NULL DEFAULT ''");
-
-        EnsureColumn(connection, transaction, "ciphers", "organization_id", "TEXT NULL");
-        EnsureColumn(connection, transaction, "ciphers", "revision_date_unix_ms", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "ciphers", "creation_date_unix_ms", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "ciphers", "deleted_date_unix_ms", "INTEGER NULL");
-        EnsureColumn(connection, transaction, "ciphers", "archived_date_unix_ms", "INTEGER NULL");
-        EnsureColumn(connection, transaction, "ciphers", "favorite", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "ciphers", "reprompt", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "ciphers", "edit", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "ciphers", "view_password", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(connection, transaction, "ciphers", "encrypted_key", "TEXT NULL");
-    }
-
-    private static void EnsureColumn(IDbConnection connection, IDbTransaction transaction, string tableName, string columnName, string columnDefinition)
-    {
-        var existingColumns = connection.Query<TableInfoRow>($"PRAGMA table_info({tableName});", transaction: transaction);
-        if (existingColumns.Any(column => string.Equals(column.Name, columnName, StringComparison.OrdinalIgnoreCase)))
-        {
-            return;
-        }
-
-        connection.Execute($"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition};", transaction: transaction);
-    }
-
-    private readonly record struct TableInfoRow(int Cid, string Name, string Type, int NotNull, string? DfltValue, int Pk);
 }

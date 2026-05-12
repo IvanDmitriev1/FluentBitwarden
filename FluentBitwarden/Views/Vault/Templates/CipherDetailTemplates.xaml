@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.Resources.Controls"
-    xmlns:models="using:BitwardenApi.Modules.Vault.Models"
+    xmlns:models="using:BitwardenApi.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates">
 
     <Style x:Key="SectionTitleTextBlockStyle" TargetType="TextBlock">
@@ -39,7 +39,7 @@
         <Setter Property="Margin" Value="4,2" />
     </Style>
 
-    <DataTemplate x:Key="LoginCipherDetailsTemplate" x:DataType="models:LoginCipher">
+    <DataTemplate x:Key="LoginCipherDetailsTemplate" x:DataType="models:LoginVaultCipher">
         <StackPanel Spacing="6">
             <Border
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -85,7 +85,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="SecureNoteCipherDetailsTemplate" x:DataType="models:SecureNoteCipher">
+    <DataTemplate x:Key="SecureNoteCipherDetailsTemplate" x:DataType="models:SecureNoteVaultCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Secure note" />
 
@@ -94,7 +94,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="CardCipherDetailsTemplate" x:DataType="models:CardCipher">
+    <DataTemplate x:Key="CardCipherDetailsTemplate" x:DataType="models:CardVaultCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Card" />
 
@@ -118,7 +118,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="IdentityCipherDetailsTemplate" x:DataType="models:IdentityCipher">
+    <DataTemplate x:Key="IdentityCipherDetailsTemplate" x:DataType="models:IdentityVaultCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Identity" />
 
@@ -189,7 +189,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="SshKeyCipherDetailsTemplate" x:DataType="models:SshKeyCipher">
+    <DataTemplate x:Key="SshKeyCipherDetailsTemplate" x:DataType="models:SshKeyVaultCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="SSH key" />
 

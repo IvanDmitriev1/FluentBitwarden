@@ -1,5 +1,5 @@
-﻿using Microsoft.UI.Xaml.Controls.Primitives;
-using BitwardenApi.Modules.Vault.Models;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using BitwardenApi.Models;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 

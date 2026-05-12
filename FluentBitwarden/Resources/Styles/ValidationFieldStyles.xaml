@@ -8,8 +8,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="controls:ValidationField">
-                    <StackPanel Spacing="4">
+                    <StackPanel HorizontalAlignment="Stretch" Spacing="6">
                         <ContentPresenter
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
                             Content="{TemplateBinding Content}"
                             ContentTemplate="{TemplateBinding ContentTemplate}"
                             ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}" />

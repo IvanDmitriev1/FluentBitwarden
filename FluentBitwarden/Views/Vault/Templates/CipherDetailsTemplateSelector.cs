@@ -1,6 +1,6 @@
-﻿namespace FluentBitwarden.Views.Vault.Templates;
+namespace FluentBitwarden.Views.Vault.Templates;
 
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -16,11 +16,11 @@ public sealed class CipherDetailsTemplateSelector : DataTemplateSelector
     {
         return item switch
         {
-            LoginCipher => LoginTemplate,
-            SecureNoteCipher => SecureNoteTemplate,
-            CardCipher => CardTemplate,
-            IdentityCipher => IdentityTemplate,
-            SshKeyCipher => SshKeyTemplate,
+            LoginVaultCipher => LoginTemplate,
+            SecureNoteVaultCipher => SecureNoteTemplate,
+            CardVaultCipher => CardTemplate,
+            IdentityVaultCipher => IdentityTemplate,
+            SshKeyVaultCipher => SshKeyTemplate,
             _ => base.SelectTemplateCore(item)
         };
     }

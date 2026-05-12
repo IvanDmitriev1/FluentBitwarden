@@ -11,26 +11,25 @@
 
     <Border
         Width="420"
-        Margin="24"
+        Padding="24"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
         BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
         BorderThickness="1"
-        CornerRadius="16">
+        CornerRadius="6">
         <Border.Background>
             <SolidColorBrush Opacity="0.92" Color="{ThemeResource CardBackgroundFillColorDefault}" />
         </Border.Background>
 
-        <Grid Padding="28">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <StackPanel Spacing="22">
 
-            <StackPanel
-                Grid.Row="0"
-                Margin="0,0,0,15"
-                HorizontalAlignment="Center">
+            <Image
+                Width="85"
+                Height="85"
+                Source="ms-appx:///Assets/vault-icon.svg"
+                Stretch="Uniform" />
+
+            <StackPanel Margin="0,0,0,15" HorizontalAlignment="Center">
                 <TextBlock
                     Style="{StaticResource TitleLargeTextBlockStyle}"
                     Text="Your vault is locked"
@@ -42,10 +41,7 @@
                     TextAlignment="Center" />
             </StackPanel>
 
-            <unlock1:VaultUnlock
-                Grid.Row="1"
-                Account="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
-                ResultCommand="{x:Bind ViewModel.VaultUnlockResultCommand}" />
-        </Grid>
+            <unlock1:VaultUnlock Account="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}" ResultCommand="{x:Bind ViewModel.VaultUnlockResultCommand}" />
+        </StackPanel>
     </Border>
 </lifecycle:LifecyclePage>

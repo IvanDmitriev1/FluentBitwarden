@@ -12,6 +12,7 @@ public sealed partial class ValidationField : ContentControl
 {
     private INotifyDataErrorInfo? _currentValidationSource;
     private string _currentPropertyName = string.Empty;
+    private bool _isLoaded;
 
     public ValidationField()
     {
@@ -21,17 +22,26 @@ public sealed partial class ValidationField : ContentControl
         Unloaded += OnUnloaded;
     }
 
-    partial void OnPropertyChanged(ValidatableProperty? oldValue, ValidatableProperty? newValue)
+    partial void OnPropertyChanged()
         => RefreshValidationSubscription();
 
     private void OnLoaded(object sender, RoutedEventArgs e)
-        => RefreshValidationSubscription();
+    {
+        _isLoaded = true;
+        RefreshValidationSubscription();
+    }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
-        => DetachValidationSource();
+    {
+        _isLoaded = false;
+        DetachValidationSource();
+    }
 
     private void RefreshValidationSubscription()
     {
+        if (!_isLoaded)
+            return;
+
         INotifyDataErrorInfo? nextValidationSource = Property?.Source;
         string nextPropertyName = Property?.PropertyName ?? string.Empty;
 
@@ -93,8 +103,7 @@ public sealed partial class ValidationField : ContentControl
         }
 
         string errorMessage = GetFirstErrorMessage(_currentValidationSource.GetErrors(_currentPropertyName));
-
-        if (string.IsNullOrWhiteSpace(errorMessage))
+        if (string.IsNullOrEmpty(errorMessage))
         {
             ClearValidationState();
             return;

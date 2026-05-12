@@ -2,7 +2,7 @@ using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.Data.Abstractions;
 
-internal interface ISqliteConnectionFactory
+public interface ISqliteConnectionFactory
 {
     SqliteConnection OpenConnection();
 }

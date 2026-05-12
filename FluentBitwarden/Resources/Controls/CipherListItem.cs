@@ -1,15 +1,15 @@
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Resources.Converters;
-using FluentBitwarden.Shared.Extensions;
 using Microsoft.UI.Xaml;
 using System.Linq;
+using FluentBitwarden.Infrastructure.Extensions;
 
 namespace FluentBitwarden.Resources.Controls;
 
 [TemplatePart(Name = PartIconHost, Type = typeof(SiteIcon))]
 [TemplatePart(Name = PartTitleTextBlock, Type = typeof(TextBlock))]
 [TemplatePart(Name = PartSubtitleTextBlock, Type = typeof(TextBlock))]
-[DependencyProperty<Cipher>("Cipher")]
+[DependencyProperty<VaultCipher>("VaultCipher")]
 [DependencyProperty<double>("IconSize", DefaultValue = 22)]
 [DependencyProperty<double>("IconCornerRadius", DefaultValue = 10)]
 public sealed partial class CipherListItem : Control
@@ -28,7 +28,7 @@ public sealed partial class CipherListItem : Control
         DefaultStyleKey = typeof(CipherListItem);
     }
 
-    partial void OnCipherChanged()
+    partial void OnVaultCipherChanged()
         => Refresh();
 
     partial void OnIconSizeChanged()
@@ -47,14 +47,14 @@ public sealed partial class CipherListItem : Control
 
     private void Refresh()
     {
-        if (Cipher is null)
+        if (VaultCipher is null)
         {
             Clear();
             return;
         }
 
-        _titleTextBlock?.Text = Cipher.Name;
-        _subtitleTextBlock?.Text = BuildSubtitle(Cipher);
+        _titleTextBlock?.Text = VaultCipher.Name;
+        _subtitleTextBlock?.Text = BuildSubtitle(VaultCipher);
         RefreshIcon();
     }
 
@@ -65,7 +65,7 @@ public sealed partial class CipherListItem : Control
             return;
         }
 
-        if (Cipher is null)
+        if (VaultCipher is null)
         {
             _iconHost.FallbackGlyph = DefaultFallbackGlyph;
             _iconHost.Uri = null;
@@ -75,13 +75,13 @@ public sealed partial class CipherListItem : Control
 
         Uri? iconUri = null;
 
-        if (Cipher is LoginCipher loginCipher)
+        if (VaultCipher is LoginVaultCipher loginCipher)
         {
             string? url = loginCipher.Uris.FirstOrDefault();
             StringToUriConverter.TryConvert(url, out iconUri);
         }
 
-        _iconHost.FallbackGlyph = Cipher.GetGlyph();
+        _iconHost.FallbackGlyph = VaultCipher.GetGlyph();
         _iconHost.Uri = iconUri;
         _iconHost.Size = IconSize;
     }
@@ -93,13 +93,13 @@ public sealed partial class CipherListItem : Control
         RefreshIcon();
     }
 
-    private static string? BuildSubtitle(Cipher cipher) => cipher switch
+    private static string? BuildSubtitle(VaultCipher vaultCipher) => vaultCipher switch
     {
-        CardCipher cardCipher => cardCipher.Brand,
-        IdentityCipher identityCipher => identityCipher.Title,
-        LoginCipher loginCipher => loginCipher.Username,
-        SecureNoteCipher _ => null,
-        SshKeyCipher sshKeyCipher => sshKeyCipher.KeyFingerprint,
-        _ => throw new ArgumentOutOfRangeException(nameof(cipher))
+        CardVaultCipher cardCipher => cardCipher.Brand,
+        IdentityVaultCipher identityCipher => identityCipher.Title,
+        LoginVaultCipher loginCipher => loginCipher.Username,
+        SecureNoteVaultCipher _ => null,
+        SshKeyVaultCipher sshKeyCipher => sshKeyCipher.KeyFingerprint,
+        _ => throw new ArgumentOutOfRangeException(nameof(vaultCipher))
     };
 }

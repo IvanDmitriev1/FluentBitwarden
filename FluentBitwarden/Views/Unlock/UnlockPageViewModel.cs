@@ -1,39 +1,31 @@
+using System.Diagnostics;
+using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security.Models.Unlock;
+using FluentBitwarden.Modules.Session.Models;
+using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
-using FluentBitwarden.Views.Setup;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Unlock.Models;
 using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Modules.Identity.Models;
-using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Shared.Services.Abstractions;
-using FluentBitwarden.Resources.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Unlock;
 
 public sealed partial class UnlockPageViewModel(
     INavigationService navigationService,
-    IVaultSyncService vaultSyncService,
+    IVaultService vaultService,
     IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
-    public partial StoredAccount? SelectedAccount { get; private set; }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasUnlockMethods))]
-    public partial IReadOnlyList<UnlockOption> UnlockMethods { get; private set; } = [];
-
-    public bool HasUnlockMethods => UnlockMethods.Count > 1;
-
+    public partial AccountProfile? SelectedAccount { get; private set; }
 
     [MemberNotNull(nameof(SelectedAccount))]
     public Task OnLoadingAsync(UnlockPageParameter param, CancellationToken cancellationToken)
     {
-        SelectedAccount = param.FavoriteAccount;
-        UnlockMethods = UnlockOption.CreateUnlockOptions(param.FavoriteAccountUnlockCapabilities);
+        SelectedAccount = param.FavoriteAccountProfile;
 
         return Task.CompletedTask;
     }
@@ -41,15 +33,15 @@ public sealed partial class UnlockPageViewModel(
     public void OnUnloading() { }
 
     [RelayCommand]
-    private void VaultUnlockResult(UnlockResult result)
+    private void VaultUnlockResult(AccountUnlockOutcome result)
     {
         switch (result)
         {
-            case UnlockResult.Success success:
+            case AccountUnlockOutcome.Success success:
                 OnSuccessUnlock(success.UserKey);
                 return;
 
-            case UnlockResult.RequiresOnlineReauth:
+            case AccountUnlockOutcome.RequiresOnlineReauth:
                 OnRequiresOnlineReauth();
                 return;
         }
@@ -59,7 +51,8 @@ public sealed partial class UnlockPageViewModel(
     {
         if (connectivityService.HasInternetAccess)
         {
-            navigationService.NavigateTo<SetupPage>();
+            throw new NotSupportedException();
+            //navigationService.NavigateTo<SetupPage>();
             return;
         }
 
@@ -69,7 +62,7 @@ public sealed partial class UnlockPageViewModel(
 
     private void OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
     {
-        vaultSyncService.LoadAllFromDb();
+        vaultService.LoadLocalVault();
         navigationService.NavigateTo<ShellPage>();
     }
 }

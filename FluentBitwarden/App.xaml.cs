@@ -5,16 +5,9 @@ using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Modules.Passkey;
-using FluentBitwarden.Modules.Security;
 using FluentBitwarden.Modules.Session;
-using FluentBitwarden.Modules.Session.Services.Authentication;
 using FluentBitwarden.Modules.SshAgent;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.Vault;
-using FluentBitwarden.Shared.Extensions;
-using FluentBitwarden.Shared.Ipc;
-using FluentBitwarden.Shared.Ipc.Abstractions;
-using FluentBitwarden.Shared.Services;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,9 +15,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
+using FluentBitwarden.Infrastructure.Extensions;
+using FluentBitwarden.Infrastructure.Ipc;
+using FluentBitwarden.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Infrastructure.Services;
+using FluentBitwarden.Modules.Session.Services;
+using FluentBitwarden.Modules.SshAgent.Abstractions;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using FluentBitwarden.Shared.Services.Abstractions.Dialog;
 
 namespace FluentBitwarden;
 
@@ -51,9 +49,8 @@ public partial class App : IXamlMetadataServiceProvider
             services.AddDatabaseServices();
             services.AddSharedServices();
 
-            services.AddBitwardenApi<BearerTokenHandler>();
+            services.AddBitwardenApi<BearerAuthTokenProvider>();
             services.AddAccountModule();
-            services.AddSecurityModule();
             services.AddSessionModule();
             services.AddVaultServices();
             services.AddPasskeyModule();
@@ -88,8 +85,6 @@ public partial class App : IXamlMetadataServiceProvider
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        _ = Host.Services.GetRequiredService<MainWindow>();
-
         Host.Services.GetRequiredService<IAppSetupService>().Initialize();
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
         _ = Task.Run(() => Host.Services.GetRequiredService<ISshAgentServer>().RunAsync());

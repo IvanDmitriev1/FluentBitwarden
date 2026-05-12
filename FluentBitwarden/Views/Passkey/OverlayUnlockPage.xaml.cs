@@ -1,29 +1,29 @@
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security.Models.Unlock;
+using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Views.Passkey;
 
 public sealed partial class OverlayUnlockPage : Page
 {
     public OverlayUnlockPage(
-        StoredAccount selectedAccount,
+        AccountProfile selectedAccountProfile,
         Action<DecryptedUserKey> onUnlock)
     {
         _onUnlock = onUnlock;
-        SelectedAccount = selectedAccount;
+        SelectedAccountProfile = selectedAccountProfile;
         InitializeComponent();
     }
 
     private readonly Action<DecryptedUserKey> _onUnlock;
 
-    public StoredAccount SelectedAccount { get; }
+    public AccountProfile SelectedAccountProfile { get; }
 
     [RelayCommand]
-    private void VaultUnlockResult(UnlockResult result)
+    private void VaultUnlockResult(AccountUnlockOutcome result)
     {
-        if (result is not UnlockResult.Success success)
+        if (result is not AccountUnlockOutcome.Success success)
             throw new InvalidOperationException("Failed to unlock the vault. (This should not happen.)");
 
         _onUnlock.Invoke(success.UserKey);

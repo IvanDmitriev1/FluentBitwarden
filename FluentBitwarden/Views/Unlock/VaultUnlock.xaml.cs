@@ -1,70 +1,95 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Security.Abstractions;
-using FluentBitwarden.Modules.Security.Models.Unlock;
-using FluentBitwarden.Modules.Security.Services.Unlock;
+using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources.Controls;
-using FluentBitwarden.Resources.UserControls;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
-using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
+using FluentBitwarden.Modules.Session.Services;
 
 namespace FluentBitwarden.Views.Unlock;
 
-[DependencyProperty<StoredAccount>("Account")]
+[DependencyProperty<AccountProfile>("Account")]
 [DependencyProperty<ICommand>("ResultCommand")]
-public sealed partial class VaultUnlock : ValidatingUserControl
+public sealed partial class VaultUnlock : UserControl
 {
+    private const string PermissionGlyph = "\uE8D7";
+    private const string ForwardGlyph = "\uE72A";
+
     public VaultUnlock()
     {
         InitializeComponent();
 
-        _unlockService = App.Current.GetRequiredService<IUnlockService>();
+        _accountSessionManager = App.Current.GetRequiredService<IAccountSessionManager>();
+        _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<WindowsHelloAccountUnlockMethod>();
+
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
-    private readonly IUnlockService _unlockService;
+    private readonly IAccountSessionManager _accountSessionManager;
+    private readonly WindowsHelloAccountUnlockMethod _windowsHelloAccountUnlockMethod;
 
     public string Password => PasswordBox.Password;
 
-    [field: AllowNull]
-    public ValidatableProperty PasswordValidation
-        => field ??= ValidatableProperty.Create(this, static state => state.Password);
 
-    private async void KeyboardAccelerator_OnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        args.Handled = true;
-        await UnlockAsync();
+        Loaded -= OnLoaded;
+        PasswordBox.PasswordChanged += PasswordChanged;
+
+        SyncPasswordAccentIcon();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        Unloaded -= OnUnloaded;
+
+        PasswordBox.PasswordChanged -= PasswordChanged;
+    }
+
+    private void PasswordChanged(PasswordBoxEx sender, string newPassword) => SyncPasswordAccentIcon();
+
+    partial void OnAccountChanged()
+    {
+        ArgumentNullException.ThrowIfNull(Account);
+
+        WindowsHelloButton.Visibility = _windowsHelloAccountUnlockMethod.IsEnabled(Account.UserId)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
 
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    private async Task UnlockAsync()
+    [RelayCommand]
+    private void Unlock()
     {
-        ClearError(nameof(Password));
+        ArgumentNullException.ThrowIfNull(Account);
 
-        if (Account is null)
-        {
-            SetError(nameof(Password), "No account selected.");
-            return;
-        }
-
-        if (!ValidateRequired(
-                nameof(Password),
-                Password,
-                "Enter your master password."))
+        if (string.IsNullOrWhiteSpace(Password))
         {
             PasswordBox.Focus(FocusState.Programmatic);
             return;
         }
 
+        OnUnlockCore(new AccountUnlockRequest.MasterPasswordRequest(Account, Password));
+    }
+
+    [RelayCommand]
+    private void UnlockWithWindowsHello()
+    {
+        ArgumentNullException.ThrowIfNull(Account);
+        OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account));
+    }
+
+    private void OnUnlockCore(AccountUnlockRequest request)
+    {
         PasswordBox.IsPasswordRevealed = false;
         PasswordBox.IsEnabled = false;
-        UnlockResult result;
+        AccountUnlockOutcome result;
 
         try
         {
-            result = await _unlockService.UnlockAsync(Account.UserId, new MasterPasswordUnlockRequest(Password));
+            result = _accountSessionManager.Unlock(request);
         }
         finally
         {
@@ -73,13 +98,19 @@ public sealed partial class VaultUnlock : ValidatingUserControl
 
         switch (result)
         {
-            case UnlockResult.Failure failure:
-                SetError(nameof(Password), failure.Reason);
+            case AccountUnlockOutcome.Failure failure:
+                InfoBar.Message = failure.Reason;
+                InfoBar.IsOpen = true;
                 PasswordBox.Focus(FocusState.Programmatic);
                 break;
             default:
                 ResultCommand?.Execute(result);
                 break;
         }
+    }
+
+    private void SyncPasswordAccentIcon()
+    {
+        PasswordBoxActionButtonIcon.Glyph = string.IsNullOrWhiteSpace(Password) ? PermissionGlyph : ForwardGlyph;
     }
 }

@@ -9,7 +9,7 @@
     xmlns:lifecycle="using:FluentBitwarden.Resources.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
-    xmlns:models1="using:BitwardenApi.Modules.Vault.Models"
+    xmlns:models1="using:BitwardenApi.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
     xmlns:userControls="using:FluentBitwarden.Resources.UserControls"
     NavigationCacheMode="Required"
@@ -67,8 +67,8 @@
                     SingleSelectionFollowsFocus="True"
                     TabFocusNavigation="Once">
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models1:Cipher">
-                            <controls1:CipherListItem Cipher="{x:Bind}" />
+                        <DataTemplate x:DataType="models1:VaultCipher">
+                            <controls1:CipherListItem VaultCipher="{x:Bind}" />
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
@@ -94,7 +94,7 @@
             Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
 
             <StackPanel Padding="20" Spacing="20">
-                <userControls:CipherDetailsHeader Cipher="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" />
+                <userControls:CipherDetailsHeader VaultCipher="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" />
 
                 <ContentControl
                     HorizontalContentAlignment="Stretch"

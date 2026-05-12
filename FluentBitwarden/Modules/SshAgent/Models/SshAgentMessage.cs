@@ -1,6 +1,6 @@
 ﻿namespace FluentBitwarden.Modules.SshAgent.Models;
 
-internal enum SshAgentMessageRequests : byte
+public enum SshAgentMessageRequests : byte
 {
     Unsupported = 0,
 
@@ -10,7 +10,7 @@ internal enum SshAgentMessageRequests : byte
     AgenticExtension = 27
 }
 
-internal enum SshAgentMessageReplies : byte
+public enum SshAgentMessageReplies : byte
 {
     Undefined = 0,
 

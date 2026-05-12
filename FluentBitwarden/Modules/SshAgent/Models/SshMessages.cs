@@ -2,15 +2,15 @@
 
 namespace FluentBitwarden.Modules.SshAgent.Models;
 
-internal readonly record struct SshAgentPacket(
+public readonly record struct SshAgentPacket(
     SshAgentMessageRequests Message,
     ReadOnlyMemory<byte> Payload);
 
-internal readonly record struct SshPublicIdentityResponce(
+public readonly record struct SshPublicIdentityResponce(
     byte[] PublicKey,
     string Comment);
 
-internal readonly record struct SshAgentExtensionRequest(
+public readonly record struct SshAgentExtensionRequest(
     ReadOnlyMemory<byte> ExtensionType,
     ReadOnlyMemory<byte> Payload)
 {
