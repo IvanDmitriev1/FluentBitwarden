@@ -1,4 +1,5 @@
-﻿using BitwardenApi.Shared.Context;
+using BitwardenApi.Contracts;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
 using Microsoft.Extensions.DependencyInjection;

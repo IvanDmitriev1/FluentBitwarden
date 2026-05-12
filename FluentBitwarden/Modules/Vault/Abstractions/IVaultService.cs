@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Models;
 

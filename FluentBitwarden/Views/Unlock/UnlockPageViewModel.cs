@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Account.Models;

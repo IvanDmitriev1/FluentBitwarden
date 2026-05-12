@@ -1,6 +1,5 @@
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Modules.Vault.Abstractions;
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
+using BitwardenApi.Contracts;
 using Dapper;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Vault.Abstractions;

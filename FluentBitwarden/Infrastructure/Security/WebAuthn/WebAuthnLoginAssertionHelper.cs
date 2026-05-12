@@ -1,4 +1,4 @@
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Views.Shell;
 using System.Buffers.Text;
 using System.Runtime.InteropServices;

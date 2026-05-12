@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Shared.Extensions;
+using BitwardenApi.Extensions;
 
 namespace BitwardenApi.OpenSsh;
 

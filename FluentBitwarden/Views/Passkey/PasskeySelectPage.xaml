@@ -6,7 +6,7 @@
     xmlns:controls="using:FluentBitwarden.Resources.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:models="using:BitwardenApi.Modules.Vault.Models"
+    xmlns:models="using:BitwardenApi.Models"
     mc:Ignorable="d">
 
     <Grid Margin="24" RowSpacing="18">

@@ -1,4 +1,4 @@
-using BitwardenApi.Shared.Context;
+using BitwardenApi.Models;
 using FluentBitwarden.Infrastructure.Security;
 
 namespace FluentBitwarden.Views.LogIn.Models;

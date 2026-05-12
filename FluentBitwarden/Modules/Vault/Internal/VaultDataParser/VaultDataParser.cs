@@ -1,6 +1,6 @@
 using System.Text.Json;
 using BitwardenApi.Cryptography;
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 

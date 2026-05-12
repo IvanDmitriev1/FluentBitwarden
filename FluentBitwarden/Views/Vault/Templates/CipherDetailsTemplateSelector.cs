@@ -1,6 +1,6 @@
-﻿namespace FluentBitwarden.Views.Vault.Templates;
+namespace FluentBitwarden.Views.Vault.Templates;
 
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 

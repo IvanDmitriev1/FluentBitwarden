@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.Passkey.Models;
 
 namespace FluentBitwarden.Modules.Passkey.Abstractions;

@@ -1,7 +1,6 @@
 using System.Text.Json;
 using BitwardenApi.Cryptography;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using BitwardenApi.OpenSsh;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;

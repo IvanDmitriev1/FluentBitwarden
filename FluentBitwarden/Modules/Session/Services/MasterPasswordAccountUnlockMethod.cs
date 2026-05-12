@@ -1,5 +1,5 @@
-﻿using BitwardenApi.Cryptography;
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Cryptography;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;

@@ -1,5 +1,5 @@
-﻿using BitwardenApi.Cryptography;
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Cryptography;
+using BitwardenApi.Models;
 
 namespace FluentBitwarden.Modules.Account.Models;
 

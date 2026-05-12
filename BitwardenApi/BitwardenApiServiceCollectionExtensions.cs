@@ -1,12 +1,7 @@
-using BitwardenApi.Modules.Attachments.Abstractions;
-using BitwardenApi.Modules.Attachments.Services;
-using BitwardenApi.Modules.Identity.Abstractions;
-using BitwardenApi.Modules.Identity.Services;
-using BitwardenApi.Modules.Notifications.Abstractions;
-using BitwardenApi.Modules.Notifications.Services;
-using BitwardenApi.Modules.Vault.Abstractions;
-using BitwardenApi.Modules.Vault.Services;
-using BitwardenApi.Shared.Transport;
+using BitwardenApi.Contracts;
+using BitwardenApi.Clients;
+using BitwardenApi.Internal.Notifications;
+using BitwardenApi.Internal.Transport;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;

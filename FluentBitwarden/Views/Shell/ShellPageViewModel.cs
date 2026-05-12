@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using BitwardenApi.Modules.Vault.Models;
+using System.Linq;
+using BitwardenApi.Models;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Resources.Controls.Lifecycle;

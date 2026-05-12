@@ -1,5 +1,4 @@
-﻿using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 

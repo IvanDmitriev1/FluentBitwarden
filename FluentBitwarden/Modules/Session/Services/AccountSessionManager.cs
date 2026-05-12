@@ -1,6 +1,5 @@
-﻿using BitwardenApi.Modules.Identity.Abstractions;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Context;
+using BitwardenApi.Contracts;
+using BitwardenApi.Models;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Security;
 using FluentBitwarden.Modules.Account.Models;

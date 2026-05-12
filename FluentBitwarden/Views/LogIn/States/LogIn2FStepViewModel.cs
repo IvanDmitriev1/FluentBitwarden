@@ -1,4 +1,4 @@
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Modules.Session.Models;

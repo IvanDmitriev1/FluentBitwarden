@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Resources.Controls.Lifecycle;

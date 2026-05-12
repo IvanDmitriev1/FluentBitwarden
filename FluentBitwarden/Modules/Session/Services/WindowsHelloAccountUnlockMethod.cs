@@ -1,4 +1,4 @@
-using BitwardenApi.Modules.Identity.Models;
+using BitwardenApi.Models;
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Security.WindowsHello;

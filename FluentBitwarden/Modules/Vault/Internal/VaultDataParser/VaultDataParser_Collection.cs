@@ -1,6 +1,5 @@
 using BitwardenApi.Cryptography;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 

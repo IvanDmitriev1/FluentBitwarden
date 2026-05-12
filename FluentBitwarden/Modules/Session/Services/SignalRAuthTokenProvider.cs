@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Modules.Notifications.Abstractions;
+using BitwardenApi.Contracts;
 using FluentBitwarden.Modules.Session.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services;

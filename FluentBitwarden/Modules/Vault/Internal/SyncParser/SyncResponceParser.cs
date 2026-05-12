@@ -1,5 +1,5 @@
 using System.Text.Json;
-using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using Wololo.Text.Json;
 

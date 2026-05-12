@@ -1,6 +1,5 @@
-﻿using System.Linq;
-using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Modules.Vault.Models;
+using System.Linq;
+using BitwardenApi.Models;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Account.Models;

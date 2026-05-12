@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Shared.Context;
+using BitwardenApi.Models;
 using Microsoft.Win32;
 using System.Security.Cryptography;
 using System.Text;

@@ -9,7 +9,7 @@
     xmlns:lifecycle="using:FluentBitwarden.Resources.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
-    xmlns:models1="using:BitwardenApi.Modules.Vault.Models"
+    xmlns:models1="using:BitwardenApi.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
     xmlns:userControls="using:FluentBitwarden.Resources.UserControls"
     NavigationCacheMode="Required"

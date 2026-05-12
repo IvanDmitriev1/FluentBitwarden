@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Modules.Vault.Models;
+using BitwardenApi.Models;
 using System.Collections.Immutable;
 
 namespace FluentBitwarden.Views.Vault.Models;

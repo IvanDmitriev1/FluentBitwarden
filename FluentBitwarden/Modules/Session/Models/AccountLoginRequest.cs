@@ -1,5 +1,4 @@
-﻿using BitwardenApi.Modules.Identity.Models;
-using BitwardenApi.Shared.Context;
+using BitwardenApi.Models;
 
 namespace FluentBitwarden.Modules.Session.Models;
 
