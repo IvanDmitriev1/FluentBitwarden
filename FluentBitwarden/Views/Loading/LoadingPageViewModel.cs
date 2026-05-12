@@ -1,6 +1,6 @@
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;

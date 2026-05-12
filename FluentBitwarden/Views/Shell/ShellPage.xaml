@@ -7,7 +7,7 @@
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
-    xmlns:lifecycle="using:FluentBitwarden.Resources.Controls.Lifecycle"
+    xmlns:lifecycle="using:FluentBitwarden.UI.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     attachedProperties:TitlebarProperties.NavigationFrame="{x:Bind ContentFrame}"
     attachedProperties:TitlebarProperties.PaneToggleCommand="{x:Bind PaneToggleCommand}"

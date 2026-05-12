@@ -1,6 +1,6 @@
-﻿using System.Linq;
+using System.Linq;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
 using Microsoft.UI.Xaml;

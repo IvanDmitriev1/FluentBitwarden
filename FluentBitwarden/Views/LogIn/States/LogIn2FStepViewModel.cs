@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources;
-using FluentBitwarden.Resources.Controls;
+using FluentBitwarden.UI.Controls;
 using FluentBitwarden.Views.LogIn.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;

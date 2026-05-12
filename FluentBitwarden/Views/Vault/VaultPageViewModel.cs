@@ -1,7 +1,7 @@
 using BitwardenApi.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;

@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources;
-using FluentBitwarden.Resources.Controls;
+using FluentBitwarden.UI.Controls;
 using FluentBitwarden.Views.LogIn.Models;
 using FluentBitwarden.Views.LogIn.ValidationAttributes;
 using System.ComponentModel.DataAnnotations;

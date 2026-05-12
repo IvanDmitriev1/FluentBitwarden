@@ -6,6 +6,7 @@ using FluentBitwarden.Views.LogIn;
 using FluentBitwarden.Views.Unlock;
 using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.Views;
 
@@ -22,7 +23,7 @@ internal static class ServiceCollectionExtensions
             .AddView<ShellPage, ShellPageViewModel>();
     }
 
-    private static IServiceCollection AddView<TPage, TViewModel>(this IServiceCollection services)
+    private static IServiceCollection AddView<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TPage, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TViewModel>(this IServiceCollection services)
         where TPage : Page
         where TViewModel : ObservableObject
     {

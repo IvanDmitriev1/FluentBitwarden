@@ -10,18 +10,18 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/ValidationFieldStyles.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherFieldChromeStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherTextField.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherPasswordFieldStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherTotpFieldStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/CountdownRingStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/SiteIconStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/CipherListItemStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/PasswordBoxExStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/TextBoxExStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/ValidationFieldStyles.xaml" />
+                <ResourceDictionary Source="ms-appx:///Views/Vault/Styles/CipherFieldChromeStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Views/Vault/Styles/CipherTextFieldStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Views/Vault/Styles/CipherPasswordFieldStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Views/Vault/Styles/CipherTotpFieldStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/CountdownRingStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/SiteIconStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///Views/Vault/Styles/CipherListItemStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/PasswordBoxExStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/TextBoxExStyle.xaml" />
 
-                <ResourceDictionary Source="ms-appx:///Resources/Styles/MyStyles.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/MyStyles.xaml" />
                 <dialogs:SshUserActionRequestViewModelTemplate />
             </ResourceDictionary.MergedDictionaries>
 

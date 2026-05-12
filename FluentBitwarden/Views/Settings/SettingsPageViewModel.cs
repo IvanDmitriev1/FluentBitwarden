@@ -1,10 +1,10 @@
-﻿using FluentBitwarden.Modules.AppState.Abstractions;
+using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Views.Settings.Models;
 using Microsoft.UI.Xaml;
 using FluentBitwarden.Modules.AppState;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Settings;
 

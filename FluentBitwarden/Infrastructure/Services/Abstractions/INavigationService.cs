@@ -1,4 +1,4 @@
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 
 namespace FluentBitwarden.Infrastructure.Services.Abstractions;
 

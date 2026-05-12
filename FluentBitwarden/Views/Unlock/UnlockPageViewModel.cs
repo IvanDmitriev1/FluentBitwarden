@@ -5,7 +5,7 @@ using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;

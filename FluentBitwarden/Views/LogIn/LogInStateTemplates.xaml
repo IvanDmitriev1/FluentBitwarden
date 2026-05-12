@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:controls1="using:FluentBitwarden.Resources.Controls"
+    xmlns:controls1="using:FluentBitwarden.UI.Controls"
     xmlns:local="using:FluentBitwarden.Views.LogIn"
     xmlns:models="using:FluentBitwarden.Views.LogIn.Models"
     xmlns:states="using:FluentBitwarden.Views.LogIn.States">

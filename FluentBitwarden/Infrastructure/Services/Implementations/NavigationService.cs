@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Resources.Controls.Lifecycle;
+using FluentBitwarden.UI.Controls.Lifecycle;
 
 namespace FluentBitwarden.Infrastructure.Services.Implementations;
 
