@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using BitwardenApi.Cryptography;
 using BitwardenApi.Models;
 
-namespace BitwardenApi.Internal.Identity;
+namespace BitwardenApi.Infrastructure.Identity.Payloads;
 
 internal record TokenRefreshSessionResponse
 {

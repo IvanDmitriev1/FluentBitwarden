@@ -43,13 +43,11 @@ internal class PasskeyOverlayService(
             cancellationToken.Register(() => overlayWindow.DispatcherQueue.TryEnqueue(overlayWindow.Close));
 
         overlayWindow.Closed += (_, _) => cts.Cancel();
-        overlayWindow.Activate();
-        overlayWindow.Show();
-        overlayWindow.BringToFront();
+        overlayWindow.ShowWindow();
 
         try
         {
-            if (accountSessionManager.ActiveSession is not null)
+            if (accountSessionManager.ActiveSession is null)
             {
                 var userKey = await ShowUnlockPageAsync(
                     overlayWindow,

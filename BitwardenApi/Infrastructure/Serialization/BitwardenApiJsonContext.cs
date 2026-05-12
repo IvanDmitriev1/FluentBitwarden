@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
-using BitwardenApi.Internal.Identity;
-using BitwardenApi.Internal.Notifications;
+using BitwardenApi.Infrastructure.Identity.Payloads;
+using BitwardenApi.Infrastructure.Notifications;
 using BitwardenApi.Models;
 
-namespace BitwardenApi.Internal.Serialization;
+namespace BitwardenApi.Infrastructure.Serialization;
 
 [JsonSourceGenerationOptions(
     JsonSerializerDefaults.Web,

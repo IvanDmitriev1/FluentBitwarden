@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 
-namespace BitwardenApi.Internal.Transport;
+namespace BitwardenApi.Infrastructure.Http;
 
 internal sealed class BitwardenRequiredHeadersHandler : DelegatingHandler
 {

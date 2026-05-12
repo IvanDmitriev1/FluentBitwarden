@@ -21,7 +21,7 @@
         <MicaBackdrop />
     </winex:WindowEx.SystemBackdrop>
 
-    <Grid x:Name="DragArea">
+    <Grid x:Name="DragArea" KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="Escape" Invoked="EscapeKeyboardAccelerator_Invoked" />
         </Grid.KeyboardAccelerators>

@@ -1,5 +1,3 @@
-using BitwardenApi.Models;
-
 namespace BitwardenApi.Models;
 
 public readonly record struct VaultSyncRequestedNotification(

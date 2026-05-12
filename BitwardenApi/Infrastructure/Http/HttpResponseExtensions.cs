@@ -1,7 +1,7 @@
 using System.Text;
 using BitwardenApi.Exceptions;
 
-namespace BitwardenApi.Internal.Transport;
+namespace BitwardenApi.Infrastructure.Http;
 
 internal static class HttpResponseExtensions
 {
@@ -20,7 +20,7 @@ internal static class HttpResponseExtensions
         HttpResponseMessage response,
         string operation)
     {
-        using var streamReader = new StreamReader(response.Content.ReadAsStream(), Encoding.UTF8);
+        using var streamReader = new StreamReader(response.Content.ReadAsStream(), System.Text.Encoding.UTF8);
         string body = streamReader.ReadToEnd();
 
         string message = $"{operation} failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";

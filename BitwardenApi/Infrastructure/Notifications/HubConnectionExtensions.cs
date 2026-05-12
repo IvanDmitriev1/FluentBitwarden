@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace BitwardenApi.Internal.Notifications;
+namespace BitwardenApi.Infrastructure.Notifications;
 
 internal static class HubConnectionExtensions
 {

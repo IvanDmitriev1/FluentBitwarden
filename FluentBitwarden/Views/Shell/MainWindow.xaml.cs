@@ -53,10 +53,12 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 
     public void ShowWindow()
     {
-        Activate();
         this.Show();
-        BringToFront();
-        IsShownInSwitchers = true;
+        this.Restore();
+
+        bool focused = this.SetForegroundWindow();
+        if (!focused)
+            Activate();
     }
 
     private void OnClosed(object sender, WindowEventArgs args)

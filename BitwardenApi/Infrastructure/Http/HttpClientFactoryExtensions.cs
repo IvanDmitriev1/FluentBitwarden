@@ -1,4 +1,4 @@
-namespace BitwardenApi.Internal.Extensions;
+namespace BitwardenApi.Infrastructure.Http;
 
 internal static class HttpClientFactoryExtensions
 {

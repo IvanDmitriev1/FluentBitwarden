@@ -1,7 +1,7 @@
 using System.Buffers.Text;
 using System.Text.Json.Serialization;
 
-namespace BitwardenApi.Internal.Identity;
+namespace BitwardenApi.Models;
 
 internal sealed class Base64UrlByteArrayJsonConverter : JsonConverter<byte[]>
 {

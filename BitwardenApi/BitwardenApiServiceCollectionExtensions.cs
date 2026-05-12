@@ -1,7 +1,9 @@
 using BitwardenApi.Contracts;
-using BitwardenApi.Clients;
-using BitwardenApi.Internal.Notifications;
-using BitwardenApi.Internal.Transport;
+using BitwardenApi.Infrastructure.Attachments;
+using BitwardenApi.Infrastructure.Http;
+using BitwardenApi.Infrastructure.Identity;
+using BitwardenApi.Infrastructure.Notifications;
+using BitwardenApi.Infrastructure.Vault;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
@@ -39,7 +41,6 @@ public static class BitwardenApiServiceCollectionExtensions
         services.AddSingleton<IAttachmentsApiClient, AttachmentsApiClient>();
 
         services.AddSingleton<INotificationsClient, NotificationsClient>();
-        services.AddSingleton<INotificationDispatcher, NotificationDispatcher>();
 
         return services;
     }

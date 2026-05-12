@@ -17,6 +17,15 @@ public sealed partial class OverlayWindow : WindowEx
         this.CenterOnScreen();
     }
 
+    public void ShowWindow()
+    {
+        this.Show();
+
+        bool focused = this.SetForegroundWindow();
+        if (!focused)
+            Activate();
+    }
+
     public void SetContent(Page content)
     {
         Frame.Content = content;

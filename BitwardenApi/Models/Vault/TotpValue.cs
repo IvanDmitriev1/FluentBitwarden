@@ -1,4 +1,3 @@
-using BitwardenApi.Internal;
 using OtpNet;
 using System.Buffers.Text;
 using System.Diagnostics.CodeAnalysis;
@@ -64,7 +63,7 @@ public sealed class TotpValue
         uri = uri[scheme.Length..];
         int slash = uri.IndexOf((byte)'/');
         if (slash < 0) return false;
-        if (!Enum.TryParse(Encoding.ASCII.GetString(uri[..slash]), ignoreCase: true, out OtpType type))
+        if (!Enum.TryParse(System.Text.Encoding.ASCII.GetString(uri[..slash]), ignoreCase: true, out OtpType type))
             return false;
 
         uri = uri[(slash + 1)..];
@@ -86,9 +85,9 @@ public sealed class TotpValue
             var value = pair[(eq + 1)..];
 
             if (Ascii.EqualsIgnoreCase(key, "secret"u8))
-                secret = Encoding.ASCII.GetString(value);
+                secret = System.Text.Encoding.ASCII.GetString(value);
             else if (Ascii.EqualsIgnoreCase(key, "algorithm"u8))
-                Enum.TryParse(Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
+                Enum.TryParse(System.Text.Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
             else if (Ascii.EqualsIgnoreCase(key, "digits"u8))
                 Utf8Parser.TryParse(value, out digits, out _);
             else if (Ascii.EqualsIgnoreCase(key, "period"u8))

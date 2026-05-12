@@ -2,12 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Contracts;
-using BitwardenApi.Internal.Extensions;
-using BitwardenApi.Internal.Identity;
-using BitwardenApi.Internal.Serialization;
-using BitwardenApi.Internal.Transport;
+using BitwardenApi.Infrastructure.Http;
+using BitwardenApi.Infrastructure.Identity.Payloads;
+using BitwardenApi.Infrastructure.Serialization;
 
-namespace BitwardenApi.Clients;
+namespace BitwardenApi.Infrastructure.Identity;
 
 internal sealed class IdentityApiClient(IHttpClientFactory httpClientFactory) : IIdentityApiClient
 {

@@ -51,7 +51,7 @@ internal static class EncString
         }
 
 #if DEBUG
-        string raw = Encoding.ASCII.GetString(buffer);
+        string raw = System.Text.Encoding.ASCII.GetString(buffer);
         throw new FormatException(
             $"EncString {segmentName} segment was not valid Base64/Base64Url. Raw segment: '{raw}'.");
 #else

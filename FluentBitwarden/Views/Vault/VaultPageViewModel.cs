@@ -5,6 +5,7 @@ using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
+using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 
 namespace FluentBitwarden.Views.Vault;
@@ -56,21 +57,13 @@ public sealed partial class VaultPageViewModel(
     {
         var selectedCipherId = SelectedCipher?.Id;
 
-        ReplaceWith(FilteredCiphers, vaultService.GetCiphers());
-        ReplaceWith(Folders, vaultService.GetFolders());
+        var ciphers = vaultService.GetCiphers();
+
+        FilteredCiphers.ReplaceWith(ciphers);
+        Folders.ReplaceWith(vaultService.GetFolders());
 
         SelectedCipher = selectedCipherId is null
             ? null
             : FilteredCiphers.FirstOrDefault(cipher => cipher.Id == selectedCipherId);
-    }
-
-    private static void ReplaceWith<T>(ObservableCollection<T> target, IReadOnlyList<T> source)
-    {
-        target.Clear();
-
-        foreach (var item in source)
-        {
-            target.Add(item);
-        }
     }
 }

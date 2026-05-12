@@ -24,17 +24,18 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
         return File.Exists(filePath) ? new Uri(filePath, UriKind.Absolute) : null;
     }
 
-    public Task PreloadAsync(IEnumerable<Uri> siteUris, CancellationToken cancellationToken = default)
+    public async Task PreloadAsync(IEnumerable<Uri> siteUris)
     {
         Directory.CreateDirectory(CacheDirectoryPath);
+        CancellationTokenSource cts = new(TimeSpan.FromSeconds(8));
 
         var options = new ParallelOptions()
         {
-            CancellationToken = cancellationToken,
-            MaxDegreeOfParallelism = 4
+            CancellationToken = cts.Token,
+            MaxDegreeOfParallelism = Environment.ProcessorCount >= 4 ? 4 : 2
         };
 
-        return Parallel.ForEachAsync(siteUris, options, CacheIconAsync);
+        await Parallel.ForEachAsync(siteUris, options, CacheIconAsync);
     }
 
     private async ValueTask CacheIconAsync(Uri siteUri, CancellationToken cancellationToken)

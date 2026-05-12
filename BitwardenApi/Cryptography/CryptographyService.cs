@@ -184,7 +184,7 @@ public static class CryptographyService
         try
         {
             int bytesWritten = AesCbcHmac.DecryptTo(encString, key, plaintext);
-            return Encoding.UTF8.GetString(plaintext[..bytesWritten]);
+            return System.Text.Encoding.UTF8.GetString(plaintext[..bytesWritten]);
         }
         finally
         {

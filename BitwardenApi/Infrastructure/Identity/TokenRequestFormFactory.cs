@@ -1,7 +1,7 @@
 using System.Globalization;
-using BitwardenApi.Internal.Serialization;
+using BitwardenApi.Infrastructure.Serialization;
 
-namespace BitwardenApi.Internal.Identity;
+namespace BitwardenApi.Infrastructure.Identity;
 
 internal static class TokenRequestFormFactory
 {

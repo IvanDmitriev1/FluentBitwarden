@@ -1,6 +1,4 @@
-using BitwardenApi.Models;
-
-namespace BitwardenApi.Internal.Notifications;
+namespace BitwardenApi.Infrastructure.Notifications;
 
 internal readonly record struct NotificationEnvelope(
     ContextId ContextId,

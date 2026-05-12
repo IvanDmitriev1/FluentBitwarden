@@ -1,7 +1,9 @@
-using BitwardenApi.Models;
 using BitwardenApi.Contracts;
+using BitwardenApi.Models;
 using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
+using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Internal;
 using FluentBitwarden.Modules.Vault.Internal.SyncParser;
@@ -10,13 +12,15 @@ using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Repositories;
 using System.Diagnostics;
 using System.Linq;
-using FluentBitwarden.Modules.SshAgent.Models;
 
 namespace FluentBitwarden.Modules.Vault.Services;
 
+[Fody.ConfigureAwait(false)]
 internal sealed class VaultService(
     IUnitOfWorkFactory unitOfWorkFactory,
     IAccountSessionManager accountSessionManager,
+    IConnectivityService connectivityService,
+    ISiteIconCache siteIconCache,
     IVaultApiClient vaultApiClient) : IVaultService
 {
     private readonly Dictionary<CipherId, VaultCipher> _ciphersById = new();
@@ -55,6 +59,20 @@ internal sealed class VaultService(
         foreach (var folder in folders)
         {
             _folders.Add(folder);
+        }
+
+        if (connectivityService.HasInternetAccess)
+        {
+            var urls = _ciphersById.Values
+                .OfType<LoginVaultCipher>()
+                .Select(static c => c.Uris.FirstOrDefault())
+                .Where(static s => !string.IsNullOrWhiteSpace(s))
+                .Select(static s => Uri.TryCreate(s, UriKind.Absolute, out var uri) ? uri : null)
+                .Where(static uri => uri is not null)
+                .Cast<Uri>()
+                .ToList();
+
+            Task.Run(() => siteIconCache.PreloadAsync(urls));
         }
 
 

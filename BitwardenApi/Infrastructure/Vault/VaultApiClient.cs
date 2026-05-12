@@ -1,12 +1,11 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
 using BitwardenApi.Exceptions;
-using BitwardenApi.Internal.Extensions;
-using BitwardenApi.Internal.Serialization;
-using BitwardenApi.Internal.Transport;
+using BitwardenApi.Infrastructure.Http;
+using BitwardenApi.Infrastructure.Serialization;
 using System.Net.Http.Json;
 
-namespace BitwardenApi.Clients;
+namespace BitwardenApi.Infrastructure.Vault;
 
 internal sealed class VaultApiClient(
     IHttpClientFactory httpClientFactory,

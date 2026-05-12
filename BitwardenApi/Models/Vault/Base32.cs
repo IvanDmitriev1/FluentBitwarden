@@ -1,4 +1,4 @@
-﻿namespace BitwardenApi.Internal;
+namespace BitwardenApi.Models;
 
 internal sealed class Base32
 {

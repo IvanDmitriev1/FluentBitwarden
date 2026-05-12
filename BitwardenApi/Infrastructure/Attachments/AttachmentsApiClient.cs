@@ -1,13 +1,12 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
-using BitwardenApi.Internal.Extensions;
-using BitwardenApi.Internal.Serialization;
-using BitwardenApi.Internal.Transport;
+using BitwardenApi.Infrastructure.Http;
+using BitwardenApi.Infrastructure.Serialization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 
-namespace BitwardenApi.Clients;
+namespace BitwardenApi.Infrastructure.Attachments;
 
 internal sealed class AttachmentsApiClient(
     IHttpClientFactory httpClientFactory,
@@ -32,7 +31,7 @@ internal sealed class AttachmentsApiClient(
 
         response.EnsureSuccess("Attachments start upload v2", cancellationToken);
 
-        AttachmentUploadInit? payload = await response.Content.ReadFromJsonAsync(
+        var payload = await response.Content.ReadFromJsonAsync(
             BitwardenApiJsonContext.ConfiguredDefault.AttachmentUploadInit,
             cancellationToken);
 
@@ -95,7 +94,7 @@ internal sealed class AttachmentsApiClient(
 
         foreach (var field in request.FormFields)
         {
-            multipart.Add(new StringContent(field.Value, Encoding.UTF8), field.Key);
+            multipart.Add(new StringContent(field.Value, System.Text.Encoding.UTF8), field.Key);
         }
 
         using var fileContent = new StreamContent(request.File);

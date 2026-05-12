@@ -13,5 +13,5 @@ public interface ISiteIconCache
     /// <summary>
     /// Downloads missing icons for the provided site URIs. Intended to run after vault unlock.
     /// </summary>
-    Task PreloadAsync(IEnumerable<Uri> siteUris, CancellationToken cancellationToken = default);
+    Task PreloadAsync(IEnumerable<Uri> siteUris);
 }

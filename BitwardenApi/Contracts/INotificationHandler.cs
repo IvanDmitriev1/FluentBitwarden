@@ -2,5 +2,5 @@ namespace BitwardenApi.Contracts;
 
 public interface INotificationHandler<in TNotification>
 {
-    Task HandleAsync(TNotification notification, CancellationToken cancellationToken);
+    Task HandleAsync(TNotification notification);
 }

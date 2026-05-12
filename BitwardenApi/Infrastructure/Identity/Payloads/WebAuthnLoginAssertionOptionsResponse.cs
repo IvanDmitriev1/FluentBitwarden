@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using BitwardenApi.Models;
 
-namespace BitwardenApi.Internal.Identity;
+namespace BitwardenApi.Infrastructure.Identity.Payloads;
 
 internal sealed class WebAuthnLoginAssertionOptionsResponse
 {
