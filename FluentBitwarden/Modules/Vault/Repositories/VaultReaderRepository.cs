@@ -12,7 +12,7 @@ namespace FluentBitwarden.Modules.Vault.Repositories;
 
 internal sealed partial class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction), IVaultReaderRepository
 {
-    public IEnumerable<FolderDto> GetAllFolders(UserId userId)
+    public IEnumerable<VaultFolderDto> GetAllFolders(UserId userId)
     {
         var rows = Connection.Query<FolderRow>(
             """
@@ -30,7 +30,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         return rows.Select(static row => ToDto(row));
     }
 
-    public IEnumerable<CollectionDto> GetAllCollections(UserId userId)
+    public IEnumerable<VaultCollectionDto> GetAllCollections(UserId userId)
     {
         var rows = Connection.Query<CollectionRow>(
             """

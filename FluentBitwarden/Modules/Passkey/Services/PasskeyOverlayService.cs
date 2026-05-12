@@ -15,7 +15,7 @@ namespace FluentBitwarden.Modules.Passkey.Services;
 
 internal class PasskeyOverlayService(
     IAccountSessionManager accountSessionManager,
-    IVaultSyncService vaultSyncService,
+    IVaultService vaultService,
     IUnitOfWorkFactory unitOfWorkFactory)
     : IPasskeyOverlayService
 {
@@ -57,10 +57,10 @@ internal class PasskeyOverlayService(
                     accountProfile,
                     cts.Token);
 
-                vaultSyncService.LoadAllFromDb();
+                vaultService.LoadLocalVault();
             }
 
-            var credentials = GetMatchingCredentials(request);
+            var credentials = vaultService.GetFido2Credentials(request.RpId);
             return await ShowCredentialSelectPageAsync(overlayWindow, credentials, cts.Token);
         }
         finally
@@ -100,11 +100,4 @@ internal class PasskeyOverlayService(
         overlayWindow.SetContent(page);
         return await tcs.Task;
     }
-
-    private IReadOnlyList<Fido2Credential> GetMatchingCredentials(
-        PasskeyGetAssertionRequest request) => vaultSyncService.Ciphers
-        .OfType<LoginCipher>()
-        .SelectMany(static cipher => cipher.Fido2Credentials)
-        .Where(credential => credential.RpId == request.RpId)
-        .ToList();
 }

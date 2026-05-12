@@ -87,9 +87,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             UNIQUE (user_id, cipher_id),
         
             FOREIGN KEY (user_id) REFERENCES account_profiles(user_id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id, folder_id) REFERENCES folders(user_id, folder_id)
-                ON DELETE SET NULL
-                DEFERRABLE INITIALLY DEFERRED
+            FOREIGN KEY (user_id, folder_id) REFERENCES folders(user_id, folder_id) DEFERRABLE INITIALLY DEFERRED
         );
         """;
 

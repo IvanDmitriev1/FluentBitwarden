@@ -16,7 +16,7 @@ internal partial class VaultSyncResponseParser
     private static void ParseFolder(
         ref Utf8JsonReader reader,
         int depth,
-        ref FolderDto state,
+        ref VaultFolderDto state,
         ref FolderProperty currentProperty)
     {
         if (reader.TokenType == JsonTokenType.PropertyName)

@@ -16,7 +16,7 @@ namespace FluentBitwarden.Views.Unlock;
 
 public sealed partial class UnlockPageViewModel(
     INavigationService navigationService,
-    IVaultSyncService vaultSyncService,
+    IVaultService vaultService,
     IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
@@ -62,7 +62,7 @@ public sealed partial class UnlockPageViewModel(
 
     private void OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
     {
-        vaultSyncService.LoadAllFromDb();
+        vaultService.LoadLocalVault();
         navigationService.NavigateTo<ShellPage>();
     }
 }

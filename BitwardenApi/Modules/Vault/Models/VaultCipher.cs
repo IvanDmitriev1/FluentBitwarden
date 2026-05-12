@@ -3,11 +3,13 @@
 namespace BitwardenApi.Modules.Vault.Models;
 
 /// <summary>
-/// Common vault cipher fields.
-/// <see cref="CardCipher"/>, <see cref="IdentityCipher"/>, <see cref="SecureNoteCipher"/>.
+/// Common vault vaultCipher fields.
+/// <see cref="CardVaultCipher"/>, <see cref="IdentityVaultCipher"/>, <see cref="SecureNoteVaultCipher"/>.
 /// </summary>
-public abstract class Cipher
+public abstract class VaultCipher
 {
+    public abstract CipherType Type { get; }
+
     public required CipherId Id { get; set; }
     public FolderId? FolderId { get; set; }
     public required string Name { get; set; }
@@ -20,8 +22,10 @@ public abstract class Cipher
 }
 
 
-public sealed class LoginCipher : Cipher
+public sealed class LoginVaultCipher : VaultCipher
 {
+    public override CipherType Type => CipherType.Login;
+
     public string? Username { get; set; }
     public string? Password { get; set; }
     public TotpValue? Totp { get; set; }
@@ -29,11 +33,16 @@ public sealed class LoginCipher : Cipher
     public List<Fido2Credential> Fido2Credentials { get; set; } = [];
 }
 
-/// <remarks>Notes carries the secure note text via <see cref="Cipher.Notes"/>.</remarks>
-public sealed class SecureNoteCipher : Cipher { }
-
-public sealed class CardCipher : Cipher
+/// <remarks>Notes carries the secure note text via <see cref="VaultCipher.Notes"/>.</remarks>
+public sealed class SecureNoteVaultCipher : VaultCipher
 {
+    public override CipherType Type => CipherType.SecureNote;
+}
+
+public sealed class CardVaultCipher : VaultCipher
+{
+    public override CipherType Type => CipherType.Card;
+
     public string? CardholderName { get; set; }
     public string? Brand { get; set; }
     public string? Number { get; set; }
@@ -42,8 +51,10 @@ public sealed class CardCipher : Cipher
     public string? Code { get; set; }
 }
 
-public sealed class IdentityCipher : Cipher
+public sealed class IdentityVaultCipher : VaultCipher
 {
+    public override CipherType Type => CipherType.Identity;
+
     public string? Title { get; set; }
     public string? FirstName { get; set; }
     public string? MiddleName { get; set; }
@@ -64,8 +75,10 @@ public sealed class IdentityCipher : Cipher
     public string? LicenseNumber { get; set; }
 }
 
-public sealed class SshKeyCipher : Cipher
+public sealed class SshKeyVaultCipher : VaultCipher
 {
+    public override CipherType Type => CipherType.SshKey;
+
     public OpenSshPublicKey PublicKey { get; set; } = OpenSshPublicKey.Empty;
     public string PrivateKey { get; set; } = string.Empty;
     public string KeyFingerprint { get; set; } = string.Empty;

@@ -26,14 +26,14 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddHttpClient("BitwardenApiIdentityHttpClient", client =>
             {
-                //client.Timeout = TimeSpan.FromSeconds(5);
+                client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddBitwardenReadRetry();
 
         services.AddHttpClient("BitwardenApiVaultHttpClient", client =>
             {
-                //client.Timeout = TimeSpan.FromSeconds(5);
+                client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<TAuthHandler>()

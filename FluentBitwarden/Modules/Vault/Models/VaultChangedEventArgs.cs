@@ -1,9 +1,11 @@
-﻿namespace FluentBitwarden.Modules.Vault.Models;
+﻿using BitwardenApi.Modules.Vault.Models;
 
-public enum VaultChangeKind { FullReload, CipherAdded, CipherUpdated, CipherDeleted, FoldersReloaded }
+namespace FluentBitwarden.Modules.Vault.Models;
 
-public sealed class VaultChangedEventArgs(VaultChangeKind kind, Guid? itemId = null) : EventArgs
+public sealed class VaultChangedEventArgs : EventArgs
 {
-    public VaultChangeKind Kind { get; } = kind;
-    public Guid? ItemId { get; } = itemId;
+    public enum VaultChangeKind { FullReload, CipherAdded, CipherUpdated, CipherDeleted, FoldersReloaded }
+
+    public required VaultChangeKind Kind { get; init; }
+    public required CipherId CipherId { get; init; }
 }

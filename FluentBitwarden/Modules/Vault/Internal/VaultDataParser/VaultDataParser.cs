@@ -6,7 +6,7 @@ namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, scoped ReadOnlySpan<byte> decryptKey) where T : Cipher;
+    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, scoped ReadOnlySpan<byte> decryptKey) where T : VaultCipher;
     private delegate T JsonArrayItemReader<out T>(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey);
 
     private static Utf8JsonReader CreateObjectReader(ReadOnlySpan<byte> payload)
@@ -21,7 +21,7 @@ public static partial class VaultDataParser
     }
 
     private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey,
-        CipherPropertyReader<T> readProperty) where T : Cipher
+        CipherPropertyReader<T> readProperty) where T : VaultCipher
     {
         while (reader.Read())
         {

@@ -8,12 +8,12 @@ using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
-internal sealed class VaultSyncRepository(SqliteTransaction transaction, UserId userId)
+internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserId userId)
     : BaseRepository(transaction), IVaultWriterRepository
 {
     private readonly string _userIdStr = userId.ToString();
 
-    public void WriteFolder(ref readonly FolderDto dto)
+    public void WriteFolder(ref readonly VaultFolderDto dto)
     {
         Connection.Execute(
             """
@@ -33,7 +33,7 @@ internal sealed class VaultSyncRepository(SqliteTransaction transaction, UserId 
             transaction: Transaction);
     }
 
-    public void WriteCollection(ref readonly CollectionDto dto)
+    public void WriteCollection(ref readonly VaultCollectionDto dto)
     {
         Connection.Execute(
             """
@@ -77,7 +77,7 @@ internal sealed class VaultSyncRepository(SqliteTransaction transaction, UserId 
             transaction: Transaction);
     }
 
-    public void WriteCipher(ref readonly CipherDto dto, ReadOnlySpan<byte> payload)
+    public void WriteCipher(ref readonly VaultCipherDto dto, ReadOnlySpan<byte> payload)
     {
         var rowId = Connection.ExecuteScalar<long>(
             """

@@ -20,7 +20,7 @@ internal partial class VaultSyncResponseParser
     private static void ParseCollection(
         ref Utf8JsonReader reader,
         int depth,
-        ref CollectionDto state,
+        ref VaultCollectionDto state,
         ref CollectionProperty currentProperty)
     {
         if (reader.TokenType == JsonTokenType.PropertyName)

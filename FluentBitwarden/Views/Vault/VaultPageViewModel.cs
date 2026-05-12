@@ -1,7 +1,6 @@
 ﻿using BitwardenApi.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
-using FluentBitwarden.Modules.Vault.Services;
 using FluentBitwarden.Resources.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
@@ -11,20 +10,20 @@ using FluentBitwarden.Infrastructure.Services.Abstractions;
 namespace FluentBitwarden.Views.Vault;
 
 public sealed partial class VaultPageViewModel(
-    IVaultSyncService vaultSyncService,
+    IVaultService vaultService,
     IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware
 {
     [ObservableProperty] 
-    public partial ObservableCollection<Cipher> FilteredCiphers { get; private set; } = [];
+    public partial ObservableCollection<VaultCipher> FilteredCiphers { get; private set; } = [];
 
     [ObservableProperty]
-    public partial ObservableCollection<Folder> Folders { get; private set; } = [];
+    public partial ObservableCollection<VaultFolder> Folders { get; private set; } = [];
 
     [ObservableProperty]
     public partial CipherTypeOption SelectedTypeOption { get; set; } = CipherTypeOption.ToCipherTypeOption(null);
 
     [ObservableProperty]
-    public partial Cipher? SelectedCipher { get; set; }
+    public partial VaultCipher? SelectedCipher { get; set; }
 
     private bool _hasInitialized;
 
@@ -35,10 +34,10 @@ public sealed partial class VaultPageViewModel(
 
         RefreshCollections();
 
-        var result = await vaultSyncService.SyncVaultAsync(cancellationToken);
+        var result = await vaultService.SyncVaultAsync(cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
-            vaultSyncService.LoadAllFromDb();
+            vaultService.LoadLocalVault();
             RefreshCollections();
             return;
         }
@@ -57,8 +56,8 @@ public sealed partial class VaultPageViewModel(
     {
         var selectedCipherId = SelectedCipher?.Id;
 
-        ReplaceWith(FilteredCiphers, vaultSyncService.Ciphers);
-        ReplaceWith(Folders, vaultSyncService.Folders);
+        ReplaceWith(FilteredCiphers, vaultService.GetCiphers());
+        ReplaceWith(Folders, vaultService.GetFolders());
 
         SelectedCipher = selectedCipherId is null
             ? null

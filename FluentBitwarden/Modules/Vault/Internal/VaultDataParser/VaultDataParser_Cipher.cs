@@ -8,7 +8,7 @@ namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    public static Cipher ParseAndDecryptCipher(ref readonly CipherDto dto, ReadOnlySpan<byte> payload, DecryptedUserKey decryptedUserKey)
+    public static VaultCipher ParseAndDecryptCipher(ref readonly VaultCipherDto dto, ReadOnlySpan<byte> payload, DecryptedUserKey decryptedUserKey)
     {
         var cipher = CreateCipher(in dto);
         var reader = CreateObjectReader(payload);
@@ -28,18 +28,18 @@ public static partial class VaultDataParser
 
         return dto.CipherType switch
         {
-            CipherType.Login => ParseLoginCipher((LoginCipher)cipher, ref reader, decryptionKey),
-            CipherType.SecureNote => ParseSecureNoteCipher((SecureNoteCipher)cipher, ref reader, decryptionKey),
-            CipherType.Card => ParseCardCipher((CardCipher)cipher, ref reader, decryptionKey),
-            CipherType.Identity => ParseIdentityCipher((IdentityCipher)cipher, ref reader, decryptionKey),
-            CipherType.SshKey => ParseSshKeyCipher((SshKeyCipher)cipher, ref reader, decryptionKey),
-            _ => throw new NotSupportedException($"Unsupported cipher type: {dto.CipherType}")
+            CipherType.Login => ParseLoginCipher((LoginVaultCipher)cipher, ref reader, decryptionKey),
+            CipherType.SecureNote => ParseSecureNoteCipher((SecureNoteVaultCipher)cipher, ref reader, decryptionKey),
+            CipherType.Card => ParseCardCipher((CardVaultCipher)cipher, ref reader, decryptionKey),
+            CipherType.Identity => ParseIdentityCipher((IdentityVaultCipher)cipher, ref reader, decryptionKey),
+            CipherType.SshKey => ParseSshKeyCipher((SshKeyVaultCipher)cipher, ref reader, decryptionKey),
+            _ => throw new NotSupportedException($"Unsupported vaultCipher type: {dto.CipherType}")
         };
     }
 
-    private static LoginCipher ParseLoginCipher(LoginCipher cipher, ref Utf8JsonReader reader,
+    private static LoginVaultCipher ParseLoginCipher(LoginVaultCipher vaultCipher, ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(cipher, ref reader, decryptKey,
+        => ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("username"u8) || r.ValueTextEquals("Username"u8))
@@ -59,11 +59,11 @@ public static partial class VaultDataParser
             });
 
 
-    private static SecureNoteCipher ParseSecureNoteCipher(SecureNoteCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(cipher, ref reader, decryptKey, static (ref _, _, scoped _) => false);
+    private static SecureNoteVaultCipher ParseSecureNoteCipher(SecureNoteVaultCipher vaultCipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref _, _, scoped _) => false);
 
-    private static CardCipher ParseCardCipher(CardCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(cipher, ref reader, decryptKey, static (ref r, c, scoped k) =>
+    private static CardVaultCipher ParseCardCipher(CardVaultCipher vaultCipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+        => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref r, c, scoped k) =>
         {
             if (r.ValueTextEquals("cardholderName"u8) || r.ValueTextEquals("CardholderName"u8))
                 c.CardholderName = ReadDecryptField(ref r, k);
@@ -83,9 +83,9 @@ public static partial class VaultDataParser
             return true;
         });
 
-    private static IdentityCipher ParseIdentityCipher(IdentityCipher cipher, ref Utf8JsonReader reader,
+    private static IdentityVaultCipher ParseIdentityCipher(IdentityVaultCipher vaultCipher, ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(cipher, ref reader, decryptKey,
+        => ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("title"u8) || r.ValueTextEquals("Title"u8))
@@ -129,9 +129,9 @@ public static partial class VaultDataParser
                 return true;
             });
 
-    private static SshKeyCipher ParseSshKeyCipher(SshKeyCipher cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static SshKeyVaultCipher ParseSshKeyCipher(SshKeyVaultCipher vaultCipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
-        return ParseCipherObject(cipher, ref reader, decryptKey,
+        return ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, scoped k) =>
             {
                 if (r.ValueTextEquals("privateKey"u8) || r.ValueTextEquals("PrivateKey"u8))
@@ -160,26 +160,26 @@ public static partial class VaultDataParser
             });
     }
 
-    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, Cipher cipher, scoped ReadOnlySpan<byte> decryptKey)
+    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, VaultCipher vaultCipher, scoped ReadOnlySpan<byte> decryptKey)
     {
         if (reader.ValueTextEquals("name"u8) || reader.ValueTextEquals("Name"u8))
         {
-            cipher.Name = ReadRequiredDecryptField(ref reader, decryptKey, "name");
+            vaultCipher.Name = ReadRequiredDecryptField(ref reader, decryptKey, "name");
             return true;
         }
 
         if (reader.ValueTextEquals("notes"u8) || reader.ValueTextEquals("Notes"u8))
         {
-            cipher.Notes = ReadDecryptField(ref reader, decryptKey);
+            vaultCipher.Notes = ReadDecryptField(ref reader, decryptKey);
             return true;
         }
 
         return false;
     }
 
-    private static Cipher CreateCipher(ref readonly CipherDto dto) => dto.CipherType switch
+    private static VaultCipher CreateCipher(ref readonly VaultCipherDto dto) => dto.CipherType switch
     {
-        CipherType.Login => new LoginCipher
+        CipherType.Login => new LoginVaultCipher
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -190,7 +190,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate,
         },
-        CipherType.SecureNote => new SecureNoteCipher()
+        CipherType.SecureNote => new SecureNoteVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -201,7 +201,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        CipherType.Card => new CardCipher()
+        CipherType.Card => new CardVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -212,7 +212,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        CipherType.Identity => new IdentityCipher()
+        CipherType.Identity => new IdentityVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -223,7 +223,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        CipherType.SshKey => new SshKeyCipher()
+        CipherType.SshKey => new SshKeyVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,

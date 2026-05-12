@@ -17,8 +17,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAccountSessionManager>(static sp => sp.GetRequiredService<AccountSessionManager>());
         services.AddSingleton<IBitwardenEnvironmentAccessor>(static sp => sp.GetRequiredService<AccountSessionManager>());
 
-        services.AddTransient<BearerAuthTokenProvider>();
-
         return services;
     }
 }

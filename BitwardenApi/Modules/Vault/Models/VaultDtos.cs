@@ -1,13 +1,13 @@
 namespace BitwardenApi.Modules.Vault.Models;
 
-public struct FolderDto
+public struct VaultFolderDto
 {
     public FolderId Id { get; set; }
     public DateTimeOffset RevisionDate { get; set; }
     public string? EncryptedName { get; set; }
 }
 
-public struct CollectionDto
+public struct VaultCollectionDto
 {
     public CollectionId Id { get; set; }
     public OrganizationId? OrganizationId { get; set; }
@@ -18,7 +18,7 @@ public struct CollectionDto
     public string? EncryptedName { get; set; }
 }
 
-public struct CipherDto
+public struct VaultCipherDto
 {
     public CipherId Id { get; set; }
     public OrganizationId? OrganizationId { get; set; }

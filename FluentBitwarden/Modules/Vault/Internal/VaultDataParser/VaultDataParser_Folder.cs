@@ -6,11 +6,11 @@ namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    public static Folder ParseAndDecryptFolder(ref readonly FolderDto dto, DecryptedUserKey decryptedUserKey)
+    public static VaultFolder ParseAndDecryptFolder(ref readonly VaultFolderDto dto, DecryptedUserKey decryptedUserKey)
     {
         ArgumentNullException.ThrowIfNull(dto.EncryptedName);
 
-        return new Folder
+        return new VaultFolder
         {
             Id = dto.Id,
             Name = CryptographyService.DecryptString(dto.EncryptedName, decryptedUserKey.Key),

@@ -16,11 +16,11 @@ public sealed class CipherDetailsTemplateSelector : DataTemplateSelector
     {
         return item switch
         {
-            LoginCipher => LoginTemplate,
-            SecureNoteCipher => SecureNoteTemplate,
-            CardCipher => CardTemplate,
-            IdentityCipher => IdentityTemplate,
-            SshKeyCipher => SshKeyTemplate,
+            LoginVaultCipher => LoginTemplate,
+            SecureNoteVaultCipher => SecureNoteTemplate,
+            CardVaultCipher => CardTemplate,
+            IdentityVaultCipher => IdentityTemplate,
+            SshKeyVaultCipher => SshKeyTemplate,
             _ => base.SelectTemplateCore(item)
         };
     }

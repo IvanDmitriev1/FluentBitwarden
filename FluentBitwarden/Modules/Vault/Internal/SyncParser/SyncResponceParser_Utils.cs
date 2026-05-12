@@ -118,7 +118,7 @@ internal partial class VaultSyncResponseParser
     {
         if (reader.TokenType != JsonTokenType.String)
         {
-            throw new JsonException($"Expected cipher id string, got {reader.TokenType}.");
+            throw new JsonException($"Expected vaultCipher id string, got {reader.TokenType}.");
         }
 
         Span<char> buffer = stackalloc char[64];
@@ -221,25 +221,25 @@ internal partial class VaultSyncResponseParser
         };
     }
 
-    private static void EnsureFolderIsComplete(ref readonly FolderDto dto)
+    private static void EnsureFolderIsComplete(ref readonly VaultFolderDto dto)
     {
         if (dto.Id == default)
         {
-            throw new InvalidDataException("Folder payload did not include an id.");
+            throw new InvalidDataException("VaultFolder payload did not include an id.");
         }
 
         if (dto.RevisionDate == default)
         {
-            throw new InvalidDataException("Folder payload did not include a revision date.");
+            throw new InvalidDataException("VaultFolder payload did not include a revision date.");
         }
 
         if (dto.EncryptedName is null)
         {
-            throw new InvalidDataException("Folder payload did not include a name.");
+            throw new InvalidDataException("VaultFolder payload did not include a name.");
         }
     }
 
-    private static void EnsureCollectionIsComplete(ref readonly CollectionDto dto)
+    private static void EnsureCollectionIsComplete(ref readonly VaultCollectionDto dto)
     {
         if (dto.Id == default)
         {
@@ -252,31 +252,31 @@ internal partial class VaultSyncResponseParser
         }
     }
 
-    private void EnsureCipherIsComplete(ref readonly CipherDto dto)
+    private void EnsureCipherIsComplete(ref readonly VaultCipherDto dto)
     {
         if (dto.Id == default)
         {
-            throw new InvalidDataException("Cipher payload did not include an id.");
+            throw new InvalidDataException("VaultCipher payload did not include an id.");
         }
 
         if (!Enum.IsDefined(dto.CipherType) || dto.CipherType == 0)
         {
-            throw new InvalidDataException($"Cipher payload did not include a supported type. Parsed value: {(int)dto.CipherType}.");
+            throw new InvalidDataException($"VaultCipher payload did not include a supported type. Parsed value: {(int)dto.CipherType}.");
         }
 
         if (dto.RevisionDate == default)
         {
-            throw new InvalidDataException("Cipher payload did not include a revision date.");
+            throw new InvalidDataException("VaultCipher payload did not include a revision date.");
         }
 
         if (dto.CreationDate == default)
         {
-            throw new InvalidDataException("Cipher payload did not include a creation date.");
+            throw new InvalidDataException("VaultCipher payload did not include a creation date.");
         }
 
         if (!_cipherPayloadCapture.HasCapturedPayload)
         {
-            throw new InvalidDataException("Cipher payload did not include the root data property.");
+            throw new InvalidDataException("VaultCipher payload did not include the root data property.");
         }
     }
 }

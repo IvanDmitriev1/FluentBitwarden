@@ -8,7 +8,7 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddVaultServices(this IServiceCollection services)
     {
-        services.AddSingleton<IVaultSyncService, VaultSyncService>();
+        services.AddSingleton<IVaultService, VaultService>();
 
         return services;
     }

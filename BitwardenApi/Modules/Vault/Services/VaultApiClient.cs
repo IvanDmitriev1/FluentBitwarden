@@ -68,7 +68,7 @@ public sealed class VaultApiClient(
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        response.EnsureSuccess("Vault get cipher", cancellationToken);
+        response.EnsureSuccess("Vault get vaultCipher", cancellationToken);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         await streamHandler.Invoke(stream);
     }
@@ -85,6 +85,6 @@ public sealed class VaultApiClient(
 
         using var response = await httpClient.SendAsync(requestMessage, cancellationToken);
 
-        response.EnsureSuccess("Vault delete cipher", cancellationToken);
+        response.EnsureSuccess("Vault delete vaultCipher", cancellationToken);
     }
 }

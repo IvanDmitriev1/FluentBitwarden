@@ -27,7 +27,7 @@ internal partial class VaultSyncResponseParser
     private void ParseCipher(
         ref Utf8JsonReader reader,
         int depth,
-        ref CipherDto state,
+        ref VaultCipherDto state,
         ref CipherProperty currentProperty)
     {
         if (reader.TokenType == JsonTokenType.PropertyName)

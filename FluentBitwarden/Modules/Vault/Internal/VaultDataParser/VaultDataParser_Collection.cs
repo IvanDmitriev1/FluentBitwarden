@@ -6,7 +6,7 @@ namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    public static VaultCollection ParseAndDecryptCollection(ref readonly CollectionDto dto, DecryptedUserKey decryptedUserKey)
+    public static VaultCollection ParseAndDecryptCollection(ref readonly VaultCollectionDto dto, DecryptedUserKey decryptedUserKey)
     {
         ArgumentNullException.ThrowIfNull(dto.EncryptedName);
 

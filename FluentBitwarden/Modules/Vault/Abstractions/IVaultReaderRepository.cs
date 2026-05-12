@@ -7,11 +7,11 @@ public interface IVaultReaderRepository
 {
     public delegate void CipherVisitor<in TState>(
         TState state,
-        ref readonly CipherDto dto,
+        ref readonly VaultCipherDto dto,
         ReadOnlySpan<byte> payload);
 
     void ReadAllCiphers<TState>(UserId userId, TState stateObj, CipherVisitor<TState> onCipher);
 
-    IEnumerable<FolderDto> GetAllFolders(UserId userId);
-    IEnumerable<CollectionDto> GetAllCollections(UserId userId);
+    IEnumerable<VaultFolderDto> GetAllFolders(UserId userId);
+    IEnumerable<VaultCollectionDto> GetAllCollections(UserId userId);
 }

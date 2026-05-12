@@ -17,15 +17,15 @@ internal sealed partial class VaultSyncResponseParser(IVaultWriterRepository dat
     private ArrayCaptureState _arrayCaptureState;
     private RootProperty _pendingRootProperty;
 
-    private CipherDto _cipherDto;
+    private VaultCipherDto _vaultCipherDto;
     private CipherProperty _cipherProperty;
     private int _parsedCiphers;
 
-    private CollectionDto _collectionDto;
+    private VaultCollectionDto _vaultCollectionDto;
     private CollectionProperty _collectionProperty;
     private int _parsedCollections;
 
-    private FolderDto _folderDto;
+    private VaultFolderDto _vaultFolderDto;
     private FolderProperty _folderProperty;
     private int _parsedFolders;
 
@@ -66,7 +66,7 @@ internal sealed partial class VaultSyncResponseParser(IVaultWriterRepository dat
             case RootProperty.Folders:
                 CaptureArray(
                     ref reader,
-                    ref _folderDto,
+                    ref _vaultFolderDto,
                     ref _folderProperty,
                     ParseFolder,
                     static (writer, ref dto) =>
@@ -80,7 +80,7 @@ internal sealed partial class VaultSyncResponseParser(IVaultWriterRepository dat
             case RootProperty.Collections:
                 CaptureArray(
                     ref reader,
-                    ref _collectionDto,
+                    ref _vaultCollectionDto,
                     ref _collectionProperty,
                     ParseCollection,
                     static (writer, ref dto) =>
@@ -94,7 +94,7 @@ internal sealed partial class VaultSyncResponseParser(IVaultWriterRepository dat
             case RootProperty.Ciphers:
                 CaptureArray(
                     ref reader,
-                    ref _cipherDto,
+                    ref _vaultCipherDto,
                     ref _cipherProperty,
                     ParseCipher,
                     (writer, ref dto) =>
