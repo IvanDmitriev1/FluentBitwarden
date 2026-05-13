@@ -1,5 +1,5 @@
 using FluentBitwarden.Modules.AppState.Models;
-using FluentBitwarden.UI.Models;
+using FluentBitwarden.UI.Converters;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Views.Settings.Models;

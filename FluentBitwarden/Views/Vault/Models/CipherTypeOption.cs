@@ -1,5 +1,5 @@
 using BitwardenApi.Models;
-using FluentBitwarden.UI.Models;
+using FluentBitwarden.UI.Converters;
 
 namespace FluentBitwarden.Views.Vault.Models;
 

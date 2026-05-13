@@ -10,6 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
     xmlns:models1="using:BitwardenApi.Models"
+    xmlns:models2="using:FluentBitwarden.Modules.Vault.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
     xmlns:vaultControls="using:FluentBitwarden.Views.Vault.Controls"
     NavigationCacheMode="Required"
@@ -59,9 +60,34 @@
                     </controls1:SearchFilterBar.FilterContent>
                     <controls1:SearchFilterBar.SortFlyout>
                         <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                            <MenuFlyoutItem Text="Name" />
-                            <MenuFlyoutItem Text="Newest first" />
-                            <MenuFlyoutItem Text="Oldest first" />
+
+                            <controls1:RadioMenuFlyoutItem
+                                SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
+                                Text="Title"
+                                Value="{x:Bind models2:CipherSortField.Name}" />
+
+                            <controls1:RadioMenuFlyoutItem
+                                SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
+                                Text="Date created"
+                                Value="{x:Bind models2:CipherSortField.CreationDate}" />
+
+                            <controls1:RadioMenuFlyoutItem
+                                SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
+                                Text="Date modified"
+                                Value="{x:Bind models2:CipherSortField.RevisionDate}" />
+
+                            <MenuFlyoutSeparator />
+
+                            <controls1:RadioMenuFlyoutItem
+                                SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
+                                Text="Newest first"
+                                Value="{x:Bind models2:CipherSortDirection.Ascending}" />
+
+                            <controls1:RadioMenuFlyoutItem
+                                SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
+                                Text="Oldest first"
+                                Value="{x:Bind models2:CipherSortDirection.Descending}" />
+
                         </MenuFlyout>
                     </controls1:SearchFilterBar.SortFlyout>
                 </controls1:SearchFilterBar>

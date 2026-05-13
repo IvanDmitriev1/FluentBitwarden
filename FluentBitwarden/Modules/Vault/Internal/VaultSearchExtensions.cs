@@ -1,9 +1,38 @@
+using System.Linq;
 using BitwardenApi.Models;
+using FluentBitwarden.Modules.Vault.Models;
 
 namespace FluentBitwarden.Modules.Vault.Internal;
 
 internal static class VaultSearchExtensions
 {
+    public static IEnumerable<VaultCipher> ApplySort(
+        this IEnumerable<VaultCipher> source,
+        CipherSortField sortField,
+        CipherSortDirection sortDirection) => (sortField, sortDirection) switch
+    {
+        (CipherSortField.Name, CipherSortDirection.Ascending) =>
+            source.OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
+
+        (CipherSortField.Name, CipherSortDirection.Descending) =>
+            source.OrderByDescending(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
+
+        (CipherSortField.CreationDate, CipherSortDirection.Ascending) =>
+            source.OrderBy(static x => x.CreationDate),
+
+        (CipherSortField.CreationDate, CipherSortDirection.Descending) =>
+            source.OrderByDescending(static x => x.CreationDate),
+
+        (CipherSortField.RevisionDate, CipherSortDirection.Ascending) =>
+            source.OrderBy(static x => x.RevisionDate),
+
+        (CipherSortField.RevisionDate, CipherSortDirection.Descending) =>
+            source.OrderByDescending(static x => x.RevisionDate),
+
+        _ =>
+            source.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
+    };
+
     public static bool MatchesSearchText(this VaultCipher cipher, string? searchText)
     {
         searchText = searchText?.Trim();

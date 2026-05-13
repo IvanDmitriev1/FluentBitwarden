@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml.Data;
 
-namespace FluentBitwarden.UI.Models;
+namespace FluentBitwarden.UI.Converters;
 
 public interface IOptionItem
 {
@@ -17,7 +17,7 @@ public abstract class OptionItemConverter<TValue, TOption>(IReadOnlyList<TOption
 {
     private IReadOnlyList<TOption> Options { get; } = options;
 
-    public object Convert(object value, Type targetType, object parameter, string language)
+    public object? Convert(object? value, Type targetType, object parameter, string language)
     {
         if (value is not TValue typedValue)
             return Options[0];

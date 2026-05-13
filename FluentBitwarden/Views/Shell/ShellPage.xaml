@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<lifecycle:LifecyclePage
+<Page
     x:Class="FluentBitwarden.Views.Shell.ShellPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,7 +7,6 @@
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
-    xmlns:lifecycle="using:FluentBitwarden.UI.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     attachedProperties:TitlebarProperties.NavigationFrame="{x:Bind ContentFrame}"
     attachedProperties:TitlebarProperties.PaneToggleCommand="{x:Bind PaneToggleCommand}"
@@ -20,12 +19,12 @@
         </behaviors:FocusBehavior>
     </interactivity:Interaction.Behaviors>
 
-    <lifecycle:LifecyclePage.KeyboardAccelerators>
+    <Page.KeyboardAccelerators>
         <KeyboardAccelerator
             Key="F"
             Invoked="SearchKeyboardAccelerator_Invoked"
             Modifiers="Control" />
-    </lifecycle:LifecyclePage.KeyboardAccelerators>
+    </Page.KeyboardAccelerators>
 
     <attachedProperties:TitlebarProperties.Content>
         <AutoSuggestBox
@@ -33,6 +32,7 @@
             Width="360"
             VerticalAlignment="Center"
             PlaceholderText="Search.."
+            TextChanged="AutoSuggestBox_OnTextChanged"
             QueryIcon="Find" />
     </attachedProperties:TitlebarProperties.Content>
 
@@ -62,4 +62,4 @@
 
         <Frame x:Name="ContentFrame" Navigated="ContentFrame_OnNavigated" />
     </NavigationView>
-</lifecycle:LifecyclePage>
+</Page>

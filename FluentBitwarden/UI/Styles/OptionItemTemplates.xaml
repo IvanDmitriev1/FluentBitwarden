@@ -3,7 +3,7 @@
     x:Class="FluentBitwarden.UI.Styles.OptionItemTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:uiModels="using:FluentBitwarden.UI.Models">
+    xmlns:uiModels="using:FluentBitwarden.UI.Converters">
 
     <DataTemplate x:Key="OptionItemComboBoxItemTemplate" x:DataType="uiModels:IOptionItem">
         <TextBlock

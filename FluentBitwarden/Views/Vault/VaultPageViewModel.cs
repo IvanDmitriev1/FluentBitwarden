@@ -28,18 +28,28 @@ public sealed partial class VaultPageViewModel(
     [ObservableProperty] 
     public partial string SearchText { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial CipherSortField CipherSortField { get; set; } = CipherSortField.Name;
+
+    [ObservableProperty]
+    public partial CipherSortDirection CipherSortDirection { get; set; } = CipherSortDirection.Ascending;
+
 
     private bool _hasInitialized;
 
 
     partial void OnSelectedCipherTypeChanged(CipherType? value) => QueryCiphers();
     partial void OnSearchTextChanged(string value) => QueryCiphers();
+    partial void OnCipherSortFieldChanged(CipherSortField value) => QueryCiphers();
+    partial void OnCipherSortDirectionChanged(CipherSortDirection value) => QueryCiphers();
 
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
         if (_hasInitialized || !connectivityService.HasInternetAccess)
             return;
 
+        OnPropertyChanged(nameof(CipherSortField));
+        OnPropertyChanged(nameof(CipherSortDirection));
         RefreshCollections();
 
         var result = await vaultService.SyncVaultAsync(cancellationToken);
@@ -78,6 +88,8 @@ public sealed partial class VaultPageViewModel(
         {
             SearchText = SearchText,
             CipherType = SelectedCipherType,
+            SortField = CipherSortField,
+            SortDirection = CipherSortDirection
         });
 
         FilteredCiphers.ReplaceWith(ciphers);

@@ -152,9 +152,12 @@ internal sealed class VaultService(
         if (!string.IsNullOrWhiteSpace(query.SearchText))
             result = result.Where(x => x.MatchesSearchText(query.SearchText));
 
-        return result
-            .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+        result = result.ApplySort(query.SortField, query.SortDirection);
+
+        if (query.Limit is not null)
+            result = result.Take(query.Limit.Value);
+
+        return result.ToList();
     }
 
     public IReadOnlyList<Fido2Credential> GetFido2Credentials(string rpId)

@@ -14,13 +14,14 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddViews(this IServiceCollection services)
     {
+        services.AddTransient<ShellPage>();
+
         return services.AddView<LoadingPage, LoadingPageViewModel>()
             .AddView<OfflinePage, OfflinePageViewModel>()
             .AddView<LogInFlowPage, LogInFlowPageViewModel>()
             .AddView<UnlockPage, UnlockPageViewModel>()
             .AddView<SettingsPage, SettingsPageViewModel>()
-            .AddView<VaultPage, VaultPageViewModel>()
-            .AddView<ShellPage, ShellPageViewModel>();
+            .AddView<VaultPage, VaultPageViewModel>();
     }
 
     private static IServiceCollection AddView<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TPage, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TViewModel>(this IServiceCollection services)

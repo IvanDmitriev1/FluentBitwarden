@@ -85,6 +85,7 @@ public sealed partial class VaultUnlock : UserControl
     {
         PasswordBox.IsPasswordRevealed = false;
         PasswordBox.IsEnabled = false;
+        WindowsHelloButton.IsEnabled = false;
         AccountUnlockOutcome result;
 
         try
@@ -94,6 +95,7 @@ public sealed partial class VaultUnlock : UserControl
         finally
         {
             PasswordBox.IsEnabled = true;
+            WindowsHelloButton.IsEnabled = true;
         }
 
         switch (result)
