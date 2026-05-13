@@ -63,6 +63,12 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
+        if (!SettingsStore.Instance.Get(AppSettingKeys.App.CloseToTrayKey))
+        {
+            RequestExit();
+            return;
+        }
+
         args.Handled = true;
 
         IsShownInSwitchers = false;

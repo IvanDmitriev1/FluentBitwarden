@@ -12,8 +12,13 @@ internal sealed class AppSetupService(IDataInitializationService dataInitializat
         if (setupCompleted)
             return;
 
-        _ = Task.Run(PasskeyPluginSetupService.EnsureRegisteredAsync);
         dataInitializationService.Initialize();
+
+        if (PasskeyPluginSetupService.IsSupported())
+        {
+            _ = Task.Run(PasskeyPluginSetupService.EnsureRegisteredAsync);
+            SettingsStore.Instance.Set(AppSettingKeys.Passkeys.PluginEnabledKey, true);
+        }
 
         SettingsStore.Instance.Set(AppSettingKeys.App.SetupCompletedKey, true);
     }

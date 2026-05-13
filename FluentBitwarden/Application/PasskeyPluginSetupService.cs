@@ -8,6 +8,8 @@ public static class PasskeyPluginSetupService
 {
     private const int Windows11_24H2Build = 26100;
 
+    public static bool IsSupported() => OperatingSystem.IsWindowsVersionAtLeast(10, 0, Windows11_24H2Build);
+
     public static Task EnsureRegisteredAsync()
         => RunPackagedComServerAsync("--register-plugin");
 
@@ -16,10 +18,8 @@ public static class PasskeyPluginSetupService
 
     private static async Task RunPackagedComServerAsync(string arguments)
     {
-        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, Windows11_24H2Build))
-        {
+        if (!IsSupported())
             return;
-        }
 
         string executablePath = Path.Combine(
             Package.Current.InstalledLocation.Path,

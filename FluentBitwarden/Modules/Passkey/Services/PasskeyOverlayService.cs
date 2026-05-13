@@ -2,6 +2,8 @@ using System.Linq;
 using BitwardenApi.Models;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Modules.AppState;
+using FluentBitwarden.Modules.AppState.Models;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Passkey.Abstractions;
 using FluentBitwarden.Modules.Passkey.Models;
@@ -20,6 +22,11 @@ internal class PasskeyOverlayService(
 {
     public Task<Fido2Credential> UnlockAndSelectAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
+        if (CanUseCredentialWithoutPrompt(request, out var credential))
+        {
+            return Task.FromResult(credential);
+        }
+
         IReadOnlyList<AccountProfile> accounts;
 
         using (var unitOfWork = unitOfWorkFactory.Create())
@@ -29,6 +36,27 @@ internal class PasskeyOverlayService(
 
         return App.Current.DispatcherQueue.EnqueueAsync(() =>
             RunOverlayFlowAsync(request, accounts[0], cancellationToken));
+    }
+
+    private bool CanUseCredentialWithoutPrompt(
+        PasskeyGetAssertionRequest request,
+        out Fido2Credential credential)
+    {
+        credential = default!;
+
+        if (accountSessionManager.ActiveSession is null)
+            return false;
+
+        var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.Passkeys.UserVerificationPolicyKey);
+        if (userVerificationPolicy != SensitiveActionPolicy.AllowWhenUnlocked)
+            return false;
+
+        var credentials = vaultService.GetFido2Credentials(request.RpId);
+        if (credentials.Count != 1)
+            return false;
+
+        credential = credentials[0];
+        return true;
     }
 
     private async Task<Fido2Credential> RunOverlayFlowAsync(

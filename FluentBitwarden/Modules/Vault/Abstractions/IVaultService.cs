@@ -13,7 +13,7 @@ public interface IVaultService
 
     IReadOnlyList<VaultCipher> GetCiphers();
     VaultCipher? GetCipher(CipherId id);
-    IReadOnlyList<VaultCipher> Search(CipherQuery query);
+    IReadOnlyList<VaultCipher> GetCiphers(CipherQuery query);
 
     IReadOnlyList<Fido2Credential> GetFido2Credentials(string rpId);
     IReadOnlyList<SshPublicIdentityResponce> GetAvailableSshKeys();

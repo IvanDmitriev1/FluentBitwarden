@@ -12,79 +12,228 @@
     mc:Ignorable="d">
 
     <lifecycle:LifecyclePage.Resources>
-        <models:ThemeOptionConverter x:Name="ThemeOptionConverter" />
         <x:Double x:Key="SettingsCardSpacing">4</x:Double>
+
+        <models:ClipboardClearDelayOptionConverter x:Key="ClipboardClearDelayOptionConverter" />
+        <models:LanguageOptionConverter x:Key="LanguageOptionConverter" />
+        <models:SensitiveActionPolicyOptionConverter x:Key="SensitiveActionPolicyOptionConverter" />
+        <models:ThemeOptionConverter x:Key="ThemeOptionConverter" />
+        <models:VaultTimeoutOptionConverter x:Key="VaultTimeoutOptionConverter" />
+        <models:VaultTimeoutTriggerOptionConverter x:Key="VaultTimeoutTriggerOptionConverter" />
+
+        <Style x:Key="SettingsComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="MinWidth" Value="220" />
+            <Setter Property="MaxWidth" Value="280" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="ItemTemplate" Value="{StaticResource OptionItemComboBoxItemTemplate}" />
+        </Style>
 
         <Style
             x:Key="SettingsSectionHeaderTextBlockStyle"
             BasedOn="{StaticResource BodyStrongTextBlockStyle}"
             TargetType="TextBlock">
-            <Setter Property="Margin" Value="1,30,0,6" />
+            <Setter Property="Margin" Value="1,28,0,6" />
         </Style>
     </lifecycle:LifecyclePage.Resources>
 
-    <ScrollViewer Padding="22">
-        <StackPanel Spacing="{StaticResource SettingsCardSpacing}">
+    <ScrollViewer
+        Padding="22"
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel HorizontalAlignment="Center" Spacing="{StaticResource SettingsCardSpacing}">
 
             <TextBlock
                 Margin="0,0,0,12"
                 Style="{ThemeResource TitleTextBlockStyle}"
                 Text="Settings" />
 
-            <!--  Appearance  -->
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Appearance" />
 
-            <controls:SettingsCard Description="Choose how the app looks." Header="Theme">
-                <ComboBox ItemsSource="{x:Bind models:ThemeOption.Options}" SelectedItem="{x:Bind ViewModel.Theme.Value, Mode=TwoWay, Converter={StaticResource ThemeOptionConverter}}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:ThemeOption">
-                            <TextBlock Text="{x:Bind Title}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+            <controls:SettingsCard Description="Choose how FluentBitwarden follows Windows theme settings." Header="Theme">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE790;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="Theme"
+                    ItemsSource="{x:Bind models:ThemeOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.Theme.Value, Mode=TwoWay, Converter={StaticResource ThemeOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
             </controls:SettingsCard>
 
-            <!--  Security  -->
+            <controls:SettingsCard Description="Language resources are not available yet, so the app follows Windows." Header="Language">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xF2B7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="Language"
+                    IsEnabled="False"
+                    ItemsSource="{x:Bind models:LanguageOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.Language.Value, Mode=TwoWay, Converter={StaticResource LanguageOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
+            </controls:SettingsCard>
+
+            <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="App integration" />
+
+            <controls:SettingsCard Description="Keep FluentBitwarden available from the Windows notification area." Header="Close to tray">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE773;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.CloseToTray.Value, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Security" />
 
-            <controls:SettingsCard Description="Lock the vault when Windows goes to sleep." Header="Lock on system suspend" />
-            <controls:SettingsCard Description="Minutes before the unlocked vault is locked automatically." Header="Vault timeout" />
+            <controls:SettingsCard Description="Minutes before the unlocked vault should lock automatically." Header="Vault timeout">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE916;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="Vault timeout"
+                    ItemsSource="{x:Bind models:VaultTimeoutOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.VaultTimeout.Value, Mode=TwoWay, Converter={StaticResource VaultTimeoutOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Description="Choose whether the timeout is based on app activity or system idle time." Header="Timeout trigger">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE121;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="Timeout trigger"
+                    ItemsSource="{x:Bind models:VaultTimeoutTriggerOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.VaultTimeoutTrigger.Value, Mode=TwoWay, Converter={StaticResource VaultTimeoutTriggerOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Description="Lock the vault when Windows is locked." Header="Lock when Windows locks">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE72E;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.LockWhenSystemLocks.Value, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Description="Lock the vault when the device goes to sleep." Header="Lock when device sleeps">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE708;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.LockWhenDeviceSleeps.Value, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Description="Lock the vault when the app is hidden to the tray." Header="Lock when hidden to tray">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE75F;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.LockWhenAppHiddenToTray.Value, Mode=TwoWay}" />
+            </controls:SettingsCard>
 
             <controls:SettingsCard
                 Description="Use Windows Hello to unlock your vault without entering your master password."
                 Header="Windows Hello"
-                Visibility="{x:Bind ViewModel.IsWindowsHelloSupported, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                IsEnabled="{x:Bind ViewModel.WindowsHello.IsSupported, Mode=OneWay}">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon Glyph="&#xE72E;" />
                 </controls:SettingsCard.HeaderIcon>
-
-                <ToggleSwitch IsOn="{x:Bind ViewModel.IsWindowsHelloEnabled, Mode=TwoWay}" />
+                <ToggleSwitch IsOn="{x:Bind ViewModel.WindowsHello.IsEnabled, Mode=TwoWay}" />
             </controls:SettingsCard>
 
-            <!--  About  -->
+            <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Clipboard" />
+
+            <controls:SettingsCard Description="Clear copied vault values after a short delay." Header="Clear copied values">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8C8;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="Clear copied values"
+                    ItemsSource="{x:Bind models:ClipboardClearDelayOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.ClipboardClearDelay.Value, Mode=TwoWay, Converter={StaticResource ClipboardClearDelayOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Description="Clear copied vault values when the vault locks." Header="Clear clipboard on lock">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE785;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.ClipboardClearOnLock.Value, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Passkeys and SSH" />
+            <InfoBar
+                Title="Passkey plugin"
+                IsClosable="False"
+                IsOpen="{x:Bind ViewModel.PasskeyPlugin.InfoBarStatus, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
+                Message="{x:Bind ViewModel.PasskeyPlugin.InfoBarStatus, Mode=OneWay}"
+                Severity="Informational" />
+
+            <controls:SettingsCard
+                Description="Register the Windows passkey provider integration when supported."
+                Header="Passkey plugin"
+                IsEnabled="{x:Bind ViewModel.PasskeyPlugin.IsSupported, Mode=OneWay}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE192;" />
+                </controls:SettingsCard.HeaderIcon>
+                <StackPanel HorizontalAlignment="Right" Spacing="6">
+                    <ToggleSwitch IsEnabled="{x:Bind ViewModel.PasskeyPlugin.CanToggle, Mode=OneWay}" IsOn="{x:Bind ViewModel.PasskeyPlugin.Enabled.Value, Mode=TwoWay}" />
+                    <ProgressRing
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Right"
+                        IsActive="{x:Bind ViewModel.PasskeyPlugin.IsApplying, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.PasskeyPlugin.IsApplying, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard
+                Description="Choose whether passkey assertions require an approval step."
+                Header="Passkey requests"
+                IsEnabled="{x:Bind ViewModel.PasskeyPlugin.IsSupported, Mode=OneWay}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8D7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="Passkey request approval"
+                    ItemsSource="{x:Bind models:SensitiveActionPolicyOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.PasskeyUserVerificationPolicy.Value, Mode=TwoWay, Converter={StaticResource SensitiveActionPolicyOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Description="Choose whether SSH signature requests require an approval step." Header="SSH agent requests">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE756;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox
+                    AutomationProperties.Name="SSH request approval"
+                    ItemsSource="{x:Bind models:SensitiveActionPolicyOption.Options}"
+                    SelectedItem="{x:Bind ViewModel.SshUserVerificationPolicy.Value, Mode=TwoWay, Converter={StaticResource SensitiveActionPolicyOptionConverter}}"
+                    Style="{StaticResource SettingsComboBoxStyle}" />
+            </controls:SettingsCard>
+
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="About" />
 
             <controls:SettingsExpander Description="Version, storage, and diagnostics." Header="Application">
-                <TextBlock Text="MyPasswordManager 0.1.0" />
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon Glyph="&#xE946;" />
+                </controls:SettingsExpander.HeaderIcon>
+
+                <TextBlock Text="{x:Bind ViewModel.AppVersion, Mode=OneWay}" />
 
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard
+                        Command="{x:Bind ViewModel.OpenAppDataFolderCommand}"
                         Description="Open the local application data folder."
-                        Header="Open data folder"
+                        Header="App data folder"
                         IsClickEnabled="True" />
 
                     <controls:SettingsCard
+                        Command="{x:Bind ViewModel.OpenLogsFolderCommand}"
                         Description="Open the diagnostics log folder."
-                        Header="Open logs"
+                        Header="Log folder"
                         IsClickEnabled="True" />
 
-                    <controls:SettingsCard Description="Restore all settings to their default values." Header="Reset settings">
-                        <Button Content="Reset" />
-                    </controls:SettingsCard>
-
-                    <controls:SettingsCard Description="Remove cached vault data and force a fresh reload next time." Header="Clear local cache">
-                        <Button Content="Clear cache" />
-                    </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Command="{x:Bind ViewModel.ResetSettingsCommand}"
+                        Description="Restore user preferences to their default values."
+                        Header="Reset settings"
+                        IsClickEnabled="True" />
                 </controls:SettingsExpander.Items>
             </controls:SettingsExpander>
         </StackPanel>

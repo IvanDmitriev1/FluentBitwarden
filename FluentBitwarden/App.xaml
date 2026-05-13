@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:FluentBitwarden.Resources.Converters"
     xmlns:dialogs="using:FluentBitwarden.Resources.Dialogs"
+    xmlns:uiStyles="using:FluentBitwarden.UI.Styles"
     xmlns:toolkitConverters="using:CommunityToolkit.WinUI.Converters">
     <Application.Resources>
         <ResourceDictionary>
@@ -20,8 +21,10 @@
                 <ResourceDictionary Source="ms-appx:///Views/Vault/Styles/CipherListItemStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/PasswordBoxExStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/TextBoxExStyle.xaml" />
+                <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/SearchFilterBarStyle.xaml" />
 
                 <ResourceDictionary Source="ms-appx:///UI/Styles/MyStyles.xaml" />
+                <uiStyles:OptionItemTemplates />
                 <dialogs:SshUserActionRequestViewModelTemplate />
             </ResourceDictionary.MergedDictionaries>
 
@@ -33,6 +36,11 @@
                 NotEmptyValue="Visible" />
             <toolkitConverters:EmptyObjectToObjectConverter
                 x:Key="NullToBoolConverter"
+                EmptyValue="False"
+                NotEmptyValue="True" />
+
+            <toolkitConverters:EmptyStringToObjectConverter
+                x:Key="StringToBoolConverter"
                 EmptyValue="False"
                 NotEmptyValue="True" />
 

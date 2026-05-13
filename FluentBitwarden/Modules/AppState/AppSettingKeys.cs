@@ -7,26 +7,20 @@ public static class AppSettingKeys
 {
     public static class App
     {
-        public static readonly SettingKey<AppStartupBehavior> StartupBehaviorKey =
-            new("integration.startup.behavior", AppStartupBehavior.StartMinimizedToTray);
-
-        public static readonly SettingKey<bool> ShowTrayIconKey =
+        public static readonly SettingKey<bool> CloseToTrayKey =
             new("integration.tray.showIcon", true);
 
         public static readonly SettingKey<bool> SetupCompletedKey =
             new("app.setupCompleted", false);
 
         public static readonly SettingKey<string> LastOpenedAccountIdKey =
-            new("app.lastOpenedAccountId", "");
+            new("app.lastOpenedAccountId", string.Empty);
     }
 
     public static class Appearance
     {
         public static readonly SettingKey<ElementTheme> ThemeKey =
             new("appearance.theme", ElementTheme.Default);
-
-        public static readonly SettingKey<bool> UseCompactModeKey =
-            new("appearance.useCompactMode", false);
 
         public static readonly SettingKey<string> LanguageKey =
             new("appearance.language", "system");
@@ -71,6 +65,6 @@ public static class AppSettingKeys
     public static class SshAgent
     {
         public static readonly SettingKey<SensitiveActionPolicy> UserVerificationPolicyKey =
-            new("passkeys.userVerificationPolicy", SensitiveActionPolicy.RequireUserAction);
+            new("sshAgent.userVerificationPolicy", SensitiveActionPolicy.RequireUserAction);
     }
 }

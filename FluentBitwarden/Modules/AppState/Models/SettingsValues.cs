@@ -27,13 +27,6 @@ public enum ClipboardClearDelay : uint
     Minutes5 = 300
 }
 
-public enum AppStartupBehavior : byte
-{
-    DoNothing = 0,
-    OpenMainWindow = 1,
-    StartMinimizedToTray = 2
-}
-
 public enum SensitiveActionPolicy : byte
 {
     AllowWhenUnlocked = 0,

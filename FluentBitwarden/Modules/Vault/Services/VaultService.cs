@@ -131,7 +131,7 @@ internal sealed class VaultService(
         return _ciphersById.GetValueOrDefault(id);
     }
 
-    public IReadOnlyList<VaultCipher> Search(CipherQuery query)
+    public IReadOnlyList<VaultCipher> GetCiphers(CipherQuery query)
     {
         using var _ = _lock.EnterScope();
 
@@ -141,9 +141,6 @@ internal sealed class VaultService(
             result = result.Where(static x => x.Favorite);
 
         if (query.IncludeDeleted)
-            result = result.Where(static x => x.DeletedDate is null);
-
-        if (!query.IncludeArchived)
             result = result.Where(static x => x.DeletedDate is null);
 
         if (query.FolderId != FolderId.Empty)

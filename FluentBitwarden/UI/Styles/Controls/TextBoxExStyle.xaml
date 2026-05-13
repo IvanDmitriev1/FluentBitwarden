@@ -68,6 +68,7 @@
                                     x:Name="ContentElement"
                                     Grid.Column="1"
                                     Padding="{TemplateBinding Padding}"
+                                    VerticalAlignment="Center"
                                     Foreground="{TemplateBinding Foreground}"
                                     HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
                                     HorizontalScrollMode="{TemplateBinding ScrollViewer.HorizontalScrollMode}"
@@ -82,6 +83,7 @@
                                     x:Name="PlaceholderTextContentPresenter"
                                     Grid.Column="1"
                                     Padding="{TemplateBinding Padding}"
+                                    VerticalAlignment="Center"
                                     Foreground="{ThemeResource TextControlPlaceholderForeground}"
                                     IsHitTestVisible="False"
                                     Text="{TemplateBinding PlaceholderText}"
@@ -116,6 +118,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="BackgroundElement.Background" Value="{ThemeResource TextControlBackgroundFocused}" />
                                         <Setter Target="BorderElement.BorderBrush" Value="{ThemeResource TextControlBorderBrushFocused}" />
+                                        <Setter Target="BorderElement.BorderThickness" Value="{ThemeResource TextControlBorderThemeThicknessFocused}" />
                                         <Setter Target="ContentElement.Foreground" Value="{ThemeResource TextControlForegroundFocused}" />
                                         <Setter Target="PlaceholderTextContentPresenter.Foreground" Value="{ThemeResource TextControlPlaceholderForegroundFocused}" />
                                     </VisualState.Setters>

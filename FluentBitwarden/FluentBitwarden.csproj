@@ -22,6 +22,10 @@
 		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <None Remove="UI\Styles\Controls\SearchFilterBarStyle.xaml" />
+	</ItemGroup>
+
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -98,6 +102,11 @@
 	<TrimmerRootAssembly Include="Microsoft.WinUI" />
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
+</ItemGroup>
+<ItemGroup>
+  <Page Update="UI\Styles\Controls\SearchFilterBarStyle.xaml">
+    <Generator>MSBuild:Compile</Generator>
+  </Page>
 </ItemGroup>
 
 </Project>

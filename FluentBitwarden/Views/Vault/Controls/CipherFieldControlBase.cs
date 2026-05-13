@@ -1,8 +1,7 @@
+using FluentBitwarden.Infrastructure.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using System.Windows.Input;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace FluentBitwarden.Views.Vault.Controls;
 
@@ -39,19 +38,7 @@ public abstract partial class CipherFieldControlBase : Control
 
     protected void CopyTextToClipboard(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text))
-            return;
-
-        DataPackage package = new DataPackage();
-        package.SetText(text);
-
-        var options = new ClipboardContentOptions
-        {
-            IsAllowedInHistory = false,
-            IsRoamable = false,
-        };
-        
-        Clipboard.SetContentWithOptions(package, options);
+        ClipboardManager.SetText(text);
     }
 
     private void Refresh()
