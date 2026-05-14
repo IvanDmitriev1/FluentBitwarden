@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -21,10 +21,6 @@
 		<CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
 		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <None Remove="UI\Styles\Controls\SearchFilterBarStyle.xaml" />
-	</ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -102,11 +98,6 @@
 	<TrimmerRootAssembly Include="Microsoft.WinUI" />
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
-</ItemGroup>
-<ItemGroup>
-  <Page Update="UI\Styles\Controls\SearchFilterBarStyle.xaml">
-    <Generator>MSBuild:Compile</Generator>
-  </Page>
 </ItemGroup>
 
 </Project>

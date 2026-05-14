@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:uiStyles="using:FluentBitwarden.UI.Styles">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ms-appx:///UI/Styles/MyStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/ValidationFieldStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/CountdownRingStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/SiteIconStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/PasswordBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/TextBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///UI/Styles/Controls/SearchFilterBarStyle.xaml" />
+        <uiStyles:OptionItemTemplates />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

@@ -6,13 +6,12 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:controls1="using:FluentBitwarden.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:extensions="using:FluentBitwarden.Infrastructure.Extensions"
     xmlns:lifecycle="using:FluentBitwarden.UI.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
-    xmlns:models1="using:BitwardenApi.Models"
     xmlns:models2="using:FluentBitwarden.Modules.Vault.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
-    xmlns:vaultControls="using:FluentBitwarden.Views.Vault.Controls"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
@@ -21,6 +20,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ms-appx:///Views/Vault/Templates/CipherListViewItemTemplate.xaml" />
                 <templates:CipherDetailTemplates />
+                <templates:CipherListItemDataTemplate />
             </ResourceDictionary.MergedDictionaries>
 
             <models:CipherTypeOptionOptionConverter x:Key="CipherTypeOptionConverter" />
@@ -97,17 +97,12 @@
                     Grid.Column="0"
                     IsItemClickEnabled="False"
                     ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
+                    ItemTemplate="{StaticResource CipherListItemDataTemplate}"
                     ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
                     SelectionMode="Single"
                     SingleSelectionFollowsFocus="True"
-                    TabFocusNavigation="Once">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models1:VaultCipher">
-                            <vaultControls:CipherListItem VaultCipher="{x:Bind}" />
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    TabFocusNavigation="Once" />
 
                 <controls:PropertySizer
                     Grid.Row="0"
@@ -129,13 +124,31 @@
             VerticalScrollBarVisibility="Auto"
             Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
 
-            <StackPanel Padding="20" Spacing="20">
-                <vaultControls:CipherDetailsHeader VaultCipher="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" />
+            <StackPanel
+                x:Name="CipherDetailsStackPanel"
+                Padding="20"
+                x:Load="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToBoolConverter}}"
+                Spacing="20">
+                <StackPanel
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="24">
+                    <controls1:SiteIcon
+                        FallbackGlyph="{x:Bind extensions:CipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
+                        Size="36"
+                        Uri="{x:Bind extensions:CipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{StaticResource TitleTextBlockStyle}"
+                        Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
 
                 <ContentControl
                     HorizontalContentAlignment="Stretch"
                     Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
-                    ContentTemplateSelector="{StaticResource CipherDetailsTemplateSelector}" />
+                    ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
             </StackPanel>
         </ScrollViewer>
     </SplitView>

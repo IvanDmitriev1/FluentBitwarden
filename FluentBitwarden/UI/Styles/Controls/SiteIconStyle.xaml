@@ -13,6 +13,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="controls:SiteIcon">
                     <ContentPresenter
+                        Width="{TemplateBinding Size}"
+                        Height="{TemplateBinding Size}"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Content="{TemplateBinding Content}"

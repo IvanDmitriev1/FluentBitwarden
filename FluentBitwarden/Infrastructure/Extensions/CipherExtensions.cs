@@ -1,15 +1,36 @@
+using System.Linq;
 using BitwardenApi.Models;
+using FluentBitwarden.Resources.Converters;
 
 namespace FluentBitwarden.Infrastructure.Extensions;
 
 public static class CipherExtensions
 {
-    public static string GetGlyph(this VaultCipher vaultCipher) => vaultCipher switch
+    public static Uri? GetDefaultSiteIconUri(this VaultCipher? cipher)
     {
-        CardVaultCipher => "\uE8C7", // wallet/payment-ish, replace if you prefer another glyph
-        IdentityVaultCipher => "\uE77B", // contact/person
-        SecureNoteVaultCipher => "\uE70B", // note/document
-        SshKeyVaultCipher => "\uE192", // key
-        _ => "\uE774" // globe/default
+        if (cipher is not LoginVaultCipher loginCipher)
+            return null;
+
+        StringToUriConverter.TryConvert(loginCipher.Uris.FirstOrDefault(), out var uri);
+        return uri;
+    }
+
+    public static string? GetSubtitle(this VaultCipher? cipher) => cipher switch
+    {
+        CardVaultCipher cardCipher => cardCipher.Brand,
+        IdentityVaultCipher identityCipher => identityCipher.Title,
+        LoginVaultCipher loginCipher => loginCipher.Username,
+        _ => null
+    };
+
+    public static bool HasSubtitle(this VaultCipher cipher) => !string.IsNullOrEmpty(cipher.GetSubtitle());
+
+    public static string GetDefaultGlyph(VaultCipher? cipher) => cipher switch
+    {
+        CardVaultCipher => "\uE8C7",
+        IdentityVaultCipher => "\uE77B",
+        SecureNoteVaultCipher => "\uE70B",
+        SshKeyVaultCipher => "\uE192",
+        _ => "\uE774"
     };
 }

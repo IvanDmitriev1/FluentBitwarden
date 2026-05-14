@@ -5,17 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.UI.Controls"
     xmlns:models="using:BitwardenApi.Models"
-    xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
+    xmlns:templateSelectors="using:FluentBitwarden.Resources.TemplateSelectors"
     xmlns:vaultControls="using:FluentBitwarden.Views.Vault.Controls">
 
-    <Style x:Key="SectionTitleTextBlockStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="18" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Margin" Value="0,0,0,8" />
-    </Style>
-
     <Style x:Key="FieldLabelTextBlockStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="16" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
         <Setter Property="Margin" Value="0,0,0,4" />
@@ -46,7 +40,7 @@
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="16">
+                CornerRadius="6">
                 <ItemsControl>
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -76,7 +70,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
             </StackPanel>
 
             <StackPanel Orientation="Vertical">
@@ -88,8 +81,6 @@
 
     <DataTemplate x:Key="SecureNoteCipherDetailsTemplate" x:DataType="models:SecureNoteVaultCipher">
         <StackPanel>
-            <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Secure note" />
-
             <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Contents" />
             <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind Notes}" />
         </StackPanel>
@@ -97,8 +88,6 @@
 
     <DataTemplate x:Key="CardCipherDetailsTemplate" x:DataType="models:CardVaultCipher">
         <StackPanel>
-            <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Card" />
-
             <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Cardholder name" />
             <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind CardholderName}" />
 
@@ -121,8 +110,6 @@
 
     <DataTemplate x:Key="IdentityCipherDetailsTemplate" x:DataType="models:IdentityVaultCipher">
         <StackPanel>
-            <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="Identity" />
-
             <Grid ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -192,21 +179,29 @@
 
     <DataTemplate x:Key="SshKeyCipherDetailsTemplate" x:DataType="models:SshKeyVaultCipher">
         <StackPanel>
-            <TextBlock Style="{StaticResource SectionTitleTextBlockStyle}" Text="SSH key" />
-
-            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Fingerprint" />
-            <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind KeyFingerprint}" />
-
-            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Public key" />
-            <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind PublicKey}" />
-
-            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Private key" />
-            <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind PrivateKey}" />
+            <Border
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6">
+                <ItemsControl>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <controls:DividedStackPanel DividerBrush="{ThemeResource CardStrokeColorDefaultBrush}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.Items>
+                        <vaultControls:CipherTextField Label="Fingerprint" Text="{x:Bind KeyFingerprint}" />
+                        <vaultControls:CipherTextField Label="Public key" Text="{x:Bind PublicKey.RawKey}" />
+                        <vaultControls:CipherPasswordField Label="Private key" Password="{x:Bind PrivateKey}" />
+                    </ItemsControl.Items>
+                </ItemsControl>
+            </Border>
         </StackPanel>
     </DataTemplate>
 
-    <templates:CipherDetailsTemplateSelector
-        x:Key="CipherDetailsTemplateSelector"
+    <templateSelectors:VaultCipherTemplateSelector
+        x:Key="VaultCipherTemplateSelector"
         CardTemplate="{StaticResource CardCipherDetailsTemplate}"
         IdentityTemplate="{StaticResource IdentityCipherDetailsTemplate}"
         LoginTemplate="{StaticResource LoginCipherDetailsTemplate}"

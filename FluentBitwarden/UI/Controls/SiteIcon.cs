@@ -1,124 +1,204 @@
+using FluentBitwarden.Infrastructure.Services.Abstractions;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
-using Microsoft.UI.Dispatching;
 
 namespace FluentBitwarden.UI.Controls;
 
 [DependencyProperty<Uri>("Uri")]
 [DependencyProperty<string>("FallbackGlyph", DefaultValue = "\uE774")]
-[DependencyProperty<double>("Size", DefaultValue = 20)]
+[DependencyProperty<double>("Size", DefaultValue = DefaultSize)]
 public sealed partial class SiteIcon : ContentControl
 {
-    [field: AllowNull, MaybeNull]
-    private ISiteIconCache SiteIconCache => field ??= App.Current.GetRequiredService<ISiteIconCache>();
+    private enum SiteIconContentKind { None, Fallback, Image }
 
-    private bool _isListeningForCacheUpdates;
+    private const double DefaultSize = 20;
+
+    [field: AllowNull, MaybeNull]
+    private ISiteIconCache SiteIconCache =>
+        field ??= App.Current.GetRequiredService<ISiteIconCache>();
+
+    private SiteIconContentKind _contentKind;
+    private Uri? _displayedSiteUri;
+    private Uri? _displayedCachedFilePath;
+    private int _displayedDecodeSize;
+    private bool _isSubscribed;
 
     public SiteIcon()
     {
         DefaultStyleKey = typeof(SiteIcon);
+
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+    }
+
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+        UpdateCurrentContent();
+        Refresh();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!_isSubscribed)
+        {
+            SiteIconCache.IconCached += SiteIconCacheOnIconCached;
+            _isSubscribed = true;
+        }
+
+        Refresh();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_isSubscribed)
+        {
+            SiteIconCache.IconCached -= SiteIconCacheOnIconCached;
+            _isSubscribed = false;
+        }
     }
 
     partial void OnSizeChanged(double newValue)
     {
         if (double.IsNaN(newValue) || double.IsInfinity(newValue) || newValue <= 0)
         {
-            Size = 20;
+            Size = DefaultSize;
+            return;
         }
 
+        UpdateCurrentContent();
         Refresh();
     }
 
     partial void OnUriChanged()
     {
-        Content = CreateFallbackContent();
+        InvalidateDisplayedIcon();
         Refresh();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    partial void OnFallbackGlyphChanged()
     {
-        Loaded -= OnLoaded;
-        Refresh();
-
-        if (!_isListeningForCacheUpdates)
-        {
-            SiteIconCache.IconCached += SiteIconCacheOnIconCached;
-            _isListeningForCacheUpdates = true;
-        }
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        Unloaded -= OnUnloaded;
-
-        if (_isListeningForCacheUpdates)
-        {
-            SiteIconCache.IconCached -= SiteIconCacheOnIconCached;
-            _isListeningForCacheUpdates = false;
-        }
+        UpdateCurrentContent();
     }
 
     private void SiteIconCacheOnIconCached(object? sender, SiteIconCachedEventArgs e)
     {
-        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
-        {
-            if (e.Host != Uri)
-                return;
+        if (e.Host != Uri)
+            return;
 
-            Refresh();
-        });
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, Refresh);
     }
 
     private void Refresh()
     {
         if (!IsLoaded)
-        {
             return;
-        }
 
         if (Uri is null || SiteIconCache.TryGetCachedFilePath(Uri) is not { } cachedFilePath)
         {
-            Content = CreateFallbackContent();
+            ShowFallback();
             return;
         }
-       
-        int decodeSize = Math.Max(1, (int)Math.Ceiling(Size));
-        var bitmap = new BitmapImage
-        {
-            DecodePixelType = DecodePixelType.Logical,
-            DecodePixelWidth = decodeSize,
-            DecodePixelHeight = decodeSize,
-            UriSource = cachedFilePath
-        };
 
-        Content = CreateImageContent(bitmap);
+        int decodeSize = Math.Max(1, (int)Math.Ceiling(Size));
+
+        if (_contentKind == SiteIconContentKind.Image
+            && Uri == _displayedSiteUri
+            && cachedFilePath == _displayedCachedFilePath
+            && decodeSize == _displayedDecodeSize)
+        {
+            return;
+        }
+
+        ShowImage(CreateImageSource(cachedFilePath, decodeSize), cachedFilePath, decodeSize);
     }
 
-    private UIElement CreateFallbackContent()
-        => new FontIcon
+    private void ShowImage(ImageSource source, Uri cachedFilePath, int decodeSize)
+    {
+        if (_contentKind == SiteIconContentKind.Image && Content is Border { Child: Image image } frame)
         {
-            Width = Size,
-            Height = Size,
-            Glyph = FallbackGlyph,
+            UpdateImageFrame(frame);
+            image.Source = source;
+        }
+        else
+        {
+            Content = CreateImageContent(source);
+            _contentKind = SiteIconContentKind.Image;
+        }
+
+        _displayedSiteUri = Uri;
+        _displayedCachedFilePath = cachedFilePath;
+        _displayedDecodeSize = decodeSize;
+    }
+
+    private void ShowFallback()
+    {
+        if (_contentKind == SiteIconContentKind.Fallback && Content is FontIcon fallbackIcon)
+        {
+            UpdateFallbackContent(fallbackIcon);
+        }
+        else
+        {
+            Content = CreateFallbackContent();
+            _contentKind = SiteIconContentKind.Fallback;
+        }
+
+        _displayedSiteUri = Uri;
+        _displayedCachedFilePath = null;
+        _displayedDecodeSize = 0;
+    }
+
+    private void UpdateCurrentContent()
+    {
+        switch (_contentKind)
+        {
+            case SiteIconContentKind.Fallback when Content is FontIcon fallbackIcon:
+                UpdateFallbackContent(fallbackIcon);
+                break;
+            case SiteIconContentKind.Image when Content is Border { Child: Image } frame:
+                UpdateImageFrame(frame);
+                break;
+        }
+    }
+
+    private void InvalidateDisplayedIcon()
+    {
+        _displayedSiteUri = null;
+        _displayedCachedFilePath = null;
+        _displayedDecodeSize = 0;
+    }
+
+    private FontIcon CreateFallbackContent()
+    {
+        var icon = new FontIcon
+        {
             FontFamily = new FontFamily("Segoe Fluent Icons"),
-            FontSize = Size,
-            Foreground = Foreground,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             IsHitTestVisible = false
         };
 
-    private UIElement CreateImageContent(ImageSource source)
-        => new Border
+        UpdateFallbackContent(icon);
+        return icon;
+    }
+
+    private void UpdateFallbackContent(FontIcon icon)
+    {
+        icon.Width = Size;
+        icon.Height = Size;
+        icon.Glyph = FallbackGlyph;
+        icon.FontSize = Size;
+        icon.Foreground = Foreground;
+    }
+
+    private Border CreateImageContent(ImageSource source)
+    {
+        var frame = new Border
         {
-            Width = Size,
-            Height = Size,
-            CornerRadius = new CornerRadius(Math.Clamp(Size * 0.18, 4, 8)),
             Child = new Image
             {
                 Source = source,
@@ -126,4 +206,26 @@ public sealed partial class SiteIcon : ContentControl
                 IsHitTestVisible = false
             }
         };
+
+        UpdateImageFrame(frame);
+        return frame;
+    }
+
+    private void UpdateImageFrame(Border frame)
+    {
+        frame.Width = Size;
+        frame.Height = Size;
+        frame.CornerRadius = new CornerRadius(Math.Clamp(Size * 0.18, 4, 8));
+    }
+
+    private static ImageSource CreateImageSource(Uri cachedFilePath, int decodeSize)
+    {
+        return new BitmapImage
+        {
+            DecodePixelType = DecodePixelType.Logical,
+            DecodePixelWidth = decodeSize,
+            DecodePixelHeight = decodeSize,
+            UriSource = cachedFilePath
+        };
+    }
 }

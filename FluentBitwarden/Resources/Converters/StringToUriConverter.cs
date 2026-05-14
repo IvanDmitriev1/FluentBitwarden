@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.UI.Xaml.Data;
 
 namespace FluentBitwarden.Resources.Converters;
 
-internal sealed class StringToUriConverter : IValueConverter
+internal sealed class StringToUriConverter
 {
     public const string DefaultScheme = "https";
 
@@ -30,18 +29,5 @@ internal sealed class StringToUriConverter : IValueConverter
 
         uri = null;
         return false;
-    }
-
-    public object? Convert(object? value, Type targetType, object? parameter, string language)
-    {
-        if (value is not string uriString || TryConvert(uriString, out var uri))
-            return null;
-
-        return uri;
-    }
-
-    public object? ConvertBack(object value, Type targetType, object parameter, string language)
-    {
-        throw new NotSupportedException();
     }
 }

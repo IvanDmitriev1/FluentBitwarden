@@ -1,4 +1,6 @@
 ﻿using System.Net.Http;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using Windows.Storage;
@@ -14,14 +16,24 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
     private static readonly string CacheDirectoryPath =
         Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "SiteIcons");
 
+    private readonly ConcurrentDictionary<Uri, Uri> _cachedFilePaths = [];
+
     public event EventHandler<SiteIconCachedEventArgs>? IconCached;
 
     public Uri? TryGetCachedFilePath(Uri siteUri)
     {
+        if (_cachedFilePaths.TryGetValue(siteUri, out var cachedFilePath))
+            return cachedFilePath;
+
         string fileName = GetFileName(siteUri);
         string filePath = Path.Combine(CacheDirectoryPath, fileName);
 
-        return File.Exists(filePath) ? new Uri(filePath, UriKind.Absolute) : null;
+        if (!File.Exists(filePath))
+            return null;
+
+        cachedFilePath = new Uri(filePath, UriKind.Absolute);
+        _cachedFilePaths.TryAdd(siteUri, cachedFilePath);
+        return cachedFilePath;
     }
 
     public async Task PreloadAsync(IEnumerable<Uri> siteUris)
@@ -46,7 +58,10 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
             string filePath = Path.Combine(CacheDirectoryPath, fileName);
 
             if (File.Exists(filePath))
+            {
+                _cachedFilePaths.TryAdd(siteUri, new Uri(filePath, UriKind.Absolute));
                 return;
+            }
 
             using var httpClient = httpClientFactory.CreateSharedClient();
 
@@ -69,11 +84,12 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
             }
 
             File.Move(tmpPath, filePath, true);
+            _cachedFilePaths[siteUri] = new Uri(filePath, UriKind.Absolute);
             IconCached?.Invoke(this, new SiteIconCachedEventArgs(siteUri, filePath));
         }
         catch (Exception e) when (e is TaskCanceledException or OperationCanceledException)
         {
-            // Operation was canceled
+            Debug.WriteLine($"Site icon cache preload was canceled for {siteUri}: {e.Message}");
         }
     }
 
