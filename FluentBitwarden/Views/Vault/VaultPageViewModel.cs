@@ -37,6 +37,8 @@ public sealed partial class VaultPageViewModel(
     [ObservableProperty]
     public partial CipherSortDirection CipherSortDirection { get; set; } = CipherSortDirection.Ascending;
 
+    [ObservableProperty]
+    public partial bool IsSearchFieldOpen { get; set; }
 
     private bool _hasInitialized;
 
@@ -56,6 +58,7 @@ public sealed partial class VaultPageViewModel(
 
     public void Receive(ShowVaultCipherMessage message)
     {
+        IsSearchFieldOpen = true;
         SearchText = message.SearchText;
         SelectedCipherType = null;
         QueryCiphers();

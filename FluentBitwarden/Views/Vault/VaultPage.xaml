@@ -7,7 +7,6 @@
     xmlns:controls1="using:FluentBitwarden.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:extensions="using:FluentBitwarden.Infrastructure.Extensions"
-    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:lifecycle="using:FluentBitwarden.UI.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
@@ -51,6 +50,7 @@
                     Grid.Row="0"
                     Grid.Column="0"
                     Padding="16,16,16,8"
+                    IsSearchOpen="{x:Bind ViewModel.IsSearchFieldOpen, Mode=TwoWay}"
                     SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <controls1:SearchFilterBar.FilterContent>
                         <ComboBox
