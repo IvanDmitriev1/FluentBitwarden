@@ -1,17 +1,20 @@
 using BitwardenApi.Models;
+using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Infrastructure.Extensions;
+using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.UI.Controls.Lifecycle;
+using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
-using FluentBitwarden.Infrastructure.Extensions;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
 
 namespace FluentBitwarden.Views.Vault;
 
 public sealed partial class VaultPageViewModel(
+    IMessenger messenger,
     IVaultService vaultService,
-    IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware
+    IConnectivityService connectivityService) : ObservableRecipient(messenger), IPageLifecycleAware, IRecipient<ShowVaultCipherMessage>
 {
     [ObservableProperty]
     public partial ObservableCollection<VaultCipher> FilteredCiphers { get; private set; } = [];
@@ -66,6 +69,15 @@ public sealed partial class VaultPageViewModel(
         }
 
         _hasInitialized = true;
+    }
+
+    public void Receive(ShowVaultCipherMessage message)
+    {
+        SearchText = message.SearchText;
+        SelectedCipherType = null;
+        QueryCiphers();
+
+        SelectedCipher = message.SelectedCipher;
     }
 
     public void OnUnloading() {}

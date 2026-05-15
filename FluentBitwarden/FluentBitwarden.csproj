@@ -99,5 +99,8 @@
 	<TrimmerRootAssembly Include="WinUIEx" />
 	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
 </ItemGroup>
+<ItemGroup>
+  <Folder Include="Views\Shell\Models\" />
+</ItemGroup>
 
 </Project>

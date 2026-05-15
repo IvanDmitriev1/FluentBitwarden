@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:attachedProperties="using:FluentBitwarden.Resources.AttachedProperties"
+    xmlns:controls="using:FluentBitwarden.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winUiEx="using:WinUIEx"
@@ -22,7 +23,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TitleBar
+        <controls:MyTitleBar
             x:Name="AppTitleBar"
             Title="FluentBitwarden"
             Grid.Row="0"

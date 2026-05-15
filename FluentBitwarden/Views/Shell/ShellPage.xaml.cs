@@ -1,13 +1,15 @@
-using System.Linq;
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
+using FluentBitwarden.Views.Vault.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using System.Linq;
 
 namespace FluentBitwarden.Views.Shell;
 
@@ -24,18 +26,19 @@ public sealed partial class ShellPage : Page
         TagByPage = pageByTag.ToDictionary(static pair => pair.Value, static pair => pair.Key);
     }
 
-    public ShellPage(IVaultService vaultService)
+    public ShellPage(IVaultService vaultService, IMessenger messenger)
     {
         _vaultService = vaultService;
+        _messenger = messenger;
         InitializeComponent();
         ContentFrame.Navigate(typeof(VaultPage));
     }
 
     private readonly IVaultService _vaultService;
+    private readonly IMessenger _messenger;
 
     private static readonly IReadOnlyDictionary<string, Type> PageByTag;
     private static readonly IReadOnlyDictionary<Type, string> TagByPage;
-
 
     [RelayCommand]
     private void PaneToggle()
@@ -80,7 +83,7 @@ public sealed partial class ShellPage : Page
 
     private void AutoSuggestBox_OnTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
+        if (args.Reason is not AutoSuggestionBoxTextChangeReason.UserInput)
             return;
 
         if (string.IsNullOrWhiteSpace(sender.Text))
@@ -96,5 +99,17 @@ public sealed partial class ShellPage : Page
         });
 
         sender.ItemsSource = ciphers;
+    }
+
+    private void AutoSuggestBox_OnQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (args.ChosenSuggestion is not VaultCipher vaultCipher)
+            return;
+
+        if (ContentFrame.CurrentSourcePageType != typeof(VaultPage))
+            ContentFrame.Navigate(typeof(VaultPage));
+
+        sender.Text = string.Empty;
+        _messenger.Send(new ShowVaultCipherMessage(args.QueryText, vaultCipher));
     }
 }

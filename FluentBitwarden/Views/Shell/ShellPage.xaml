@@ -8,10 +8,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:templates="using:FluentBitwarden.Views.Shell.Templates"
     attachedProperties:TitlebarProperties.NavigationFrame="{x:Bind ContentFrame}"
     attachedProperties:TitlebarProperties.PaneToggleCommand="{x:Bind PaneToggleCommand}"
     KeyboardAcceleratorPlacementMode="Hidden"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <templates:CipherAutosuggestItemTemplates />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
 
     <interactivity:Interaction.Behaviors>
         <behaviors:FocusBehavior>
@@ -29,11 +38,13 @@
     <attachedProperties:TitlebarProperties.Content>
         <AutoSuggestBox
             x:Name="AutoSuggestBox"
-            Width="360"
-            VerticalAlignment="Center"
+            ItemTemplate="{StaticResource CipherAutosuggestItemTemplates}"
             PlaceholderText="Search.."
+            QueryIcon="Find"
+            QuerySubmitted="AutoSuggestBox_OnQuerySubmitted"
             TextChanged="AutoSuggestBox_OnTextChanged"
-            QueryIcon="Find" />
+            TextMemberPath="Name"
+            UpdateTextOnSelect="False" />
     </attachedProperties:TitlebarProperties.Content>
 
     <NavigationView

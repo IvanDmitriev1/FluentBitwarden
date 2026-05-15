@@ -1,3 +1,5 @@
+using CommunityToolkit.Mvvm.Messaging;
+
 namespace FluentBitwarden.UI.Controls.Lifecycle;
 
 public interface IPageLifecycleAwareBase
@@ -17,3 +19,6 @@ public interface IPageLifecycleAware<in TParam> : IPageLifecycleAwareBase where 
 {
     Task OnLoadingAsync(TParam param, CancellationToken cancellationToken);
 }
+
+public interface IPageLifecycleAndMessageAware<in TParam> : IPageLifecycleAware<TParam>, IRecipient<TParam>
+    where TParam : class;

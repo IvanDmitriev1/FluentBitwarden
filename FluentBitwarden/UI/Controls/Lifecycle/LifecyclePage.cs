@@ -20,48 +20,68 @@ public abstract class LifecyclePage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        _pendingParameter = e.Parameter as IPageNavigationParameter;
-        _hasPendingNavigation = true;
 
+        var parameter = e.Parameter as IPageNavigationParameter;
         if (_isLoaded)
         {
-            StartLoading();
+            LoadViewModel(parameter);
         }
+        else
+        {
+            _hasPendingNavigation = true;
+            _pendingParameter = parameter;
+        }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        CancelLoading();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _isLoaded = true;
 
-        if (_hasPendingNavigation)
-        {
-            StartLoading();
-        }
+        if (DataContext is ObservableRecipient recipient)
+            recipient.IsActive = true;
+
+        if (!_hasPendingNavigation)
+            return;
+
+        _hasPendingNavigation = false;
+        var param = _pendingParameter;
+        _pendingParameter = null;
+
+        LoadViewModel(param);
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _isLoaded = false;
         CancelLoading();
+
+        if (DataContext is ObservableRecipient recipient)
+            recipient.IsActive = false;
+
+        if (DataContext is IPageLifecycleAwareBase aware)
+            aware.OnUnloading();
     }
 
-    private async void StartLoading()
+    private async void LoadViewModel(IPageNavigationParameter? navParameter)
     {
         CancelLoading();
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
-        var parameter = _pendingParameter;
-
-        _pendingParameter = null;
-        _hasPendingNavigation = false;
 
         try
         {
             Task loadingTask = Task.CompletedTask;
-            if (parameter is not null)
-                loadingTask = parameter.Load(DataContext, token);
+            if (navParameter is not null)
+                loadingTask = navParameter.Load(DataContext, token);
             else if (DataContext is IPageLifecycleAware aware)
                 loadingTask = aware.OnLoadingAsync(token);
+
             await loadingTask;
         }
         catch (Exception e) when (token.IsCancellationRequested &&
@@ -73,16 +93,6 @@ public abstract class LifecyclePage : Page
         {
             UnhandledExceptionLogger.WriteException(e);
         }
-    }
-
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
-    {
-        base.OnNavigatedFrom(e);
-
-        CancelLoading();
-
-        if (DataContext is IPageLifecycleAwareBase aware)
-            aware.OnUnloading();
     }
 
     private void CancelLoading()
