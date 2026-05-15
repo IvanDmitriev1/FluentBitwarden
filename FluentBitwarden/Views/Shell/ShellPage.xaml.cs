@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Models;
+using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
 using FluentBitwarden.Views.Vault.Models;
@@ -106,10 +107,13 @@ public sealed partial class ShellPage : Page
         if (args.ChosenSuggestion is not VaultCipher vaultCipher)
             return;
 
-        if (ContentFrame.CurrentSourcePageType != typeof(VaultPage))
-            ContentFrame.Navigate(typeof(VaultPage));
-
         sender.Text = string.Empty;
-        _messenger.Send(new ShowVaultCipherMessage(args.QueryText, vaultCipher));
+        var message = new ShowVaultCipherMessage(args.QueryText, vaultCipher);
+
+
+        if (ContentFrame.CurrentSourcePageType != typeof(VaultPage))
+            ContentFrame.Navigate(typeof(VaultPage), PageNavigationParameter.From(message));
+        else
+            _messenger.Send(message);
     }
 }

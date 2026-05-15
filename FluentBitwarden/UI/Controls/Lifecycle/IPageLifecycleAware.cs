@@ -20,5 +20,4 @@ public interface IPageLifecycleAware<in TParam> : IPageLifecycleAwareBase where 
     Task OnLoadingAsync(TParam param, CancellationToken cancellationToken);
 }
 
-public interface IPageLifecycleAndMessageAware<in TParam> : IPageLifecycleAware<TParam>, IRecipient<TParam>
-    where TParam : class;
+public interface IPageLifecycleRecipientAware<in TParam> : IPageLifecycleAware<TParam>, IRecipient<TParam> where TParam : class;

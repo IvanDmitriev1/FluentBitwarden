@@ -4,6 +4,12 @@ namespace FluentBitwarden.Modules.Vault.Models;
 
 public sealed class CipherQuery
 {
+    public static readonly CipherQuery QueryAll = new()
+    {
+        SearchText = string.Empty,
+        CipherType = null,
+    };
+
     public string SearchText { get; init; } = string.Empty;
 
     public CipherType? CipherType { get; init; }

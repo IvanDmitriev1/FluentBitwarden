@@ -14,10 +14,10 @@ namespace FluentBitwarden.Views.Vault;
 public sealed partial class VaultPageViewModel(
     IMessenger messenger,
     IVaultService vaultService,
-    IConnectivityService connectivityService) : ObservableRecipient(messenger), IPageLifecycleAware, IRecipient<ShowVaultCipherMessage>
+    IConnectivityService connectivityService) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
 {
     [ObservableProperty]
-    public partial ObservableCollection<VaultCipher> FilteredCiphers { get; private set; } = [];
+    public partial List<VaultCipher> FilteredCiphers { get; private set; } = [];
 
     [ObservableProperty]
     public partial ObservableCollection<VaultFolder> Folders { get; private set; } = [];
@@ -46,29 +46,12 @@ public sealed partial class VaultPageViewModel(
     partial void OnCipherSortFieldChanged(CipherSortField value) => QueryCiphers();
     partial void OnCipherSortDirectionChanged(CipherSortDirection value) => QueryCiphers();
 
-    public async Task OnLoadingAsync(CancellationToken cancellationToken)
+    public Task OnLoadingAsync(CancellationToken cancellationToken) => EnsureLoadedAsync(cancellationToken);
+
+    public async Task OnLoadingAsync(ShowVaultCipherMessage param, CancellationToken cancellationToken)
     {
-        if (_hasInitialized || !connectivityService.HasInternetAccess)
-            return;
-
-        OnPropertyChanged(nameof(CipherSortField));
-        OnPropertyChanged(nameof(CipherSortDirection));
-        RefreshCollections();
-
-        var result = await vaultService.SyncVaultAsync(cancellationToken);
-        if (result == VaultSyncResult.Synced)
-        {
-            vaultService.LoadLocalVault();
-            RefreshCollections();
-            return;
-        }
-
-        if (result == VaultSyncResult.Failed)
-        {
-            //
-        }
-
-        _hasInitialized = true;
+        await EnsureLoadedAsync(cancellationToken);
+        Receive(param);
     }
 
     public void Receive(ShowVaultCipherMessage message)
@@ -80,18 +63,44 @@ public sealed partial class VaultPageViewModel(
         SelectedCipher = message.SelectedCipher;
     }
 
+
     public void OnUnloading() {}
 
-    private void RefreshCollections()
+    private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
     {
-        var selectedCipherId = SelectedCipher?.Id;
+        if (_hasInitialized || !connectivityService.HasInternetAccess)
+            return;
 
-        FilteredCiphers.ReplaceWith(vaultService.GetCiphers());
-        Folders.ReplaceWith(vaultService.GetFolders());
+        _hasInitialized = true;
+        OnPropertyChanged(nameof(CipherSortField));
+        OnPropertyChanged(nameof(CipherSortDirection));
 
-        SelectedCipher = selectedCipherId is null
-            ? null
-            : FilteredCiphers.FirstOrDefault(cipher => cipher.Id == selectedCipherId);
+        RefreshCollections();
+
+        if (!connectivityService.HasInternetAccess)
+            return;
+
+        var result = await vaultService.SyncVaultAsync(cancellationToken);
+        if (result == VaultSyncResult.Synced)
+        {
+            vaultService.LoadLocalVault();
+            RefreshCollections();
+            return;
+        }
+
+        return;
+
+        void RefreshCollections()
+        {
+            var selectedCipherId = SelectedCipher?.Id;
+
+            FilteredCiphers = vaultService.GetCiphers(CipherQuery.QueryAll);
+            Folders.ReplaceWith(vaultService.GetFolders());
+
+            SelectedCipher = selectedCipherId is null
+                ? null
+                : FilteredCiphers.FirstOrDefault(cipher => cipher.Id == selectedCipherId);
+        }
     }
 
     private void QueryCiphers()
@@ -104,6 +113,7 @@ public sealed partial class VaultPageViewModel(
             SortDirection = CipherSortDirection
         });
 
-        FilteredCiphers.ReplaceWith(ciphers);
+        FilteredCiphers = ciphers;
     }
+
 }

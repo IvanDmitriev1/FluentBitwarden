@@ -115,23 +115,13 @@ internal sealed class VaultService(
         }
     }
 
-    public IReadOnlyList<VaultCipher> GetCiphers()
-    {
-        using var _ = _lock.EnterScope();
-
-        return _ciphersById.Values
-            .Where(static x => x.DeletedDate is null)
-            .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
-    }
-
     public VaultCipher? GetCipher(CipherId id)
     {
         using var _ = _lock.EnterScope();
         return _ciphersById.GetValueOrDefault(id);
     }
 
-    public IReadOnlyList<VaultCipher> GetCiphers(CipherQuery query)
+    public List<VaultCipher> GetCiphers(CipherQuery query)
     {
         using var _ = _lock.EnterScope();
 
@@ -160,7 +150,7 @@ internal sealed class VaultService(
         return result.ToList();
     }
 
-    public IReadOnlyList<Fido2Credential> GetFido2Credentials(string rpId)
+    public List<Fido2Credential> GetFido2Credentials(string rpId)
     {
         using var _ = _lock.EnterScope();
 
@@ -171,7 +161,7 @@ internal sealed class VaultService(
             .ToList();
     }
 
-    public IReadOnlyList<SshPublicIdentityResponce> GetAvailableSshKeys()
+    public List<SshPublicIdentityResponce> GetAvailableSshKeys()
     {
         using var _ = _lock.EnterScope();
 
@@ -188,7 +178,7 @@ internal sealed class VaultService(
             .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
     }
 
-    public IReadOnlyList<VaultFolder> GetFolders()
+    public List<VaultFolder> GetFolders()
     {
         using var _ = _lock.EnterScope();
 
@@ -197,7 +187,7 @@ internal sealed class VaultService(
             .ToList();
     }
 
-    public IReadOnlyList<VaultCollection> GetCollections()
+    public List<VaultCollection> GetCollections()
     {
         using var _ = _lock.EnterScope();
 

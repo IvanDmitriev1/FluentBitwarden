@@ -11,14 +11,13 @@ public interface IVaultService
     void LoadLocalVault();
     Task<VaultSyncResult> SyncVaultAsync(CancellationToken token);
 
-    IReadOnlyList<VaultCipher> GetCiphers();
     VaultCipher? GetCipher(CipherId id);
-    IReadOnlyList<VaultCipher> GetCiphers(CipherQuery query);
+    List<VaultCipher> GetCiphers(CipherQuery query);
 
-    IReadOnlyList<Fido2Credential> GetFido2Credentials(string rpId);
-    IReadOnlyList<SshPublicIdentityResponce> GetAvailableSshKeys();
+    List<Fido2Credential> GetFido2Credentials(string rpId);
+    List<SshPublicIdentityResponce> GetAvailableSshKeys();
     SshKeyVaultCipher? GetSsh(ReadOnlyMemory<byte> publicKeyBlob);
 
-    IReadOnlyList<VaultFolder> GetFolders();
-    IReadOnlyList<VaultCollection> GetCollections();
+    List<VaultFolder> GetFolders();
+    List<VaultCollection> GetCollections();
 }
