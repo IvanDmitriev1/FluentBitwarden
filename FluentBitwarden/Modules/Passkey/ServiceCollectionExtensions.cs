@@ -1,6 +1,5 @@
 using FluentBitwarden.Infrastructure.Ipc;
 using FluentBitwarden.Modules.Passkey.Abstractions;
-using FluentBitwarden.Modules.Passkey.Internal;
 using FluentBitwarden.Modules.Passkey.Models;
 using FluentBitwarden.Modules.Passkey.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +12,7 @@ internal static class ServiceCollectionExtensions
     {
         services.AddTransient<IPasskeyOverlayService, PasskeyOverlayService>();
 
-        services.AddPipeMessageHandler<PasskeyAssertionHandler, PasskeyGetAssertionRequest, PasskeyAssertionResponse>(
-            PasskeyJsonContext.Default.PasskeyGetAssertionRequest,
-            PasskeyJsonContext.Default.PasskeyAssertionResponse);
+        services.AddPipeMessageHandler<PasskeyAssertionHandler, PasskeyGetAssertionRequest, PasskeyAssertionResponse>();
 
         return services;
     }

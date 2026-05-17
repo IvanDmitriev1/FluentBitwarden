@@ -1,6 +1,5 @@
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using CommunityToolkit.HighPerformance.Buffers;
+using FluentBitwarden.Infrastructure.Ipc.Abstractions;
 
 namespace FluentBitwarden.Infrastructure.Ipc.Internal;
 
@@ -10,29 +9,23 @@ internal static class PipeProtocol
     public static async ValueTask<TMessage> ReadPayloadAsync<TMessage>(
         Stream stream,
         int payloadLength,
-        JsonTypeInfo<TMessage> jsonTypeInfo,
         CancellationToken cancellationToken)
-        where TMessage : notnull
+        where TMessage : IPipeMessage<TMessage>
     {
         using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
         await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
 
-        return JsonSerializer.Deserialize(bufferOwner.Memory.Span, jsonTypeInfo) ??
-               throw new InvalidOperationException();
+        return TMessage.ReadPayload(bufferOwner.Memory.Span);
     }
 
     public static async ValueTask WriteResponseMessageAsync<TMessage>(
         Stream stream,
         TMessage message,
-        JsonTypeInfo<TMessage> jsonTypeInfo,
         CancellationToken cancellationToken)
-        where TMessage : notnull
+        where TMessage : IPipeMessage<TMessage>
     {
         using ArrayPoolBufferWriter<byte> payloadWriter = new();
-        using var jsonWriter = new Utf8JsonWriter(payloadWriter);
-
-        JsonSerializer.Serialize(jsonWriter, message, jsonTypeInfo);
-        jsonWriter.Flush();
+        message.WritePayload(payloadWriter);
 
         ReadOnlyMemory<byte> payload = payloadWriter.WrittenMemory;
         if (payload.Length > IpcConstants.MaxPayloadLength)

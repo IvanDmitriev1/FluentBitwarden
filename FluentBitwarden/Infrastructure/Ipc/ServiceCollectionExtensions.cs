@@ -1,4 +1,3 @@
-﻿using System.Text.Json.Serialization.Metadata;
 using FluentBitwarden.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Infrastructure.Ipc.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,27 +13,22 @@ public static class ServiceCollectionExtensions
     }
 
     public static IServiceCollection AddPipeMessageHandler<THandler, TRequest, TResponse>(
-        this IServiceCollection services,
-        JsonTypeInfo<TRequest> requestTypeInfo,
-        JsonTypeInfo<TResponse> responseTypeInfo)
+        this IServiceCollection services)
         where THandler : class, IPipeMessageHandler<TRequest, TResponse>
-        where TRequest : notnull
-        where TResponse : notnull
+        where TRequest : IPipeRequest<TRequest>
+        where TResponse : IPipeMessage<TResponse>
     {
         services.AddTransient<IPipeMessageHandler<TRequest, TResponse>, THandler>();
         services.AddSingleton(new PipeMessageInvokerDescriptor(
-            THandler.MessageType,
+            TRequest.MessageType,
             sp =>
             {
                 var handler =
                     sp.GetRequiredService<IPipeMessageHandler<TRequest, TResponse>>();
 
                 return new PipeMessageInvoker<TRequest, TResponse>(
-                    handler,
-                    requestTypeInfo,
-                    responseTypeInfo);
+                    handler);
             }));
-
 
         return services;
     }

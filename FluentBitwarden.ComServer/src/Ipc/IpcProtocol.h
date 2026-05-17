@@ -3,13 +3,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <bit>
+#include <concepts>
+#include <span>
+#include <string_view>
+#include <vector>
 
 namespace FluentBitwarden::ComServer::Ipc
 {
 	namespace Constants
 	{
-		inline constexpr std::wstring_view PipePath = LR"(\\.\pipe\LOCAL\FluentBitwarden.v1)";
-		inline constexpr std::uint16_t ProtocolVersion = 1;
+		inline constexpr std::wstring_view PipePath = LR"(\\.\pipe\LOCAL\FluentBitwarden.v2)";
+		inline constexpr std::uint16_t ProtocolVersion = 2;
 		inline constexpr std::int32_t MaxPayloadLength = 1024 * 1024;
 	}
 
@@ -47,19 +51,19 @@ namespace FluentBitwarden::ComServer::Ipc
 	};
 
 	template <typename T>
-	concept IpcJsonRequest =
+	concept IpcBinaryRequest =
 		std::movable<T> &&
 		requires(const T& value)
 	{
 		{ T::MessageType } -> std::convertible_to<std::uint16_t>;
-		{ value.ToJson() } -> std::same_as<JsonObject>;
+		{ value.ToPayload() } -> std::same_as<std::vector<std::byte>>;
 	};
 
 	template <typename T>
-	concept IpcJsonResponse =
+	concept IpcBinaryResponse =
 		std::movable<T> &&
-		requires(JsonObject json)
+		requires(std::span<const std::byte> payload)
 	{
-		{ T::FromJson(json) } -> std::same_as<T>;
+		{ T::FromPayload(payload) } -> std::same_as<T>;
 	};
 }

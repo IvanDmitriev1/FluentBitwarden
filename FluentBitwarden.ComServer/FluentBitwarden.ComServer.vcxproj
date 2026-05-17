@@ -93,7 +93,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp23</LanguageStandard>
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</SDLCheck>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)/src;$(MSBuildProjectDirectory)/vendor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -107,7 +107,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)/src;$(MSBuildProjectDirectory)/vendor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -122,7 +122,6 @@
     <ClInclude Include="src\Utils\HashingFunctions.h" />
     <ClInclude Include="src\WebAuthn\DecodedWebAuthnGetAssertionRequest.h" />
     <ClInclude Include="src\WebAuthn\Messages\PasskeyAssertionMessage.h" />
-    <ClInclude Include="src\Utils\Base64Url.h" />
     <ClInclude Include="src\Ipc\PipeWin32.h" />
     <ClInclude Include="src\Ipc\IpcBinary.h" />
     <ClInclude Include="src\Ipc\IpcProtocol.h" />
@@ -135,7 +134,6 @@
     <ClInclude Include="src\Authenticator\PluginAuthenticator.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
-    <ClCompile Include="src\Utils\Base64Url.cpp" />
     <ClCompile Include="src\WebAuthn\AssertionResponseBuilder.cpp" />
     <ClCompile Include="src\Utils\HashingFunctions.cpp" />
     <ClCompile Include="src\WebAuthn\DecodedWebAuthnGetAssertionRequest.cpp" />

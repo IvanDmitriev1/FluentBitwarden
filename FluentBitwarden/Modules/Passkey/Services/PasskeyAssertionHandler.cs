@@ -6,10 +6,8 @@ using FluentBitwarden.Modules.Passkey.Models;
 namespace FluentBitwarden.Modules.Passkey.Services;
 
 [Fody.ConfigureAwait(false)]
-internal class PasskeyAssertionHandler(IPasskeyOverlayService passkeyOverlayService) : IPipeMessageHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>
+internal sealed class PasskeyAssertionHandler(IPasskeyOverlayService passkeyOverlayService) : IPipeMessageHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>
 {
-    public static ushort MessageType => 2;
-
     public async ValueTask<PasskeyAssertionResponse> HandleAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
         var credential = await passkeyOverlayService.UnlockAndSelectAsync(request, cancellationToken);

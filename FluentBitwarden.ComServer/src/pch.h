@@ -20,11 +20,8 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.System.h>
-#include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.Storage.h>
-#include <winrt/Windows.Security.Cryptography.h>
-#include <winrt/Windows.Storage.Streams.h>
 
 #include <array>
 #include <filesystem>
@@ -41,8 +38,4 @@
 #include <vector>
 #include <ranges>
 
-using winrt::Windows::Data::Json::JsonObject;
-using winrt::Windows::Data::Json::JsonValue;
 using winrt::Windows::Foundation::TimeSpan;
-
-using winrt::Windows::Security::Cryptography::CryptographicBuffer;

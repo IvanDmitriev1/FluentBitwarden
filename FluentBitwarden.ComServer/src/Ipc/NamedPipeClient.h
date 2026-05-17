@@ -19,31 +19,32 @@ namespace FluentBitwarden::ComServer::Ipc
 		NamedPipeClient& operator=(NamedPipeClient&&) noexcept = default;
 
 	public:
-		template <IpcJsonRequest TRequest, IpcJsonResponse TResponse>
+		template <IpcBinaryRequest TRequest, IpcBinaryResponse TResponse>
 		[[nodiscard]] wil::task<TResponse> SendAsync(TRequest request);
 
 	private:
-		wil::task<JsonObject> SendJsonRequestAsync(uint16_t messageType, JsonObject json);
+		wil::task<std::vector<std::byte>> SendBinaryRequestAsync(uint16_t messageType, std::vector<std::byte> payload);
 
-		wil::task<void> WritePayload(uint16_t messageType, std::string utf8);
-		wil::task<JsonObject> ReadJsonResponseAsync();
+		wil::task<void> WritePayload(uint16_t messageType, std::vector<std::byte> payload);
+		wil::task<std::vector<std::byte>> ReadResponsePayloadAsync();
 
 	private:
 		wil::unique_hfile m_pipe;
 		std::wstring m_pipePath;
 	};
 
-	template<IpcJsonRequest TRequest, IpcJsonResponse TResponse>
+	template<IpcBinaryRequest TRequest, IpcBinaryResponse TResponse>
 	inline wil::task<TResponse> NamedPipeClient::SendAsync(TRequest request)
 	{
 		co_await winrt::resume_background();
-		JsonObject requestJson = request.ToJson();
+		std::vector<std::byte> requestPayload = request.ToPayload();
 
-		JsonObject responseJson =
-			co_await SendJsonRequestAsync(
+		std::vector<std::byte> responsePayload =
+			co_await SendBinaryRequestAsync(
 			TRequest::MessageType,
-			requestJson);
+			std::move(requestPayload));
 
-		co_return TResponse::FromJson(responseJson);
+		co_return TResponse::FromPayload(
+			std::span<const std::byte>{ responsePayload.data(), responsePayload.size() });
 	}
 }

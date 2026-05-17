@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Models;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Data.Abstractions;
@@ -10,7 +10,6 @@ using FluentBitwarden.Modules.Passkey.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Views.Passkey;
-using WinUIEx;
 
 namespace FluentBitwarden.Modules.Passkey.Services;
 
@@ -26,23 +25,14 @@ internal class PasskeyOverlayService(
         {
             return Task.FromResult(credential);
         }
-
-        IReadOnlyList<AccountProfile> accounts;
-
-        using (var unitOfWork = unitOfWorkFactory.Create())
-        {
-            accounts = unitOfWork.AccountProfileRepository.GetAccounts();
-        }
-
-        return App.Current.DispatcherQueue.EnqueueAsync(() =>
-            RunOverlayFlowAsync(request, accounts[0], cancellationToken));
+        return App.Current.DispatcherQueue.EnqueueAsync(() => RunOverlayFlowAsync(request, cancellationToken));
     }
 
     private bool CanUseCredentialWithoutPrompt(
         PasskeyGetAssertionRequest request,
-        out Fido2Credential credential)
+        [NotNullWhen(true)] out Fido2Credential? credential)
     {
-        credential = default!;
+        credential = null;
 
         if (accountSessionManager.ActiveSession is null)
             return false;
@@ -59,10 +49,7 @@ internal class PasskeyOverlayService(
         return true;
     }
 
-    private async Task<Fido2Credential> RunOverlayFlowAsync(
-        PasskeyGetAssertionRequest request,
-        AccountProfile accountProfile,
-        CancellationToken cancellationToken)
+    private async Task<Fido2Credential> RunOverlayFlowAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
@@ -77,9 +64,12 @@ internal class PasskeyOverlayService(
         {
             if (accountSessionManager.ActiveSession is null)
             {
+                using var unitOfWork = unitOfWorkFactory.Create();
+                var accounts = unitOfWork.AccountProfileRepository.GetAccounts();
+
                 var userKey = await ShowUnlockPageAsync(
                     overlayWindow,
-                    accountProfile,
+                    accounts[0],
                     cts.Token);
 
                 vaultService.LoadLocalVault();
@@ -103,7 +93,7 @@ internal class PasskeyOverlayService(
         var tcs = new TaskCompletionSource<DecryptedUserKey>(TaskCreationOptions.RunContinuationsAsynchronously);
         await using var _ = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
 
-        var page = new OverlayUnlockPage(accountProfile, key => tcs.SetResult(key));
+        var page = new OverlayUnlockPage(accountProfile, tcs.SetResult);
         overlayWindow.SetContent(page);
 
         return await tcs.Task;
@@ -117,7 +107,7 @@ internal class PasskeyOverlayService(
         var tcs = new TaskCompletionSource<Fido2Credential>(TaskCreationOptions.RunContinuationsAsynchronously);
         await using var _ = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
 
-        var page = new PasskeySelectPage(new PasskeySelectPageViewModel(credential => tcs.SetResult(credential))
+        var page = new PasskeySelectPage(new PasskeySelectPageViewModel(tcs.SetResult)
         {
             Items = credentials
         });

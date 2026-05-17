@@ -37,9 +37,11 @@ namespace FluentBitwarden::ComServer::WebAuthn::AssertionResponseBuilder
 		userInfo.cbId = static_cast<DWORD>(assertion.UserId.size());
 		userInfo.pbId = const_cast<PBYTE>(assertion.UserId.data());
 
+		const auto userName = winrt::to_hstring(assertion.UserName);
+		const auto userDisplayName = winrt::to_hstring(assertion.UserDisplayName);
 
-		userInfo.pwszName = assertion.UserName.c_str();
-		userInfo.pwszDisplayName = assertion.UserDisplayName.c_str();
+		userInfo.pwszName = userName.c_str();
+		userInfo.pwszDisplayName = userDisplayName.c_str();
 		userInfo.pwszIcon = nullptr;
 
 		WEBAUTHN_CTAPCBOR_GET_ASSERTION_RESPONSE getAssertionResponse{};

@@ -46,7 +46,7 @@ namespace FluentBitwarden::ComServer::WebAuthn
 
 		return PasskeyGetAssertionRequest
 		{
-			.RpId = winrt::hstring(request->pwszRpId),
+			.RpId = winrt::to_string(request->pwszRpId),
 			.RpIdHash = std::move(rpIdHash),
 			.ClientDataHash = std::move(clientDataHash)
 		};

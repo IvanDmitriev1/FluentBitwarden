@@ -100,7 +100,7 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
 
         return string.Create(hashLength * 2 + extension.Length, uri, static (destination, uri) =>
         {
-            ReadOnlySpan<char> text = uri.AbsoluteUri.AsSpan();
+            ReadOnlySpan<char> text = uri.Host.AsSpan();
 
             int length = Encoding.UTF8.GetByteCount(text);
             bool useStackAlloc = length <= 512;
