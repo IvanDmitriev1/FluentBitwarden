@@ -55,8 +55,12 @@ internal partial class VaultReaderRepository
     private static VaultCipherDto ToDto(in CipherRow row) => new()
     {
         Id = CipherId.Parse(row.CipherId),
-        OrganizationId = row.OrganizationId is null ? null : OrganizationId.Parse(row.OrganizationId),
-        FolderId = row.FolderId is null ? null : FolderId.Parse(row.FolderId),
+        OrganizationId = row.OrganizationId is null
+            ? null
+            : OrganizationId.Parse(row.OrganizationId),
+        FolderId = row.FolderId is null
+            ? null
+            : FolderId.Parse(row.FolderId),
         EncryptedKey = row.EncryptedKey,
         CipherType = (CipherType)row.CipherType,
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
@@ -70,6 +74,7 @@ internal partial class VaultReaderRepository
         Favorite = row.Favorite != 0,
         Reprompt = row.Reprompt != 0,
         Edit = row.Edit != 0,
-        ViewPassword = row.ViewPassword != 0
+        ViewPassword = row.ViewPassword != 0,
+        Data = []
     };
 }

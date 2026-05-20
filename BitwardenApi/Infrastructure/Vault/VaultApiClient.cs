@@ -1,5 +1,4 @@
 using BitwardenApi.Contracts;
-using BitwardenApi.Models;
 using BitwardenApi.Exceptions;
 using BitwardenApi.Infrastructure.Http;
 using BitwardenApi.Infrastructure.Serialization;
@@ -31,9 +30,7 @@ internal sealed class VaultApiClient(
         return revision;
     }
 
-    public async Task GetSyncAsync(
-        Func<Stream, Task> streamHandler,
-        CancellationToken cancellationToken = default)
+    public async Task<VaultSyncResponse> GetSyncAsync(CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
@@ -47,14 +44,21 @@ internal sealed class VaultApiClient(
             cancellationToken);
 
         response.EnsureSuccess("Vault sync", cancellationToken);
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        await streamHandler.Invoke(stream);
+
+        try
+        {
+            return await response.Content.ReadFromJsonAsync<VaultSyncResponse>(BitwardenVaultApiJsonContext
+                       .ConfiguredDefault.VaultSyncResponse) ??
+                   throw new InvalidOperationException();
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
-    public async Task GetCipherAsync(
-        CipherId cipherId,
-        Func<Stream, Task> streamHandler,
-        CancellationToken cancellationToken = default)
+    public async Task<VaultCipherDto> GetCipherAsync(CipherId cipherId, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
@@ -69,7 +73,8 @@ internal sealed class VaultApiClient(
 
         response.EnsureSuccess("Vault get vaultCipher", cancellationToken);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        await streamHandler.Invoke(stream);
+
+        return JsonSerializer.Deserialize(stream, BitwardenVaultApiJsonContext.Default.VaultCipherDto);
     }
 
     public async Task DeleteCipherAsync(

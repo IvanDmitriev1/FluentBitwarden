@@ -6,12 +6,12 @@ using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Internal;
-using FluentBitwarden.Modules.Vault.Internal.SyncParser;
 using FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Repositories;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace FluentBitwarden.Modules.Vault.Services;
 
@@ -92,19 +92,18 @@ internal sealed class VaultService(
             if (!await HasRemoteChangesAsync(currentUserId, token))
                 return VaultSyncResult.NoChanges;
 
+            var response = await vaultApiClient.GetSyncAsync(token);
 
-            await vaultApiClient.GetSyncAsync(async stream =>
-            {
-                using var unitOfWork = unitOfWorkFactory.Create();
+            using var unitOfWork = unitOfWorkFactory.Create();
+            var repository = new VaultWriterRepository(unitOfWork.Transaction, currentUserId);
+            repository.DeleteVaultData();
 
-                var repository = new VaultWriterRepository(unitOfWork.Transaction, currentUserId);
-                repository.DeleteVaultData();
+            repository.WriteFolders(CollectionsMarshal.AsSpan(response.Folders));
+            repository.WriteCollections(CollectionsMarshal.AsSpan(response.Collections));
+            repository.WriteCiphers(CollectionsMarshal.AsSpan(response.VaultCiphers));
 
-                await VaultSyncResponseParser.ParseAsync(repository, stream, token);
-
-                unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUserId, DateTimeOffset.UtcNow);
-                unitOfWork.SaveChanges();
-            }, token);
+            unitOfWork.AccountProfileRepository.UpdateSyncTime(currentUserId, DateTimeOffset.UtcNow);
+            unitOfWork.SaveChanges();
 
             return VaultSyncResult.Synced;
         }

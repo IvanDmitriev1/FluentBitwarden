@@ -4,8 +4,8 @@ namespace FluentBitwarden.Modules.Vault.Abstractions;
 
 internal interface IVaultWriterRepository
 {
-    void WriteFolder(ref readonly VaultFolderDto dto);
-    void WriteCollection(ref readonly VaultCollectionDto dto);
-    void WriteCipher(ref readonly VaultCipherDto dto, ReadOnlySpan<byte> payload);
+    void WriteFolders(ReadOnlySpan<VaultFolderDto> folders);
+    void WriteCollections(ReadOnlySpan<VaultCollectionDto> collections);
+    void WriteCiphers(ReadOnlySpan<VaultCipherDto> ciphers);
     void DeleteVaultData();
 }
