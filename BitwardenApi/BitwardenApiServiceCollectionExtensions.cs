@@ -1,9 +1,8 @@
 using BitwardenApi.Contracts;
-using BitwardenApi.Infrastructure.Attachments;
-using BitwardenApi.Infrastructure.Http;
-using BitwardenApi.Infrastructure.Identity;
-using BitwardenApi.Infrastructure.Notifications;
-using BitwardenApi.Infrastructure.Vault;
+using BitwardenApi.Vault.Infrastructure;
+using BitwardenApi.Common.Http;
+using BitwardenApi.Identity.Infrastructure;
+using BitwardenApi.Notifications.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
@@ -64,3 +63,4 @@ public static class BitwardenApiServiceCollectionExtensions
         return builder;
     }
 }
+
