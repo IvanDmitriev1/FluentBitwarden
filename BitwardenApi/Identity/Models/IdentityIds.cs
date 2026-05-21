@@ -10,12 +10,6 @@ public readonly partial struct RefreshToken;
 public readonly partial struct TwoFactorToken;
 
 [StronglyTypedId(Template.String)]
-public readonly partial struct EncryptedUserKey;
-
-[StronglyTypedId(Template.String)]
-public readonly partial struct EncryptedPrivateKey;
-
-[StronglyTypedId(Template.String)]
 public readonly partial struct WebAuthnLoginAssertionOptionsToken;
 
 

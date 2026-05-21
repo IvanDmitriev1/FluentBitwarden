@@ -1,6 +1,6 @@
-using System.Text.Json;
-using BitwardenApi.Cryptography;
 using BitwardenApi.Models;
+using System.Text;
+using System.Text.Json;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
@@ -56,7 +56,9 @@ public static partial class VaultDataParser
         if (reader.TokenType == JsonTokenType.Null)
             return null;
 
-        return CryptographyService.DecryptString(ref reader, decryptKey);
+        return reader.ParseEncryptedValue(
+            decryptKey,
+            static value => Encoding.UTF8.GetString(value));
     }
 
     private static List<T> ReadJsonArray<T>(

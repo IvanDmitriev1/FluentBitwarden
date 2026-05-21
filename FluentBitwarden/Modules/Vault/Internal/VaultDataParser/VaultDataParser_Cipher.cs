@@ -1,7 +1,6 @@
-using System.Text.Json;
-using BitwardenApi.Cryptography;
 using BitwardenApi.Models;
 using BitwardenApi.OpenSsh;
+using System.Text.Json;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
@@ -16,10 +15,7 @@ public static partial class VaultDataParser
             ? Span<byte>.Empty
             : stackalloc byte[64];
 
-        if (dto.EncryptedKey is not null)
-        {
-            CryptographyService.UnwrapSymmetricKey(dto.EncryptedKey, decryptedUserKey, keyBuffer);
-        }
+        dto.EncryptedKey?.DecodeTo(decryptedUserKey.Key, keyBuffer);
 
         ReadOnlySpan<byte> decryptionKey = dto.EncryptedKey is null
             ? decryptedUserKey.Key
@@ -297,23 +293,23 @@ public static partial class VaultDataParser
             else if (reader.ValueTextEquals("keyCurve"u8) || reader.ValueTextEquals("KeyCurve"u8))
                 keyCurve = Fido2CredentialJsonMapper.ReadKeyCurve(ref reader, decryptKey, "KeyCurve");
             else if (reader.ValueTextEquals("keyValue"u8) || reader.ValueTextEquals("KeyValue"u8))
-                keyValue = ReadBase64UrlBytes(ref reader, decryptKey, "KeyValue");
+                keyValue = ReadBase64UrlBytes(ref reader, decryptKey);
             else if (reader.ValueTextEquals("rpId"u8) || reader.ValueTextEquals("RpId"u8))
                 rpId = ReadRequiredDecryptField(ref reader, decryptKey, "RpId");
             else if (reader.ValueTextEquals("rpName"u8) || reader.ValueTextEquals("RpName"u8))
                 rpName = ReadRequiredDecryptField(ref reader, decryptKey, "RpName");
             else if (reader.ValueTextEquals("userHandle"u8) || reader.ValueTextEquals("UserHandle"u8))
-                userHandle = ReadBase64UrlBytes(ref reader, decryptKey, "UserHandle");
+                userHandle = ReadBase64UrlBytes(ref reader, decryptKey);
             else if (reader.ValueTextEquals("userName"u8) || reader.ValueTextEquals("UserName"u8))
                 userName = ReadRequiredDecryptField(ref reader, decryptKey, "UserName");
             else if (reader.ValueTextEquals("userDisplayName"u8) || reader.ValueTextEquals("UserDisplayName"u8))
                 userDisplayName = ReadRequiredDecryptField(ref reader, decryptKey, "UserDisplayName");
             else if (reader.ValueTextEquals("counter"u8) || reader.ValueTextEquals("Counter"u8))
-                counter = ReadRequiredEncryptedInt32(ref reader, decryptKey, "Counter");
+                counter = ReadRequiredEncryptedInt32(ref reader, decryptKey);
             else if (reader.ValueTextEquals("discoverable"u8) || reader.ValueTextEquals("Discoverable"u8))
-                discoverable = ReadRequiredEncryptedBoolean(ref reader, decryptKey, "Discoverable");
+                discoverable = ReadRequiredEncryptedBoolean(ref reader, decryptKey);
             else if (reader.ValueTextEquals("creationDate"u8) || reader.ValueTextEquals("CreationDate"u8))
-                creationDate = ReadRequiredDateTimeOffset(ref reader, "CreationDate");
+                creationDate = ReadRequiredDateTimeOffset(ref reader);
             else
                 SkipValue(ref reader);
         }
@@ -343,11 +339,12 @@ public static partial class VaultDataParser
         if (reader.TokenType == JsonTokenType.Null)
             return null;
 
-        Span<byte> decodedSpan = stackalloc byte[reader.ValueSpan.Length];
-        int bytesWritten = CryptographyService.DecryptStringTo(ref reader, decryptKey, decodedSpan);
-        Span<byte> decodedValue = decodedSpan[..bytesWritten];
-
-        TotpValue.TryParse(decodedValue, out var totpValue);
-        return totpValue;
+        return reader.ParseEncryptedValue(
+            decryptKey,
+            static value =>
+            {
+                TotpValue.TryParse(value, out var totpValue);
+                return totpValue;
+            });
     }
 }

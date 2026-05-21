@@ -12,7 +12,7 @@ namespace FluentBitwarden.Modules.Account.Repositories;
 internal sealed class AccountProfileRepository(SqliteTransaction transaction)
     : BaseRepository(transaction), IAccountProfileRepository
 {
-    private readonly record struct AccountProfileRow(
+    internal readonly record struct AccountProfileRow(
         string UserId,
         string Email,
         string ApiBase,

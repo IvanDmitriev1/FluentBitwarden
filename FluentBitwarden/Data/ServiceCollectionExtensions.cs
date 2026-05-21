@@ -12,8 +12,6 @@ internal static class ServiceCollectionExtensions
 
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services)
     {
-        DefaultTypeMap.MatchNamesWithUnderscores = true;
-
         services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory(Path.Combine(ApplicationData.Current.LocalFolder.Path, DatabaseFileName)));
         services.AddSingleton<IDataInitializationService, DataInitializationService>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();

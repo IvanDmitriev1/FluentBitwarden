@@ -1,6 +1,6 @@
-﻿namespace BitwardenApi.Cryptography.Enc;
+namespace BitwardenApi.Cryptography.Enc;
 
-public readonly ref struct EncStringParts(
+internal readonly ref struct EncStringParts(
     EncStringType type,
     ReadOnlySpan<byte> data,
     ReadOnlySpan<byte> iv = default,

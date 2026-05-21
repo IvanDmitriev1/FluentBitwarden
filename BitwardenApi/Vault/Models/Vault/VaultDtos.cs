@@ -14,7 +14,7 @@ public struct VaultFolderDto
     public DateTimeOffset RevisionDate { get; set; }
 
     [JsonPropertyName("name")]
-    public string? EncryptedName { get; set; }
+    public EncString EncryptedName { get; set; }
 }
 
 public record struct VaultCollectionDto
@@ -27,7 +27,7 @@ public record struct VaultCollectionDto
     public int? Type { get; set; }
 
     [JsonPropertyName("name")]
-    public string? EncryptedName { get; set; }
+    public EncString EncryptedName { get; set; }
 }
 
 public readonly struct VaultCipherDto
@@ -37,7 +37,7 @@ public readonly struct VaultCipherDto
     public FolderId? FolderId { get; init; }
 
     [JsonPropertyName("key")]
-    public string? EncryptedKey { get; init; }
+    public EncString? EncryptedKey { get; init; }
 
     [JsonPropertyName("type")]
     public required CipherType CipherType { get; init; }

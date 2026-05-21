@@ -22,7 +22,7 @@ internal static class IdentityJsonMapper
             dto.RefreshToken,
             dto.TwoFactorToken,
             expiresAt,
-            dto.EncryptedPrivateKey,
+            EncryptedPrivateKey.Create(dto.EncryptedPrivateKey),
             dto.UserDecryptionOptions.MasterPasswordUnlock.ToMasterPasswordUnlockModel());
     }
 
@@ -69,7 +69,10 @@ internal static class IdentityJsonMapper
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        return new MasterPasswordUnlockModel(kdfConfig, dto.Salt, dto.MasterKeyEncryptedUserKey);
+        return new MasterPasswordUnlockModel(
+            kdfConfig,
+            dto.Salt,
+            EncryptedUserKey.Create(dto.MasterKeyEncryptedUserKey));
     }
 }
 

@@ -7,12 +7,10 @@ public static partial class VaultDataParser
 {
     public static VaultFolder ParseAndDecryptFolder(ref readonly VaultFolderDto dto, DecryptedUserKey decryptedUserKey)
     {
-        ArgumentNullException.ThrowIfNull(dto.EncryptedName);
-
         return new VaultFolder
         {
             Id = dto.Id,
-            Name = CryptographyService.DecryptString(dto.EncryptedName, decryptedUserKey.Key),
+            Name = dto.EncryptedName.Decode(decryptedUserKey.Key),
             RevisionDate = dto.RevisionDate
         };
     }

@@ -20,8 +20,8 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
         CREATE TABLE IF NOT EXISTS account_key_material (
             user_id TEXT PRIMARY KEY NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE,
             salt TEXT NOT NULL,
-            encrypted_user_key TEXT NOT NULL,
-            encrypted_private_key TEXT NOT NULL,
+            encrypted_user_key BLOB NOT NULL,
+            encrypted_private_key BLOB NOT NULL,
             kdf_type INTEGER NOT NULL,
             kdf_iterations INTEGER NOT NULL,
             kdf_memory_mib INTEGER,
@@ -43,7 +43,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             user_id   TEXT NOT NULL COLLATE NOCASE,
             folder_id TEXT NOT NULL COLLATE NOCASE,
             revision_date_unix_ms INTEGER NOT NULL,
-            encrypted_name    TEXT NOT NULL,
+            encrypted_name    BLOB NOT NULL,
         
             UNIQUE (user_id, folder_id),
         
@@ -59,7 +59,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             manage         INTEGER NOT NULL,
             hide_passwords INTEGER NOT NULL,
             collection_type INTEGER NULL,
-            encrypted_name TEXT NOT NULL,
+            encrypted_name BLOB NOT NULL,
         
             UNIQUE (user_id, collection_id),
         
@@ -81,7 +81,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             reprompt     INTEGER NOT NULL,
             edit         INTEGER NOT NULL,
             view_password INTEGER NOT NULL,
-            encrypted_key TEXT NULL,
+            encrypted_key BLOB NULL,
             payload      BLOB NOT NULL,
         
             UNIQUE (user_id, cipher_id),

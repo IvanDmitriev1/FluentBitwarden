@@ -15,8 +15,7 @@ internal sealed class MasterPasswordAccountUnlockMethod : IAccountIUnlockMethod
     {
         try
         {
-            var decryptedKey = CryptographyService.DecryptUserKey(
-                accountKeyMaterial.EncryptedUserKey,
+            var decryptedKey = accountKeyMaterial.EncryptedUserKey.Decrypt(
                 masterPassword,
                 accountKeyMaterial.Salt,
                 accountKeyMaterial.KdfConfig);

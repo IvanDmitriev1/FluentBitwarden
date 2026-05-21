@@ -10,60 +10,60 @@ internal static class Fido2CredentialJsonMapper
         ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> key,
         string propertyName)
-        => EncryptedJsonValueReader.ReadRequired(ref reader, key, propertyName,
-            static (value, propertyName) =>
+        => EncryptedJsonValueReader.ReadRequired(ref reader, key,
+            static value =>
             {
                 if (Ascii.EqualsIgnoreCase(value, "public-key"u8))
                 {
                     return Fido2CredentialKeyType.PublicKey;
                 }
 
-                throw new JsonException($"{propertyName} contains an unsupported Fido2 credential key type.");
+                throw new JsonException($"Property contains an unsupported Fido2 credential key type.");
             });
 
     public static Fido2CredentialKeyAlgorithm ReadKeyAlgorithm(
         ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> key,
         string propertyName)
-        => EncryptedJsonValueReader.ReadRequired(ref reader, key, propertyName,
-            static (value, propertyName) =>
+        => EncryptedJsonValueReader.ReadRequired(ref reader, key,
+            static (value) =>
             {
                 if (Ascii.EqualsIgnoreCase(value, "ECDSA"u8))
                 {
                     return Fido2CredentialKeyAlgorithm.Ecdsa;
                 }
 
-                throw new JsonException($"{propertyName} contains an unsupported Fido2 credential key algorithm.");
+                throw new JsonException("Property contains an unsupported Fido2 credential key algorithm.");
             });
 
     public static Fido2CredentialKeyCurve ReadKeyCurve(
         ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> key,
         string propertyName)
-        => EncryptedJsonValueReader.ReadRequired(ref reader, key, propertyName,
-            static (value, propertyName) =>
+        => EncryptedJsonValueReader.ReadRequired(ref reader, key,
+            static value =>
             {
                 if (Ascii.EqualsIgnoreCase(value, "P-256"u8))
                 {
                     return Fido2CredentialKeyCurve.P256;
                 }
 
-                throw new JsonException($"{propertyName} contains an unsupported Fido2 credential key curve.");
+                throw new JsonException("Property contains an unsupported Fido2 credential key curve.");
             });
 
     public static byte[] ReadCredentialId(
         ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> key,
         string propertyName)
-        => EncryptedJsonValueReader.ReadRequired(ref reader, key, propertyName,
-            static (value, propertyName) =>
+        => EncryptedJsonValueReader.ReadRequired(ref reader, key,
+            static value =>
             {
                 if (Guid.TryParse(value, out Guid guid))
                 {
                     return guid.ToByteArray(bigEndian: true);
                 }
 
-                throw new JsonException($"{propertyName} must be a valid GUID value.");
+                throw new JsonException("Property must be a valid GUID value.");
             });
 
 }

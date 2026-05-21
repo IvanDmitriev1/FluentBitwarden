@@ -22,7 +22,7 @@ internal record TokenRefreshSessionResponse
 internal sealed record TokenAuthenticatedResponse : TokenRefreshSessionResponse
 {
     [JsonPropertyName("privateKey")]
-    public required EncryptedPrivateKey EncryptedPrivateKey { get; init; }
+    public required EncString EncryptedPrivateKey { get; init; }
 
     [JsonPropertyName("userDecryptionOptions")]
     public required UserDecryptionOptions UserDecryptionOptions { get; init; }
@@ -58,7 +58,7 @@ internal sealed class MasterPasswordUnlock
     public required KdfSettingsDto Kdf { get; init; }
 
     [JsonPropertyName("masterKeyEncryptedUserKey")]
-    public required EncryptedUserKey MasterKeyEncryptedUserKey { get; init; }
+    public required EncString MasterKeyEncryptedUserKey { get; init; }
 
     [JsonPropertyName("salt")]
     public required string Salt { get; init; }

@@ -11,11 +11,11 @@ namespace FluentBitwarden.Modules.Account.Repositories;
 internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction)
     : BaseRepository(transaction), IAccountKeyMaterialRepository
 {
-    private readonly record struct AccountKeyMaterialRow(
+    internal sealed record AccountKeyMaterialRow(
         string UserId,
         string Salt,
-        string EncryptedUserKey,
-        string EncryptedPrivateKey,
+        byte[] EncryptedUserKey,
+        byte[] EncryptedPrivateKey,
         int KdfType,
         int KdfIterations,
         int? KdfMemoryMib,
@@ -45,7 +45,7 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             },
             transaction: Transaction);
 
-        return row == default ? null : MapToDomain(row);
+        return row is null ? null : MapToDomain(row);
     }
 
     public void Upsert(AccountKeyMaterial keyMaterial)
@@ -89,8 +89,8 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             {
                 UserId = keyMaterial.UserId.ToString(),
                 Salt = keyMaterial.Salt,
-                EncryptedUserKey = keyMaterial.EncryptedUserKey.ToString(),
-                EncryptedPrivateKey = keyMaterial.EncryptedPrivateKey.ToString(),
+                EncryptedUserKey = keyMaterial.EncryptedUserKey.Value.ToByteArray(),
+                EncryptedPrivateKey = keyMaterial.EncryptedPrivateKey.Value.ToByteArray(),
                 KdfType = (int)kdf.Type,
                 KdfIterations = kdf.Iterations,
                 KdfMemoryMib = kdf.MemoryMib,
@@ -103,8 +103,8 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
         UserId: UserId.Parse(row.UserId),
         Salt: row.Salt,
         KdfConfig: BuildKdf(row),
-        EncryptedUserKey: EncryptedUserKey.Parse(row.EncryptedUserKey),
-        EncryptedPrivateKey: EncryptedPrivateKey.Parse(row.EncryptedPrivateKey));
+        EncryptedUserKey: EncryptedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),
+        EncryptedPrivateKey: EncryptedPrivateKey.Create(EncString.FromBytes(row.EncryptedPrivateKey)));
 
     private static KdfConfig BuildKdf(in AccountKeyMaterialRow row) =>
         (KdfType)row.KdfType switch

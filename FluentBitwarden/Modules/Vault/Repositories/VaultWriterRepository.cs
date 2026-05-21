@@ -31,7 +31,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     UserId = _userIdStr,
                     FolderId = dto.Id.ToString(),
                     RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
-                    EncryptedName = dto.EncryptedName
+                    EncryptedName = dto.EncryptedName.ToByteArray()
                 },
                 transaction: Transaction);
         }
@@ -80,7 +80,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     Manage = dto.Manage ? 1 : 0,
                     HidePasswords = dto.HidePasswords ? 1 : 0,
                     CollectionType = dto.Type,
-                    EncryptedName = dto.EncryptedName
+                    EncryptedName = dto.EncryptedName.ToByteArray()
                 },
                 transaction: Transaction);
         }
@@ -158,7 +158,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     Reprompt = dto.Reprompt ? 1 : 0,
                     Edit = dto.Edit ? 1 : 0,
                     ViewPassword = dto.ViewPassword ? 1 : 0,
-                    EncryptedKey = dto.EncryptedKey,
+                    EncryptedKey = dto.EncryptedKey?.ToByteArray(),
                     Size = dto.Data.Length
                 },
                 transaction: Transaction);

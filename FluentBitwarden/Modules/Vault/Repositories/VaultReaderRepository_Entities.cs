@@ -4,26 +4,26 @@ namespace FluentBitwarden.Modules.Vault.Repositories;
 
 internal partial class VaultReaderRepository
 {
-    private readonly record struct FolderRow(
+    internal readonly record struct FolderRow(
         string FolderId,
         long RevisionDateUnixMs,
-        string? EncryptedName);
+        byte[] EncryptedName);
 
     private static VaultFolderDto ToDto(in FolderRow row) => new()
     {
         Id = FolderId.Parse(row.FolderId),
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
-        EncryptedName = row.EncryptedName
+        EncryptedName = EncString.FromBytes(row.EncryptedName)
     };
 
-    private readonly record struct CollectionRow(
+    internal readonly record struct CollectionRow(
         string CollectionId,
         string? OrganizationId,
         int ReadOnly,
         int Manage,
         int HidePasswords,
         int? CollectionType,
-        string? EncryptedName);
+        byte[] EncryptedName);
 
     private static VaultCollectionDto ToDto(in CollectionRow row) => new()
     {
@@ -33,15 +33,15 @@ internal partial class VaultReaderRepository
         Manage = row.Manage != 0,
         HidePasswords = row.HidePasswords != 0,
         Type = row.CollectionType,
-        EncryptedName = row.EncryptedName
+        EncryptedName = EncString.FromBytes(row.EncryptedName)
     };
 
-    private readonly record struct CipherRow(
+    internal readonly record struct CipherRow(
         int RowId,
         string CipherId,
         string? OrganizationId,
         string? FolderId,
-        string? EncryptedKey,
+        byte[]? EncryptedKey,
         int CipherType,
         long RevisionDateUnixMs,
         long CreationDateUnixMs,
@@ -61,7 +61,7 @@ internal partial class VaultReaderRepository
         FolderId = row.FolderId is null
             ? null
             : FolderId.Parse(row.FolderId),
-        EncryptedKey = row.EncryptedKey,
+        EncryptedKey = row.EncryptedKey is null ? null : EncString.FromBytes(row.EncryptedKey),
         CipherType = (CipherType)row.CipherType,
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
         CreationDate = DateTimeOffset.FromUnixTimeMilliseconds(row.CreationDateUnixMs),
