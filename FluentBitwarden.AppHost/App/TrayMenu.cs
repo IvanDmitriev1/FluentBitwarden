@@ -36,15 +36,15 @@ internal static class TrayMenu
         switch (command)
         {
             case ShowCommand:
-                UiProcessLauncher.Activate(UiLifecycleCommand.Show);
+                AppProcessLauncher.Activate(AppLifecycleCommand.Show);
                 return;
 
             case LockCommand:
-                UiProcessLauncher.Activate(UiLifecycleCommand.Lock);
+                AppProcessLauncher.Activate(AppLifecycleCommand.Lock);
                 return;
 
             case ExitCommand:
-                UiProcessLauncher.Activate(UiLifecycleCommand.Exit);
+                AppProcessLauncher.Activate(AppLifecycleCommand.Exit);
                 PInvoke.DestroyWindow(windowHandle);
                 return;
         }

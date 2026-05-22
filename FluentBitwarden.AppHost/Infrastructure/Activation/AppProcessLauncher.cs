@@ -1,11 +1,11 @@
 namespace FluentBitwarden.AppHost.Infrastructure.Activation;
 
-internal static class UiProcessLauncher
+internal static class AppProcessLauncher
 {
     private const string UiExecutableName = "FluentBitwarden.Ui.exe";
     private const string UiProjectDirectoryName = "FluentBitwarden.Ui";
 
-    public static void Activate(UiLifecycleCommand command)
+    public static void Activate(AppLifecycleCommand command)
     {
         try
         {

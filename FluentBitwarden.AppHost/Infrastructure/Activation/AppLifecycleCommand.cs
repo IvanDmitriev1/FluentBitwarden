@@ -1,6 +1,6 @@
 namespace FluentBitwarden.AppHost.Infrastructure.Activation;
 
-internal enum UiLifecycleCommand
+internal enum AppLifecycleCommand
 {
     Show,
     Headless,

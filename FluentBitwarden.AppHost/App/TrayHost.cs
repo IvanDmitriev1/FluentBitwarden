@@ -100,7 +100,7 @@ internal sealed class TrayHost
             case LeftButtonDoubleClickMessage:
             case TraySelectMessage:
             case TrayKeySelectMessage:
-                UiProcessLauncher.Activate(UiLifecycleCommand.Show);
+                AppProcessLauncher.Activate(AppLifecycleCommand.Show);
                 return;
 
             case ContextMenuMessage:

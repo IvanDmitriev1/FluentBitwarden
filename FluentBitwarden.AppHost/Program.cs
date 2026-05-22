@@ -40,10 +40,10 @@ internal static class Program
 
     private static void HandleActivation(TrayHost trayHost, AppActivationArguments args)
     {
-        UiLifecycleCommand command = UiLifecycleCommandExtensions.From(args);
-        UiProcessLauncher.Activate(command);
+        AppLifecycleCommand command = AppLifecycleCommandExtensions.From(args);
+        AppProcessLauncher.Activate(command);
 
-        if (command == UiLifecycleCommand.Exit)
+        if (command == AppLifecycleCommand.Exit)
             trayHost.RequestShutdown();
     }
 
