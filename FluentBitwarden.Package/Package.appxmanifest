@@ -33,9 +33,9 @@
 	</Resources>
 
 	<Applications>
-		<!-- Main WinUI 3 app -->
+		<!-- Visible lifetime host for tray and UI process activation. -->
 		<Application Id="MainApp"
-					 Executable="FluentBitwarden.exe"
+					 Executable="FluentBitwarden.AppHost.exe"
 					 EntryPoint="windows.fullTrustApplication">
 			<uap:VisualElements
 			  DisplayName="FluentBitwarden"
@@ -53,6 +53,21 @@
 					Category="windows.fullTrustProcess"
 					Executable="FluentBitwarden.ComServer.exe" />
 			</Extensions>
+		</Application>
+
+		<!-- WinUI vault UI process. The AppHost launches and foregrounds it. -->
+		<Application Id="UiApp"
+					 Executable="FluentBitwarden.Ui\FluentBitwarden.Ui.exe"
+					 EntryPoint="windows.fullTrustApplication">
+			<uap:VisualElements
+			  DisplayName="FluentBitwarden UI"
+			  Description="FluentBitwarden UI"
+			  BackgroundColor="transparent"
+			  Square150x150Logo="Images\Square150x150Logo.png"
+			  Square44x44Logo="Images\Square44x44Logo.png"
+			  AppListEntry="none" >
+				<uap:DefaultTile/>
+			</uap:VisualElements>
 		</Application>
 
 		<!-- Native helper / COM server -->

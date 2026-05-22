@@ -3,5 +3,5 @@
 
 namespace FluentBitwarden::ComServer::AppActivationLauncher
 {
-    void ActivateMainApp(std::wstring launchArguments);
+    void ActivateAppHost(std::wstring launchArguments);
 }

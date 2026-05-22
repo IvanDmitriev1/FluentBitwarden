@@ -8,7 +8,7 @@ namespace FluentBitwarden::ComServer::AppActivationLauncher
 
     namespace
     {
-        [[nodiscard]] path GetMainAppPath()
+        [[nodiscard]] path GetAppHostPath()
         {
             const auto installedLocation =
                 AppModel::Package::Current().InstalledLocation();
@@ -18,7 +18,12 @@ namespace FluentBitwarden::ComServer::AppActivationLauncher
                 installedLocation.Path().c_str()
             };
 
-            return packageRoot / L"FluentBitwarden" / L"FluentBitwarden.exe";
+            const path nestedHostPath =
+                packageRoot / L"FluentBitwarden.AppHost" / L"FluentBitwarden.AppHost.exe";
+
+            return std::filesystem::exists(nestedHostPath)
+                ? nestedHostPath
+                : packageRoot / L"FluentBitwarden.AppHost.exe";
         }
 
         [[nodiscard]] constexpr std::wstring QuoteCommandLinePath(
@@ -52,8 +57,8 @@ namespace FluentBitwarden::ComServer::AppActivationLauncher
             return buffer;
         }
 
-        void CreateMainAppProcess(
-            const std::filesystem::path& mainAppPath,
+        void CreateAppHostProcess(
+            const std::filesystem::path& appHostPath,
             std::vector<wchar_t>& commandLine)
         {
             STARTUPINFOW startupInfo{};
@@ -63,14 +68,14 @@ namespace FluentBitwarden::ComServer::AppActivationLauncher
 
             THROW_LAST_ERROR_IF(
                 !::CreateProcessW(
-                mainAppPath.c_str(),
+                appHostPath.c_str(),
                 commandLine.data(),
                 nullptr,
                 nullptr,
                 FALSE,
                 0,
                 nullptr,
-                mainAppPath.parent_path().c_str(),
+                appHostPath.parent_path().c_str(),
                 &startupInfo,
                 &processInfo));
 
@@ -84,11 +89,11 @@ namespace FluentBitwarden::ComServer::AppActivationLauncher
         }
     }
 
-    void ActivateMainApp(std::wstring launchArguments)
+    void ActivateAppHost(std::wstring launchArguments)
     {
-        const auto mainAppPath = GetMainAppPath();
-        auto commandLineArgs = MakeCommandLineArgs(mainAppPath, launchArguments);
+        const auto appHostPath = GetAppHostPath();
+        auto commandLineArgs = MakeCommandLineArgs(appHostPath, launchArguments);
 
-        CreateMainAppProcess(mainAppPath, commandLineArgs);
+        CreateAppHostProcess(appHostPath, commandLineArgs);
     }
 }

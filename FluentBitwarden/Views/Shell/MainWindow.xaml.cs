@@ -32,8 +32,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 
         Apply(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
         RootFrame.Navigate(typeof(LoadingPage));
-
-        Closed += OnClosed;
     }
 
     public bool IsHidden => !AppWindow.IsVisible;
@@ -46,8 +44,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 
     public void RequestExit()
     {
-        Closed -= OnClosed;
-
         App.Current.Exit();
     }
 

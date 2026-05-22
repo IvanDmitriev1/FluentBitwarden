@@ -69,7 +69,7 @@ namespace FluentBitwarden::ComServer
 		{
 			RETURN_HR_IF_NULL(E_POINTER, lockStatus);
 
-			AppActivationLauncher::ActivateMainApp(L"--headless");
+			AppActivationLauncher::ActivateAppHost(L"--headless");
 
 			*lockStatus = PluginLocked;
 			return S_OK;

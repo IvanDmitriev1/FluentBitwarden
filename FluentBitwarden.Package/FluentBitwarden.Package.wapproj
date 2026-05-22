@@ -33,7 +33,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <AssetTargetFallback>net10.0-windows$(TargetPlatformVersion);$(AssetTargetFallback)</AssetTargetFallback>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <EntryPointProjectUniqueName>..\FluentBitwarden\FluentBitwarden.csproj</EntryPointProjectUniqueName>
+    <EntryPointProjectUniqueName>..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj</EntryPointProjectUniqueName>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
@@ -53,7 +53,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
-    <ProjectReference Include="..\FluentBitwarden\FluentBitwarden.csproj">
+    <ProjectReference Include="..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj">
+      <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
+      <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+    </ProjectReference>
+    <ProjectReference Include="..\FluentBitwarden\FluentBitwarden.Ui.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>

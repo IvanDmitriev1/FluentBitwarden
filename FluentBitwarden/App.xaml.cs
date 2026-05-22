@@ -20,7 +20,6 @@ using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
-using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
@@ -33,8 +32,6 @@ public partial class App : IXamlMetadataServiceProvider
     public new static App Current => (App)Microsoft.UI.Xaml.Application.Current;
 
     public DispatcherQueue DispatcherQueue { get; }
-
-    private readonly AppActivationArguments _initialActivation;
 
     public IHost Host { get; } = Microsoft.Extensions.Hosting.Host
         .CreateDefaultBuilder()
@@ -66,11 +63,9 @@ public partial class App : IXamlMetadataServiceProvider
 
     public T GetRequiredService<T>() where T : notnull => Host.Services.GetRequiredService<T>();
 
-    public App(AppActivationArguments initialActivation)
+    public App()
     {
         InitializeComponent();
-
-        _initialActivation = initialActivation;
 
         UnhandledException += static (sender, args) => UnhandledExceptionLogger.WriteException(args.Exception);
         TaskScheduler.UnobservedTaskException += static (sender, args) =>
@@ -91,11 +86,11 @@ public partial class App : IXamlMetadataServiceProvider
         _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
         _ = Task.Run(() => Host.Services.GetRequiredService<ISshAgentServer>().RunAsync());
 
-        AppLifetimeManager.Activate(_initialActivation);
+        WindowManager.ShowMainWindow();
     }
 
-    public void HandleActivation(AppActivationArguments args)
+    public void HandleActivation()
     {
-        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, () => AppLifetimeManager.Activate(args));
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, WindowManager.ShowMainWindow);
     }
 }

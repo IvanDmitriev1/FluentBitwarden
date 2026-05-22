@@ -2,8 +2,6 @@ using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using FluentBitwarden.Modules.Session.Models;
-
 namespace FluentBitwarden;
 
 public static class Program
@@ -14,35 +12,25 @@ public static class Program
     static int Main()
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
-        bool isRedirect = DecideRedirection(out var initialActivation);
+        AppInstance keyInstance = AppInstance.FindOrRegisterForKey("FluentBitwardenUiSingleInstance");
 
-        if (isRedirect)
+        if (!keyInstance.IsCurrent)
+        {
+            RedirectActivationTo(AppInstance.GetCurrent().GetActivatedEventArgs(), keyInstance);
             return 0;
+        }
+
+        keyInstance.Activated += static (_, _) => App.Current.HandleActivation();
 
         Microsoft.UI.Xaml.Application.Start(_ =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
-            var app = new App(initialActivation);
+            var app = new App();
         });
 
         return 0;
-    }
-
-    private static bool DecideRedirection(out AppActivationArguments initialActivation)
-    {
-        AppInstance keyInstance = AppInstance.FindOrRegisterForKey("FluentBitwardenSingleInstance");
-        initialActivation = AppInstance.GetCurrent().GetActivatedEventArgs();
-
-        if (keyInstance.IsCurrent)
-        {
-            keyInstance.Activated += OnActivated;
-            return false;
-        }
-
-        RedirectActivationTo(initialActivation, keyInstance);
-        return true;
     }
 
     // Do the redirection on another thread, and use a non-blocking
@@ -57,12 +45,10 @@ public static class Program
             PInvoke.SetEvent(_redirectEventHandle);
         });
 
-        const uint CWMO_DEFAULT = 0;
-        const uint INFINITE = 0xFFFFFFFF;
+        const uint CoWaitDefault = 0;
+        const uint Infinite = 0xFFFFFFFF;
 
         HANDLE rawHandle = new(_redirectEventHandle.DangerousGetHandle());
-        PInvoke.CoWaitForMultipleObjects(CWMO_DEFAULT, INFINITE, [rawHandle], out _);
+        PInvoke.CoWaitForMultipleObjects(CoWaitDefault, Infinite, [rawHandle], out _);
     }
-
-    private static void OnActivated(object? sender, AppActivationArguments args) => App.Current.HandleActivation(args);
 }
