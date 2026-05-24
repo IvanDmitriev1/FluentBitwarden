@@ -7,9 +7,9 @@ using FluentBitwarden.Infrastructure.Ipc.Internal;
 namespace FluentBitwarden.Infrastructure.Ipc.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class IpcPipeServer : IIpcPipeServer, IAsyncDisposable
+internal sealed class AppPipeIpcServer : IIpcPipeServer, IAsyncDisposable
 {
-    public IpcPipeServer(IServiceProvider serviceProvider, IEnumerable<PipeMessageInvokerDescriptor> descriptors)
+    public AppPipeIpcServer(IServiceProvider serviceProvider, IEnumerable<PipeMessageInvokerDescriptor> descriptors)
     {
         _serviceProvider = serviceProvider;
         _invokers = descriptors.ToDictionary(static desc => desc.MessageType, static desc => desc);

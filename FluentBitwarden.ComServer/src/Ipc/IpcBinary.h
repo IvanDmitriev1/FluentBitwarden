@@ -2,7 +2,6 @@
 #include <concepts>
 #include <span>
 #include <cstring>
-#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -40,25 +39,27 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 	class PayloadWriter final
 	{
 	public:
-		void WriteUInt16(std::uint16_t value)
+		void WriteObjectHeader(std::uint8_t memberCount)
 		{
-			WriteInteger(value);
-		}
-
-		void WriteUInt32(std::uint32_t value)
-		{
-			WriteInteger(value);
+			m_buffer.push_back(static_cast<std::byte>(memberCount));
 		}
 
 		void WriteBytes(std::span<const std::uint8_t> value)
 		{
-			WriteLength(value.size());
+			WriteCollectionLength(value.size());
 			AppendBytes(std::as_bytes(value));
 		}
 
 		void WriteString(std::string_view value)
 		{
-			WriteLength(value.size());
+			if (value.empty())
+			{
+				WriteInt32(0);
+				return;
+			}
+
+			WriteInt32(~static_cast<std::int32_t>(value.size()));
+			WriteInt32(-1);
 			AppendBytes(std::as_bytes(std::span{ value.data(), value.size() }));
 		}
 
@@ -68,22 +69,16 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 		}
 
 	private:
-		template <std::unsigned_integral T>
-		void WriteInteger(T value)
+		void WriteInt32(std::int32_t value)
 		{
 			const auto offset = m_buffer.size();
-			m_buffer.resize(offset + sizeof(T));
-			WriteLe<T>(std::span<std::byte>{ m_buffer }.subspan(offset, sizeof(T)), value);
+			m_buffer.resize(offset + sizeof(value));
+			std::memcpy(m_buffer.data() + offset, &value, sizeof(value));
 		}
 
-		void WriteLength(std::size_t length)
+		void WriteCollectionLength(std::size_t length)
 		{
-			if (length > std::numeric_limits<std::uint32_t>::max())
-			{
-				throw std::runtime_error("IPC field length exceeds uint32 range.");
-			}
-
-			WriteUInt32(static_cast<std::uint32_t>(length));
+			WriteInt32(static_cast<std::int32_t>(length));
 		}
 
 		void AppendBytes(std::span<const std::byte> bytes)
@@ -110,19 +105,18 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 		{
 		}
 
-		[[nodiscard]] std::uint16_t ReadUInt16()
+		void ReadObjectHeader(std::uint8_t expectedMemberCount)
 		{
-			return ReadInteger<std::uint16_t>();
-		}
-
-		[[nodiscard]] std::uint32_t ReadUInt32()
-		{
-			return ReadInteger<std::uint32_t>();
+			const auto actual = ReadRaw(sizeof(std::uint8_t))[0];
+			if (actual != static_cast<std::byte>(expectedMemberCount))
+			{
+				throw std::runtime_error("Unexpected MemoryPack object member count.");
+			}
 		}
 
 		[[nodiscard]] std::vector<std::uint8_t> ReadBytes()
 		{
-			const auto bytes = ReadRaw(ReadUInt32());
+			const auto bytes = ReadRaw(ReadCollectionLength());
 			std::vector<std::uint8_t> value(bytes.size());
 			if (!bytes.empty())
 			{
@@ -134,12 +128,21 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 
 		[[nodiscard]] std::string ReadString()
 		{
-			const auto bytes = ReadRaw(ReadUInt32());
-			if (bytes.empty())
+			const auto length = ReadInt32();
+			if (length == 0)
 			{
 				return {};
 			}
 
+			if (length > 0)
+			{
+				throw std::runtime_error("Expected MemoryPack UTF-8 string.");
+			}
+
+			const auto utf8Length = ~length;
+			(void)ReadInt32();
+
+			const auto bytes = ReadRaw(static_cast<std::size_t>(utf8Length));
 			return std::string{
 				reinterpret_cast<const char*>(bytes.data()),
 				bytes.size()
@@ -155,10 +158,23 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 		}
 
 	private:
-		template <std::unsigned_integral T>
-		[[nodiscard]] T ReadInteger()
+		[[nodiscard]] std::int32_t ReadInt32()
 		{
-			return ReadLe<T>(ReadRaw(sizeof(T)));
+			std::int32_t value{};
+			const auto bytes = ReadRaw(sizeof(value));
+			std::memcpy(&value, bytes.data(), sizeof(value));
+			return value;
+		}
+
+		[[nodiscard]] std::size_t ReadCollectionLength()
+		{
+			const auto length = ReadInt32();
+			if (length < 0)
+			{
+				throw std::runtime_error("Unexpected null MemoryPack collection.");
+			}
+
+			return static_cast<std::size_t>(length);
 		}
 
 		[[nodiscard]] std::span<const std::byte> ReadRaw(std::size_t length)

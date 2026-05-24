@@ -8,27 +8,26 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddNamedPipeIpc(this IServiceCollection services)
     {
-        services.AddSingleton<IIpcPipeServer, IpcPipeServer>();
+        services.AddSingleton<IIpcPipeServer, AppPipeIpcServer>();
+        services.AddTransient<IAppPipeIpcClient, AppPipeIpcClient>();
         return services;
     }
 
     public static IServiceCollection AddPipeMessageHandler<THandler, TRequest, TResponse>(
         this IServiceCollection services)
-        where THandler : class, IPipeMessageHandler<TRequest, TResponse>
-        where TRequest : IPipeRequest<TRequest>
-        where TResponse : IPipeMessage<TResponse>
+        where THandler : class, IPipeRequestMessageHandler<TRequest, TResponse>
+        where TRequest : IPipeRequestMessage
+        where TResponse : notnull
     {
-        services.AddTransient<IPipeMessageHandler<TRequest, TResponse>, THandler>();
+        services.AddTransient<THandler>();
+
         services.AddSingleton(new PipeMessageInvokerDescriptor(
             TRequest.MessageType,
-            sp =>
-            {
-                var handler =
-                    sp.GetRequiredService<IPipeMessageHandler<TRequest, TResponse>>();
-
-                return new PipeMessageInvoker<TRequest, TResponse>(
-                    handler);
-            }));
+           static sp =>
+           {
+               var handler = sp.GetRequiredService<THandler>();
+               return new PipeMessageInvoker<THandler, TRequest, TResponse>(handler);
+           }));
 
         return services;
     }

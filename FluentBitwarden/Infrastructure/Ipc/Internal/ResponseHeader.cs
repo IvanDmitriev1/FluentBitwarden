@@ -9,13 +9,27 @@ internal readonly record struct ResponseHeader(int PayloadLength)
     private const int VersionOffset = 0;
     private const int PayloadLengthOffset = sizeof(ushort);
 
+    public static ResponseHeader Read(Stream stream)
+    {
+        Span<byte> header = stackalloc byte[HeaderSize];
+        stream.ReadExactly(header);
+
+        var version = BinaryPrimitives.ReadUInt16LittleEndian(
+            header.Slice(VersionOffset, sizeof(ushort)));
+
+        int payloadLength = BinaryPrimitives.ReadInt32LittleEndian(
+            header.Slice(PayloadLengthOffset, sizeof(int)));
+
+        if (version != IpcConstants.ProtocolVersion)
+            throw new InvalidOperationException(
+                $"Incompatible IPC version. Expected {IpcConstants.ProtocolVersion}, got {version}.");
+
+        return new ResponseHeader(payloadLength);
+    }
+
     public void Write(Stream stream)
     {
         Span<byte> header = stackalloc byte[HeaderSize];
-
-        if (PayloadLength is <= 0 or > IpcConstants.MaxPayloadLength)
-            throw new InvalidOperationException(
-                $"Invalid payload length: {PayloadLength}.");
 
         BinaryPrimitives.WriteUInt16LittleEndian(
             header.Slice(VersionOffset, sizeof(ushort)),

@@ -12,6 +12,25 @@ internal readonly record struct RequestHeader(
     private const int MessageTypeOffset = sizeof(ushort);
     private const int PayloadLengthOffset = sizeof(ushort) * 2;
 
+    public void Write(Stream stream)
+    {
+        Span<byte> header = stackalloc byte[HeaderSize];
+
+        BinaryPrimitives.WriteUInt16LittleEndian(
+            header.Slice(VersionOffset, sizeof(ushort)),
+            IpcConstants.ProtocolVersion);
+
+        BinaryPrimitives.WriteUInt16LittleEndian(
+            header.Slice(MessageTypeOffset, sizeof(ushort)),
+            MessageType);
+
+        BinaryPrimitives.WriteInt32LittleEndian(
+            header.Slice(PayloadLengthOffset, sizeof(int)),
+            PayloadLength);
+
+        stream.Write(header);
+    }
+
     public static RequestHeader Read(Stream stream)
     {
         Span<byte> header = stackalloc byte[HeaderSize];
@@ -29,10 +48,6 @@ internal readonly record struct RequestHeader(
         if (version != IpcConstants.ProtocolVersion)
             throw new InvalidOperationException(
                 $"Incompatible IPC version. Expected {IpcConstants.ProtocolVersion}, got {version}.");
-
-        if (payloadLength is <= 0 or > IpcConstants.MaxPayloadLength)
-            throw new InvalidOperationException(
-                $"Invalid payload length: {payloadLength} bytes.");
 
         return new RequestHeader(messageType, payloadLength);
     }

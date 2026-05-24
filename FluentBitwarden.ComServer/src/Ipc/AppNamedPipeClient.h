@@ -4,19 +4,19 @@
 
 namespace FluentBitwarden::ComServer::Ipc
 {
-	class NamedPipeClient final
+	class AppNamedPipeClient final
 	{
 		std::chrono::milliseconds ConnectTimeout{ std::chrono::seconds{ 5 } };
 
 	public:
-		NamedPipeClient(std::wstring_view pipeName);
-		~NamedPipeClient() = default;
+		AppNamedPipeClient();
+		~AppNamedPipeClient() = default;
 
-		NamedPipeClient(NamedPipeClient const&) = delete;
-		NamedPipeClient& operator=(NamedPipeClient const&) = delete;
+		AppNamedPipeClient(AppNamedPipeClient const&) = delete;
+		AppNamedPipeClient& operator=(AppNamedPipeClient const&) = delete;
 
-		NamedPipeClient(NamedPipeClient&&) noexcept = default;
-		NamedPipeClient& operator=(NamedPipeClient&&) noexcept = default;
+		AppNamedPipeClient(AppNamedPipeClient&&) noexcept = default;
+		AppNamedPipeClient& operator=(AppNamedPipeClient&&) noexcept = default;
 
 	public:
 		template <IpcBinaryRequest TRequest, IpcBinaryResponse TResponse>
@@ -30,11 +30,10 @@ namespace FluentBitwarden::ComServer::Ipc
 
 	private:
 		wil::unique_hfile m_pipe;
-		std::wstring m_pipePath;
 	};
 
 	template<IpcBinaryRequest TRequest, IpcBinaryResponse TResponse>
-	inline wil::task<TResponse> NamedPipeClient::SendAsync(TRequest request)
+	inline wil::task<TResponse> AppNamedPipeClient::SendAsync(TRequest request)
 	{
 		co_await winrt::resume_background();
 		std::vector<std::byte> requestPayload = request.ToPayload();

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "PluginAuthenticator.h"
 #include "AppActivationLauncher.h"
-#include "Ipc/NamedPipeClient.h"
+#include "Ipc/AppNamedPipeClient.h"
 
 #include "WebAuthn/OperationRequestVerifier.h"
 #include "WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
@@ -46,7 +46,7 @@ namespace FluentBitwarden::ComServer
 				WebAuthn::DecodedGetAssertionRequest::Decode(request);
 			WebAuthn::PasskeyGetAssertionRequest ipcRequest = decodedRequest.ToIpcRequest();
 
-			Ipc::NamedPipeClient m_pipeClient{ Ipc::Constants::PipePath };
+			Ipc::AppNamedPipeClient m_pipeClient;
 
 			auto assertion = m_pipeClient.SendAsync<WebAuthn::PasskeyGetAssertionRequest, WebAuthn::PasskeyAssertionResponse>(std::move(ipcRequest)).get();
 			WebAuthn::AssertionResponseBuilder::BuildResponse(assertion, response);

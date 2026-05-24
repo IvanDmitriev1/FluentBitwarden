@@ -4,11 +4,12 @@ using FluentBitwarden.Infrastructure.Ipc.Internal;
 namespace FluentBitwarden.Infrastructure.Ipc.Services;
 
 [Fody.ConfigureAwait(false)]
-public sealed class PipeMessageInvoker<TRequest, TResponse>(
-    IPipeMessageHandler<TRequest, TResponse> handler)
+public sealed class PipeMessageInvoker<THandler, TRequest, TResponse>(
+    THandler handler)
     : IPipeMessageInvoker
-    where TRequest : IPipeMessage<TRequest>
-    where TResponse : IPipeMessage<TResponse>
+    where THandler : class, IPipeRequestMessageHandler<TRequest, TResponse>
+    where TRequest : IPipeRequestMessage
+    where TResponse : notnull
 {
     public async ValueTask InvokeAsync(Stream stream, int payloadLength, CancellationToken cancellationToken)
     {

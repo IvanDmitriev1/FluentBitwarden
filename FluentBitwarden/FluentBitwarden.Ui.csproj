@@ -63,6 +63,7 @@
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
+	<PackageReference Include="MemoryPack" Version="1.21.4" />
 	<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.7" />
 	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
 	<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />

@@ -125,7 +125,7 @@
     <ClInclude Include="src\Ipc\PipeWin32.h" />
     <ClInclude Include="src\Ipc\IpcBinary.h" />
     <ClInclude Include="src\Ipc\IpcProtocol.h" />
-    <ClInclude Include="src\Ipc\NamedPipeClient.h" />
+    <ClInclude Include="src\Ipc\AppNamedPipeClient.h" />
     <ClInclude Include="src\AppActivationLauncher.h" />
     <ClInclude Include="src\WebAuthn\OperationRequestVerifier.h" />
     <ClInclude Include="src\Authenticator\AuthenticatorInfoBuilder.h" />
@@ -139,7 +139,7 @@
     <ClCompile Include="src\WebAuthn\DecodedWebAuthnGetAssertionRequest.cpp" />
     <ClCompile Include="src\Ipc\IpcProtocol.cpp" />
     <ClCompile Include="src\Ipc\PipeWin32.cpp" />
-    <ClCompile Include="src\Ipc\NamedPipeClient.cpp" />
+    <ClCompile Include="src\Ipc\AppNamedPipeClient.cpp" />
     <ClCompile Include="src\AppActivationLauncher.cpp" />
     <ClCompile Include="src\WebAuthn\OperationRequestVerifier.cpp" />
     <ClCompile Include="src\Authenticator\AuthenticatorInfoBuilder.cpp" />

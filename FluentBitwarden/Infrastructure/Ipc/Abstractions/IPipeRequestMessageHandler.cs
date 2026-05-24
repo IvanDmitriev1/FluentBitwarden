@@ -1,7 +1,7 @@
 ﻿namespace FluentBitwarden.Infrastructure.Ipc.Abstractions;
 
-public interface IPipeMessageHandler<in TRequest, TResponse>
-    where TRequest : notnull
+public interface IPipeRequestMessageHandler<in TRequest, TResponse>
+    where TRequest : IPipeRequestMessage
     where TResponse : notnull
 {
     ValueTask<TResponse> HandleAsync(
