@@ -25,9 +25,11 @@ public sealed partial class SiteIcon : ContentControl
     private Uri? _displayedCachedFilePath;
     private int _displayedDecodeSize;
     private bool _isSubscribed;
+    private readonly DispatcherQueue _dispatcherQueue;
 
     public SiteIcon()
     {
+        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         DefaultStyleKey = typeof(SiteIcon);
 
         Loaded += OnLoaded;
@@ -87,10 +89,16 @@ public sealed partial class SiteIcon : ContentControl
 
     private void SiteIconCacheOnIconCached(object? sender, SiteIconCachedEventArgs e)
     {
-        if (e.Host != Uri)
+        var siteUri = e.Host;
+        _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => RefreshIfCurrent(siteUri));
+    }
+
+    private void RefreshIfCurrent(Uri siteUri)
+    {
+        if (!IsLoaded || siteUri != Uri)
             return;
 
-        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, Refresh);
+        Refresh();
     }
 
     private void Refresh()

@@ -1,4 +1,4 @@
-using FluentBitwarden.Infrastructure.Services;
+using FluentBitwarden.Infrastructure.Implementations;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using System.Windows.Input;

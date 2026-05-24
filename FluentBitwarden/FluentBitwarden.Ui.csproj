@@ -19,7 +19,6 @@
 		<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
 		<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
 		<CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
-		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +34,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\BitwardenApi\BitwardenApi.csproj" />
+		<ProjectReference Include="..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj" />
 	</ItemGroup>
 	
 
@@ -43,7 +43,6 @@
   </ItemGroup>
 
 	<ItemGroup>
-	<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
 	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 	<PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
 	<PackageReference Include="CommunityToolkit.WinUI.Behaviors" Version="8.2.251219" />
@@ -57,17 +56,11 @@
 	<PackageReference Include="ConfigureAwait.Fody" Version="3.4.0" PrivateAssets="all" ExcludeAssets="runtime">
 	  <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="Dapper" Version="2.1.72" />
-	<PackageReference Include="Dapper.AOT" Version="1.0.52" />
 	<PackageReference Include="DependencyPropertyGenerator" Version="1.5.0">
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="MemoryPack" Version="1.21.4" />
-	<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.7" />
-	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
 	<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
-	<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
 	<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.275">
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -77,9 +70,6 @@
 		<IncludeAssets>build</IncludeAssets>
 	</PackageReference>
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
-	<PackageReference Include="StronglyTypedId" Version="1.0.0-beta08" PrivateAssets="all" ExcludeAssets="runtime" />
-	<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
-	<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
 	<PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
 	<PackageReference Include="WinUIEx" Version="2.9.0" />
 </ItemGroup>

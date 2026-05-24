@@ -20,6 +20,13 @@ namespace FluentBitwarden.UI.Controls;
 [DependencyProperty<ICommand>("Command")]
 public sealed partial class PasswordBoxEx : Control
 {
+    public static readonly DependencyProperty PasswordProperty =
+        DependencyProperty.Register(
+            nameof(Password),
+            typeof(string),
+            typeof(PasswordBoxEx),
+            new PropertyMetadata(string.Empty, OnPasswordPropertyChanged));
+
     private const string PartPasswordTextBox = "PART_PasswordTextBox";
     private const string PartRevealButton = "PART_RevealButton";
     private const string PartActionButton = "PART_ActionButton";
@@ -42,21 +49,26 @@ public sealed partial class PasswordBoxEx : Control
         _revealButton?.FocusState != FocusState.Unfocused ||
         _actionButton?.FocusState != FocusState.Unfocused;
 
+    public EventHandler<PasswordBoxEx, string>? PasswordChanged;
+
     public string Password
     {
-        get => field;
-        private set
-        {
-            field = value;
-            PasswordChanged?.Invoke(this, value);
-        }
-    } = string.Empty;
-
-    public EventHandler<PasswordBoxEx, string>? PasswordChanged;
+        get => (string)GetValue(PasswordProperty);
+        private set => SetValue(PasswordProperty, value);
+    }
 
     public PasswordBoxEx()
     {
         DefaultStyleKey = typeof(PasswordBoxEx);
+    }
+
+    private static void OnPasswordPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (PasswordBoxEx)d;
+        var password = (string?)e.NewValue ?? string.Empty;
+
+        control.PasswordChanged?.Invoke(control, password);
+        control.UpdatePasswordState();
     }
 
     partial void OnActionButtonContentChanged()
@@ -177,25 +189,18 @@ public sealed partial class PasswordBoxEx : Control
         if (_passwordTextBox is null)
             return;
 
-        try
+        if (IsPasswordRevealed)
         {
-            if (IsPasswordRevealed)
-            {
-                Password = _passwordTextBox.Text;
-                return;
-            }
+            Password = _passwordTextBox.Text;
+            return;
+        }
 
-            int caretPos = _passwordTextBox.SelectionStart;
-            Password = RetrievePassword(_passwordTextBox.Text, caretPos, Password);
-            _passwordTextBox.TextChanging -= OnTextBoxTextChanging;
-            _passwordTextBox.Text = new string(PasswordBullet, Password.Length);
-            _passwordTextBox.SelectionStart = caretPos;
-            _passwordTextBox.TextChanging += OnTextBoxTextChanging;
-        }
-        finally
-        {
-            UpdatePasswordState();
-        }
+        int caretPos = _passwordTextBox.SelectionStart;
+        Password = RetrievePassword(_passwordTextBox.Text, caretPos, Password);
+        _passwordTextBox.TextChanging -= OnTextBoxTextChanging;
+        _passwordTextBox.Text = new string(PasswordBullet, Password.Length);
+        _passwordTextBox.SelectionStart = caretPos;
+        _passwordTextBox.TextChanging += OnTextBoxTextChanging;
     }
 
     private void OnRevealButtonClick(object sender, RoutedEventArgs e)

@@ -1,13 +1,13 @@
 using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Resources.AttachedProperties;
 using FluentBitwarden.Views.Loading;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Infrastructure.Services.Implementations;
 using WinUIEx;
+using FluentBitwarden.Infrastructure.Abstractions;
+using FluentBitwarden.Infrastructure.Implementations;
 
 namespace FluentBitwarden.Views.Shell;
 
@@ -30,7 +30,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-        Apply(SettingsStore.Instance.Get(AppSettingKeys.Appearance.ThemeKey));
+        Apply(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
         RootFrame.Navigate(typeof(LoadingPage));
     }
 

@@ -13,21 +13,22 @@ public static class Program
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
         AppInstance keyInstance = AppInstance.FindOrRegisterForKey("FluentBitwardenUiSingleInstance");
+        var activationEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
 
         if (!keyInstance.IsCurrent)
         {
-            RedirectActivationTo(AppInstance.GetCurrent().GetActivatedEventArgs(), keyInstance);
+            RedirectActivationTo(activationEventArgs, keyInstance);
             return 0;
         }
 
-        keyInstance.Activated += static (_, _) => App.Current.HandleActivation();
+        keyInstance.Activated += static (_, args) => App.Current.HandleActivation(args);
 
         Microsoft.UI.Xaml.Application.Start(_ =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
-            var app = new App();
+            var app = new App(activationEventArgs);
         });
 
         return 0;

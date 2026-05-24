@@ -7,6 +7,7 @@ using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.LogIn;
 using FluentBitwarden.Views.Unlock;
 using FluentBitwarden.Views.Unlock.Models;
+using FluentBitwarden.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Views.Loading;
 

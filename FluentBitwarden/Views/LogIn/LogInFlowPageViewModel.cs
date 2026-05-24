@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
+using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Views.Loading;

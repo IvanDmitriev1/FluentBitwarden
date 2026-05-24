@@ -7,4 +7,3 @@ global using BitwardenApi.Cryptography.Enc;
 global using CommunityToolkit.Mvvm.ComponentModel;
 global using DependencyPropertyGenerator;
 global using Microsoft.UI.Xaml.Controls;
-global using StronglyTypedIds;

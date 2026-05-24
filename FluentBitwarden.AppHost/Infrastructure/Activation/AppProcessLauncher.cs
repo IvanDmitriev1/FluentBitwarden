@@ -5,17 +5,24 @@ internal static class AppProcessLauncher
     private const string UiExecutableName = "FluentBitwarden.Ui.exe";
     private const string UiProjectDirectoryName = "FluentBitwarden.Ui";
 
-    public static void Activate(AppLifecycleCommand command)
+    private static readonly string PackageRoot = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+    private static readonly string ExecutablePath = Path.Combine(PackageRoot, UiProjectDirectoryName, UiExecutableName);
+
+    public static void Activate()
+        => StartProcess(string.Empty);
+
+    public static void Exit()
+        => StartProcess("--exit");
+
+    private static void StartProcess(string arguments)
     {
         try
         {
-            string packageRoot = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
-            string executablePath = Path.Combine(packageRoot, UiProjectDirectoryName, UiExecutableName);
-
             var startInfo = new ProcessStartInfo
             {
-                FileName = executablePath,
-                WorkingDirectory = Path.GetDirectoryName(executablePath),
+                FileName = ExecutablePath,
+                Arguments = arguments,
+                WorkingDirectory = Path.GetDirectoryName(ExecutablePath),
                 UseShellExecute = false
             };
 
@@ -23,7 +30,7 @@ internal static class AppProcessLauncher
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed to activate FluentBitwarden UI with '{command}': {ex}");
+            Debug.WriteLine($"Failed to activate FluentBitwarden UI: {ex}");
         }
     }
 }

@@ -1,7 +1,8 @@
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
+using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.AppState.Abstractions;
 using FluentBitwarden.Modules.AppState.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Services;
@@ -21,8 +22,8 @@ public sealed partial class SettingsPageViewModel(
     WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod)
     : ObservableObject, IPageLifecycleAware
 {
-    public SettingValue<ElementTheme> Theme { get; } = AppSettingKeys.Appearance.ThemeKey.CreateSettingValue(themeService.Apply);
-    public SettingValue<string> Language { get; } = AppSettingKeys.Appearance.LanguageKey.CreateSettingValue();
+    public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(themeService.Apply);
+    public SettingValue<string> Language { get; } = UiSettingKeys.Appearance.LanguageKey.CreateSettingValue();
     public SettingValue<bool> CloseToTray { get; } = AppSettingKeys.App.CloseToTrayKey.CreateSettingValue();
 
     public SettingValue<VaultTimeout> VaultTimeout { get; } = AppSettingKeys.Security.VaultTimeoutKey.CreateSettingValue();

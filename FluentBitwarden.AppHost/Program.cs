@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.App;
+using FluentBitwarden.AppHost.Application.Tray;
 using FluentBitwarden.AppHost.Infrastructure.Activation;
 using Microsoft.Win32.SafeHandles;
 using Microsoft.Windows.AppLifecycle;
@@ -41,10 +41,14 @@ internal static class Program
     private static void HandleActivation(TrayHost trayHost, AppActivationArguments args)
     {
         AppLifecycleCommand command = AppLifecycleCommandExtensions.From(args);
-        AppProcessLauncher.Activate(command);
-
+        
         if (command == AppLifecycleCommand.Exit)
+        {
             trayHost.RequestShutdown();
+            return;
+        }
+
+        AppProcessLauncher.Activate();
     }
 
     private static void RedirectActivationTo(AppActivationArguments args, AppInstance keyInstance)

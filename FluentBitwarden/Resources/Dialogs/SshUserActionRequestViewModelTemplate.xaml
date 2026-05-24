@@ -16,7 +16,7 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <DataTemplate x:Name="SshUserActionRequestViewModelTemplateKey" x:DataType="models:SshUserActionRequestViewModel">
+    <DataTemplate x:Name="SshUserActionRequestViewModelTemplateKey" x:DataType="models:SshUserActionDialogViewModel">
         <Grid
             Width="440"
             MaxWidth="440"

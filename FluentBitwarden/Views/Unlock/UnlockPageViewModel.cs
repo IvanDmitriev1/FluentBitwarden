@@ -11,6 +11,7 @@ using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Unlock.Models;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Views.Unlock;
 
