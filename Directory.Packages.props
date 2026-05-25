@@ -1,0 +1,61 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Shared Package Versions">
+    <CommunityToolkitVersion>8.4.2</CommunityToolkitVersion>
+    <CommunityToolkitWinUIVersion>8.2.251219</CommunityToolkitWinUIVersion>
+    <NetPackageVersion>10.0.8</NetPackageVersion>
+    <WindowsAppSdkVersion>2.1.3</WindowsAppSdkVersion>
+  </PropertyGroup>
+
+  <ItemGroup Label="Shared Dependencies">
+    <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0-beta.98" />
+    <PackageVersion Include="CommunityToolkit.HighPerformance" Version="$(CommunityToolkitVersion)" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="$(CommunityToolkitVersion)" />
+    <PackageVersion Include="ConfigureAwait.Fody" Version="3.4.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.275" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="$(NetPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="API Dependencies">
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
+    <PackageVersion Include="Otp.NET" Version="1.4.1" />
+    <PackageVersion Include="StronglyTypedId" Version="1.0.0-beta08" />
+    <PackageVersion Include="Utf8JsonStreamReader" Version="4.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="AppHost Dependencies">
+    <PackageVersion Include="Dapper" Version="2.1.79" />
+    <PackageVersion Include="Dapper.AOT" Version="1.0.52" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
+    <PackageVersion Include="MemoryPack" Version="1.21.4" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK.Foundation" Version="2.0.21" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK.Runtime" Version="$(WindowsAppSdkVersion)" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="WinUI Dependencies">
+    <PackageVersion Include="CommunityToolkit.WinUI.Animations" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Behaviors" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Controls.Primitives" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Controls.Segmented" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Controls.Sizers" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Extensions" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Helpers" Version="$(CommunityToolkitWinUIVersion)" />
+    <PackageVersion Include="DependencyPropertyGenerator" Version="1.5.0" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="$(WindowsAppSdkVersion)" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
+    <PackageVersion Include="WinUI.DependencyInjection" Version="1.1.0" />
+    <PackageVersion Include="WinUIEx" Version="2.9.0" />
+  </ItemGroup>
+</Project>

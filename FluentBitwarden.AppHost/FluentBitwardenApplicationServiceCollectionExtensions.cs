@@ -1,7 +1,7 @@
 using BitwardenApi;
-using FluentBitwarden.Application.Lifetime;
+using FluentBitwarden.AppHost.Infrastructure.Services.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Services.Implementations;
 using FluentBitwarden.Data;
-using FluentBitwarden.Infrastructure.Ipc;
 using FluentBitwarden.Infrastructure.Services;
 using FluentBitwarden.Modules.Account;
 using FluentBitwarden.Modules.Passkey;
@@ -19,7 +19,6 @@ public static class FluentBitwardenApplicationServiceCollectionExtensions
     {
         services.AddTransient<IAppSetupService, AppSetupService>();
 
-        services.AddNamedPipeIpc();
         services.AddDatabaseServices();
         services.AddApplicationInfrastructureServices();
 

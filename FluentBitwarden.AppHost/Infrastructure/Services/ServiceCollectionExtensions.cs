@@ -1,3 +1,5 @@
+using FluentBitwarden.AppHost.Infrastructure.Services.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Services.Implementations;
 using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Infrastructure.Services.Implementations;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,8 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<IConnectivityService, WindowsConnectivityService>();
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
+
+        services.AddTransient<IAppSetupService, AppSetupService>();
 
         return services;
     }

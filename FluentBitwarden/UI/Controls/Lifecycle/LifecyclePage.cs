@@ -1,4 +1,4 @@
-using FluentBitwarden.Application.Diagnostics;
+using FluentBitwarden.AppHost.Infrastructure.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 

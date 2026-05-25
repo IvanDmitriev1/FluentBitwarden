@@ -1,9 +1,11 @@
-using FluentBitwarden.AppHost.Infrastructure.Activation;
+using FluentBitwarden.AppHost.Infrastructure.Services;
+using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Application.Tray;
 
-internal sealed class TrayHost
+internal sealed class TrayHost : IDisposable
 {
+    private const uint CloseMessage = 0x0010;
     private const uint DestroyMessage = 0x0002;
     private const uint AppMessage = 0x8000;
     private const uint TrayCallbackMessage = AppMessage + 1;
@@ -14,18 +16,41 @@ internal sealed class TrayHost
 
     private readonly HINSTANCE _moduleHandle;
     private readonly HWND _windowHandle;
+    private readonly NotificationIcon _trayIcon;
+    private readonly IHostApplicationLifetime _applicationLifetime;
+    private bool _windowDestroyed;
+    private bool _disposed;
 
-    public TrayHost()
+    public TrayHost(IHostApplicationLifetime applicationLifetime)
     {
+        _applicationLifetime = applicationLifetime;
         _moduleHandle = PInvoke.GetModuleHandle(default(PCWSTR));
         RegisterWindowClass();
 
         _current = this;
         _windowHandle = CreateHiddenWindow();
-        TrayIcon.CreateNotifyIcon(_windowHandle, TrayCallbackMessage);
+        _trayIcon = NotificationIcon.Create(_windowHandle, TrayCallbackMessage);
     }
 
-    public void RequestShutdown() => PInvoke.DestroyWindow(_windowHandle);
+    public void RequestShutdown()
+    {
+        if (!_windowDestroyed)
+            PInvoke.PostMessage(_windowHandle, CloseMessage, default, default);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        _trayIcon.Dispose();
+
+        if (!_windowDestroyed)
+            PInvoke.DestroyWindow(_windowHandle);
+
+        _current = null;
+    }
 
     private unsafe void RegisterWindowClass()
     {
@@ -74,10 +99,15 @@ internal sealed class TrayHost
         switch (message)
         {
             case TrayCallbackMessage:
-                _current!.HandleTrayCallback((TrayIconMessage)unchecked((uint)(nint)lParam));
+                _current?.HandleTrayCallback((TrayIconMessage)unchecked((uint)(nint)lParam));
+                return default;
+
+            case CloseMessage:
+                PInvoke.DestroyWindow(windowHandle);
                 return default;
 
             case DestroyMessage:
+                _current?.HandleWindowDestroyed();
                 PInvoke.PostQuitMessage(0);
                 return default;
 
@@ -99,8 +129,30 @@ internal sealed class TrayHost
 
             case TrayIconMessage.ContextMenu:
             case TrayIconMessage.RightButtonUp:
-                TrayMenu.Show(_windowHandle);
+                HandleTrayCommand(TrayMenu.Show(_windowHandle));
                 return;
         }
+    }
+
+    private void HandleTrayCommand(TrayMenuCommand command)
+    {
+        switch (command)
+        {
+            case TrayMenuCommand.Show:
+            case TrayMenuCommand.Lock:
+                AppProcessLauncher.Activate();
+                return;
+
+            case TrayMenuCommand.Exit:
+                AppProcessLauncher.Exit();
+                _applicationLifetime.StopApplication();
+                return;
+        }
+    }
+
+    private void HandleWindowDestroyed()
+    {
+        _windowDestroyed = true;
+        _trayIcon.Dispose();
     }
 }

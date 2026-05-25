@@ -1,4 +1,4 @@
-using FluentBitwarden.Application;
+using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.Modules.AppState;
 using System.Diagnostics;
 

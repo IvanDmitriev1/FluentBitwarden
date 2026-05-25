@@ -9,7 +9,7 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddPasskeyModule(this IServiceCollection services)
     {
-        services.AddPipeMessageHandler<PasskeyAssertionHandler, PasskeyGetAssertionRequest, PasskeyAssertionResponse>();
+        services.AddIpcRequestHandler<PasskeyAssertionHandler, PasskeyGetAssertionRequest, PasskeyAssertionResponse>();
 
         return services;
     }

@@ -1,7 +1,8 @@
+using FluentBitwarden.AppHost.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.AppState;
 
-namespace FluentBitwarden.Application.Lifetime;
+namespace FluentBitwarden.AppHost.Infrastructure.Services.Implementations;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class AppSetupService(IDataInitializationService dataInitializationService) : IAppSetupService

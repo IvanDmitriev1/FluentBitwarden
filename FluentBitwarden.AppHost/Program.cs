@@ -1,5 +1,11 @@
-using FluentBitwarden.AppHost.Application.Tray;
-using FluentBitwarden.AppHost.Infrastructure.Activation;
+using FluentBitwarden.AppHost.Application;
+using FluentBitwarden.AppHost.Application.Activation;
+using FluentBitwarden.AppHost.Infrastructure.Services.Abstractions;
+using FluentBitwarden.Data;
+using FluentBitwarden.Infrastructure.Ipc;
+using FluentBitwarden.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Win32.SafeHandles;
 using Microsoft.Windows.AppLifecycle;
 
@@ -7,15 +13,16 @@ namespace FluentBitwarden.AppHost;
 
 internal static class Program
 {
+    private const string InstanceKey = "FluentBitwardenHostSingleInstance";
     private static SafeFileHandle? _redirectEventHandle;
 
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
 
         AppActivationArguments initialActivation = AppInstance.GetCurrent().GetActivatedEventArgs();
-        AppInstance keyInstance = AppInstance.FindOrRegisterForKey("FluentBitwardenHostSingleInstance");
+        AppInstance keyInstance = AppInstance.FindOrRegisterForKey(InstanceKey);
 
         if (!keyInstance.IsCurrent)
         {
@@ -23,32 +30,28 @@ internal static class Program
             return 0;
         }
 
-        var trayHost = new TrayHost();
-        keyInstance.Activated += (_, args) => HandleActivation(trayHost, args);
+        var builder = Host.CreateApplicationBuilder(args);
 
-        HandleActivation(trayHost, initialActivation);
-        MSG message;
+        builder.Services.AddSingleton<AppHostActivationHandler>();
+        builder.Services.AddHostedService<AppHostHostedService>();
 
-        while (PInvoke.GetMessage(out message, default, 0, 0).Value > 0)
-        {
-            PInvoke.TranslateMessage(in message);
-            PInvoke.DispatchMessage(in message);
-        }
+        builder.Services.AddDatabaseServices();
+        builder.Services.AddApplicationInfrastructureServices();
+        builder.Services.AddIpcServer(IpcConstants.AppHostPipeName);
 
-        return unchecked((int)(nuint)message.wParam);
-    }
+        var host = builder.Build();
 
-    private static void HandleActivation(TrayHost trayHost, AppActivationArguments args)
-    {
-        AppLifecycleCommand command = AppLifecycleCommandExtensions.From(args);
-        
-        if (command == AppLifecycleCommand.Exit)
-        {
-            trayHost.RequestShutdown();
-            return;
-        }
+        keyInstance.Activated += (_, arguments) =>
+            host.Services.GetRequiredService<AppHostActivationHandler>().Handle(arguments);
 
-        AppProcessLauncher.Activate();
+        host.Services
+            .GetRequiredService<IHostApplicationLifetime>()
+            .ApplicationStarted
+            .Register(() => host.Services.GetRequiredService<AppHostActivationHandler>().Handle(initialActivation));
+
+        host.Services.GetRequiredService<IAppSetupService>().Initialize();
+        host.Run();
+        return 0;
     }
 
     private static void RedirectActivationTo(AppActivationArguments args, AppInstance keyInstance)

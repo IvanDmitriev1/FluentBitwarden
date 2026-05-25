@@ -1,6 +1,6 @@
 namespace FluentBitwarden.Infrastructure.Ipc.Abstractions;
 
-public interface IAppPipeIpcClient
+public interface IIpcPipeClient
 {
     ValueTask<TResponse> SendAsync<TRequest, TResponse>(
         TRequest request,

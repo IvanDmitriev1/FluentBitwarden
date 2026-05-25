@@ -25,8 +25,7 @@ public static class Program
 
         Microsoft.UI.Xaml.Application.Start(_ =>
         {
-            var context = new DispatcherQueueSynchronizationContext(
-                DispatcherQueue.GetForCurrentThread());
+            var context = new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
             var app = new App(activationEventArgs);
         });

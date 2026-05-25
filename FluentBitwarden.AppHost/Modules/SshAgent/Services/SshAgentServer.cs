@@ -1,33 +1,24 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Application.Diagnostics;
+using FluentBitwarden.AppHost.Infrastructure.Diagnostics;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Internal;
 using FluentBitwarden.Modules.SshAgent.Models;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : ISshAgentServer, IDisposable
+internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : BackgroundService
 {
     private const string PipeName = "openssh-ssh-agent";
     public const int MaxPacketLength = 512 * 1024;
 
-    private readonly CancellationTokenSource _cts = new();
-
-    public void Dispose()
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _cts.Cancel();
-        _cts.Dispose();
-    }
-
-    public async Task RunAsync()
-    {
-        var token = _cts.Token;
-
-        while (!token.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested)
         {
             await using var server = new NamedPipeServerStream(
                 PipeName,
@@ -40,16 +31,16 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : ISshAgent
 
             try
             {
-                await server.WaitForConnectionAsync(token);
-                await HandleClientAsync(server, token);
+                await server.WaitForConnectionAsync(stoppingToken);
+                await HandleClientAsync(server, stoppingToken);
             }
             catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
             {
-                await SshAgentProtocolWriter.WriteFailureAsync(server, token);
+                //
             }
             catch (Exception e)
             {
-                await SshAgentProtocolWriter.WriteFailureAsync(server, token);
+                await SshAgentProtocolWriter.WriteFailureAsync(server, stoppingToken);
                 UnhandledExceptionLogger.WriteException(e);
             }
         }

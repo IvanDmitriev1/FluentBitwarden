@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup Label="Shared C# Build Settings" Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <PropertyGroup Label="BitwardenApi Target Framework" Condition="'$(MSBuildProjectName)' == 'BitwardenApi'">
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Windows App Target Framework" Condition="'$(MSBuildProjectName)' == 'FluentBitwarden.Ui' or '$(MSBuildProjectName)' == 'FluentBitwarden.AppHost'">
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+</Project>

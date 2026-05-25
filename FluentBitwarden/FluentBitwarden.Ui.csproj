@@ -1,25 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>FluentBitwarden</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Configurations>Debug;Release</Configurations>
-    <Platforms>x64;ARM64</Platforms>
-    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-    <UseWinUI>true</UseWinUI>
-    <WinUISDKReferences>false</WinUISDKReferences>
-    <Nullable>enable</Nullable>
-    <LangVersion>preview</LangVersion>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+	<UseWinUI>true</UseWinUI>
+	<WinUISDKReferences>false</WinUISDKReferences>
+	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+	<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+	<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
+	<CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
   </PropertyGroup>
-
-	<PropertyGroup>
-		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
-		<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
-		<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
-		<CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
-	</PropertyGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -43,35 +33,34 @@
   </ItemGroup>
 
 	<ItemGroup>
-	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-	<PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Behaviors" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.2.251219" />
-	<PackageReference Include="CommunityToolkit.WinUI.Helpers" Version="8.2.251219" />
-	<PackageReference Include="ConfigureAwait.Fody" Version="3.4.0" PrivateAssets="all" ExcludeAssets="runtime">
+	<PackageReference Include="CommunityToolkit.Mvvm" />
+	<PackageReference Include="CommunityToolkit.WinUI.Animations" />
+	<PackageReference Include="CommunityToolkit.WinUI.Behaviors" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
+	<PackageReference Include="CommunityToolkit.WinUI.Converters" />
+	<PackageReference Include="CommunityToolkit.WinUI.Extensions" />
+	<PackageReference Include="CommunityToolkit.WinUI.Helpers" />
+	<PackageReference Include="ConfigureAwait.Fody" PrivateAssets="all" ExcludeAssets="runtime">
 	  <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="DependencyPropertyGenerator" Version="1.5.0">
+	<PackageReference Include="DependencyPropertyGenerator">
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
-	<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.275">
+	<PackageReference Include="Microsoft.Windows.CsWin32">
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
-	<PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1">
+	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+	<PackageReference Include="Microsoft.WindowsAppSDK">
 		<IncludeAssets>build</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
-	<PackageReference Include="WinUI.DependencyInjection" Version="1.1.0" />
-	<PackageReference Include="WinUIEx" Version="2.9.0" />
+	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
+	<PackageReference Include="WinUI.DependencyInjection" />
+	<PackageReference Include="WinUIEx" />
 </ItemGroup>
 
 <!-- Publish Properties -->

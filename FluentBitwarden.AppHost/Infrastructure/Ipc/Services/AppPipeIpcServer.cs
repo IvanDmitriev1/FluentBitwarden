@@ -1,47 +1,40 @@
-﻿using System.Diagnostics;
+﻿using FluentBitwarden.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Infrastructure.Ipc.Internal;
+using Microsoft.Extensions.Hosting;
 using System.IO.Pipes;
 using System.Linq;
-using FluentBitwarden.Infrastructure.Ipc.Abstractions;
-using FluentBitwarden.Infrastructure.Ipc.Internal;
 
 namespace FluentBitwarden.Infrastructure.Ipc.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class AppPipeIpcServer : IIpcPipeServer, IAsyncDisposable
+internal sealed class AppPipeIpcServer : BackgroundService
 {
-    public AppPipeIpcServer(IServiceProvider serviceProvider, IEnumerable<PipeMessageInvokerDescriptor> descriptors)
+    public AppPipeIpcServer(string pipeName, IEnumerable<IPipeRequestHandlerInvoker> invokers)
     {
-        _serviceProvider = serviceProvider;
-        _invokers = descriptors.ToDictionary(static desc => desc.MessageType, static desc => desc);
+        _pipeName = pipeName;
+        _invokers = invokers.ToDictionary(static i => i.MessageType);
     }
 
-    private readonly IServiceProvider _serviceProvider;
-    private readonly CancellationTokenSource _cts = new();
-    private readonly Dictionary<ushort, PipeMessageInvokerDescriptor> _invokers;
+    private readonly string _pipeName;
+    private readonly IReadOnlyDictionary<ushort, IPipeRequestHandlerInvoker> _invokers;
 
-    public async ValueTask DisposeAsync()
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _cts.CancelAsync();
-        _cts.Dispose();
-    }
-
-    public async Task RunAsync()
-    {
-        var cancellationToken = _cts.Token;
         await using var pipe = new NamedPipeServerStream(
-            IpcConstants.PipeName, PipeDirection.InOut,
+            _pipeName,
+            PipeDirection.InOut,
             maxNumberOfServerInstances: 1,
             PipeTransmissionMode.Byte,
             PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
             inBufferSize: 64 * 1024,
             outBufferSize: 64 * 1024);
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 Debug.WriteLine("Waiting for named pipe client......");
-                await pipe.WaitForConnectionAsync(cancellationToken);
+                await pipe.WaitForConnectionAsync(stoppingToken);
                 Debug.WriteLine("Named pipe client connected.");
 
                 if (!PipeClientVerifier.IsExpectedClient(pipe))
@@ -51,11 +44,10 @@ internal sealed class AppPipeIpcServer : IIpcPipeServer, IAsyncDisposable
                 }
 
                 var header = RequestHeader.Read(pipe);
-                if (!_invokers.TryGetValue(header.MessageType, out var descriptor))
-                    continue;
+                if (!_invokers.TryGetValue(header.MessageType, out var invoker))
+                    return;
 
-                var invoker = descriptor.CreateInvoker.Invoke(_serviceProvider);
-                await invoker.InvokeAsync(pipe, header.PayloadLength, cancellationToken);
+                await invoker.InvokeAsync(pipe, header.PayloadLength, stoppingToken);
             }
             catch (EndOfStreamException)
             {

@@ -1,4 +1,4 @@
-namespace FluentBitwarden.AppHost.Infrastructure.Activation;
+namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
 internal static class AppProcessLauncher
 {

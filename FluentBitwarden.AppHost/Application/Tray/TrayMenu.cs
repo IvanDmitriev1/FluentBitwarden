@@ -1,27 +1,21 @@
-using FluentBitwarden.AppHost.Infrastructure.Activation;
-
 namespace FluentBitwarden.AppHost.Application.Tray;
 
 internal static class TrayMenu
-{
-    private const uint ShowCommand = 1;
-    private const uint LockCommand = 2;
-    private const uint ExitCommand = 3;
-
-    public static void Show(HWND windowHandle)
+{ 
+    public static TrayMenuCommand Show(HWND windowHandle)
     {
         if (!PInvoke.GetCursorPos(out var cursor))
-            return;
+            return TrayMenuCommand.None;
 
         PInvoke.SetForegroundWindow(windowHandle);
         using var popupMenuHandle = PInvoke.CreatePopupMenu_SafeHandle();
         if (popupMenuHandle.IsInvalid)
             throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not create the tray menu.");
 
-        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_STRING, ShowCommand, "Show");
-        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_STRING, LockCommand, "Lock");
-        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_SEPARATOR, 0, string.Empty);
-        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_STRING, ExitCommand, "Exit");
+        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_STRING, (uint)TrayMenuCommand.Show, "Show");
+        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_STRING, (uint)TrayMenuCommand.Lock, "Lock");
+        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_SEPARATOR, (uint)TrayMenuCommand.None, string.Empty);
+        PInvoke.AppendMenu(popupMenuHandle, MENU_ITEM_FLAGS.MF_STRING, (uint)TrayMenuCommand.Exit, "Exit");
 
         BOOL selectedCommand = PInvoke.TrackPopupMenu(
             popupMenuHandle,
@@ -33,20 +27,6 @@ internal static class TrayMenu
             windowHandle);
 
         uint command = (uint)selectedCommand.Value;
-        switch (command)
-        {
-            case ShowCommand:
-                AppProcessLauncher.Activate();
-                return;
-
-            case LockCommand:
-                AppProcessLauncher.Activate();
-                return;
-
-            case ExitCommand:
-                AppProcessLauncher.Exit();
-                PInvoke.DestroyWindow(windowHandle);
-                return;
-        }
+        return (TrayMenuCommand)command;
     }
 }

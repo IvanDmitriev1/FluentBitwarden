@@ -1,10 +1,10 @@
 namespace FluentBitwarden.AppHost.Application.Tray;
 
-internal static class TrayIcon
+internal sealed class NotificationIcon : IDisposable
 {
     private const uint IconId = 1;
 
-    public static void CreateNotifyIcon(HWND windowHandle, uint callbackMessage)
+    public static NotificationIcon Create(HWND windowHandle, uint callbackMessage)
     {
         var icon = CreateIconImage();
         var data = new NOTIFYICONDATAW
@@ -22,6 +22,33 @@ internal static class TrayIcon
 
         if (!PInvoke.Shell_NotifyIcon(NOTIFY_ICON_MESSAGE.NIM_ADD, in data))
             throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not add the FluentBitwarden tray icon.");
+
+        return new NotificationIcon(windowHandle);
+    }
+
+    private NotificationIcon(HWND windowHandle)
+    {
+        _windowHandle = windowHandle;
+    }
+
+    private readonly HWND _windowHandle;
+    private bool _disposed;
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        var data = new NOTIFYICONDATAW
+        {
+            cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATAW>(),
+            hWnd = _windowHandle,
+            uID = IconId
+        };
+
+        PInvoke.Shell_NotifyIcon(NOTIFY_ICON_MESSAGE.NIM_DELETE, in data);
     }
 
     private static unsafe HICON CreateIconImage()

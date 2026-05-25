@@ -6,29 +6,35 @@ namespace FluentBitwarden.Infrastructure.Ipc;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddNamedPipeIpc(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddSingleton<IIpcPipeServer, AppPipeIpcServer>();
-        services.AddTransient<IAppPipeIpcClient, AppPipeIpcClient>();
-        return services;
-    }
+        public IServiceCollection AddIpcServer(string pipeName)
+        {
+            services.AddHostedService(sp =>
+                new AppPipeIpcServer(pipeName, sp.GetServices<IPipeRequestHandlerInvoker>()));
 
-    public static IServiceCollection AddPipeMessageHandler<THandler, TRequest, TResponse>(
-        this IServiceCollection services)
-        where THandler : class, IPipeRequestMessageHandler<TRequest, TResponse>
-        where TRequest : IPipeRequestMessage
-        where TResponse : notnull
-    {
-        services.AddTransient<THandler>();
+            return services;
+        }
 
-        services.AddSingleton(new PipeMessageInvokerDescriptor(
-            TRequest.MessageType,
-           static sp =>
-           {
-               var handler = sp.GetRequiredService<THandler>();
-               return new PipeMessageInvoker<THandler, TRequest, TResponse>(handler);
-           }));
+        public IServiceCollection AddIpcClient(string pipeName)
+        {
+            services.AddSingleton<IIpcPipeClient>(_ => new IpcPipeClient(pipeName));
+            return services;
+        }
 
-        return services;
+        public IServiceCollection AddIpcRequestHandler<THandler, TRequest, TResponse>()
+            where THandler : class, IPipeRequestHandler<TRequest, TResponse>
+            where TRequest : IPipeRequestMessage
+            where TResponse : notnull
+        {
+            services.AddTransient<THandler>();
+
+            services.AddSingleton<IPipeRequestHandlerInvoker>(sp =>
+                new PipeRequestHandlerInvoker<THandler, TRequest, TResponse>(
+                    TRequest.MessageType,
+                    sp.GetRequiredService<THandler>()));
+
+            return services;
+        }
     }
 }

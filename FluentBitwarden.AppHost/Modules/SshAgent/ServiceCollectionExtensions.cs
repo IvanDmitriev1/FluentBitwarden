@@ -8,7 +8,7 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddSshAgent(this IServiceCollection services)
     {
-        services.AddSingleton<ISshAgentServer, SshAgentServer>();
+        services.AddHostedService<SshAgentServer>();
         services.AddSingleton<ISshKeyProvider, SshKeyProvider>();
 
         return services;

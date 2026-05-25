@@ -1,29 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <LangVersion>preview</LangVersion>
     <RootNamespace>BitwardenApi</RootNamespace>
     <IsAotCompatible>true</IsAotCompatible>
     <IsTrimmable>true</IsTrimmable>
-    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0-beta.98" />
-	  <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
-    <PackageReference Include="ConfigureAwait.Fody" Version="3.4.0" PrivateAssets="all" ExcludeAssets="runtime">
+	  <PackageReference Include="BouncyCastle.Cryptography" />
+	  <PackageReference Include="CommunityToolkit.HighPerformance" />
+    <PackageReference Include="ConfigureAwait.Fody" PrivateAssets="all" ExcludeAssets="runtime">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
-    <PackageReference Include="Otp.NET" Version="1.4.1" />
-    <PackageReference Include="StronglyTypedId" Version="1.0.0-beta08" PrivateAssets="all" ExcludeAssets="runtime" />
-    <PackageReference Include="Utf8JsonStreamReader" Version="4.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Otp.NET" />
+    <PackageReference Include="StronglyTypedId" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Utf8JsonStreamReader" />
   </ItemGroup>
 
 </Project>

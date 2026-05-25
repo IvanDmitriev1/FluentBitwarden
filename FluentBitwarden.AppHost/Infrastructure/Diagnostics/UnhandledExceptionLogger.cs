@@ -1,8 +1,7 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using FluentBitwarden.Infrastructure.Extensions;
 
-namespace FluentBitwarden.Application.Diagnostics;
+namespace FluentBitwarden.AppHost.Infrastructure.Diagnostics;
 
 public static class UnhandledExceptionLogger
 {

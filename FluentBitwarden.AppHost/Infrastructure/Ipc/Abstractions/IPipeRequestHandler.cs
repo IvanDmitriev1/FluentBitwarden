@@ -1,6 +1,6 @@
 ﻿namespace FluentBitwarden.Infrastructure.Ipc.Abstractions;
 
-public interface IPipeRequestMessageHandler<in TRequest, TResponse>
+public interface IPipeRequestHandler<in TRequest, TResponse>
     where TRequest : IPipeRequestMessage
     where TResponse : notnull
 {

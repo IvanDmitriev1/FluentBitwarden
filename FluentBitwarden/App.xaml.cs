@@ -1,9 +1,6 @@
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.AppHost;
-using FluentBitwarden.Application.Diagnostics;
-using FluentBitwarden.Application.Lifetime;
 using FluentBitwarden.Infrastructure.Extensions;
-using FluentBitwarden.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Modules.Passkey.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Views;
@@ -13,12 +10,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
+using System.Linq;
 using Windows.ApplicationModel.Activation;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Infrastructure;
+using FluentBitwarden.AppHost.Infrastructure.Diagnostics;
 
 namespace FluentBitwarden;
 
@@ -26,7 +25,6 @@ namespace FluentBitwarden;
 public partial class App : IXamlMetadataServiceProvider
 {
     private readonly AppActivationArguments _initialActivation;
-    private const string ExitCommandArgument = "--exit";
 
     public new static App Current => (App)Microsoft.UI.Xaml.Application.Current;
 
@@ -75,24 +73,15 @@ public partial class App : IXamlMetadataServiceProvider
     {
         _ = GetRequiredService<MainWindow>();
         HandleActivation(_initialActivation);
-
-        Host.Services.GetRequiredService<IAppSetupService>().Initialize();
-        _ = Task.Run(() => Host.Services.GetRequiredService<IIpcPipeServer>().RunAsync());
-        _ = Task.Run(() => Host.Services.GetRequiredService<ISshAgentServer>().RunAsync());
     }
 
     public void HandleActivation(AppActivationArguments args)
     {
         var lunchArgs = (ILaunchActivatedEventArgs)args.Data;
-        var parameters = lunchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var parameters = lunchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1);
+        var firstParameter = parameters.FirstOrDefault();
 
-        if (parameters.Length <= 1)
-        {
-            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, MainWindow.Instance.ShowWindow);
-            return;
-        }
-
-        switch (parameters[1])
+        switch (firstParameter)
         {
             case "--exit":
                 DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, Exit);

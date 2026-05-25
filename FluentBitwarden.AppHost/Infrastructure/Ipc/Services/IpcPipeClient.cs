@@ -5,7 +5,7 @@ using FluentBitwarden.Infrastructure.Ipc.Internal;
 namespace FluentBitwarden.Infrastructure.Ipc.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class AppPipeIpcClient : IAppPipeIpcClient
+internal sealed class IpcPipeClient(string pipeName) : IIpcPipeClient
 {
     public async ValueTask<TResponse> SendAsync<TRequest, TResponse>(
         TRequest request,
@@ -15,7 +15,7 @@ internal sealed class AppPipeIpcClient : IAppPipeIpcClient
     {
         await using var pipe = new NamedPipeClientStream(
             ".",
-            IpcConstants.PipeName,
+            pipeName,
             PipeDirection.InOut,
             PipeOptions.Asynchronous);
 

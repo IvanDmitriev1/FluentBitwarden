@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Windows.ApplicationModel;
 
-namespace FluentBitwarden.Application;
+namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
 [Fody.ConfigureAwait(false)]
 public static class PasskeyPluginSetupService
