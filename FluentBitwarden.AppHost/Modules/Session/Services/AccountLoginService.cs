@@ -3,12 +3,12 @@ using BitwardenApi.Contracts;
 using BitwardenApi.Models;
 using FluentBitwarden.Infrastructure.Security;
 using FluentBitwarden.Infrastructure.Security.WebAuthn;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services;
 

@@ -9,8 +9,6 @@ DestroyWindow
 CoWaitForMultipleObjects
 DispatchMessage
 CloseHandle
-GetCurrentPackageFamilyName
-GetCurrentPackageFullName
 GetCursorPos
 GetNamedPipeClientProcessId
 GetPackageFamilyName

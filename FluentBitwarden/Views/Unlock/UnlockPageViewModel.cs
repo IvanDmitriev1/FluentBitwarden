@@ -1,24 +1,17 @@
-using System.Diagnostics;
-using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Session.Models;
-using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;
-using FluentBitwarden.Views.Unlock.Models;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Infrastructure.Abstractions;
+using Windows.Networking.Connectivity;
+using FluentBitwarden.Views.Passkey;
 
 namespace FluentBitwarden.Views.Unlock;
 
 public sealed partial class UnlockPageViewModel(
-    INavigationService navigationService,
-    IVaultService vaultService,
-    IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
+    INavigationService navigationService) : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
     public partial AccountProfile? SelectedAccount { get; private set; }
@@ -38,8 +31,8 @@ public sealed partial class UnlockPageViewModel(
     {
         switch (result)
         {
-            case AccountUnlockOutcome.Success success:
-                OnSuccessUnlock(success.UserKey);
+            case AccountUnlockOutcome.Success:
+                navigationService.NavigateTo<ShellPage>();
                 return;
 
             case AccountUnlockOutcome.RequiresOnlineReauth:
@@ -50,7 +43,7 @@ public sealed partial class UnlockPageViewModel(
 
     private void OnRequiresOnlineReauth()
     {
-        if (connectivityService.HasInternetAccess)
+        if (NetworkInformation.HasInternetAccess)
         {
             throw new NotSupportedException();
             //navigationService.NavigateTo<SetupPage>();
@@ -59,11 +52,5 @@ public sealed partial class UnlockPageViewModel(
 
         navigationService.NavigateTo<OfflinePage>(
             PageNavigationParameter.From(new OfflinePageParameter(OfflinePageReason.ReauthRequiresInternet)));
-    }
-
-    private void OnSuccessUnlock(DecryptedUserKey decryptedUserKey)
-    {
-        vaultService.LoadLocalVault();
-        navigationService.NavigateTo<ShellPage>();
     }
 }

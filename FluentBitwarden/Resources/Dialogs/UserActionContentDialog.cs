@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.Resources.Dialogs.Models;
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Resources.Dialogs;
 

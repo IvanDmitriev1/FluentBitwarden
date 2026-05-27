@@ -1,9 +1,9 @@
 using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Application.Activation;
-using FluentBitwarden.AppHost.Infrastructure.Services.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
+using FluentBitwarden.Contracts.Ipc;
 using FluentBitwarden.Data;
-using FluentBitwarden.Infrastructure.Ipc;
-using FluentBitwarden.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Win32.SafeHandles;

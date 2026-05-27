@@ -1,7 +1,7 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;

@@ -1,8 +1,6 @@
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
@@ -11,6 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System.Linq;
+using FluentBitwarden.Contracts.Vault.Abstractions;
 
 namespace FluentBitwarden.Views.Shell;
 
@@ -27,7 +26,7 @@ public sealed partial class ShellPage : Page
         TagByPage = pageByTag.ToDictionary(static pair => pair.Value, static pair => pair.Key);
     }
 
-    public ShellPage(IVaultService vaultService, IMessenger messenger)
+    public ShellPage(IVaultManagerClient vaultService, IMessenger messenger)
     {
         _vaultService = vaultService;
         _messenger = messenger;
@@ -35,7 +34,7 @@ public sealed partial class ShellPage : Page
         ContentFrame.Navigate(typeof(VaultPage));
     }
 
-    private readonly IVaultService _vaultService;
+    private readonly IVaultManagerClient _vaultService;
     private readonly IMessenger _messenger;
 
     private static readonly IReadOnlyDictionary<string, Type> PageByTag;
@@ -82,7 +81,7 @@ public sealed partial class ShellPage : Page
         args.Handled = true;
     }
 
-    private void AutoSuggestBox_OnTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    private async void AutoSuggestBox_OnTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
         if (args.Reason is not AutoSuggestionBoxTextChangeReason.UserInput)
             return;
@@ -93,7 +92,7 @@ public sealed partial class ShellPage : Page
             return;
         }
 
-        var ciphers = _vaultService.GetCiphers(new CipherQuery()
+        var ciphers = await _vaultService.SearchCiphersAsync(new VaultCipherQuery()
         {
             SearchText = sender.Text,
             Limit = 8

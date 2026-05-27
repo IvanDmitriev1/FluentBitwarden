@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources;
 using FluentBitwarden.UI.Controls;
 using System.ComponentModel.DataAnnotations;
@@ -48,14 +47,14 @@ internal sealed partial class LogInPasswordStepViewModel(LogInFlowPageViewModel 
 
         switch (outcome)
         {
-            case AccountLoginnOutcome.Success success:
-                flow.OnSuccessLogIn(success.AccountSignInSuccess);
+            case AccountLoginOutcome.Success:
+                flow.OnSuccessLogIn();
                 return;
-            case AccountLoginnOutcome.InvalidCredentials e:
+            case AccountLoginOutcome.InvalidCredentials e:
                 SetError(nameof(MasterPassword), e.Message);
                 return;
 
-            case AccountLoginnOutcome.TwoFactorRequired twoFactorRequired:
+            case AccountLoginOutcome.TwoFactorRequired twoFactorRequired:
                 flow.Show2FStep(twoFactorRequired);
                 return;
             default:

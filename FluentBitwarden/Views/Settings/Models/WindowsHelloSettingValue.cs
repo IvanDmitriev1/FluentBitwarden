@@ -1,11 +1,12 @@
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Services;
+using FluentBitwarden.Contracts.Session.Abstractions;
+using FluentBitwarden.Views.Shell;
+using WinUIEx;
 
 namespace FluentBitwarden.Views.Settings.Models;
 
 public sealed partial class WindowsHelloSettingValue(
-    IAccountSessionManager accountSessionManager,
-    WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod) : ObservableObject
+    IAccountSessionManagerClient accountSessionManager,
+    IWindowsHelloUnlockClient windowsHelloUnlockClient) : ObservableObject
 {
     private bool _isLoading = true;
 
@@ -20,11 +21,9 @@ public sealed partial class WindowsHelloSettingValue(
         _isLoading = true;
         try
         {
-            IsSupported = await windowsHelloAccountUnlockMethod.IsSupportedAsync();
-            IsEnabled = IsSupported &&
-                        accountSessionManager.ActiveSession is not null &&
-                        windowsHelloAccountUnlockMethod.IsEnabled(
-                            accountSessionManager.RequireActiveSession.Profile.UserId);
+            var status = await windowsHelloUnlockClient.GetStatusAsync(CancellationToken.None);
+            IsSupported = status.IsSupported;
+            IsEnabled = IsSupported && status.IsEnabled;
         }
         finally
         {
@@ -34,17 +33,16 @@ public sealed partial class WindowsHelloSettingValue(
 
     partial void OnIsEnabledChanged(bool value)
     {
-        if (_isLoading || accountSessionManager.ActiveSession is null)
+        if (_isLoading)
             return;
 
-        var accountSession = accountSessionManager.RequireActiveSession;
         if (value)
         {
-            windowsHelloAccountUnlockMethod.Enable(accountSession);
+            _ = windowsHelloUnlockClient.EnableAsync(MainWindow.Instance.GetWindowHandle());
         }
         else
         {
-            windowsHelloAccountUnlockMethod.Disable(accountSession.Profile.UserId);
+            _ = windowsHelloUnlockClient.DisableAsync();
         }
     }
 }

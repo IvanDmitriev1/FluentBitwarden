@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Resources.Dialogs.Models;
+﻿using FluentBitwarden.Resources.Dialogs;
 
 namespace FluentBitwarden.Infrastructure.Abstractions.Dialog;
 

@@ -1,50 +1,47 @@
-using FluentBitwarden.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Modules.Session.Abstractions;
+using Windows.Networking.Connectivity;
+using FluentBitwarden.Contracts.Session.Abstractions;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.LogIn;
 using FluentBitwarden.Views.Unlock;
-using FluentBitwarden.Views.Unlock.Models;
 using FluentBitwarden.Infrastructure.Abstractions;
+using FluentBitwarden.Views.Passkey;
 
 namespace FluentBitwarden.Views.Loading;
 
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
-    IAccountSessionManager accountSessionManager,
-    IConnectivityService connectivityService)
+    IAccountSessionManagerClient accountSessionManagerClient)
     : ObservableObject, IPageLifecycleAware
 {
-    public Task OnLoadingAsync(CancellationToken cancellationToken)
+    public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        var accounts = accountSessionManager.GetAccounts();
+        var accounts = await accountSessionManagerClient.GetAccounts();
 
         if (accounts.Count <= 0)
         {
-            if (!connectivityService.HasInternetAccess)
+            if (!NetworkInformation.HasInternetAccess)
             {
                 navigationService.NavigateTo<OfflinePage>(
                     PageNavigationParameter.From(new OfflinePageParameter(OfflinePageReason.FirstSignInRequiresInternet)));
-                return Task.CompletedTask;
+                return;
             }
 
             navigationService.NavigateTo<LogInFlowPage>();
-            return Task.CompletedTask;
+            return;
         }
 
         var favoriteAccount = accounts[0];
-        if (accountSessionManager.ActiveSession is not null)
+        if (await accountSessionManagerClient.HasActiveSession())
         {
             navigationService.NavigateTo<ShellPage>();
-            return Task.CompletedTask;
+            return;
         }
 
         navigationService.NavigateTo<UnlockPage>(
             PageNavigationParameter.From(new UnlockPageParameter(accounts, favoriteAccount)));
-
-        return Task.CompletedTask;
     }
 
     public void OnUnloading() { }

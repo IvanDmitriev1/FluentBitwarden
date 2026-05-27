@@ -1,12 +1,10 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Resources;
 using FluentBitwarden.UI.Controls;
 using FluentBitwarden.Views.LogIn.Models;
 using FluentBitwarden.Views.LogIn.ValidationAttributes;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace FluentBitwarden.Views.LogIn.States;
 
@@ -104,19 +102,19 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
 
         switch (outcome)
         {
-            case AccountLoginnOutcome.Success success:
-                _flow.OnSuccessLogIn(success.AccountSignInSuccess);
+            case AccountLoginOutcome.Success:
+                _flow.OnSuccessLogIn();
                 return;
 
-            case AccountLoginnOutcome.TwoFactorRequired:
+            case AccountLoginOutcome.TwoFactorRequired:
                 PasskeyErrorMessage = "This account requires two-step verification. Sign in with your master password instead.";
                 return;
 
-            case AccountLoginnOutcome.DeviceVerificationRequired deviceVerificationRequired:
+            case AccountLoginOutcome.DeviceVerificationRequired deviceVerificationRequired:
                 PasskeyErrorMessage = deviceVerificationRequired.Message;
                 return;
 
-            case AccountLoginnOutcome.InvalidCredentials invalidCredentials:
+            case AccountLoginOutcome.InvalidCredentials invalidCredentials:
                 PasskeyErrorMessage = invalidCredentials.Message;
                 return;
 

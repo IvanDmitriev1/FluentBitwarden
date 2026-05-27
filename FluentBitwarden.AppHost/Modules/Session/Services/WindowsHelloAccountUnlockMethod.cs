@@ -1,12 +1,12 @@
 using BitwardenApi.Models;
 using Dapper;
 using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.Infrastructure.Security.WindowsHello;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Models;
 using System.Security.Cryptography;
 using Windows.System;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services;
 

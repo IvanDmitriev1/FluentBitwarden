@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.AppHost.Infrastructure.Diagnostics;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Internal;
 using FluentBitwarden.Modules.SshAgent.Models;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
+using FluentBitwarden.Contracts.Shared;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;

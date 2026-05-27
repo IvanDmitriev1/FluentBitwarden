@@ -1,9 +1,9 @@
-using FluentBitwarden.Infrastructure.Services.Abstractions;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.UI.Controls;
 

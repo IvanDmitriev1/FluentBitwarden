@@ -4,11 +4,11 @@
     <RootNamespace>FluentBitwarden</RootNamespace>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<UseWinUI>true</UseWinUI>
+	<Configurations>Debug;Release</Configurations>
+	<Platforms>x64;ARM64</Platforms>
 	<WinUISDKReferences>false</WinUISDKReferences>
 	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
-	<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
 	<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
-	<CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,8 +23,7 @@
 
 
 	<ItemGroup>
-		<ProjectReference Include="..\BitwardenApi\BitwardenApi.csproj" />
-		<ProjectReference Include="..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj" />
+		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
 	</ItemGroup>
 	
 
@@ -50,6 +49,7 @@
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 	<PackageReference Include="Microsoft.Windows.CsWin32">
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

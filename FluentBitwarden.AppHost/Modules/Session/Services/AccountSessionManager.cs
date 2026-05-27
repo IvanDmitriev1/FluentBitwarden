@@ -1,7 +1,7 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
+using FluentBitwarden.Contracts.Shared;
 using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Infrastructure.Security;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;

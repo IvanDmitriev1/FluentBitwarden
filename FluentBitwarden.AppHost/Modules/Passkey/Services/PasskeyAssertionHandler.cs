@@ -1,38 +1,43 @@
-﻿using FluentBitwarden.Infrastructure.Ipc.Abstractions;
+﻿using FluentBitwarden.Contracts.Ipc;
 using FluentBitwarden.Modules.Passkey.Abstractions;
 using FluentBitwarden.Modules.Passkey.Internal;
 using FluentBitwarden.Modules.Passkey.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Modules.Passkey.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class PasskeyAssertionHandler(IPasskeyOverlayService passkeyOverlayService) : IPipeRequestHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>
+internal static class PasskeyAssertionHandler
 {
-    public async ValueTask<PasskeyAssertionResponse> HandleAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
+    public static IServiceCollection MapPasskeyIpc(this IServiceCollection services)
     {
-        var credential = await passkeyOverlayService.UnlockAndSelectAsync(request, cancellationToken);
-        if (credential is null)
+        services.AddIpcRequestHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>(static async (
+            PasskeyGetAssertionRequest request,
+            IPasskeyOverlayService passkeyOverlayService,
+            CancellationToken cancellationToken) =>
         {
-            throw new InvalidOperationException("Credential not found.");
-        }
+            var credential = await passkeyOverlayService.UnlockAndSelectAsync(request, cancellationToken);
+            var authenticatorData =
+                WebAuthnAssertion.BuildAuthenticatorData(request.RpIdHash, credential.Counter, true, true);
+            var signedPayload = WebAuthnAssertion.BuildSignedPayload(authenticatorData, request.ClientDataHash);
 
-        var authenticatorData = WebAuthnAssertion.BuildAuthenticatorData(request.RpIdHash, credential.Counter, true, true);
-        var signedPayload = WebAuthnAssertion.BuildSignedPayload(authenticatorData, request.ClientDataHash);
+            var signature = WebAuthnAssertion.SignEs256(
+                credential.KeyValue,
+                signedPayload);
 
-        var signature = WebAuthnAssertion.SignEs256(
-            credential.KeyValue,
-            signedPayload);
+            var response = new PasskeyAssertionResponse
+            {
+                CredentialId = credential.CredentialId,
+                UserId = credential.UserHandle,
+                AuthenticatorData = authenticatorData,
+                Signature = signature,
+                UserName = credential.UserName,
+                UserDisplayName = credential.UserDisplayName
+            };
 
-        var response = new PasskeyAssertionResponse
-        {
-            CredentialId = credential.CredentialId,
-            UserId = credential.UserHandle,
-            AuthenticatorData = authenticatorData,
-            Signature = signature,
-            UserName = credential.UserName,
-            UserDisplayName = credential.UserDisplayName
-        };
+            return response;
+        });
 
-        return response;
+        return services;
     }
 }

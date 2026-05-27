@@ -1,20 +1,18 @@
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Contracts.Vault.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Windows.Networking.Connectivity;
 
 namespace FluentBitwarden.Views.Vault;
 
 public sealed partial class VaultPageViewModel(
     IMessenger messenger,
-    IVaultService vaultService,
-    IConnectivityService connectivityService) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
+    IVaultManagerClient vaultManagerClient) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
 {
     [ObservableProperty]
     public partial List<VaultCipher> FilteredCiphers { get; private set; } = [];
@@ -32,10 +30,10 @@ public sealed partial class VaultPageViewModel(
     public partial string SearchText { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial CipherSortField CipherSortField { get; set; } = CipherSortField.Name;
+    public partial VaultCipherSortField CipherSortField { get; set; } = VaultCipherSortField.Name;
 
     [ObservableProperty]
-    public partial CipherSortDirection CipherSortDirection { get; set; } = CipherSortDirection.Ascending;
+    public partial VaultCipherSortDirection CipherSortDirection { get; set; } = VaultCipherSortDirection.Ascending;
 
     [ObservableProperty]
     public partial bool IsSearchFieldOpen { get; set; }
@@ -43,10 +41,10 @@ public sealed partial class VaultPageViewModel(
     private bool _hasInitialized;
 
 
-    partial void OnSelectedCipherTypeChanged(CipherType? value) => QueryCiphers();
-    partial void OnSearchTextChanged(string value) => QueryCiphers();
-    partial void OnCipherSortFieldChanged(CipherSortField value) => QueryCiphers();
-    partial void OnCipherSortDirectionChanged(CipherSortDirection value) => QueryCiphers();
+    partial void OnSelectedCipherTypeChanged(CipherType? value) => _ = QueryCiphersAsync();
+    partial void OnSearchTextChanged(string value) => _ = QueryCiphersAsync();
+    partial void OnCipherSortFieldChanged(VaultCipherSortField value) => _ = QueryCiphersAsync();
+    partial void OnCipherSortDirectionChanged(VaultCipherSortDirection value) => _ = QueryCiphersAsync();
 
     public Task OnLoadingAsync(CancellationToken cancellationToken) => EnsureLoadedAsync(cancellationToken);
 
@@ -61,7 +59,7 @@ public sealed partial class VaultPageViewModel(
         IsSearchFieldOpen = true;
         SearchText = message.SearchText;
         SelectedCipherType = null;
-        QueryCiphers();
+        _ = QueryCiphersAsync();
 
         SelectedCipher = message.SelectedCipher;
     }
@@ -71,34 +69,34 @@ public sealed partial class VaultPageViewModel(
 
     private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
     {
-        if (_hasInitialized || !connectivityService.HasInternetAccess)
+        if (_hasInitialized || !NetworkInformation.HasInternetAccess)
             return;
 
         _hasInitialized = true;
         OnPropertyChanged(nameof(CipherSortField));
         OnPropertyChanged(nameof(CipherSortDirection));
 
-        RefreshCollections();
+        await RefreshCollections();
 
-        if (!connectivityService.HasInternetAccess)
+        if (!NetworkInformation.HasInternetAccess)
             return;
 
-        var result = await vaultService.SyncVaultAsync(cancellationToken);
+        var result = await vaultManagerClient.SyncVaultAsync(cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
-            vaultService.LoadLocalVault();
-            RefreshCollections();
+            await RefreshCollections();
             return;
         }
 
         return;
 
-        void RefreshCollections()
+        async Task RefreshCollections()
         {
             var selectedCipherId = SelectedCipher?.Id;
 
-            FilteredCiphers = vaultService.GetCiphers(CipherQuery.QueryAll);
-            Folders.ReplaceWith(vaultService.GetFolders());
+            await QueryCiphersAsync();
+
+            Folders.ReplaceWith(await vaultManagerClient.GetFoldersAsync(cancellationToken));
 
             SelectedCipher = selectedCipherId is null
                 ? null
@@ -106,9 +104,9 @@ public sealed partial class VaultPageViewModel(
         }
     }
 
-    private void QueryCiphers()
+    private async Task QueryCiphersAsync()
     {
-        var ciphers = vaultService.GetCiphers(new CipherQuery()
+        var ciphers = await vaultManagerClient.SearchCiphersAsync(new VaultCipherQuery()
         {
             SearchText = SearchText,
             CipherType = SelectedCipherType,

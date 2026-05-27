@@ -1,11 +1,10 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models;
+using FluentBitwarden.Contracts.Session.Abstractions;
 using FluentBitwarden.UI.Controls;
 using Microsoft.UI.Xaml;
 using System.Windows.Input;
-using FluentBitwarden.Modules.Session.Services;
+using FluentBitwarden.Views.Shell;
+using WinUIEx;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -20,15 +19,15 @@ public sealed partial class VaultUnlock : UserControl
     {
         InitializeComponent();
 
-        _accountSessionManager = App.Current.GetRequiredService<IAccountSessionManager>();
-        _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<WindowsHelloAccountUnlockMethod>();
+        _accountSessionManager = App.Current.GetRequiredService<IAccountSessionManagerClient>();
+        _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<IWindowsHelloUnlockClient>();
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
-    private readonly IAccountSessionManager _accountSessionManager;
-    private readonly WindowsHelloAccountUnlockMethod _windowsHelloAccountUnlockMethod;
+    private readonly IAccountSessionManagerClient _accountSessionManager;
+    private readonly IWindowsHelloUnlockClient _windowsHelloAccountUnlockMethod;
 
     public string Password => PasswordBox.Password;
 
@@ -50,38 +49,40 @@ public sealed partial class VaultUnlock : UserControl
 
     private void PasswordChanged(PasswordBoxEx sender, string newPassword) => SyncPasswordAccentIcon();
 
-    partial void OnAccountChanged()
+    async partial void OnAccountChanged()
     {
         ArgumentNullException.ThrowIfNull(Account);
 
-        WindowsHelloButton.Visibility = _windowsHelloAccountUnlockMethod.IsEnabled(Account.UserId)
+        var status = await _windowsHelloAccountUnlockMethod.GetStatusAsync(Account.UserId);
+
+        WindowsHelloButton.Visibility = status.IsEnabled
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
 
 
-    [RelayCommand]
-    private void Unlock()
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private Task Unlock()
     {
         ArgumentNullException.ThrowIfNull(Account);
 
         if (string.IsNullOrWhiteSpace(Password))
         {
             PasswordBox.Focus(FocusState.Programmatic);
-            return;
+            return Task.CompletedTask;
         }
 
-        OnUnlockCore(new AccountUnlockRequest.MasterPasswordRequest(Account, Password));
+        return OnUnlockCore(new AccountUnlockRequest.MasterPasswordRequest(Account, Password));
     }
 
-    [RelayCommand]
-    private void UnlockWithWindowsHello()
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private Task UnlockWithWindowsHello()
     {
         ArgumentNullException.ThrowIfNull(Account);
-        OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account));
+        return OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account, MainWindow.Instance.GetWindowHandle()));
     }
 
-    private void OnUnlockCore(AccountUnlockRequest request)
+    private async Task OnUnlockCore(AccountUnlockRequest request)
     {
         PasswordBox.IsPasswordRevealed = false;
         PasswordBox.IsEnabled = false;
@@ -90,7 +91,7 @@ public sealed partial class VaultUnlock : UserControl
 
         try
         {
-            result = _accountSessionManager.Unlock(request);
+            result = await _accountSessionManager.Unlock(request);
         }
         finally
         {

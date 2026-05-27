@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Contracts.Session.Abstractions;
 using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.LogIn.Models;
 using FluentBitwarden.Views.LogIn.States;
@@ -10,9 +9,8 @@ namespace FluentBitwarden.Views.LogIn;
 
 public sealed partial class LogInFlowPageViewModel : ObservableObject
 {
-
     public LogInFlowPageViewModel(
-        IAccountSessionManager accountSessionManager,
+        IAccountSessionManagerClient accountSessionManager,
         INavigationService navigationService)
     {
         _navigationService = navigationService;
@@ -22,7 +20,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
 
     private readonly INavigationService _navigationService;
 
-    internal IAccountSessionManager AccountSessionManager { get; }
+    internal IAccountSessionManagerClient AccountSessionManager { get; }
     internal LogInFlowContext Context { get; } = new();
 
 
@@ -42,12 +40,12 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
         CurrentStep = new LogInPasswordStepViewModel(this);
     }
 
-    internal void Show2FStep(AccountLoginnOutcome.TwoFactorRequired twoFactorRequired)
+    internal void Show2FStep(AccountLoginOutcome.TwoFactorRequired twoFactorRequired)
     {
         CurrentStep = new LogIn2FStepViewModel(twoFactorRequired, this);
     }
 
-    internal void OnSuccessLogIn(AccountSignInSuccess success)
+    internal void OnSuccessLogIn()
     {
         _navigationService.NavigateTo<LoadingPage>();
     }

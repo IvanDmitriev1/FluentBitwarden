@@ -1,18 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Models;
 using CommunityToolkit.WinUI;
-using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.AppState.Models;
-using FluentBitwarden.Modules.Account.Models;
-using FluentBitwarden.Modules.Passkey.Abstractions;
-using FluentBitwarden.Modules.Passkey.Models;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Contracts.AppState;
+using FluentBitwarden.Contracts.AppState.Models;
 using FluentBitwarden.Views.Passkey;
 
 namespace FluentBitwarden.Infrastructure.Implementations;
 
+/*
 internal class PasskeyOverlayService(
     IAccountSessionManager accountSessionManager,
     IVaultService vaultService,
@@ -116,3 +111,4 @@ internal class PasskeyOverlayService(
         return await tcs.Task;
     }
 }
+*/

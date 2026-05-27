@@ -1,23 +1,16 @@
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.AppHost;
+using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
-using FluentBitwarden.Modules.Passkey.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
-using System.Linq;
 using Windows.ApplicationModel.Activation;
+using FluentBitwarden.Infrastructure;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Infrastructure.Implementations;
-using FluentBitwarden.Infrastructure;
-using FluentBitwarden.AppHost.Infrastructure.Diagnostics;
 
 namespace FluentBitwarden;
 
@@ -30,26 +23,19 @@ public partial class App : IXamlMetadataServiceProvider
 
     public DispatcherQueue DispatcherQueue { get; }
 
-    public IHost Host { get; } = Microsoft.Extensions.Hosting.Host
-        .CreateDefaultBuilder()
-        .ConfigureServices((ctx, services) =>
-        {
-            services.AddFluentBitwardenApplicationServices();
-            services.AddSingleton<MainWindow>();
-            services.AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>());
-            services.AddSingleton<IMessenger>(StrongReferenceMessenger.Default);
-            services.AddTransient<IPasskeyOverlayService, PasskeyOverlayService>();
-            services.AddTransient<ISshUserActionPrompt, SshUserActionPrompt>();
+    private IServiceProvider Services = new ServiceCollection()
+        .AddSingleton<MainWindow>()
+        .AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>())
+        .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
 
-            services.AddViews();
-            services.AddUiServices();
-        })
-        .Build();
+        .AddViews()
+        .AddUiServices()
+        .BuildServiceProvider();
 
     public object GetRequiredService(Type type)
-        => Host.Services.GetRequiredService(type);
+        => Services.GetRequiredService(type);
 
-    public T GetRequiredService<T>() where T : notnull => Host.Services.GetRequiredService<T>();
+    public T GetRequiredService<T>() where T : notnull => Services.GetRequiredService<T>();
 
     public App(AppActivationArguments initialActivation)
     {

@@ -2,7 +2,6 @@
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
 using FluentBitwarden.Resources.Dialogs;
-using FluentBitwarden.Resources.Dialogs.Models;
 using FluentBitwarden.Views.Shell;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;

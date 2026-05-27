@@ -1,12 +1,12 @@
 using BitwardenApi.Models;
-using FluentBitwarden.Modules.AppState;
+using FluentBitwarden.Contracts.AppState;
+using FluentBitwarden.Contracts.AppState.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Resources.Dialogs.Models;
-using FluentBitwarden.Modules.AppState.Models;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;
 

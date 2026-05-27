@@ -1,8 +1,8 @@
-using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.AppState.Models;
 using Microsoft.UI.Dispatching;
 using System.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
+using FluentBitwarden.Contracts.AppState;
+using FluentBitwarden.Contracts.AppState.Models;
 
 namespace FluentBitwarden.Infrastructure.Implementations;
 

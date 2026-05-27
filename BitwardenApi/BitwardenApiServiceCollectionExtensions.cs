@@ -8,8 +8,6 @@ using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: Fody.ConfigureAwait(false)]
-
 namespace BitwardenApi;
 
 public static class BitwardenApiServiceCollectionExtensions

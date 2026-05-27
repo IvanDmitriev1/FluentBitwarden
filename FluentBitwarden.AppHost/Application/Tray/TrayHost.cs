@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.AppHost.Infrastructure;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Application.Tray;

@@ -1,0 +1,6 @@
+﻿GetCurrentPackageFamilyName
+GetCurrentPackageFullName
+GetPackageFamilyName
+OpenProcess
+QueryFullProcessImageName
+GetNamedPipeClientProcessId

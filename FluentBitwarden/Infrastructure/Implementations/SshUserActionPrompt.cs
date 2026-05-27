@@ -1,9 +1,9 @@
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Resources.Dialogs.Models;
 
 namespace FluentBitwarden.Infrastructure.Implementations;
 
+/*
 internal sealed class SshUserActionPrompt(IContentDialogService contentDialogService) : ISshUserActionPrompt
 {
     private static readonly ContentDialogOptions DialogOptions = new(
@@ -18,3 +18,4 @@ internal sealed class SshUserActionPrompt(IContentDialogService contentDialogSer
             new SshUserActionDialogViewModel(request.KeyName, request.KeyFingerprint, request.IsForwarded),
             DialogOptions);
 }
+*/

@@ -1,6 +1,6 @@
+using Windows.Networking.Connectivity;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Infrastructure.Services.Abstractions;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.Offline.Models;
@@ -8,11 +8,8 @@ using FluentBitwarden.Views.Offline.Models;
 namespace FluentBitwarden.Views.Offline;
 
 public sealed partial class OfflinePageViewModel(
-    INavigationService navigationService,
-    IConnectivityService connectivityService) : ObservableObject, IPageLifecycleAware<OfflinePageParameter>
+    INavigationService navigationService) : ObservableObject, IPageLifecycleAware<OfflinePageParameter>
 {
-    private bool _isActive;
-
     [ObservableProperty]
     public partial string Title { get; private set; } = string.Empty;
 
@@ -23,26 +20,19 @@ public sealed partial class OfflinePageViewModel(
     {
         ApplyReasonText(param.Reason);
 
-        _isActive = true;
-
-        connectivityService.ConnectivityChanged += OnConnectivityChanged;
-
-        if (connectivityService.HasInternetAccess)
-            navigationService.NavigateTo<LoadingPage>();
-
+        NetworkInformation.NetworkStatusChanged += NetworkInformationOnNetworkStatusChanged;
         return Task.CompletedTask;
     }
 
     public void OnUnloading()
     {
-        _isActive = false;
-        connectivityService.ConnectivityChanged -= OnConnectivityChanged;
+        NetworkInformation.NetworkStatusChanged -= NetworkInformationOnNetworkStatusChanged;
     }
 
     [RelayCommand]
     private void Retry()
     {
-        if (!connectivityService.HasInternetAccess)
+        if (!NetworkInformation.HasInternetAccess)
             return;
 
         navigationService.NavigateTo<LoadingPage>();
@@ -67,9 +57,9 @@ public sealed partial class OfflinePageViewModel(
         }
     }
 
-    private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    private void NetworkInformationOnNetworkStatusChanged(object sender)
     {
-        if (!e.HasInternetAccess || !_isActive)
+        if (!NetworkInformation.HasInternetAccess)
             return;
 
         if (App.Current.DispatcherQueue.HasThreadAccess)

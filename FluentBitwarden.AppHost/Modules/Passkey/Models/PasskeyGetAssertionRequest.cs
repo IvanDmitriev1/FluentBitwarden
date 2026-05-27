@@ -1,4 +1,4 @@
-using FluentBitwarden.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Ipc.Abstractions;
 using MemoryPack;
 
 namespace FluentBitwarden.Modules.Passkey.Models;
@@ -7,7 +7,7 @@ namespace FluentBitwarden.Modules.Passkey.Models;
 public readonly partial record struct PasskeyGetAssertionRequest(
     string RpId,
     byte[] RpIdHash,
-    byte[] ClientDataHash) : IPipeRequestMessage
+    byte[] ClientDataHash) : IIpcRequestMessage
 {
     public static ushort MessageType => 2;
 }

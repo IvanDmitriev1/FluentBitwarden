@@ -1,11 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Infrastructure.Implementations;
-using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.AppState.Models;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.Session.Services;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings.Models;
 using Microsoft.UI.Xaml;
@@ -13,13 +8,16 @@ using System.Diagnostics;
 using System.Reflection;
 using Windows.ApplicationModel;
 using Windows.Storage;
+using FluentBitwarden.Contracts.AppState;
+using FluentBitwarden.Contracts.AppState.Models;
+using FluentBitwarden.Contracts.Session.Abstractions;
 
 namespace FluentBitwarden.Views.Settings;
 
 public sealed partial class SettingsPageViewModel(
     IThemeService themeService,
-    IAccountSessionManager accountSessionManager,
-    WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod)
+    IAccountSessionManagerClient accountSessionManager,
+    IWindowsHelloUnlockClient windowsHelloUnlockClient)
     : ObservableObject, IPageLifecycleAware
 {
     public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(themeService.Apply);
@@ -38,7 +36,7 @@ public sealed partial class SettingsPageViewModel(
     public SettingValue<SensitiveActionPolicy> PasskeyUserVerificationPolicy { get; } = AppSettingKeys.Passkeys.UserVerificationPolicyKey.CreateSettingValue();
     public SettingValue<SensitiveActionPolicy> SshUserVerificationPolicy { get; } = AppSettingKeys.SshAgent.UserVerificationPolicyKey.CreateSettingValue();
 
-    public WindowsHelloSettingValue WindowsHello { get; } = new(accountSessionManager, windowsHelloAccountUnlockMethod);
+    public WindowsHelloSettingValue WindowsHello { get; } = new(accountSessionManager, windowsHelloUnlockClient);
     public PasskeyPluginSettingValue PasskeyPlugin { get; } = new();
 
     public string AppVersion { get; } = ResolveAppVersion();
