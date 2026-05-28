@@ -1,5 +1,6 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
+using FluentBitwarden.Contracts.Vault.Models;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
@@ -126,7 +127,7 @@ internal sealed class VaultService(
         return _ciphersById.GetValueOrDefault(id);
     }
 
-    public List<VaultCipher> GetCiphers(CipherQuery query)
+    public VaultCipher[] GetCiphers(VaultCipherQuery query)
     {
         using var _ = _lock.EnterScope();
 
@@ -152,7 +153,7 @@ internal sealed class VaultService(
         if (query.Limit is not null)
             result = result.Take(query.Limit.Value);
 
-        return result.ToList();
+        return result.ToArray();
     }
 
     public List<Fido2Credential> GetFido2Credentials(string rpId)
@@ -183,22 +184,22 @@ internal sealed class VaultService(
             .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
     }
 
-    public List<VaultFolder> GetFolders()
+    public VaultFolder[] GetFolders()
     {
         using var _ = _lock.EnterScope();
 
         return _folders
             .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+            .ToArray();
     }
 
-    public List<VaultCollection> GetCollections()
+    public VaultCollection[] GetCollections()
     {
         using var _ = _lock.EnterScope();
 
         return _collections
             .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+            .ToArray();
     }
 
     private async Task<bool> HasRemoteChangesAsync(UserId currentUser, CancellationToken token)

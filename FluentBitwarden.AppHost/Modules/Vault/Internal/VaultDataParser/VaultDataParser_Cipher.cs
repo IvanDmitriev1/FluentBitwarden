@@ -177,7 +177,7 @@ public static partial class VaultDataParser
         CipherType.Login => new LoginVaultCipher
         {
             Id = dto.Id,
-            FolderId = dto.FolderId,
+            FolderId = dto.FolderId ?? FolderId.Empty,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -188,7 +188,7 @@ public static partial class VaultDataParser
         CipherType.SecureNote => new SecureNoteVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId,
+            FolderId = dto.FolderId ?? FolderId.Empty,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -199,7 +199,7 @@ public static partial class VaultDataParser
         CipherType.Card => new CardVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId,
+            FolderId = dto.FolderId ?? FolderId.Empty,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -210,7 +210,7 @@ public static partial class VaultDataParser
         CipherType.Identity => new IdentityVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId,
+            FolderId = dto.FolderId ?? FolderId.Empty,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -221,7 +221,7 @@ public static partial class VaultDataParser
         CipherType.SshKey => new SshKeyVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId,
+            FolderId = dto.FolderId ?? FolderId.Empty,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,

@@ -18,17 +18,17 @@ internal sealed class PipeIpcServer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await using var pipe = new NamedPipeServerStream(
-            _pipeName,
-            PipeDirection.InOut,
-            maxNumberOfServerInstances: 1,
-            PipeTransmissionMode.Byte,
-            PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
-            inBufferSize: 64 * 1024,
-            outBufferSize: 64 * 1024);
-
         while (!stoppingToken.IsCancellationRequested)
         {
+            await using var pipe = new NamedPipeServerStream(
+                _pipeName,
+                PipeDirection.InOut,
+                maxNumberOfServerInstances: 1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
+                inBufferSize: 64 * 1024,
+                outBufferSize: 64 * 1024);
+
             try
             {
                 Debug.WriteLine("Waiting for named pipe client......");
@@ -46,6 +46,8 @@ internal sealed class PipeIpcServer : BackgroundService
                     return;
 
                 await invoker.InvokeAsync(pipe, header.PayloadLength, stoppingToken);
+                await pipe.FlushAsync(stoppingToken);
+                //pipe.c();
             }
             catch (EndOfStreamException)
             {
@@ -58,11 +60,6 @@ internal sealed class PipeIpcServer : BackgroundService
             catch (Exception e)
             {
                 UnhandledExceptionLogger.WriteException(e);
-            }
-            finally
-            {
-                if (pipe.IsConnected)
-                    pipe.Disconnect();
             }
         }
     }

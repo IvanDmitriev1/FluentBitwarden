@@ -1,5 +1,6 @@
 using System.Linq;
 using BitwardenApi.Models;
+using FluentBitwarden.Contracts.Vault.Models;
 using FluentBitwarden.Modules.Vault.Models;
 
 namespace FluentBitwarden.Modules.Vault.Internal;
@@ -8,25 +9,25 @@ internal static class VaultSearchExtensions
 {
     public static IEnumerable<VaultCipher> ApplySort(
         this IEnumerable<VaultCipher> source,
-        CipherSortField sortField,
-        CipherSortDirection sortDirection) => (sortField, sortDirection) switch
+        VaultCipherSortField sortField,
+        VaultCipherSortDirection sortDirection) => (sortField, sortDirection) switch
     {
-        (CipherSortField.Name, CipherSortDirection.Ascending) =>
+        (VaultCipherSortField.Name, VaultCipherSortDirection.Ascending) =>
             source.OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
 
-        (CipherSortField.Name, CipherSortDirection.Descending) =>
+        (VaultCipherSortField.Name, VaultCipherSortDirection.Descending) =>
             source.OrderByDescending(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
 
-        (CipherSortField.CreationDate, CipherSortDirection.Ascending) =>
+        (VaultCipherSortField.CreationDate, VaultCipherSortDirection.Ascending) =>
             source.OrderBy(static x => x.CreationDate),
 
-        (CipherSortField.CreationDate, CipherSortDirection.Descending) =>
+        (VaultCipherSortField.CreationDate, VaultCipherSortDirection.Descending) =>
             source.OrderByDescending(static x => x.CreationDate),
 
-        (CipherSortField.RevisionDate, CipherSortDirection.Ascending) =>
+        (VaultCipherSortField.RevisionDate, VaultCipherSortDirection.Ascending) =>
             source.OrderBy(static x => x.RevisionDate),
 
-        (CipherSortField.RevisionDate, CipherSortDirection.Descending) =>
+        (VaultCipherSortField.RevisionDate, VaultCipherSortDirection.Descending) =>
             source.OrderByDescending(static x => x.RevisionDate),
 
         _ =>

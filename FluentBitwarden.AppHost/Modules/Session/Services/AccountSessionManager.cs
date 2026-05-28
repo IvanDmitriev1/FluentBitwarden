@@ -7,6 +7,7 @@ using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
+using FluentBitwarden.Modules.Vault.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services;
 

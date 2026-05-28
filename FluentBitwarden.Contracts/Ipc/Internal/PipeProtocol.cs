@@ -30,9 +30,7 @@ internal static class PipeProtocol
 
         RequestHeader header = new(messageType, payloadWriter.WrittenCount);
         await header.WriteAsync(stream);
-
         await stream.WriteAsync(payloadWriter.WrittenMemory, cancellationToken);
-        await stream.FlushAsync(cancellationToken);
     }
 
     public static async ValueTask WriteRequestMessageAsync(
@@ -42,8 +40,6 @@ internal static class PipeProtocol
     {
         RequestHeader header = new(messageType, PayloadLength: 0);
         await header.WriteAsync(stream);
-
-        await stream.FlushAsync(cancellationToken);
     }
 
 
@@ -58,8 +54,6 @@ internal static class PipeProtocol
 
         ResponseHeader header = new(payloadWriter.WrittenCount);
         await header.Write(stream);
-
         await stream.WriteAsync(payloadWriter.WrittenMemory, cancellationToken);
-        await stream.FlushAsync(cancellationToken);
     }
 }

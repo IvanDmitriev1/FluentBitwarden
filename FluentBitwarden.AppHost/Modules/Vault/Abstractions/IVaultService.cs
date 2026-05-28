@@ -1,4 +1,5 @@
 using BitwardenApi.Models;
+using FluentBitwarden.Contracts.Vault.Models;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Models;
 
@@ -12,12 +13,12 @@ public interface IVaultService
     Task<VaultSyncResult> SyncVaultAsync(CancellationToken token);
 
     VaultCipher? GetCipher(CipherId id);
-    List<VaultCipher> GetCiphers(CipherQuery query);
+    VaultCipher[] GetCiphers(VaultCipherQuery query);
 
     List<Fido2Credential> GetFido2Credentials(string rpId);
     List<SshPublicIdentityResponce> GetAvailableSshKeys();
     SshKeyVaultCipher? GetSsh(ReadOnlyMemory<byte> publicKeyBlob);
 
-    List<VaultFolder> GetFolders();
-    List<VaultCollection> GetCollections();
+    VaultFolder[] GetFolders();
+    VaultCollection[] GetCollections();
 }

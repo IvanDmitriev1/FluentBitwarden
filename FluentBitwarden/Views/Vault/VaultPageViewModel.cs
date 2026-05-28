@@ -15,7 +15,7 @@ public sealed partial class VaultPageViewModel(
     IVaultManagerClient vaultManagerClient) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
 {
     [ObservableProperty]
-    public partial List<VaultCipher> FilteredCiphers { get; private set; } = [];
+    public partial VaultCipher[] FilteredCiphers { get; private set; } = [];
 
     [ObservableProperty]
     public partial ObservableCollection<VaultFolder> Folders { get; private set; } = [];

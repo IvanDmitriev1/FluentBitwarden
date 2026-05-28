@@ -1,4 +1,6 @@
+using BitwardenApi.Common.MemoryPackFormatters;
 using BitwardenApi.OpenSsh;
+using MemoryPack;
 
 namespace BitwardenApi.Models;
 
@@ -6,12 +8,22 @@ namespace BitwardenApi.Models;
 /// Common vault vaultCipher fields.
 /// <see cref="CardVaultCipher"/>, <see cref="IdentityVaultCipher"/>, <see cref="SecureNoteVaultCipher"/>.
 /// </summary>
-public abstract class VaultCipher
+[MemoryPackable]
+[MemoryPackUnion(0, typeof(LoginVaultCipher))]
+[MemoryPackUnion(1, typeof(SecureNoteVaultCipher))]
+[MemoryPackUnion(2, typeof(CardVaultCipher))]
+[MemoryPackUnion(3, typeof(IdentityVaultCipher))]
+[MemoryPackUnion(4, typeof(SshKeyVaultCipher))]
+public abstract partial class VaultCipher
 {
+    [MemoryPackIgnore]
     public abstract CipherType Type { get; }
 
+    [StronglyTypedIdFormatter<CipherId>]
     public required CipherId Id { get; set; }
-    public FolderId? FolderId { get; set; }
+
+    [StronglyTypedIdFormatter<FolderId>]
+    public FolderId FolderId { get; set; }
     public required string Name { get; set; }
     public string? Notes { get; set; }
     public required bool Favorite { get; set; }
@@ -21,25 +33,29 @@ public abstract class VaultCipher
     public required DateTimeOffset? DeletedDate { get; set; }
 }
 
-
-public sealed class LoginVaultCipher : VaultCipher
+[MemoryPackable]
+public sealed partial class LoginVaultCipher : VaultCipher
 {
     public override CipherType Type => CipherType.Login;
 
     public string? Username { get; set; }
     public string? Password { get; set; }
+
+    [TotpValueFormatter]
     public TotpValue? Totp { get; set; }
     public List<string> Uris { get; set; } = [];
     public List<Fido2Credential> Fido2Credentials { get; set; } = [];
 }
 
 /// <remarks>Notes carries the secure note text via <see cref="VaultCipher.Notes"/>.</remarks>
-public sealed class SecureNoteVaultCipher : VaultCipher
+[MemoryPackable]
+public sealed partial class SecureNoteVaultCipher : VaultCipher
 {
     public override CipherType Type => CipherType.SecureNote;
 }
 
-public sealed class CardVaultCipher : VaultCipher
+[MemoryPackable]
+public sealed partial class CardVaultCipher : VaultCipher
 {
     public override CipherType Type => CipherType.Card;
 
@@ -51,7 +67,8 @@ public sealed class CardVaultCipher : VaultCipher
     public string? Code { get; set; }
 }
 
-public sealed class IdentityVaultCipher : VaultCipher
+[MemoryPackable]
+public sealed partial class IdentityVaultCipher : VaultCipher
 {
     public override CipherType Type => CipherType.Identity;
 
@@ -75,7 +92,8 @@ public sealed class IdentityVaultCipher : VaultCipher
     public string? LicenseNumber { get; set; }
 }
 
-public sealed class SshKeyVaultCipher : VaultCipher
+[MemoryPackable]
+public sealed partial class SshKeyVaultCipher : VaultCipher
 {
     public override CipherType Type => CipherType.SshKey;
 

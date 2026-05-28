@@ -7,8 +7,8 @@ public interface IVaultManagerClient
 {
     ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default);
 
-    ValueTask<List<VaultCipher>> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default);
+    ValueTask<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default);
     ValueTask<VaultCipher?> GetCipherAsync(CipherId cipherId, CancellationToken cancellationToken = default);
-    ValueTask<List<VaultFolder>> GetFoldersAsync(CancellationToken cancellationToken = default);
-    ValueTask<List<VaultCollection>> GetCollectionsAsync(CancellationToken cancellationToken = default);
+    ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default);
+    ValueTask<VaultCollection[]> GetCollectionsAsync(CancellationToken cancellationToken = default);
 }
