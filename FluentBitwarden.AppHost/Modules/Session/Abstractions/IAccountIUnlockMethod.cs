@@ -1,4 +1,7 @@
-﻿using FluentBitwarden.Modules.Session.Models;
+﻿using BitwardenApi.Models;
+using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.Contracts.Session.Models;
+using FluentBitwarden.Modules.Session.Models;
 
 namespace FluentBitwarden.Modules.Session.Abstractions;
 

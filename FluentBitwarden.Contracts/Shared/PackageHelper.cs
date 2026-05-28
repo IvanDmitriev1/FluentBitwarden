@@ -23,5 +23,5 @@ public static class PackageHelper
     }
 
     private static string ResolvePackageRootPath() =>
-        IsPackaged ? Package.Current.InstalledLocation.Path : AppContext.BaseDirectory;
+        IsPackaged ? Package.Current.InstalledPath : AppContext.BaseDirectory;
 }

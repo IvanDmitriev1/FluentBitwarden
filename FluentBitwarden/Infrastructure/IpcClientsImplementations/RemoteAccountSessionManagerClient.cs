@@ -6,27 +6,15 @@ namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 
 internal sealed class RemoteAccountSessionManagerClient(IIpcClient ipcClient) : IAccountSessionManagerClient
 {
-    public async ValueTask<bool> HasActiveSession()
-    {
-        var result = await ipcClient.SendAsync<bool>(IpcMessageTypes.Account.HasActiveSession);
-        return result.GetValueOrThrow();
-    }
+    public ValueTask<bool> HasActiveSession() => ipcClient.SendAsync<bool>(IpcMessageTypes.Account.HasActiveSession);
 
-    public async ValueTask<AccountLoginOutcome> SignInAsync(AccountLoginRequest request, CancellationToken cancellationToken)
-    {
-        var result = await ipcClient.SendAsync<AccountLoginRequest, AccountLoginOutcome>(request, cancellationToken);
-        return result.GetValueOrThrow();
-    }
+    public ValueTask<AccountLoginOutcome>
+        LogInAsync(AccountLoginRequest request, CancellationToken cancellationToken) =>
+        ipcClient.SendAsync<AccountLoginRequest, AccountLoginOutcome>(request, cancellationToken);
 
-    public async ValueTask<IReadOnlyList<AccountProfile>> GetAccounts()
-    {
-        var result = await ipcClient.SendAsync<IReadOnlyList<AccountProfile>>(IpcMessageTypes.Account.GetAccounts);
-        return result.GetValueOrThrow();
-    }
+    public ValueTask<GetAccountsResponse> GetAccounts() =>
+        ipcClient.SendAsync<GetAccountsResponse>(IpcMessageTypes.Account.GetAccounts);
 
-    public async ValueTask<AccountUnlockOutcome> Unlock(AccountUnlockRequest request)
-    {
-        var result = await ipcClient.SendAsync<AccountUnlockRequest, AccountUnlockOutcome>(request);
-        return result.GetValueOrThrow();
-    }
+    public ValueTask<AccountUnlockOutcome> Unlock(AccountUnlockRequest request) =>
+        ipcClient.SendAsync<AccountUnlockRequest, AccountUnlockOutcome>(request);
 }

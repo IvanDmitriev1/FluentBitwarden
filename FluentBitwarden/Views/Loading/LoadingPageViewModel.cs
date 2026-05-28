@@ -18,9 +18,9 @@ public partial class LoadingPageViewModel(
 {
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        var accounts = await accountSessionManagerClient.GetAccounts();
+        var response = await accountSessionManagerClient.GetAccounts();
 
-        if (accounts.Count <= 0)
+        if (response.Accounts.Length <= 0)
         {
             if (!NetworkInformation.HasInternetAccess)
             {
@@ -33,7 +33,7 @@ public partial class LoadingPageViewModel(
             return;
         }
 
-        var favoriteAccount = accounts[0];
+        var favoriteAccount = response.Accounts[0];
         if (await accountSessionManagerClient.HasActiveSession())
         {
             navigationService.NavigateTo<ShellPage>();
@@ -41,7 +41,7 @@ public partial class LoadingPageViewModel(
         }
 
         navigationService.NavigateTo<UnlockPage>(
-            PageNavigationParameter.From(new UnlockPageParameter(accounts, favoriteAccount)));
+            PageNavigationParameter.From(new UnlockPageParameter(response.Accounts, favoriteAccount)));
     }
 
     public void OnUnloading() { }

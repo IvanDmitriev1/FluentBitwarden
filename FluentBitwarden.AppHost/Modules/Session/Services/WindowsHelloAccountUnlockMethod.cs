@@ -1,18 +1,18 @@
 using BitwardenApi.Models;
 using Dapper;
+using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.Contracts.Session.Models;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Security.WindowsHello;
 using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Models;
 using System.Security.Cryptography;
-using Windows.System;
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Modules.Session.Services;
 
-public sealed class WindowsHelloAccountUnlockMethod(
-    ISqliteConnectionFactory connectionFactory,
-    IWindowHandleProvider windowHandleProvider)
+using AccountUnlockOperationResult = OperationResult<AccountUnlockOutcome, DecryptedUserKey>;
+
+internal sealed class WindowsHelloAccountUnlockMethod(ISqliteConnectionFactory connectionFactory)
 {
     public UnlockMethodType UnlockMethod => UnlockMethodType.WindowsHello;
 
@@ -21,17 +21,16 @@ public sealed class WindowsHelloAccountUnlockMethod(
     /// <summary>
     /// Stores the currently decrypted Bitwarden user key wrapped by a Windows Hello Passport key.
     /// </summary>
-    public void Enable(AccountSession accountSession)
+    public void Enable(AccountSession accountSession, IntPtr hwnd)
     {
         var keyName = accountSession.Profile.UserId.ToString();
-        var ownerWindowHandle = windowHandleProvider.GetWindowHandle();
 
-        WindowsHelloTpmKeyProtector.CreateOrReplaceWrappingKey(keyName, ownerWindowHandle);
+        WindowsHelloTpmKeyProtector.CreateOrReplaceWrappingKey(keyName, hwnd);
 
         byte[] protectedBytes = WindowsHelloTpmKeyProtector.WrapUserKey(
             keyName,
             accountSession.DecryptedUserKey.Key,
-            ownerWindowHandle);
+            hwnd);
 
         using var connection = connectionFactory.OpenConnection();
         connection.Execute(
@@ -70,7 +69,7 @@ public sealed class WindowsHelloAccountUnlockMethod(
     /// <summary>
     /// Restores the Bitwarden user key with Windows Hello and returns the account unlock result.
     /// </summary>
-    public AccountUnlockOutcome Unlock(AccountKeyMaterial accountKeyMaterial)
+    public AccountUnlockOperationResult Unlock(AccountKeyMaterial accountKeyMaterial, IntPtr hwnd)
     {
         var keyName = accountKeyMaterial.UserId.ToString();
 
@@ -89,32 +88,34 @@ public sealed class WindowsHelloAccountUnlockMethod(
                 });
 
             if (protectedBytes is null)
-                return new AccountUnlockOutcome.Failure(
-                    "Windows Hello unlock is not enabled for this account. Unlock with your master password and enable Windows Hello again.");
+            {
+                AccountUnlockOperationResult.WithoutPayload(new AccountUnlockOutcome.Failure(
+                    "Windows Hello unlock is not enabled for this account. Unlock with your master password and enable Windows Hello again."));
+            }
 
             byte[] decryptedBytes = WindowsHelloTpmKeyProtector.UnwrapUserKey(
                 keyName,
                 protectedBytes,
-                windowHandleProvider.GetWindowHandle());
+                hwnd);
 
-            return new AccountUnlockOutcome.Success(new DecryptedUserKey(accountKeyMaterial.UserId, decryptedBytes));
+            return AccountUnlockOperationResult.WithPayload(new AccountUnlockOutcome.Success(),
+                new DecryptedUserKey(accountKeyMaterial.UserId, decryptedBytes));
         }
         catch (WindowsHelloAuthenticationCanceledException)
         {
-            return new AccountUnlockOutcome.WindowsHelloCancelled();
+            return AccountUnlockOperationResult.WithoutPayload(new AccountUnlockOutcome.WindowsHelloCancelled());
         }
         catch (WindowsHelloKeyUnavailableException)
         {
             RemoveWindowsHelloUnlock(keyName);
 
-            return new AccountUnlockOutcome.Failure(
-                "Windows Hello unlock is no longer available for this account. Unlock with your master password and enable Windows Hello again.");
+            return AccountUnlockOperationResult.WithoutPayload(new AccountUnlockOutcome.Failure(
+                "Windows Hello unlock is no longer available for this account. Unlock with your master password and enable Windows Hello again."));
         }
         catch (CryptographicException e)
         {
             RemoveWindowsHelloUnlock(keyName);
-
-            return new AccountUnlockOutcome.Failure(e.Message);
+            return AccountUnlockOperationResult.WithoutPayload(new AccountUnlockOutcome.Failure(e.Message));
         }
     }
 

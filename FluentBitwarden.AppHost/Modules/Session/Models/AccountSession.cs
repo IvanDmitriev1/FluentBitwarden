@@ -1,9 +1,9 @@
 using BitwardenApi.Models;
-using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Contracts.Session.Models;
 
 namespace FluentBitwarden.Modules.Session.Models;
 
-public sealed record AccountSession(
+internal sealed record AccountSession(
     AccountProfile Profile,
     BitwardenClientContext Context,
     AccountSessionTokens AccountSessionTokens,

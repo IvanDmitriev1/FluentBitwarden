@@ -26,7 +26,7 @@ public static class IpcMessageTypes
     public static class Account
     {
         public const ushort HasActiveSession = 200;
-        public const ushort SignIn = 201;
+        public const ushort LogIn = 201;
         public const ushort GetAccounts = 202;
         public const ushort Unlock = 203;
         public const ushort Lock = 204;
@@ -36,7 +36,7 @@ public static class IpcMessageTypes
 
     public static class WindowsHello
     {
-        public const ushort GetCurrentStatus = 300;
+        public const ushort GetCurrentAccountStatus = 300;
         public const ushort GetAccountStatus = 301;
         public const ushort Enable = 302;
         public const ushort Disable = 303;

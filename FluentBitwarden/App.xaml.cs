@@ -29,7 +29,7 @@ public partial class App : IXamlMetadataServiceProvider
         .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
 
         .AddViews()
-        .AddUiServices()
+        .AddInfrastructureServices()
         .BuildServiceProvider();
 
     public object GetRequiredService(Type type)

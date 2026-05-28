@@ -6,7 +6,7 @@ public interface IAccountSessionManagerClient
 {
     ValueTask<bool> HasActiveSession();
 
-    ValueTask<AccountLoginOutcome> SignInAsync(AccountLoginRequest request, CancellationToken cancellationToken);
-    ValueTask<IReadOnlyList<AccountProfile>> GetAccounts();
+    ValueTask<AccountLoginOutcome> LogInAsync(AccountLoginRequest request, CancellationToken cancellationToken);
+    ValueTask<GetAccountsResponse> GetAccounts();
     ValueTask<AccountUnlockOutcome> Unlock(AccountUnlockRequest request);
 }

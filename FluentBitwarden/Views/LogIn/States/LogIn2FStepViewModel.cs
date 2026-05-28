@@ -67,7 +67,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 
         var context = _flow.Context;
 
-        var outcome  = await _flow.AccountSessionManager.SignInAsync(new AccountLoginRequest.TwoFactorRequest(
+        var outcome  = await _flow.AccountSessionManager.LogInAsync(new AccountLoginRequest.TwoFactorRequest(
             context.BitwardenContext,
             _twoFactorRequired.Email,
             _twoFactorRequired.ServerAuthorizationHash,

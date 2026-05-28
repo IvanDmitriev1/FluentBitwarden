@@ -1,13 +1,17 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
+using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.Contracts.Session.Models;
 using FluentBitwarden.Contracts.Shared;
 using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.Session.Models;
 using FluentBitwarden.Modules.Session.Models.Exceptions;
 
 namespace FluentBitwarden.Modules.Session.Services;
+
+using AccountLoginOperationResult = OperationResult<AccountLoginOutcome, AccountSignInSuccess>;
+using AccountUnlockOperationResult = OperationResult<AccountUnlockOutcome, DecryptedUserKey>;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class AccountSessionManager(
@@ -49,9 +53,9 @@ internal sealed class AccountSessionManager(
         }
     }
 
-    public async Task<AccountLoginnOutcome> SignInAsync(AccountLoginRequest request, CancellationToken cancellationToken)
+    public async Task<AccountLoginOutcome> LogInAsync(AccountLoginRequest request, CancellationToken cancellationToken)
     {
-        Task<AccountLoginnOutcome> signInTask = request switch
+        Task<AccountLoginOperationResult> signInTask = request switch
         {
             AccountLoginRequest.PasswordRequest passwordRequest => accountLoginService.LoginWithPasswordAsync(passwordRequest, cancellationToken),
             AccountLoginRequest.PasskeyRequest passkeyRequest => accountLoginService.LoginWithPasskeyAsync(passkeyRequest, cancellationToken),
@@ -61,27 +65,25 @@ internal sealed class AccountSessionManager(
 
         var result = await signInTask;
 
-        if (result is not AccountLoginnOutcome.Success successOutcome)
-            return result;
 
-        var accountSignIn = successOutcome.AccountSignInSuccess;
-        using (var unitOfWork = unitOfWorkFactory.Create())
-        {
-            unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
-                accountSignIn.UserId,
-                accountSignIn.Email,
-                accountSignIn.Environment,
-                LastSyncAt: DateTimeOffset.MinValue));
+        if (!result.TryGetPayload(out var accountSignIn))
+            return result.Outcome;
 
-            unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
-            unitOfWork.SaveChanges();
-        }
+        using var unitOfWork = unitOfWorkFactory.Create();
+        unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
+            accountSignIn.UserId,
+            accountSignIn.Email,
+            accountSignIn.Environment,
+            LastSyncAt: DateTimeOffset.MinValue));
+
+        unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
+        unitOfWork.SaveChanges();
 
         sessionTokensStore.Store(accountSignIn.UserId, accountSignIn.SessionTokens.RefreshToken);
-        return result;
+        return new AccountLoginOutcome.Success();
     }
 
-    public IReadOnlyList<AccountProfile> GetAccounts()
+    public AccountProfile[] GetAccounts()
     {
         using var unitOfWork = unitOfWorkFactory.Create();
         return unitOfWork.AccountProfileRepository.GetAccounts();
@@ -96,22 +98,22 @@ internal sealed class AccountSessionManager(
         if (unitOfWork.AccountKeyMaterialRepository.GetById(account.UserId) is not { } accountKeyMaterial || refreshToken == RefreshToken.Empty)
             return new AccountUnlockOutcome.RequiresOnlineReauth();
 
-        AccountUnlockOutcome outcome = request switch
+        AccountUnlockOperationResult result = request switch
         {
             AccountUnlockRequest.MasterPasswordRequest masterPasswordRequest => _masterPasswordAccountUnlockMethod.Unlock(accountKeyMaterial, masterPasswordRequest.MasterPassword),
-            AccountUnlockRequest.WindowsHelloRequest => windowsHelloAccountUnlockMethod.Unlock(accountKeyMaterial),
+            AccountUnlockRequest.WindowsHelloRequest windowsHelloRequest => windowsHelloAccountUnlockMethod.Unlock(accountKeyMaterial, windowsHelloRequest.OwnerWindowHandle),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
 
-        if (outcome is not AccountUnlockOutcome.Success success)
-            return outcome;
+        if (!result.TryGetPayload(out var decryptedUserKey))
+            return result.Outcome;
 
         ActiveSession = new AccountSession(
             account,
             new BitwardenClientContext(account.Environment, DeviceIdentity.DeviceInfo),
-            AccountSessionTokens.Create(refreshToken), success.UserKey, DateTime.UtcNow);
+            AccountSessionTokens.Create(refreshToken), decryptedUserKey, DateTime.UtcNow);
 
-        return outcome;
+        return new AccountUnlockOutcome.Success();
     }
 
     public void Lock()

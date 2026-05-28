@@ -20,17 +20,9 @@ public sealed class PipeRequestHandlerInvoker<
     {
         var request = await PipeProtocol.ReadPayloadAsync<TRequest>(stream, payloadLength, cancellationToken);
 
-        try
-        {
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var response = await _handler.Invoke(request, scope.ServiceProvider, cancellationToken);
-            await PipeProtocol.WriteSuccessResponseMessageAsync(stream, response, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            UnhandledExceptionLogger.WriteException(exception);
-            await PipeProtocol.WriteFailureResponseMessageAsync<TResponse>(stream, exception.ToString(), cancellationToken);
-        }
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var response = await _handler.Invoke(request, scope.ServiceProvider, cancellationToken);
+        await PipeProtocol.WriteResponseMessageAsync(stream, response, cancellationToken);
     }
 }
 
@@ -52,28 +44,15 @@ public sealed class PipeRequestHandlerInvoker<TResponse>(
                 $"IPC message {MessageType} does not accept a request payload, but received {payloadLength} bytes.");
         }
 
-        try
-        {
-            await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = scopeFactory.CreateAsyncScope();
 
-            var response = await _handler.Invoke(
-                scope.ServiceProvider,
-                cancellationToken);
+        var response = await _handler.Invoke(
+            scope.ServiceProvider,
+            cancellationToken);
 
-            await PipeProtocol.WriteSuccessResponseMessageAsync(
-                stream,
-                response,
-                cancellationToken);
-
-        }
-        catch (Exception exception)
-        {
-            UnhandledExceptionLogger.WriteException(exception);
-
-            await PipeProtocol.WriteFailureResponseMessageAsync<TResponse>(
-                stream,
-                exception.ToString(),
-                cancellationToken);
-        }
+        await PipeProtocol.WriteResponseMessageAsync(
+            stream,
+            response,
+            cancellationToken);
     }
 }

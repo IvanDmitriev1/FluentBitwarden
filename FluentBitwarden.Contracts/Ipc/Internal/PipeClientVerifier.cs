@@ -3,12 +3,17 @@ using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using Windows.ApplicationModel;
 using Windows.Win32.System.Threading;
+using FluentBitwarden.Contracts.Shared;
 
 namespace FluentBitwarden.Contracts.Ipc.Internal;
 
 internal static class PipeClientVerifier
 {
-    private const string ExpectedComServerExeName = "FluentBitwarden.ComServer.exe";
+    private static readonly string[] ExpectedExeNames =
+    [
+        "FluentBitwarden.ComServer.exe",
+        "FluentBitwarden.Ui.exe"
+    ];
 
     public static bool IsExpectedClient(NamedPipeServerStream pipe)
     {
@@ -36,11 +41,11 @@ internal static class PipeClientVerifier
 
         var clientExePath = TryGetProcessImagePath(processHandle);
         var clientFileName = Path.GetFileName(clientExePath);
-        var clientBaseDirectory = Path.GetDirectoryName(clientExePath);
-        var packageInstalledPath = Package.Current.InstalledPath;
+        var clientBaseDirectory = Directory.GetParent(Path.GetDirectoryName(clientExePath)!)!;
+        var clientBaseDirectoryPath = Path.GetFullPath(clientBaseDirectory.FullName);
 
-        return StringComparer.OrdinalIgnoreCase.Equals(clientBaseDirectory, packageInstalledPath) &&
-               StringComparer.OrdinalIgnoreCase.Equals(clientFileName, ExpectedComServerExeName);
+        return StringComparer.OrdinalIgnoreCase.Equals(clientBaseDirectoryPath, PackageHelper.AppBasePath) &&
+               ExpectedExeNames.Contains(clientFileName);
     }
 
     private static SafeFileHandle OpenClientProcess(uint processId)

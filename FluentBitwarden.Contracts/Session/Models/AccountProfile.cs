@@ -2,7 +2,8 @@
 
 namespace FluentBitwarden.Contracts.Session.Models;
 
-public sealed record AccountProfile(
+[MemoryPackable]
+public sealed partial record AccountProfile(
     UserId UserId,
     string Email,
     BitwardenEnvironment Environment,

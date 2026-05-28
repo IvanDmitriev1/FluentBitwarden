@@ -2,10 +2,9 @@ using BitwardenApi.Models;
 using Dapper;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Account.Abstractions;
-using FluentBitwarden.Modules.Account.Models;
 using FluentBitwarden.Modules.Session.Models;
 using Microsoft.Data.Sqlite;
-using System.Linq;
+using FluentBitwarden.Contracts.Session.Models;
 
 namespace FluentBitwarden.Modules.Account.Repositories;
 
@@ -21,7 +20,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
         string VaultBase,
         long LastSyncAtUnixMs);
 
-    public IReadOnlyList<AccountProfile> GetAccounts()
+    public AccountProfile[] GetAccounts()
     {
         const string sql = """
                            SELECT
@@ -40,7 +39,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction)
             sql,
             transaction: Transaction);
 
-        return rows.Select(static row => MapToDomain(row)).ToList();
+        return rows.Select(static row => MapToDomain(row)).ToArray();
     }
 
     public AccountProfile? GetById(UserId accountId)

@@ -6,7 +6,7 @@ namespace FluentBitwarden.Contracts.Ipc.Services;
 
 internal sealed class PipeIpcClient(string pipeName) : IIpcClient
 {
-    public async ValueTask<IpcResult<TResponse>> SendAsync<TRequest, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
+    public async ValueTask<TResponse> SendAsync<TRequest, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         TRequest request,
         CancellationToken cancellationToken = default)
         where TRequest : IIpcRequestMessage
@@ -26,14 +26,15 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             request,
             cancellationToken);
 
-        var responseHeader = ResponseHeader.Read(pipe);
-        return await PipeProtocol.ReadPayloadAsync<IpcResult<TResponse>>(
+        var responseHeader = await ResponseHeader.ReadAsync(pipe);
+
+        return await PipeProtocol.ReadPayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,
             cancellationToken);
     }
 
-    public async ValueTask<IpcResult<TResponse>> SendAsync<TResponse>(ushort messageType, CancellationToken cancellationToken = default) where TResponse : notnull
+    public async ValueTask<TResponse> SendAsync<TResponse>(ushort messageType, CancellationToken cancellationToken = default) where TResponse : notnull
     {
         await using var pipe = new NamedPipeClientStream(
             ".",
@@ -48,9 +49,9 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             messageType,
             cancellationToken);
 
-        var responseHeader = ResponseHeader.Read(pipe);
+        var responseHeader = await ResponseHeader.ReadAsync(pipe);
 
-        return await PipeProtocol.ReadPayloadAsync<IpcResult<TResponse>>(
+        return await PipeProtocol.ReadPayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,
             cancellationToken);

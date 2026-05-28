@@ -2,18 +2,25 @@
 
 namespace FluentBitwarden.Contracts.Session.Models;
 
-public abstract record AccountLoginRequest : IIpcRequestMessage
+[MemoryPackable]
+[MemoryPackUnion(0, typeof(PasswordRequest))]
+[MemoryPackUnion(1, typeof(PasskeyRequest))]
+[MemoryPackUnion(2, typeof(TwoFactorRequest))]
+public abstract partial record AccountLoginRequest : IIpcRequestMessage
 {
-    public static ushort MessageType => IpcMessageTypes.Account.SignIn;
+    public static ushort MessageType => IpcMessageTypes.Account.LogIn;
 
-    public sealed record PasswordRequest(
+    [MemoryPackable]
+    public sealed partial record PasswordRequest(
         BitwardenClientContext Context,
         string Email,
         string MasterPassword) : AccountLoginRequest;
 
-    public sealed record PasskeyRequest(BitwardenClientContext Context) : AccountLoginRequest;
+    [MemoryPackable]
+    public sealed partial record PasskeyRequest(BitwardenClientContext Context, IntPtr OwerHwnd) : AccountLoginRequest;
 
-    public sealed record TwoFactorRequest(
+    [MemoryPackable]
+    public sealed partial record TwoFactorRequest(
         BitwardenClientContext Context,
         string Email,
         string ServerAuthorizationHash,

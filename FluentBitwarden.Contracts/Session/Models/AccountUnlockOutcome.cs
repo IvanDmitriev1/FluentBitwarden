@@ -1,11 +1,23 @@
 ﻿namespace FluentBitwarden.Contracts.Session.Models;
 
-public abstract record AccountUnlockOutcome
+[MemoryPackable]
+[MemoryPackUnion(0, typeof(Success))]
+[MemoryPackUnion(1, typeof(WindowsHelloCancelled))]
+[MemoryPackUnion(2, typeof(RequiresOnlineReauth))]
+[MemoryPackUnion(3, typeof(Failure))]
+public abstract partial record AccountUnlockOutcome
 {
     private AccountUnlockOutcome() { }
 
-    public sealed record Success() : AccountUnlockOutcome;
-    public sealed record WindowsHelloCancelled() : AccountUnlockOutcome;
-    public sealed record RequiresOnlineReauth() : AccountUnlockOutcome;
-    public sealed record Failure(string Reason) : AccountUnlockOutcome;
+    [MemoryPackable]
+    public sealed partial record Success() : AccountUnlockOutcome;
+
+    [MemoryPackable]
+    public sealed partial record WindowsHelloCancelled() : AccountUnlockOutcome;
+
+    [MemoryPackable]
+    public sealed partial record RequiresOnlineReauth() : AccountUnlockOutcome;
+
+    [MemoryPackable]
+    public sealed partial record Failure(string Reason) : AccountUnlockOutcome;
 }

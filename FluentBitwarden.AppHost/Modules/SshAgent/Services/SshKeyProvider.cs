@@ -1,6 +1,7 @@
 using BitwardenApi.Models;
 using FluentBitwarden.Contracts.AppState;
 using FluentBitwarden.Contracts.AppState.Models;
+using FluentBitwarden.Contracts.Shared;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;

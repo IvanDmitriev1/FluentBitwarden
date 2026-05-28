@@ -1,11 +1,11 @@
 using BitwardenApi.Models;
-using FluentBitwarden.Modules.Account.Models;
+using FluentBitwarden.Contracts.Session.Models;
 
 namespace FluentBitwarden.Modules.Account.Abstractions;
 
 public interface IAccountProfileRepository
 {
-    IReadOnlyList<AccountProfile> GetAccounts();
+    AccountProfile[] GetAccounts();
     AccountProfile? GetById(UserId accountId);
 
     DateTimeOffset GetLastSyncTime(UserId accountId);

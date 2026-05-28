@@ -1,5 +1,8 @@
+using MemoryPack;
+
 namespace BitwardenApi.Models;
 
-public readonly record struct BitwardenClientContext(
+[MemoryPackable]
+public readonly partial record struct BitwardenClientContext(
     BitwardenEnvironment Environment,
     DeviceInfo DeviceInfo);

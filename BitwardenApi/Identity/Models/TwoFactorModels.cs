@@ -1,3 +1,5 @@
+using MemoryPack;
+
 namespace BitwardenApi.Models;
 
 public enum TwoFactorProviderType
@@ -9,7 +11,8 @@ public enum TwoFactorProviderType
     U2f = 4
 }
 
-public readonly record struct TwoFactorProof(
+[MemoryPackable]
+public readonly partial record struct TwoFactorProof(
     string Code,
     TwoFactorProviderType Provider);
 
@@ -17,5 +20,6 @@ public readonly record struct TwoFactorProviderOption(
     TwoFactorProviderType Provider,
     IReadOnlyDictionary<string, JsonElement> Metadata);
 
-public readonly record struct TwoFactorChallenge(
+[MemoryPackable]
+public readonly partial record struct TwoFactorChallenge(
     IReadOnlyList<TwoFactorProviderOption> Providers);

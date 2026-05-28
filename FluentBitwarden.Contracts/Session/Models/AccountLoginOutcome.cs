@@ -2,15 +2,27 @@
 
 namespace FluentBitwarden.Contracts.Session.Models;
 
-public abstract record AccountLoginOutcome
+[MemoryPackable]
+[MemoryPackUnion(0, typeof(Success))]
+[MemoryPackUnion(1, typeof(TwoFactorRequired))]
+[MemoryPackUnion(2, typeof(InvalidCredentials))]
+[MemoryPackUnion(3, typeof(DeviceVerificationRequired))]
+public abstract partial record AccountLoginOutcome
 {
     private AccountLoginOutcome() { }
 
-    public sealed record Success() : AccountLoginOutcome;
-    public sealed record TwoFactorRequired(
+    [MemoryPackable]
+    public sealed partial record Success() : AccountLoginOutcome;
+
+    [MemoryPackable]
+    public sealed partial record TwoFactorRequired(
         TwoFactorChallenge Challenge,
         string Email,
         string ServerAuthorizationHash) : AccountLoginOutcome;
-    public sealed record InvalidCredentials(string Message) : AccountLoginOutcome;
-    public sealed record DeviceVerificationRequired(string Message) : AccountLoginOutcome;
+
+    [MemoryPackable]
+    public sealed partial record InvalidCredentials(string Message) : AccountLoginOutcome;
+
+    [MemoryPackable]
+    public sealed partial record DeviceVerificationRequired(string Message) : AccountLoginOutcome;
 }

@@ -1,5 +1,6 @@
 ﻿namespace FluentBitwarden.Contracts.Session.Models;
 
-public sealed record WindowsHelloStatus(
+[MemoryPackable]
+public readonly partial record struct WindowsHelloStatus(
     bool IsSupported,
     bool IsEnabled);

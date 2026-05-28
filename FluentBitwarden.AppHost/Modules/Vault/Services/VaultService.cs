@@ -1,6 +1,5 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
@@ -9,9 +8,6 @@ using FluentBitwarden.Modules.Vault.Internal;
 using FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 using FluentBitwarden.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Repositories;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace FluentBitwarden.Modules.Vault.Services;
 
@@ -19,8 +15,6 @@ namespace FluentBitwarden.Modules.Vault.Services;
 internal sealed class VaultService(
     IUnitOfWorkFactory unitOfWorkFactory,
     IAccountSessionManager accountSessionManager,
-    IConnectivityService connectivityService,
-    ISiteIconCache siteIconCache,
     IVaultApiClient vaultApiClient) : IVaultService
 {
     private readonly Dictionary<CipherId, VaultCipher> _ciphersById = new();
@@ -61,7 +55,7 @@ internal sealed class VaultService(
             _folders.Add(folder);
         }
 
-        if (connectivityService.HasInternetAccess)
+        /*if (connectivityService.HasInternetAccess)
         {
             var urls = _ciphersById.Values
                 .OfType<LoginVaultCipher>()
@@ -73,7 +67,7 @@ internal sealed class VaultService(
                 .ToList();
 
             _ = PreloadSiteIconsAsync(urls);
-        }
+        }*/
 
 
         VaultChanged?.Invoke(this, new VaultChangedEventArgs()
@@ -83,7 +77,7 @@ internal sealed class VaultService(
         });
     }
 
-    private async Task PreloadSiteIconsAsync(IReadOnlyList<Uri> urls)
+    /*private async Task PreloadSiteIconsAsync(IReadOnlyList<Uri> urls)
     {
         try
         {
@@ -93,7 +87,7 @@ internal sealed class VaultService(
         {
             Debug.WriteLine($"Site icon preload failed: {ex}");
         }
-    }
+    }*/
 
     public async Task<VaultSyncResult> SyncVaultAsync(CancellationToken token)
     {

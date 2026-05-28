@@ -1,6 +1,7 @@
-﻿using System.IO.Pipes;
-using FluentBitwarden.Contracts.Ipc.Internal;
+﻿using FluentBitwarden.Contracts.Ipc.Internal;
+using FluentBitwarden.Contracts.Shared;
 using Microsoft.Extensions.Hosting;
+using System.IO.Pipes;
 
 namespace FluentBitwarden.Contracts.Ipc.Services;
 
@@ -40,7 +41,7 @@ internal sealed class PipeIpcServer : BackgroundService
                     continue;
                 }
 
-                var header = RequestHeader.Read(pipe);
+                var header = await RequestHeader.ReadAsync(pipe);
                 if (!_invokers.TryGetValue(header.MessageType, out var invoker))
                     return;
 
@@ -56,7 +57,7 @@ internal sealed class PipeIpcServer : BackgroundService
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                UnhandledExceptionLogger.WriteException(e);
             }
             finally
             {

@@ -4,13 +4,13 @@ namespace FluentBitwarden.Contracts.Ipc.Abstractions;
 
 public interface IIpcClient
 {
-    ValueTask<IpcResult<TResponse>> SendAsync<TRequest, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
+    ValueTask<TResponse> SendAsync<TRequest, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         TRequest request,
         CancellationToken cancellationToken = default)
         where TRequest : IIpcRequestMessage
         where TResponse : notnull;
 
-    ValueTask<IpcResult<TResponse>> SendAsync<
+    ValueTask<TResponse> SendAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         ushort messageType,
         CancellationToken cancellationToken = default)
