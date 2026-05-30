@@ -10,13 +10,12 @@ using Windows.ApplicationModel;
 using Windows.Storage;
 using FluentBitwarden.Contracts.AppState;
 using FluentBitwarden.Contracts.AppState.Models;
-using FluentBitwarden.Contracts.Session.Abstractions;
+using FluentBitwarden.Contracts.Accounts;
 
 namespace FluentBitwarden.Views.Settings;
 
 public sealed partial class SettingsPageViewModel(
     IThemeService themeService,
-    IAccountSessionManagerClient accountSessionManager,
     IWindowsHelloUnlockClient windowsHelloUnlockClient)
     : ObservableObject, IPageLifecycleAware
 {
@@ -36,7 +35,7 @@ public sealed partial class SettingsPageViewModel(
     public SettingValue<SensitiveActionPolicy> PasskeyUserVerificationPolicy { get; } = AppSettingKeys.Passkeys.UserVerificationPolicyKey.CreateSettingValue();
     public SettingValue<SensitiveActionPolicy> SshUserVerificationPolicy { get; } = AppSettingKeys.SshAgent.UserVerificationPolicyKey.CreateSettingValue();
 
-    public WindowsHelloSettingValue WindowsHello { get; } = new(accountSessionManager, windowsHelloUnlockClient);
+    public WindowsHelloSettingValue WindowsHello { get; } = new(windowsHelloUnlockClient);
     public PasskeyPluginSettingValue PasskeyPlugin { get; } = new();
 
     public string AppVersion { get; } = ResolveAppVersion();

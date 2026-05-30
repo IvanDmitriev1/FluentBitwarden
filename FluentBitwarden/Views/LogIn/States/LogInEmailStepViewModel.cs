@@ -99,7 +99,7 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
         _flow.Context.Email = Email.Trim();
         _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
 
-        var outcome = await _flow.AccountSessionManager.LogInAsync(
+        var outcome = await _flow.AccountsClient.LoginAsync(
             new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext, MainWindow.Instance.GetWindowHandle()), CancellationToken.None);
 
         switch (outcome)

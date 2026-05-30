@@ -1,5 +1,5 @@
 using Windows.Networking.Connectivity;
-using FluentBitwarden.Contracts.Session.Abstractions;
+using FluentBitwarden.Contracts.Accounts;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
@@ -13,14 +13,14 @@ namespace FluentBitwarden.Views.Loading;
 
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
-    IAccountSessionManagerClient accountSessionManagerClient)
+    IAccountsClient accountsClient)
     : ObservableObject, IPageLifecycleAware
 {
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
-        var response = await accountSessionManagerClient.GetAccounts();
+        var accounts = await accountsClient.GetAccountsAsync(cancellationToken);
 
-        if (response.Accounts.Length <= 0)
+        if (accounts.Length <= 0)
         {
             if (!NetworkInformation.HasInternetAccess)
             {
@@ -33,15 +33,15 @@ public partial class LoadingPageViewModel(
             return;
         }
 
-        var favoriteAccount = response.Accounts[0];
-        if (await accountSessionManagerClient.HasActiveSession())
+        var unlockedAccount = await accountsClient.GetUnlockedAccount();
+        if (unlockedAccount is not null)
         {
             navigationService.NavigateTo<ShellPage>();
             return;
         }
 
         navigationService.NavigateTo<UnlockPage>(
-            PageNavigationParameter.From(new UnlockPageParameter(response.Accounts, favoriteAccount)));
+            PageNavigationParameter.From(new UnlockPageParameter(accounts, accounts[0])));
     }
 
     public void OnUnloading() { }

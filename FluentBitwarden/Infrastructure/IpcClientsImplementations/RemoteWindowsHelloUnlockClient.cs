@@ -1,7 +1,7 @@
 ﻿using BitwardenApi.Models;
 using FluentBitwarden.Contracts;
+using FluentBitwarden.Contracts.Accounts;
 using FluentBitwarden.Contracts.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Session.Abstractions;
 
 namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 

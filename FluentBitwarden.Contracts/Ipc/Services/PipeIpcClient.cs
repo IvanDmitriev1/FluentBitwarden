@@ -10,7 +10,6 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
         TRequest request,
         CancellationToken cancellationToken = default)
         where TRequest : IIpcRequestMessage
-        where TResponse : notnull
     {
         await using var pipe = new NamedPipeClientStream(
             ".",

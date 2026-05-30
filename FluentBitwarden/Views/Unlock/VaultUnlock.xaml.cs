@@ -1,10 +1,10 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Contracts.Session.Abstractions;
 using FluentBitwarden.UI.Controls;
 using Microsoft.UI.Xaml;
 using System.Windows.Input;
 using FluentBitwarden.Views.Shell;
 using WinUIEx;
+using FluentBitwarden.Contracts.Accounts;
 
 namespace FluentBitwarden.Views.Unlock;
 
@@ -19,14 +19,14 @@ public sealed partial class VaultUnlock : UserControl
     {
         InitializeComponent();
 
-        _accountSessionManager = App.Current.GetRequiredService<IAccountSessionManagerClient>();
+        _accountsClient = App.Current.GetRequiredService<IAccountsClient>();
         _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<IWindowsHelloUnlockClient>();
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
-    private readonly IAccountSessionManagerClient _accountSessionManager;
+    private readonly IAccountsClient _accountsClient;
     private readonly IWindowsHelloUnlockClient _windowsHelloAccountUnlockMethod;
 
     public string Password => PasswordBox.Password;
@@ -91,7 +91,7 @@ public sealed partial class VaultUnlock : UserControl
 
         try
         {
-            result = await _accountSessionManager.Unlock(request);
+            result = await _accountsClient.UnlockAsync(request);
         }
         finally
         {

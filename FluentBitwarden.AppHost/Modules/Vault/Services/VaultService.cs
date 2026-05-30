@@ -31,7 +31,7 @@ internal sealed class VaultService(
         using var lockScope = _lock.EnterScope();
 
         using var unitOfWork = unitOfWorkFactory.Create();
-        var decryptedUserKey = accountSessionManager.RequireActiveSession.DecryptedUserKey;
+        var decryptedUserKey = accountSessionManager.RequireActive.DecryptedUserKey;
 
         _ciphersById.Clear();
         _folders.Clear();
@@ -92,7 +92,7 @@ internal sealed class VaultService(
 
     public async Task<VaultSyncResult> SyncVaultAsync(CancellationToken token)
     {
-        var currentUserId = accountSessionManager.RequireActiveSession.Profile.UserId;
+        var currentUserId = accountSessionManager.RequireActive.Profile.UserId;
 
         try
         {

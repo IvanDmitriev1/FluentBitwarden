@@ -41,7 +41,7 @@ internal sealed partial class LogInPasswordStepViewModel(LogInFlowPageViewModel 
             return;
         }
 
-        var outcome = await flow.AccountSessionManager.LogInAsync(
+        var outcome = await flow.AccountsClient.LoginAsync(
             new AccountLoginRequest.PasswordRequest(flow.Context.BitwardenContext, flow.Context.Email, MasterPassword),
             CancellationToken.None);
 

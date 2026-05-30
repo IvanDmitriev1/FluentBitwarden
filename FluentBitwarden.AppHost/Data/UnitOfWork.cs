@@ -1,6 +1,6 @@
-﻿using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.Account.Abstractions;
-using FluentBitwarden.Modules.Account.Repositories;
+﻿using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Storage;
+using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Storage;
+using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Repositories;
 using Microsoft.Data.Sqlite;
@@ -8,7 +8,7 @@ using IsolationLevel = System.Data.IsolationLevel;
 
 namespace FluentBitwarden.Data;
 
-public sealed class UnitOfWork : IUnitOfWork
+internal sealed class UnitOfWork : IUnitOfWork
 {
     public UnitOfWork(SqliteConnection connection, IsolationLevel isolationLevel)
     {
@@ -18,6 +18,7 @@ public sealed class UnitOfWork : IUnitOfWork
         AccountProfileRepository = new AccountProfileRepository(Transaction);
         AccountKeyMaterialRepository = new AccountKeyMaterialRepository(Transaction);
         VaultReaderRepository = new VaultReaderRepository(Transaction);
+        SecureRefreshTokenStore = new SecureRefreshTokenStore(Transaction);
     }
 
     private readonly SqliteConnection _connection;
@@ -25,9 +26,10 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public SqliteTransaction Transaction { get; }
 
-    public IAccountProfileRepository AccountProfileRepository { get; }
-    public IAccountKeyMaterialRepository AccountKeyMaterialRepository { get; }
+    public AccountProfileRepository AccountProfileRepository { get; }
+    public AccountKeyMaterialRepository AccountKeyMaterialRepository { get; }
     public IVaultReaderRepository VaultReaderRepository { get; }
+    public SecureRefreshTokenStore SecureRefreshTokenStore { get; }
 
     public void SaveChanges()
     {

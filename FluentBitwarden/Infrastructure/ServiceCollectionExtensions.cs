@@ -1,6 +1,6 @@
 using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.Contracts.Accounts;
 using FluentBitwarden.Contracts.Ipc;
-using FluentBitwarden.Contracts.Session.Abstractions;
 using FluentBitwarden.Contracts.Vault.Abstractions;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
@@ -23,7 +23,7 @@ internal static class ServiceCollectionExtensions
 
 
         services.AddIpcClient(IpcConstants.AppHostPipeName);
-        services.AddSingleton<IAccountSessionManagerClient, RemoteAccountSessionManagerClient>();
+        services.AddSingleton<IAccountsClient, RemoteAccountsClient>();
         services.AddSingleton<IWindowsHelloUnlockClient, RemoteWindowsHelloUnlockClient>();
         services.AddSingleton<IVaultManagerClient, RemoteVaultManagerClient>();
 

@@ -25,7 +25,7 @@ public static class IpcMessageTypes
 
     public static class Account
     {
-        public const ushort HasActiveSession = 200;
+        public const ushort GetUnlockedAccount = 200;
         public const ushort LogIn = 201;
         public const ushort GetAccounts = 202;
         public const ushort Unlock = 203;

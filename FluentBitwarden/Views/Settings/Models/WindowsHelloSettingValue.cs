@@ -1,11 +1,10 @@
-using FluentBitwarden.Contracts.Session.Abstractions;
+using FluentBitwarden.Contracts.Accounts;
 using FluentBitwarden.Views.Shell;
 using WinUIEx;
 
 namespace FluentBitwarden.Views.Settings.Models;
 
 public sealed partial class WindowsHelloSettingValue(
-    IAccountSessionManagerClient accountSessionManager,
     IWindowsHelloUnlockClient windowsHelloUnlockClient) : ObservableObject
 {
     private bool _isLoading = true;
