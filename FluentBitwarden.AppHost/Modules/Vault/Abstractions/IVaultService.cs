@@ -10,7 +10,7 @@ public interface IVaultService
     event EventHandler<IVaultService, VaultChangedEventArgs> VaultChanged;
 
     void LoadLocalVault();
-    Task<VaultSyncResult> SyncVaultAsync(CancellationToken token);
+    ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken token);
 
     VaultCipher? GetCipher(CipherId id);
     VaultCipher[] GetCiphers(VaultCipherQuery query);

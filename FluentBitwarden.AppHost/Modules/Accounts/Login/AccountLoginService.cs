@@ -7,6 +7,8 @@ using FluentBitwarden.Infrastructure.Security.WebAuthn;
 using System.IdentityModel.Tokens.Jwt;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
+using FluentBitwarden.Contracts.Shared;
+using FluentBitwarden.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Login;
 
@@ -14,9 +16,39 @@ using AccountLoginOperationResult = OperationResult<AccountLoginOutcome, Account
 
 [Fody.ConfigureAwait(false)]
 internal sealed class AccountLoginService(
+    IUnitOfWorkFactory unitOfWorkFactory,
     IIdentityApiClient identityApiClient) : IAccountLoginService
 {
-    public async Task<AccountLoginOperationResult> LoginWithPasswordAsync(AccountLoginRequest.PasswordRequest request, CancellationToken cancellationToken = default)
+    public async ValueTask<AccountLoginOutcome> LoginAsync(AccountLoginRequest request, CancellationToken cancellationToken)
+    {
+        Task<AccountLoginOperationResult> signInTask = request switch
+        {
+            AccountLoginRequest.PasswordRequest passwordRequest => LoginWithPasswordAsync(passwordRequest, cancellationToken),
+            AccountLoginRequest.PasskeyRequest passkeyRequest => LoginWithPasskeyAsync(passkeyRequest, cancellationToken),
+            AccountLoginRequest.TwoFactorRequest twoFactorRequest => LoginWithTwoFactorAsync(twoFactorRequest, cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(request))
+        };
+
+        var result = await signInTask;
+        if (!result.TryGetPayload(out var accountSignIn))
+            return result.Outcome;
+
+        using var unitOfWork = unitOfWorkFactory.Create();
+
+        unitOfWork.AccountProfileRepository.Upsert(new AccountProfile(
+            accountSignIn.UserId,
+            accountSignIn.Email,
+            accountSignIn.Environment,
+            LastSyncAt: DateTimeOffset.MinValue));
+
+        unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
+        unitOfWork.SaveChanges();
+
+        unitOfWork.SecureRefreshTokenStore.Store(accountSignIn.UserId, accountSignIn.AuthenticationTokens.RefreshToken);
+        return new AccountLoginOutcome.Success();
+    }
+
+    private async Task<AccountLoginOperationResult> LoginWithPasswordAsync(AccountLoginRequest.PasswordRequest request, CancellationToken cancellationToken = default)
     {
         string serverAuthorizationHash =
             MasterPassword.HashMasterPassword(request.Email, request.MasterPassword, new KdfConfig.Pbkdf2(600000));
@@ -27,7 +59,7 @@ internal sealed class AccountLoginService(
         return ParseTokenOutcome(request.Email, serverAuthorizationHash, result, request.Context.Environment);
     }
 
-    public async Task<AccountLoginOperationResult> LoginWithPasskeyAsync(
+    private async Task<AccountLoginOperationResult> LoginWithPasskeyAsync(
         AccountLoginRequest.PasskeyRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -57,7 +89,7 @@ internal sealed class AccountLoginService(
         }
     }
 
-    public async Task<AccountLoginOperationResult> LoginWithTwoFactorAsync(AccountLoginRequest.TwoFactorRequest request, CancellationToken cancellationToken)
+    private async Task<AccountLoginOperationResult> LoginWithTwoFactorAsync(AccountLoginRequest.TwoFactorRequest request, CancellationToken cancellationToken)
     {
         var result = await identityApiClient.LoginWithPasswordAndTwoFactorAsync(
             new PasswordTwoFactorLoginRequest(request.Context,
@@ -92,7 +124,9 @@ internal sealed class AccountLoginService(
         return new AccountLoginSuccess(
             UserId.Parse(accountId),
             email,
-            new AccountAuthenticationTokens(model.RefreshToken, model.AccessToken, model.ExpiresAt),
+            new AccountAuthenticationTokens(userId,
+                new BitwardenClientContext(environment, DeviceIdentity.DeviceInfo),
+                model.RefreshToken, model.AccessToken, model.ExpiresAt),
             new AccountKeyMaterial(
                 userId,
                 model.MasterPasswordUnlockModel.Salt,
@@ -100,5 +134,4 @@ internal sealed class AccountLoginService(
                 model.MasterPasswordUnlockModel.UserKey,
                 model.PrivateKey), environment);
     }
-
 }

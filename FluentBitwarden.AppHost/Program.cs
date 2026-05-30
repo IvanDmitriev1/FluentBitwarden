@@ -9,7 +9,6 @@ using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Providers;
 using FluentBitwarden.Contracts.Ipc;
 using FluentBitwarden.Data;
 using FluentBitwarden.Modules.Passkey;
-using FluentBitwarden.Modules.Session;
 using FluentBitwarden.Modules.SshAgent;
 using FluentBitwarden.Modules.Vault;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,7 +52,6 @@ internal static class Program
         
         builder.Services.AddBitwardenApi<BearerAuthTokenProvider>();
         builder.Services.AddAccountModule();
-        builder.Services.AddSessionModule();
         builder.Services.AddVaultServices();
         builder.Services.AddPasskeyModule();
         builder.Services.AddSshAgent();

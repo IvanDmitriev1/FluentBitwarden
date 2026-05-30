@@ -37,7 +37,7 @@ public sealed partial class WindowsHelloSettingValue(
 
         if (value)
         {
-            _ = windowsHelloUnlockClient.EnableAsync(MainWindow.Instance.GetWindowHandle());
+            _ = windowsHelloUnlockClient.EnableAsync(new EnableWindowsHelloRequest(MainWindow.Instance.GetWindowHandle()));
         }
         else
         {

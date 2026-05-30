@@ -53,7 +53,7 @@ public sealed partial class VaultUnlock : UserControl
     {
         ArgumentNullException.ThrowIfNull(Account);
 
-        var status = await _windowsHelloAccountUnlockMethod.GetStatusAsync(Account.UserId);
+        var status = await _windowsHelloAccountUnlockMethod.GetStatusAsync(new GetWindowsHelloStatusRequest(Account.UserId));
 
         WindowsHelloButton.Visibility = status.IsEnabled
             ? Visibility.Visible

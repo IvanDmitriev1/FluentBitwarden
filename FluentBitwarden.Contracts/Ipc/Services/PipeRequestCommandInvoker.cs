@@ -3,20 +3,17 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.Contracts.Ipc.Services;
 
-internal sealed class PipeRequestHandlerInvoker<
+internal sealed class PipeRequestCommandInvoker<
     THandler,
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    TRequest,
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    TResponse>(
+    TRequest>(
     THandler handler,
     HandlerMethodDescriptor descriptor) : IIpcRequestHandlerInvoker
     where THandler : class, IIpcRequestsHandler
     where TRequest : IIpcRequestMessage
-    where TResponse : notnull
 {
-    private readonly IpcRequestHandlerDelegate<TRequest, TResponse> _handler = descriptor.Method
-        .CreateDelegate<IpcRequestHandlerDelegate<TRequest, TResponse>>(handler);
+    private readonly IpcRequestHandlerDelegate<TRequest> _handler = descriptor.Method
+        .CreateDelegate<IpcRequestHandlerDelegate<TRequest>>(handler);
 
     public ushort MessageType { get; } = TRequest.MessageType;
 
@@ -25,18 +22,25 @@ internal sealed class PipeRequestHandlerInvoker<
         int payloadLength,
         CancellationToken cancellationToken)
     {
+        if (payloadLength != 0)
+        {
+            throw new InvalidOperationException(
+                $"IPC message '{MessageType}' does not accept a request payload, " +
+                $"but received '{payloadLength}' bytes.");
+        }
+
         var request = await PipeProtocol.ReadRequestPayloadAsync<TRequest>(
             stream,
             payloadLength,
             cancellationToken);
 
-        var response = await _handler(
+        await _handler(
             request,
             cancellationToken);
 
         await PipeProtocol.WriteResponseMessageAsync(
             stream,
-            response,
+            new IpcVoid(),
             cancellationToken);
     }
 }

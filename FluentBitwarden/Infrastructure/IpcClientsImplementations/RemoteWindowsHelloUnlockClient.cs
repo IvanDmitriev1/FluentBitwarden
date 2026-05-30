@@ -13,15 +13,14 @@ internal class RemoteWindowsHelloUnlockClient(IIpcClient ipcClient) : IWindowsHe
             IpcMessageTypes.WindowsHello.GetCurrentAccountStatus,
             cancellationToken);
 
-    public ValueTask<WindowsHelloStatus> GetStatusAsync(UserId userId, CancellationToken cancellationToken = default)
+    public ValueTask<WindowsHelloStatus> GetStatusAsync(GetWindowsHelloStatusRequest request, CancellationToken cancellationToken = default)
     {
-        return ipcClient.SendAsync<GetWindowsHelloStatusRequest, WindowsHelloStatus >(new GetWindowsHelloStatusRequest(userId), cancellationToken);
+        return ipcClient.SendAsync<GetWindowsHelloStatusRequest, WindowsHelloStatus >(request, cancellationToken);
     }
 
-    public async ValueTask EnableAsync(IntPtr ownerWindowHandle, CancellationToken cancellationToken = default)
+    public async ValueTask EnableAsync(EnableWindowsHelloRequest request, CancellationToken cancellationToken = default)
     {
-        await ipcClient.SendAsync<EnableWindowsHelloRequest, IpcVoid>(new EnableWindowsHelloRequest(ownerWindowHandle),
-            cancellationToken);
+        await ipcClient.SendAsync<EnableWindowsHelloRequest, IpcVoid>(request, cancellationToken);
     }
 
     public async ValueTask DisableAsync(CancellationToken cancellationToken = default)

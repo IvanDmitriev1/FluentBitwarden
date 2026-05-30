@@ -107,7 +107,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             transaction: Transaction);
     }
 
-    public void SetUnlockMethods(UserId accountId, UnlockMethodType availableUnlockMethods)
+    /*public void SetUnlockMethods(UserId accountId, UnlockMethodType availableUnlockMethods)
     {
         const string sql = """
                            UPDATE account_profiles
@@ -124,6 +124,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             },
             transaction: Transaction);
     }
+    */
 
     public void Upsert(AccountProfile accountProfile)
     {

@@ -6,9 +6,11 @@ namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 
 internal sealed class RemoteAccountsClient(IIpcClient ipcClient) : IAccountsClient
 {
-    public ValueTask<AccountProfile?> GetUnlockedAccount() => ipcClient.SendAsync<AccountProfile?>(IpcMessageTypes.Account.GetUnlockedAccount);
+    public ValueTask<AccountProfile?> GetUnlockedAccount(CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<AccountProfile?>(IpcMessageTypes.Account.GetUnlocked, cancellationToken);
 
-    public ValueTask<AccountProfile[]> GetAccountsAsync(CancellationToken cancellationToken = default) => ipcClient.SendAsync<AccountProfile[]>(IpcMessageTypes.Account.GetAccounts, cancellationToken);
+    public ValueTask<AccountProfile[]> GetAccountsAsync(CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<AccountProfile[]>(IpcMessageTypes.Account.GetAccounts, cancellationToken);
 
     public ValueTask<AccountLoginOutcome> LoginAsync(AccountLoginRequest request,
         CancellationToken cancellationToken = default) =>

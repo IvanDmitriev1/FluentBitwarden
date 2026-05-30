@@ -4,7 +4,7 @@ namespace FluentBitwarden.Contracts.Accounts;
 
 public interface IAccountsClient
 {
-    ValueTask<AccountProfile?> GetUnlockedAccount();
+    ValueTask<AccountProfile?> GetUnlockedAccount(CancellationToken cancellationToken = default);
 
     ValueTask<AccountProfile[]> GetAccountsAsync(
         CancellationToken cancellationToken = default);

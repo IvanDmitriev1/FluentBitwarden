@@ -2,7 +2,6 @@
 using FluentBitwarden.Contracts;
 using FluentBitwarden.Contracts.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Vault.Abstractions;
-using System.Collections;
 
 namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 
@@ -19,12 +18,9 @@ internal sealed class RemoteVaultManagerClient(IIpcClient client) : IVaultManage
         return client.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
     }
 
-    public async ValueTask<VaultCipher?> GetCipherAsync(CipherId cipherId, CancellationToken cancellationToken = default)
+    public ValueTask<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await client.SendAsync<GetVaultCipherRequest, IpcOptional<VaultCipher>>(new GetVaultCipherRequest(cipherId),
-            cancellationToken);
-
-        return result.Value;
+        return client.SendAsync<GetVaultCipherRequest, VaultCipher?>(request, cancellationToken);
     }
 
     public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default)

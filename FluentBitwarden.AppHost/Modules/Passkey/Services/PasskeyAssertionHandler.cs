@@ -11,7 +11,7 @@ internal static class PasskeyAssertionHandler
 {
     public static IServiceCollection MapPasskeyIpc(this IServiceCollection services)
     {
-        services.AddIpcRequestHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>(static async (
+        /*services.AddIpcRequestHandler<PasskeyGetAssertionRequest, PasskeyAssertionResponse>(static async (
             PasskeyGetAssertionRequest request,
             IPasskeyOverlayService passkeyOverlayService,
             CancellationToken cancellationToken) =>
@@ -36,7 +36,7 @@ internal static class PasskeyAssertionHandler
             };
 
             return response;
-        });
+        });*/
 
         return services;
     }

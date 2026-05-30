@@ -59,7 +59,7 @@ internal sealed class SecureRefreshTokenStore(SqliteTransaction transaction) : B
             new
             {
                 UserId = userId.ToString()
-            });
+            }, Transaction);
 
         if (protectedBytes is null)
             return RefreshToken.Empty;

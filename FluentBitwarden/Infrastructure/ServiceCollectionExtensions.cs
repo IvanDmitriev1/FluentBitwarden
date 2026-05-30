@@ -14,6 +14,8 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
+        services.AddSharedHttpClient();
+
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(static sp => sp.GetRequiredService<NavigationService>());

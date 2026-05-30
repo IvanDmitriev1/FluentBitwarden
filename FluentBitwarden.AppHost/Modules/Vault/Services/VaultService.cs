@@ -1,8 +1,8 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Models;
+using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.Contracts.Vault.Models;
 using FluentBitwarden.Data.Abstractions;
-using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Internal;
@@ -15,7 +15,8 @@ namespace FluentBitwarden.Modules.Vault.Services;
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultService(
     IUnitOfWorkFactory unitOfWorkFactory,
-    IAccountSessionManager accountSessionManager,
+    IUnlockedAccountAccessor unlockedAccountAccessor,
+    IUnlockedAccountKeyAccess accountKeyAccess,
     IVaultApiClient vaultApiClient) : IVaultService
 {
     private readonly Dictionary<CipherId, VaultCipher> _ciphersById = new();
@@ -31,7 +32,7 @@ internal sealed class VaultService(
         using var lockScope = _lock.EnterScope();
 
         using var unitOfWork = unitOfWorkFactory.Create();
-        var decryptedUserKey = accountSessionManager.RequireActive.DecryptedUserKey;
+        var decryptedUserKey = accountKeyAccess.UserKey;
 
         _ciphersById.Clear();
         _folders.Clear();
@@ -90,9 +91,9 @@ internal sealed class VaultService(
         }
     }*/
 
-    public async Task<VaultSyncResult> SyncVaultAsync(CancellationToken token)
+    public async ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken token)
     {
-        var currentUserId = accountSessionManager.RequireActive.Profile.UserId;
+        var currentUserId = unlockedAccountAccessor.CurrentAccount.UserId;
 
         try
         {

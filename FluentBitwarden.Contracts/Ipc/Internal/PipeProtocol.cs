@@ -5,19 +5,6 @@ namespace FluentBitwarden.Contracts.Ipc.Internal;
 
 internal static class PipeProtocol
 {
-    public static async ValueTask<TMessage> ReadPayloadAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TMessage>(
-        Stream stream,
-        int payloadLength,
-        CancellationToken cancellationToken)
-        where TMessage : notnull
-    {
-        using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
-        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
-
-        var message = MemoryPackSerializer.Deserialize<TMessage>(bufferOwner.Memory.Span);
-        return message ?? throw new InvalidOperationException("IPC payload deserialized to null.");
-    }
-
     public static async ValueTask WriteRequestMessageAsync<TMessage>(
         Stream stream,
         ushort messageType,
@@ -42,18 +29,46 @@ internal static class PipeProtocol
         await header.WriteAsync(stream);
     }
 
-
     public static async ValueTask WriteResponseMessageAsync<TMessage>(
         Stream stream,
-        TMessage message,
+        TMessage? message,
         CancellationToken cancellationToken)
         where TMessage : notnull
     {
         using ArrayPoolBufferWriter<byte> payloadWriter = new();
-        MemoryPackSerializer.Serialize(payloadWriter, message);
+        MemoryPackSerializer.Serialize(payloadWriter, new IpcOptional<TMessage>(message));
 
         ResponseHeader header = new(payloadWriter.WrittenCount);
         await header.Write(stream);
         await stream.WriteAsync(payloadWriter.WrittenMemory, cancellationToken);
     }
+
+    public static async ValueTask<TMessage> ReadRequestPayloadAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TMessage>(
+        Stream stream,
+        int payloadLength,
+        CancellationToken cancellationToken)
+        where TMessage : notnull
+    {
+        using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
+        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+
+        var message = MemoryPackSerializer.Deserialize<TMessage>(bufferOwner.Memory.Span);
+        return message ?? throw new InvalidOperationException("IPC payload deserialized to null.");
+    }
+
+    public static async ValueTask<TResponse?> ReadResponsePayloadAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+        TResponse>(
+        Stream stream,
+        int payloadLength,
+        CancellationToken cancellationToken)
+    {
+        using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
+        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+
+        var result = MemoryPackSerializer.Deserialize<IpcOptional<TResponse>>(bufferOwner.Memory.Span);
+        return result.Value;
+    }
+
 }

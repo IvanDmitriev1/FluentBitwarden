@@ -1,8 +1,8 @@
 using BitwardenApi.Models;
+using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.Contracts.AppState;
 using FluentBitwarden.Contracts.AppState.Models;
 using FluentBitwarden.Contracts.Shared;
-using FluentBitwarden.Modules.Session.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
@@ -12,16 +12,16 @@ using FluentBitwarden.Resources.Dialogs.Models;
 namespace FluentBitwarden.Modules.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
-    IAccountSessionManager accountSessionManager,
+    IUnlockedAccountAccessor unlockedAccountAccessor,
     IVaultService vaultService,
     ISshUserActionPrompt userActionPrompt) : ISshKeyProvider
 {
     public IReadOnlyList<SshPublicIdentityResponce> ListIdentities() =>
-        accountSessionManager.ActiveSession is null ? [] : vaultService.GetAvailableSshKeys();
+        unlockedAccountAccessor.HasUnlockedAccount ? vaultService.GetAvailableSshKeys() : [];
 
     public async ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (accountSessionManager.ActiveSession is null || vaultService.GetSsh(request.PublicKeyBlob) is not { } cipher)
+        if (!unlockedAccountAccessor.HasUnlockedAccount || vaultService.GetSsh(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);

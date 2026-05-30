@@ -2,7 +2,7 @@
 
 namespace FluentBitwarden.Data.Abstractions;
 
-public interface IUnitOfWorkFactory
+internal interface IUnitOfWorkFactory
 {
     UnitOfWork Create(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 }

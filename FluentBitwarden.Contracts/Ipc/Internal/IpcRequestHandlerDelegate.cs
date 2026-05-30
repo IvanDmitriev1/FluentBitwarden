@@ -1,13 +1,19 @@
 ﻿namespace FluentBitwarden.Contracts.Ipc.Internal;
 
-internal delegate ValueTask<TResponse> IpcRequestHandlerDelegate<in TRequest, TResponse>(
+internal delegate ValueTask<TResponse?> IpcRequestHandlerDelegate<in TRequest, TResponse>(
     TRequest request,
-    IServiceProvider serviceProvider,
     CancellationToken cancellationToken)
     where TRequest : IIpcRequestMessage
     where TResponse : notnull;
 
-internal delegate ValueTask<TResponse> IpcRequestHandlerDelegate<TResponse>(
-    IServiceProvider serviceProvider,
+internal delegate ValueTask IpcRequestHandlerDelegate<in TRequest>(
+    TRequest request,
+    CancellationToken cancellationToken)
+    where TRequest : IIpcRequestMessage;
+
+internal delegate ValueTask<TResponse?> IpcCommandHandlerDelegate<TResponse>(
     CancellationToken cancellationToken)
     where TResponse : notnull;
+
+internal delegate ValueTask IpcCommandHandlerDelegate(
+    CancellationToken cancellationToken);

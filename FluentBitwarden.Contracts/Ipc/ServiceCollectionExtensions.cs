@@ -1,6 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Ipc.Internal;
 using FluentBitwarden.Contracts.Ipc.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.Contracts.Ipc;
 
@@ -23,32 +24,20 @@ public static class ServiceCollectionExtensions
         }
 
         public IServiceCollection AddIpcRequestHandler<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TRequest, TResponse>(
-            Delegate handler)
-            where TRequest : IIpcRequestMessage
-            where TResponse : notnull
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] THandler>()
+            where THandler : class, IIpcRequestsHandler
         {
-            services.AddSingleton<IIpcRequestHandlerInvoker>(sp =>
+            services.AddSingleton<THandler>();
+
+            foreach (var descriptor in HandlerMethodDescriptor.Discover<THandler>())
             {
-                var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
-                return new PipeRequestHandlerInvoker<TRequest, TResponse>(scopeFactory, handler);
-            });
+                services.AddSingleton<IIpcRequestHandlerInvoker>(sp =>
+                    descriptor.CreateInvoker(sp.GetRequiredService<THandler>()));
+            }
 
             return services;
         }
 
-        public IServiceCollection AddIpcRequestHandler<TResponse>(
-            ushort messageType,
-            Delegate handler)
-            where TResponse : notnull
-        {
-            services.AddSingleton<IIpcRequestHandlerInvoker>(sp =>
-            {
-                var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
-                return new PipeRequestHandlerInvoker<TResponse>(scopeFactory, messageType, handler);
-            });
 
-            return services;
-        }
     }
 }

@@ -18,15 +18,15 @@ internal sealed class WindowsHelloAccountUnlockMethod(ISqliteConnectionFactory c
     /// <summary>
     /// Stores the currently decrypted Bitwarden user key wrapped by a Windows Hello Passport key.
     /// </summary>
-    public void Enable(UserId userId, ReadOnlySpan<byte> decryptedKey, IntPtr hwnd)
+    public void Enable(DecryptedUserKey decryptedKey, IntPtr hwnd)
     {
-        var keyName = userId.ToString();
+        var keyName = decryptedKey.UserId.ToString();
 
         WindowsHelloTpmKeyProtector.CreateOrReplaceWrappingKey(keyName, hwnd);
 
         byte[] protectedBytes = WindowsHelloTpmKeyProtector.WrapUserKey(
             keyName,
-            decryptedKey,
+            decryptedKey.Key,
             hwnd);
 
         using var connection = connectionFactory.OpenConnection();

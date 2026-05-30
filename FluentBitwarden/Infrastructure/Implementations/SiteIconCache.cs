@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Windows.Storage;
 using CommunityToolkit.HighPerformance.Buffers;
+using FluentBitwarden.Infrastructure;
 using FluentBitwarden.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Services;

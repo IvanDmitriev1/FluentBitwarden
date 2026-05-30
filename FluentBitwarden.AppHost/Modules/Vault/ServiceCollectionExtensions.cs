@@ -1,4 +1,5 @@
 ﻿using FluentBitwarden.AppHost.Modules.Vault.Services;
+using FluentBitwarden.Contracts.Ipc;
 using FluentBitwarden.Contracts.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Services;
@@ -12,7 +13,7 @@ internal static class ServiceCollectionExtensions
     {
         services.AddSingleton<IVaultService, VaultService>();
 
-        services.MapVaultIpcHandlers();
+        services.AddIpcRequestHandler<VaultClientHandlers>();
 
         return services;
     }

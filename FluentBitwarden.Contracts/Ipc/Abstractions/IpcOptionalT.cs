@@ -1,5 +1,4 @@
 ﻿namespace FluentBitwarden.Contracts.Ipc.Abstractions;
 
-[MemoryPackable]
-public readonly partial record struct IpcOptional<T>(T? Value)
-    where T : notnull;
+[MemoryPackable(SerializeLayout.Explicit)]
+public readonly partial record struct IpcOptional<T>([property: MemoryPackOrder(0)] T Value);

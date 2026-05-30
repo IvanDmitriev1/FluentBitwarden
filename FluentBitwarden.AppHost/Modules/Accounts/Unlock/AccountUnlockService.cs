@@ -22,11 +22,9 @@ internal sealed class AccountUnlockService(
         set;
     }
 
+    public DecryptedUserKey UserKey => _decryptedUserKey ?? throw new InvalidOperationException();
     public bool HasUnlockedAccount => _decryptedUserKey is not null;
     public BitwardenEnvironment CurrentEnvironment => CurrentAccount.Environment;
-
-    public TResult UseDecryptedKey<TResult>(Func<AccountProfile, DecryptedUserKey, TResult> operation) =>
-        operation.Invoke(CurrentAccount, _decryptedUserKey ?? throw new InvalidOperationException());
 
     public AccountUnlockOutcome Unlock(AccountUnlockRequest request)
     {

@@ -26,8 +26,8 @@ internal sealed class PipeIpcServer : BackgroundService
                 maxNumberOfServerInstances: 1,
                 PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
-                inBufferSize: 64 * 1024,
-                outBufferSize: 64 * 1024);
+                inBufferSize: 4 * 1024,
+                outBufferSize: 8 * 1024);
 
             try
             {
