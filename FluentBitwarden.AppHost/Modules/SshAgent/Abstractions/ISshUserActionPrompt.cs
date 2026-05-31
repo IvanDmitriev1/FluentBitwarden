@@ -1,7 +1,7 @@
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
 
-namespace FluentBitwarden.Modules.SshAgent.Abstractions;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 
 public interface ISshUserActionPrompt
 {

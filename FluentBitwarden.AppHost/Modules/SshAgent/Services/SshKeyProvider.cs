@@ -1,26 +1,33 @@
-using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
+using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.AppState.Models;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Models;
-using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
-using FluentBitwarden.Modules.Vault.Abstractions;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 
-namespace FluentBitwarden.Modules.SshAgent.Services;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
-    IUnlockedAccountAccessor unlockedAccountAccessor,
-    IVaultService vaultService,
+    IUnlockedVaultReader unlockedVault,
     ISshUserActionPrompt userActionPrompt) : ISshKeyProvider
 {
-    public IReadOnlyList<SshPublicIdentityResponce> ListIdentities() =>
-        unlockedAccountAccessor.HasUnlockedAccount ? vaultService.GetAvailableSshKeys() : [];
+    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
+
+    public IReadOnlyList<SshPublicIdentityResponce> ListIdentities()
+    {
+        if (!unlockedVault.IsOpen)
+            return [];
+
+        return unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
+            .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
+            .ToList();
+    }
 
     public async ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!unlockedAccountAccessor.HasUnlockedAccount || vaultService.GetSsh(request.PublicKeyBlob) is not { } cipher)
+        if (!unlockedVault.IsOpen || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
@@ -40,5 +47,11 @@ internal sealed class SshKeyProvider(
         var signedData = privateKey.Sign(request.Data);
 
         return new SshSignatureResult(OpenSshEd25519Key.AlgorithmName, signedData);
+    }
+
+    private SshKeyVaultCipher? GetShhCipher(ReadOnlyMemory<byte> publicKeyBlob)
+    {
+        return unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
+        .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
     }
 }

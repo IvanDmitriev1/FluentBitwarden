@@ -1,19 +1,24 @@
-﻿using FluentBitwarden.AppHost.Modules.Vault.Services;
+﻿using FluentBitwarden.AppHost.Modules.Vault.Synchronization;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.Contracts.Infrastructure.Ipc;
-using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Modules.Vault.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.Modules.Vault;
+namespace FluentBitwarden.AppHost.Modules.Vault;
 
 internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddVaultServices(this IServiceCollection services)
     {
-        services.AddSingleton<IVaultService, VaultService>();
+        services.AddSingleton<VaultLoader>();
+        services.AddSingleton<IVaultSynchronizer, VaultSynchronizer>();
+
+        services.AddSingleton<VaultWorkspace>();
+        services.AddSingleton<IVaultWorkspace>(static sp => sp.GetRequiredService<VaultWorkspace>());
+        services.AddSingleton<IUnlockedVaultReader>(static sp => sp.GetRequiredService<VaultWorkspace>());
 
         services.AddIpcRequestHandler<VaultClientHandlers>();
-
         return services;
     }
 }

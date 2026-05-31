@@ -1,4 +1,6 @@
 using BitwardenApi.OpenSsh;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using System.Text.Json;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;

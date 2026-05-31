@@ -1,13 +1,13 @@
 ﻿using BitwardenApi.Models;
 using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules;
-using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
-using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 
 namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class RemoteVaultManagerClient(IIpcClient client) : IVaultManagerClient
+internal sealed class RemoteVaultClient(IIpcClient client) : IVaultClient
 {
     public ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default)
     {

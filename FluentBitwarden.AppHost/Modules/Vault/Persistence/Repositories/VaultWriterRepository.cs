@@ -1,12 +1,10 @@
 using Dapper;
 using FluentBitwarden.AppHost.Infrastructure.Data;
-using FluentBitwarden.Modules.Vault.Abstractions;
 using Microsoft.Data.Sqlite;
 
-namespace FluentBitwarden.Modules.Vault.Repositories;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
-internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserId userId)
-    : BaseRepository(transaction), IVaultWriterRepository
+internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserId userId) : BaseRepository(transaction)
 {
     private readonly string _userIdStr = userId.ToString();
 

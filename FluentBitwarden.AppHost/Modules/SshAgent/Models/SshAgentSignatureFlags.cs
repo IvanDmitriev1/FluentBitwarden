@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Modules.SshAgent.Models;
+﻿namespace FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
 [Flags]
 public enum SshAgentSignatureFlags : uint

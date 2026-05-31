@@ -31,7 +31,11 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             cancellationToken))!;
     }
 
-    public async ValueTask<TResponse> SendAsync<TResponse>(ushort messageType, CancellationToken cancellationToken = default)
+    public async ValueTask<TResponse> SendAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+        TResponse>(
+        ushort messageType,
+        CancellationToken cancellationToken = default)
     {
         await using var pipe = new NamedPipeClientStream(
             ".",

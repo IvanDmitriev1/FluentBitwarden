@@ -1,4 +1,5 @@
 ﻿using BitwardenApi.Common.MemoryPackFormatters;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.Contracts.Modules.Vault.Models;
 

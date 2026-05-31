@@ -1,6 +1,6 @@
-using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
-namespace FluentBitwarden.Modules.Vault.Internal;
+namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
 internal static class VaultSearchExtensions
 {

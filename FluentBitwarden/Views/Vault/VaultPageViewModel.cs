@@ -1,19 +1,19 @@
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
-using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Windows.Networking.Connectivity;
+using FluentBitwarden.Contracts.Modules.Vault;
 
 namespace FluentBitwarden.Views.Vault;
 
 public sealed partial class VaultPageViewModel(
     IMessenger messenger,
-    IVaultManagerClient vaultManagerClient) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
+    IVaultClient vaultClient) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
 {
     [ObservableProperty]
     public partial VaultCipher[] FilteredCiphers { get; private set; } = [];
@@ -82,7 +82,7 @@ public sealed partial class VaultPageViewModel(
         if (!NetworkInformation.HasInternetAccess)
             return;
 
-        var result = await vaultManagerClient.SyncVaultAsync(cancellationToken);
+        var result = await vaultClient.SyncVaultAsync(cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
             await RefreshCollections();
@@ -97,7 +97,7 @@ public sealed partial class VaultPageViewModel(
 
             await QueryCiphersAsync();
 
-            Folders.ReplaceWith(await vaultManagerClient.GetFoldersAsync(cancellationToken));
+            Folders.ReplaceWith(await vaultClient.GetFoldersAsync(cancellationToken));
 
             SelectedCipher = selectedCipherId is null
                 ? null
@@ -107,7 +107,7 @@ public sealed partial class VaultPageViewModel(
 
     private async Task QueryCiphersAsync()
     {
-        var ciphers = await vaultManagerClient.SearchCiphersAsync(new VaultCipherQuery()
+        var ciphers = await vaultClient.SearchCiphersAsync(new VaultCipherQuery()
         {
             SearchText = SearchText,
             CipherType = SelectedCipherType,

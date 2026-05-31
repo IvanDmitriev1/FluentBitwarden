@@ -1,3 +1,4 @@
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using System.Buffers.Text;
 using System.Text;
 using System.Text.Json;

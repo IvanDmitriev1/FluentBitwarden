@@ -2,7 +2,7 @@ using CommunityToolkit.HighPerformance.Buffers;
 using System.Security.Cryptography;
 using System.Text.Json;
 
-namespace FluentBitwarden.Modules.Vault.Internal;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 internal static class EncryptedJsonValueReader
 {

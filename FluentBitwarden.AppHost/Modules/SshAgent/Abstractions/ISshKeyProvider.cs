@@ -1,6 +1,6 @@
-﻿using FluentBitwarden.Modules.SshAgent.Models;
+﻿using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
-namespace FluentBitwarden.Modules.SshAgent.Abstractions;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 
 internal interface ISshKeyProvider
 {

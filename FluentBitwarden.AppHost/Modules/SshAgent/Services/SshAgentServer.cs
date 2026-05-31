@@ -1,14 +1,13 @@
-﻿using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Internal;
-using FluentBitwarden.Modules.SshAgent.Models;
-using System.IO.Pipes;
-using System.Linq;
+﻿using System.IO.Pipes;
 using System.Text;
-using Microsoft.Extensions.Hosting;
+using CommunityToolkit.HighPerformance.Buffers;
+using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
+using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
+using Microsoft.Extensions.Hosting;
 
-namespace FluentBitwarden.Modules.SshAgent.Services;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : BackgroundService

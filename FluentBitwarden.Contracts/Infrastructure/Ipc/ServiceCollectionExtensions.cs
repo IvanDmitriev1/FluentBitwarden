@@ -22,8 +22,15 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        [RequiresDynamicCode(
+            "IPC handler registration closes generic invoker types at runtime.")]
+        [RequiresUnreferencedCode(
+            "IPC handler registration reflects over handler methods and message metadata.")]
         public IServiceCollection AddIpcRequestHandler<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] THandler>()
+            [DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicConstructors |
+                DynamicallyAccessedMemberTypes.PublicMethods)]
+            THandler>()
             where THandler : class, IIpcRequestsHandler
         {
             services.AddSingleton<THandler>();

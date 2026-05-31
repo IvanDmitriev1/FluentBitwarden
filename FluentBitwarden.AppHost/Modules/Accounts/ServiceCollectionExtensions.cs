@@ -24,7 +24,6 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<AccountUnlockService>();
         services.AddSingleton<IAccountUnlockService>(static sp => sp.GetRequiredService<AccountUnlockService>());
-        services.AddSingleton<IUnlockedAccountKeyAccess>(static sp => sp.GetRequiredService<AccountUnlockService>());
         services.AddSingleton<IUnlockedAccountAccessor>(static sp => sp.GetRequiredService<AccountUnlockService>());
         services.AddSingleton<IBitwardenEnvironmentAccessor>(static sp => sp.GetRequiredService<AccountUnlockService>());
 

@@ -9,13 +9,12 @@ namespace FluentBitwarden.AppHost.Modules.Accounts;
 
 internal class WindowsHelloUnlockClientHandler(
     WindowsHelloAccountUnlockMethod windowsHelloAccountUnlockMethod,
-    IUnlockedAccountAccessor accountAccessor,
-    IUnlockedAccountKeyAccess accountKeyAccess) : IWindowsHelloUnlockClient, IIpcRequestsHandler
+    IUnlockedAccountAccessor unlockedAccountAccessor) : IWindowsHelloUnlockClient, IIpcRequestsHandler
 {
     [IpcMessageHandler(IpcMessageTypes.WindowsHello.GetCurrentAccountStatus)]
     public async ValueTask<WindowsHelloStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
-        var userId = accountAccessor.CurrentAccount.UserId;
+        var userId = unlockedAccountAccessor.CurrentAccount.UserId;
         var isSupported = await windowsHelloAccountUnlockMethod.IsSupportedAsync();
         var isEnabled = windowsHelloAccountUnlockMethod.IsEnabled(userId);
 
@@ -37,7 +36,7 @@ internal class WindowsHelloUnlockClientHandler(
     public ValueTask EnableAsync(EnableWindowsHelloRequest request, CancellationToken cancellationToken = default)
     {
         windowsHelloAccountUnlockMethod.Enable(
-            accountKeyAccess.UserKey,
+            unlockedAccountAccessor.UserKey,
             request.OwnerWindowHandle);
 
         return ValueTask.CompletedTask;
@@ -46,7 +45,7 @@ internal class WindowsHelloUnlockClientHandler(
     [IpcMessageHandler(IpcMessageTypes.WindowsHello.Disable)]
     public ValueTask DisableAsync(CancellationToken cancellationToken = default)
     {
-        var userId = accountAccessor.CurrentAccount.UserId;
+        var userId = unlockedAccountAccessor.CurrentAccount.UserId;
         windowsHelloAccountUnlockMethod.Disable(userId);
 
         return ValueTask.CompletedTask;

@@ -11,7 +11,7 @@ namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 internal sealed class AccountUnlockService(
     IStoredAccountStore storedAccountStore,
     MasterPasswordAccountUnlockMethod masterPasswordUnlockMethod,
-    WindowsHelloAccountUnlockMethod windowsHelloUnlockMethod) : IAccountUnlockService, IUnlockedAccountAccessor, IUnlockedAccountKeyAccess, IBitwardenEnvironmentAccessor
+    WindowsHelloAccountUnlockMethod windowsHelloUnlockMethod) : IAccountUnlockService, IUnlockedAccountAccessor, IBitwardenEnvironmentAccessor
 {
     private DecryptedUserKey? _decryptedUserKey;
 

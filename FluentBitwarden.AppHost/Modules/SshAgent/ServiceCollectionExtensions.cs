@@ -1,8 +1,8 @@
-using FluentBitwarden.Modules.SshAgent.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Services;
+using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
+using FluentBitwarden.AppHost.Modules.SshAgent.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.Modules.SshAgent;
+namespace FluentBitwarden.AppHost.Modules.SshAgent;
 
 internal static class ServiceCollectionExtensions
 {

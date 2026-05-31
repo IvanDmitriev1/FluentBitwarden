@@ -1,7 +1,8 @@
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using System.Text;
 using System.Text.Json;
 
-namespace FluentBitwarden.Modules.Vault.Internal;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 internal static class Fido2CredentialJsonMapper
 {

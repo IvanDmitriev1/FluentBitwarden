@@ -1,6 +1,7 @@
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
@@ -8,9 +9,6 @@ using FluentBitwarden.Views.Vault.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using System.Linq;
-using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
-using FluentBitwarden.Contracts.Modules.Vault.Models;
 
 namespace FluentBitwarden.Views.Shell;
 
@@ -27,7 +25,7 @@ public sealed partial class ShellPage : Page
         TagByPage = pageByTag.ToDictionary(static pair => pair.Value, static pair => pair.Key);
     }
 
-    public ShellPage(IVaultManagerClient vaultService, IMessenger messenger)
+    public ShellPage(IVaultClient vaultService, IMessenger messenger)
     {
         _vaultService = vaultService;
         _messenger = messenger;
@@ -35,7 +33,7 @@ public sealed partial class ShellPage : Page
         ContentFrame.Navigate(typeof(VaultPage));
     }
 
-    private readonly IVaultManagerClient _vaultService;
+    private readonly IVaultClient _vaultService;
     private readonly IMessenger _messenger;
 
     private static readonly IReadOnlyDictionary<string, Type> PageByTag;

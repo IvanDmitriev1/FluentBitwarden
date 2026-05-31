@@ -1,16 +1,18 @@
 using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
 using FluentBitwarden.AppHost.Infrastructure.Data;
-using FluentBitwarden.Modules.Vault.Abstractions;
 using Microsoft.Data.Sqlite;
-using System.Linq;
-using static FluentBitwarden.Modules.Vault.Abstractions.IVaultReaderRepository;
 
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
-internal sealed partial class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction), IVaultReaderRepository
+internal sealed partial class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    public IEnumerable<VaultFolderDto> GetAllFolders(UserId userId)
+    public delegate void CipherVisitor<in TState>(
+        TState state,
+        ref readonly VaultCipherDto dto,
+        ReadOnlySpan<byte> payload);
+
+    public VaultFolderDto[] GetAllFolders(UserId userId)
     {
         var rows = Connection.Query<FolderRow>(
             """
@@ -25,10 +27,10 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userId.ToString() },
             transaction: Transaction);
 
-        return rows.Select(static row => ToDto(row));
+        return rows.Select(static row => ToDto(row)).ToArray();
     }
 
-    public IEnumerable<VaultCollectionDto> GetAllCollections(UserId userId)
+    public VaultCollectionDto[] GetAllCollections(UserId userId)
     {
         var rows = Connection.Query<CollectionRow>(
             """
@@ -47,7 +49,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userId.ToString() },
             transaction: Transaction);
 
-        return rows.Select(static row => ToDto(row));
+        return rows.Select(static row => ToDto(row)).ToArray();
     }
 
     public void ReadAllCiphers<TState>(UserId userId, TState stateObj, CipherVisitor<TState> onCipher)

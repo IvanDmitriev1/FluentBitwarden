@@ -1,8 +1,9 @@
 ﻿using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 
-namespace FluentBitwarden.Contracts.Modules.Vault.Abstractions;
+namespace FluentBitwarden.Contracts.Modules.Vault;
 
-public interface IVaultManagerClient
+public interface IVaultClient
 {
     ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default);
 

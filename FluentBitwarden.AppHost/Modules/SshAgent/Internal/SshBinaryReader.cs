@@ -1,6 +1,6 @@
 ﻿using System.Buffers.Binary;
 
-namespace FluentBitwarden.Modules.SshAgent.Internal;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 
 internal ref struct SshBinaryReader(ReadOnlySpan<byte> buffer)
 {

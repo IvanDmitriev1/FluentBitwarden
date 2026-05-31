@@ -7,4 +7,5 @@ internal interface IUnlockedAccountAccessor
     bool HasUnlockedAccount { get; }
 
     AccountProfile CurrentAccount { get; }
+    DecryptedUserKey UserKey { get; }
 }

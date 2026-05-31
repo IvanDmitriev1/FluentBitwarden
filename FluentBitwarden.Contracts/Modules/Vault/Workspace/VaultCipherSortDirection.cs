@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Modules.Vault.Models;
+﻿namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 public enum VaultCipherSortDirection
 {

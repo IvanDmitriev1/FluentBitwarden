@@ -1,7 +1,6 @@
 ﻿using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Storage;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Storage;
-using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Repositories;
 using Microsoft.Data.Sqlite;
 using IsolationLevel = System.Data.IsolationLevel;
@@ -28,7 +27,7 @@ internal sealed class UnitOfWork : IUnitOfWork
 
     public AccountProfileRepository AccountProfileRepository { get; }
     public AccountKeyMaterialRepository AccountKeyMaterialRepository { get; }
-    public IVaultReaderRepository VaultReaderRepository { get; }
+    public VaultReaderRepository VaultReaderRepository { get; }
     public SecureRefreshTokenStore SecureRefreshTokenStore { get; }
 
     public void SaveChanges()

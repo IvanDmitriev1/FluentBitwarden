@@ -7,9 +7,17 @@ internal sealed record HandlerMethodDescriptor(
     HandlerMethodKind Kind,
     ushort MessageType,
     MethodInfo Method,
+    [param: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+    [property: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
     Type? ResponseType,
+    [param: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+    [property: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
     Type? RequestType)
 {
+    [RequiresDynamicCode(
+        "IPC handler activation closes generic invoker types at runtime.")]
+    [RequiresUnreferencedCode(
+        "IPC handler activation relies on reflected request and response types.")]
     public IIpcRequestHandlerInvoker CreateInvoker<THandler>(THandler handler)
         where THandler : class, IIpcRequestsHandler
     {
@@ -51,6 +59,10 @@ internal sealed record HandlerMethodDescriptor(
         ?? throw new InvalidOperationException(
             $"Could not find {nameof(GetMessageType)}.");
 
+    [RequiresDynamicCode(
+        "IPC handler discovery closes generic message helpers at runtime.")]
+    [RequiresUnreferencedCode(
+        "IPC handler discovery reflects over handler methods and message metadata.")]
     public static HandlerMethodDescriptor[] Discover<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
         THandler>()
@@ -64,6 +76,10 @@ internal sealed record HandlerMethodDescriptor(
             .Select(Create)
             .ToArray();
 
+    [RequiresDynamicCode(
+        "IPC handler discovery closes generic message helpers at runtime.")]
+    [RequiresUnreferencedCode(
+        "IPC handler discovery reflects over handler methods and message metadata.")]
     private static HandlerMethodDescriptor Create(MethodInfo method)
     {
         if (method.IsGenericMethodDefinition)
