@@ -1,4 +1,3 @@
-using BitwardenApi.Models;
 using System.Text;
 using System.Text.Json;
 

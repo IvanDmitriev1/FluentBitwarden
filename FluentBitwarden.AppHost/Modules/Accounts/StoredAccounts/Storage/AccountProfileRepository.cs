@@ -1,7 +1,6 @@
-using BitwardenApi.Models;
 using Dapper;
-using FluentBitwarden.Contracts.Session.Models;
-using FluentBitwarden.Data;
+using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Storage;

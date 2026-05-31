@@ -1,5 +1,4 @@
-using BitwardenApi.Models;
-using FluentBitwarden.Contracts.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.Vault.Models;
 

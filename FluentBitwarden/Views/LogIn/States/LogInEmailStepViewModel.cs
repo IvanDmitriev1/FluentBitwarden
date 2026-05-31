@@ -5,6 +5,7 @@ using FluentBitwarden.Views.LogIn.Models;
 using FluentBitwarden.Views.LogIn.ValidationAttributes;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Views.Shell;
 using WinUIEx;
 

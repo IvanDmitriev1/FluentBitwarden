@@ -1,4 +1,3 @@
-using BitwardenApi.Models;
 using BitwardenApi.OpenSsh;
 using System.Text.Json;
 

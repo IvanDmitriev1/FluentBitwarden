@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Contracts;
-using BitwardenApi.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
-using FluentBitwarden.Contracts.Session.Models;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 

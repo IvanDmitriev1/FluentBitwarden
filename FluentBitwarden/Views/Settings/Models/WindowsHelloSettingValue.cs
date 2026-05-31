@@ -1,4 +1,5 @@
-using FluentBitwarden.Contracts.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Views.Shell;
 using WinUIEx;
 

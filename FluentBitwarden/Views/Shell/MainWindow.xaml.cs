@@ -4,10 +4,10 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Contracts.AppState;
 using WinUIEx;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Implementations;
+using FluentBitwarden.Contracts.Modules.AppState;
 
 namespace FluentBitwarden.Views.Shell;
 

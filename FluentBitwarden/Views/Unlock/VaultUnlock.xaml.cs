@@ -4,7 +4,10 @@ using Microsoft.UI.Xaml;
 using System.Windows.Input;
 using FluentBitwarden.Views.Shell;
 using WinUIEx;
-using FluentBitwarden.Contracts.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 
 namespace FluentBitwarden.Views.Unlock;
 

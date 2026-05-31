@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using MemoryPack;
 
 namespace FluentBitwarden.Modules.Passkey.Models;

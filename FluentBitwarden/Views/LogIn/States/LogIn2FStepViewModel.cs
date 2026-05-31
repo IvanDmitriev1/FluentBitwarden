@@ -6,6 +6,7 @@ using FluentBitwarden.UI.Controls;
 using FluentBitwarden.Views.LogIn.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 namespace FluentBitwarden.Views.LogIn.States;
 

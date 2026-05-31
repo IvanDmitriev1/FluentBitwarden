@@ -1,5 +1,6 @@
-using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 
 namespace FluentBitwarden.Views.Passkey;
 

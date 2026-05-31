@@ -1,7 +1,7 @@
 using FluentBitwarden.AppHost.Infrastructure.Services;
-using FluentBitwarden.Contracts.Accounts;
-using FluentBitwarden.Contracts.Ipc;
-using FluentBitwarden.Contracts.Vault.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Ipc;
+using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
 using FluentBitwarden.Infrastructure.Implementations;

@@ -5,8 +5,8 @@ using FluentBitwarden.Modules.SshAgent.Models;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
-using FluentBitwarden.Contracts.Shared;
 using Microsoft.Extensions.Hosting;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;
 

@@ -1,7 +1,4 @@
-using System.Linq;
-using BitwardenApi.Models;
-using FluentBitwarden.Contracts.Vault.Models;
-using FluentBitwarden.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 
 namespace FluentBitwarden.Modules.Vault.Internal;
 

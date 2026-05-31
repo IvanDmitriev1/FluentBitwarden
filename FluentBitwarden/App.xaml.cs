@@ -11,6 +11,7 @@ using Windows.ApplicationModel.Activation;
 using FluentBitwarden.Infrastructure;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 
 namespace FluentBitwarden;
 

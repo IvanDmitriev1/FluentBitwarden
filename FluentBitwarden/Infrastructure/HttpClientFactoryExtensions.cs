@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Net;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Infrastructure;
 
@@ -13,7 +14,10 @@ internal static class HttpClientFactoryExtensions
     {
         services.AddHttpClient(Name, static client =>
         {
+            client.DefaultRequestVersion = HttpVersion.Version20;
+            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             client.Timeout = TimeSpan.FromSeconds(8);
+
             client.DefaultRequestHeaders.Add("Accept",
                 "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
             client.DefaultRequestHeaders.UserAgent.ParseAdd(

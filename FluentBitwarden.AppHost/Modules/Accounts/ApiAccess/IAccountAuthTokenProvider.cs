@@ -1,5 +1,5 @@
 ﻿using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
-using FluentBitwarden.Contracts.Session.Models;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.ApiAccess;
 

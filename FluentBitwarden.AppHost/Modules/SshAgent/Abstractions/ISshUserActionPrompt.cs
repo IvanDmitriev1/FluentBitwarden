@@ -1,5 +1,5 @@
-using FluentBitwarden.Contracts.Shared;
-using FluentBitwarden.Resources.Dialogs.Models;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 
 namespace FluentBitwarden.Modules.SshAgent.Abstractions;
 

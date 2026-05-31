@@ -1,6 +1,7 @@
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Contracts.Vault.Abstractions;
+using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;

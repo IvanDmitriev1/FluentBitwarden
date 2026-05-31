@@ -1,7 +1,6 @@
-using BitwardenApi.Models;
 using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
-using FluentBitwarden.Data;
+using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using Microsoft.Data.Sqlite;
 using System.Linq;

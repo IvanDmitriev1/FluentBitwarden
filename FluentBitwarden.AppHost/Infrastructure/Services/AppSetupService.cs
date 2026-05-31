@@ -1,7 +1,7 @@
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
-using FluentBitwarden.Contracts.AppState;
-using FluentBitwarden.Contracts.Shared;
-using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Modules.AppState;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Services;
 

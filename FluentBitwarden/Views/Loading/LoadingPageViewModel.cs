@@ -1,5 +1,4 @@
 using Windows.Networking.Connectivity;
-using FluentBitwarden.Contracts.Accounts;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Offline;
 using FluentBitwarden.Views.Offline.Models;
@@ -8,6 +7,7 @@ using FluentBitwarden.Views.LogIn;
 using FluentBitwarden.Views.Unlock;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Views.Passkey;
+using FluentBitwarden.Contracts.Modules.Accounts;
 
 namespace FluentBitwarden.Views.Loading;
 

@@ -1,11 +1,10 @@
-using BitwardenApi.Models;
 using Dapper;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
-using FluentBitwarden.Contracts.Session.Models;
-using FluentBitwarden.Data.Abstractions;
 using FluentBitwarden.Infrastructure.Security.WindowsHello;
 using System.Security.Cryptography;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
 

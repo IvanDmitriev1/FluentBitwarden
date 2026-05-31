@@ -4,3 +4,4 @@ GetPackageFamilyName
 OpenProcess
 QueryFullProcessImageName
 GetNamedPipeClientProcessId
+HRESULT_FROM_WIN32

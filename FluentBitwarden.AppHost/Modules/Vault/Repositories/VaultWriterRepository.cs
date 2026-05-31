@@ -1,6 +1,5 @@
-using BitwardenApi.Models;
 using Dapper;
-using FluentBitwarden.Data;
+using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using Microsoft.Data.Sqlite;
 

@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using FluentBitwarden.Contracts.AppState;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Modules.AppState;
 
 namespace FluentBitwarden.Views.Settings.Models;
 

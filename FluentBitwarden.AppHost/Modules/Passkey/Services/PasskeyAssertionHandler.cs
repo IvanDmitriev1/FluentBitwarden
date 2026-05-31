@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.Contracts.Ipc;
-using FluentBitwarden.Modules.Passkey.Abstractions;
+﻿using FluentBitwarden.Modules.Passkey.Abstractions;
 using FluentBitwarden.Modules.Passkey.Internal;
 using FluentBitwarden.Modules.Passkey.Models;
 using Microsoft.Extensions.DependencyInjection;

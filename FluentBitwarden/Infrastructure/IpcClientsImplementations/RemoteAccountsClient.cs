@@ -1,6 +1,9 @@
-﻿using FluentBitwarden.Contracts;
-using FluentBitwarden.Contracts.Accounts;
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Modules;
+using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts.Login;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 
 namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 

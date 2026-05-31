@@ -9,7 +9,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System.Linq;
-using FluentBitwarden.Contracts.Vault.Abstractions;
+using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 
 namespace FluentBitwarden.Views.Shell;
 

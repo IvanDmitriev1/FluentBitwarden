@@ -1,5 +1,3 @@
-using BitwardenApi.Models;
-
 namespace FluentBitwarden.Modules.Vault.Repositories;
 
 internal partial class VaultReaderRepository

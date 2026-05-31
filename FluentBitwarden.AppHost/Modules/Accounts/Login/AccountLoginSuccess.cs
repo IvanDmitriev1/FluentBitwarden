@@ -1,4 +1,3 @@
-using BitwardenApi.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
 

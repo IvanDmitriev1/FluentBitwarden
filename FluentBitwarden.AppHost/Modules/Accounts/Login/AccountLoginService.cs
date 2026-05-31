@@ -1,14 +1,14 @@
 using BitwardenApi.Contracts;
 using BitwardenApi.Cryptography;
-using BitwardenApi.Models;
 using FluentBitwarden.AppHost.Infrastructure;
-using FluentBitwarden.Contracts.Session.Models;
 using FluentBitwarden.Infrastructure.Security.WebAuthn;
 using System.IdentityModel.Tokens.Jwt;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
-using FluentBitwarden.Contracts.Shared;
-using FluentBitwarden.Data.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Modules.Accounts.Login;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Login;
 

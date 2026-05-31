@@ -1,3 +1,4 @@
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 

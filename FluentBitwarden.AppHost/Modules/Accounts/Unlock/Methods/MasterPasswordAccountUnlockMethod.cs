@@ -1,8 +1,7 @@
-using BitwardenApi.Models;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
-using FluentBitwarden.Contracts.Session.Models;
 using System.Security.Cryptography;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
 

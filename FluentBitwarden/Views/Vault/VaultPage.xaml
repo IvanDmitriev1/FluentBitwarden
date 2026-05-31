@@ -10,7 +10,7 @@
     xmlns:lifecycle="using:FluentBitwarden.UI.Controls.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Models"
-    xmlns:models21="using:FluentBitwarden.Contracts.Vault.Models"
+    xmlns:models211="using:FluentBitwarden.Contracts.Modules.Vault.Models"
     xmlns:templates="using:FluentBitwarden.Views.Vault.Templates"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
@@ -65,29 +65,29 @@
                             <controls1:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
                                 Text="Title"
-                                Value="{x:Bind models21:VaultCipherSortField.Name}" />
+                                Value="{x:Bind models211:VaultCipherSortField.Name}" />
 
                             <controls1:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
                                 Text="Date created"
-                                Value="{x:Bind models21:VaultCipherSortField.CreationDate}" />
+                                Value="{x:Bind models211:VaultCipherSortField.CreationDate}" />
 
                             <controls1:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
                                 Text="Date modified"
-                                Value="{x:Bind models21:VaultCipherSortField.RevisionDate}" />
+                                Value="{x:Bind models211:VaultCipherSortField.RevisionDate}" />
 
                             <MenuFlyoutSeparator />
 
                             <controls1:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
                                 Text="Newest first"
-                                Value="{x:Bind models21:VaultCipherSortDirection.Ascending}" />
+                                Value="{x:Bind models211:VaultCipherSortDirection.Ascending}" />
 
                             <controls1:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
                                 Text="Oldest first"
-                                Value="{x:Bind models21:VaultCipherSortDirection.Descending}" />
+                                Value="{x:Bind models211:VaultCipherSortDirection.Descending}" />
 
                         </MenuFlyout>
                     </controls1:SearchFilterBar.SortFlyout>

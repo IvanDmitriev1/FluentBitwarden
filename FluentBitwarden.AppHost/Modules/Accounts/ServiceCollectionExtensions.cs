@@ -5,7 +5,7 @@ using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
-using FluentBitwarden.Contracts.Ipc;
+using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts;

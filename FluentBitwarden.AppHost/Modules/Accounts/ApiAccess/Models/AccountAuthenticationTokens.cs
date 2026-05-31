@@ -1,6 +1,5 @@
-using BitwardenApi.Models;
-using FluentBitwarden.Contracts.Session.Models;
-using FluentBitwarden.Contracts.Shared;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
 

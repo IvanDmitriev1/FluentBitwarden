@@ -8,9 +8,10 @@ using System.Diagnostics;
 using System.Reflection;
 using Windows.ApplicationModel;
 using Windows.Storage;
-using FluentBitwarden.Contracts.AppState;
-using FluentBitwarden.Contracts.AppState.Models;
-using FluentBitwarden.Contracts.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Modules.AppState.Models;
 
 namespace FluentBitwarden.Views.Settings;
 

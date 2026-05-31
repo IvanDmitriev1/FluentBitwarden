@@ -1,8 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using BitwardenApi.Models;
 using Dapper;
-using FluentBitwarden.Data;
+using FluentBitwarden.AppHost.Infrastructure.Data;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Storage;

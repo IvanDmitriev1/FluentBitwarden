@@ -1,9 +1,9 @@
 ﻿using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
-using FluentBitwarden.Contracts;
-using FluentBitwarden.Contracts.Accounts;
-using FluentBitwarden.Contracts.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Session.Models;
+using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Modules;
+using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts;
 

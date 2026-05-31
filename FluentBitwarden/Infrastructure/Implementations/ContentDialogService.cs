@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.WinUI;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
 using FluentBitwarden.Resources.Dialogs;
 using FluentBitwarden.Views.Shell;

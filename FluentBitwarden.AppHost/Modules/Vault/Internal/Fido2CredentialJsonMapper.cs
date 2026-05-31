@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using BitwardenApi.Models;
 
 namespace FluentBitwarden.Modules.Vault.Internal;
 

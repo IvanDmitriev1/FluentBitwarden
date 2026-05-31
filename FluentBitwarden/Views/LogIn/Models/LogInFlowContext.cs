@@ -1,4 +1,5 @@
 using BitwardenApi.Models;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 
 namespace FluentBitwarden.Views.LogIn.Models;
 

@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.Resources.Dialogs;
+﻿using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Resources.Dialogs;
 
 namespace FluentBitwarden.Infrastructure.Abstractions.Dialog;
 

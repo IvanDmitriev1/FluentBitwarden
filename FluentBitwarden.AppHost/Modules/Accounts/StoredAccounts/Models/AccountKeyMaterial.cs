@@ -1,5 +1,4 @@
 using BitwardenApi.Cryptography;
-using BitwardenApi.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
 

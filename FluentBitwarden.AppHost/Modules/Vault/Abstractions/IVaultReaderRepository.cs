@@ -1,5 +1,3 @@
-using BitwardenApi.Models;
-
 namespace FluentBitwarden.Modules.Vault.Abstractions;
 
 public interface IVaultReaderRepository

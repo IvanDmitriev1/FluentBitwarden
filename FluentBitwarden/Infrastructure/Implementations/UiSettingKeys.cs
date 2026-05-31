@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.AppState.Models;
+using FluentBitwarden.Contracts.Modules.AppState.Models;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Infrastructure.Implementations;

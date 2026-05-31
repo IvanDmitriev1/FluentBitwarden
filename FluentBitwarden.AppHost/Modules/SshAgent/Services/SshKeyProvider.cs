@@ -1,13 +1,12 @@
-using BitwardenApi.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
-using FluentBitwarden.Contracts.AppState;
-using FluentBitwarden.Contracts.AppState.Models;
-using FluentBitwarden.Contracts.Shared;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Modules.AppState.Models;
 using FluentBitwarden.Modules.SshAgent.Abstractions;
 using FluentBitwarden.Modules.SshAgent.Models;
 using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Resources.Dialogs.Models;
 
 namespace FluentBitwarden.Modules.SshAgent.Services;
 

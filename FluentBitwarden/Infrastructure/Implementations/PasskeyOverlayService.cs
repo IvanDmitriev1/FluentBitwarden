@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Models;
 using CommunityToolkit.WinUI;
-using FluentBitwarden.Contracts.AppState;
-using FluentBitwarden.Contracts.AppState.Models;
 using FluentBitwarden.Views.Passkey;
 
 namespace FluentBitwarden.Infrastructure.Implementations;

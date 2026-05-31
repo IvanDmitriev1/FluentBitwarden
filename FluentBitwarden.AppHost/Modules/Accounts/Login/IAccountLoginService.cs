@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.AppHost.Infrastructure;
-using FluentBitwarden.Contracts.Session.Models;
+﻿using FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Login;
 

@@ -6,6 +6,8 @@ using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;
 using System.Diagnostics.CodeAnalysis;
 using Windows.Networking.Connectivity;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 using FluentBitwarden.Views.Passkey;
 
 namespace FluentBitwarden.Views.Unlock;

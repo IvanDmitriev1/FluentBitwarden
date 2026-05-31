@@ -1,6 +1,5 @@
 ﻿using FluentBitwarden.AppHost.Modules.Vault.Services;
-using FluentBitwarden.Contracts.Ipc;
-using FluentBitwarden.Contracts.Vault.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Modules.Vault.Abstractions;
 using FluentBitwarden.Modules.Vault.Services;
 using Microsoft.Extensions.DependencyInjection;

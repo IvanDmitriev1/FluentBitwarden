@@ -1,8 +1,7 @@
-﻿using BitwardenApi.Models;
-using FluentBitwarden.Contracts;
-using FluentBitwarden.Contracts.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Vault.Abstractions;
-using FluentBitwarden.Contracts.Vault.Models;
+﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Modules;
+using FluentBitwarden.Contracts.Modules.Vault.Abstractions;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 using FluentBitwarden.Modules.Vault.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
