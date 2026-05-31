@@ -7,6 +7,8 @@ using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Views.Startup;
+using FluentBitwarden.Views.Startup.Models;
+using FluentBitwarden.UI.Controls.Lifecycle;
 
 namespace FluentBitwarden.Views.Shell.Main;
 
@@ -29,7 +31,9 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
         ApplyTheme(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
-        RootFrame.Navigate(typeof(LoadingPage));
+        RootFrame.Navigate(
+            typeof(LoadingPage),
+            PageNavigationParameter.From(LoadingPageParameter.MainShell));
     }
 
     public bool IsHidden => !AppWindow.IsVisible;
@@ -63,7 +67,9 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         if (RootFrame.Content is not null)
             return;
 
-        RootFrame.Navigate(typeof(LoadingPage));
+        RootFrame.Navigate(
+            typeof(LoadingPage),
+            PageNavigationParameter.From(LoadingPageParameter.MainShell));
     }
 
     private void RootFrame_OnNavigated(object sender, NavigationEventArgs e)

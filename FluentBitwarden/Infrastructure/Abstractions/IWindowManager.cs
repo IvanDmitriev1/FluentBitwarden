@@ -1,11 +1,11 @@
-using Microsoft.UI.Xaml;
+using WinUIEx;
 
 namespace FluentBitwarden.Infrastructure.Abstractions;
 
 public interface IWindowManager
 {
-    Window? ActiveWindow { get; }
+    WindowEx? ActiveWindow { get; }
 
-    void SetWindow(WinUIEx.WindowEx window);
+    void SetWindow(WindowEx window);
     void CloseWindow();
 }

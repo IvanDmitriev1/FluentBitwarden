@@ -8,4 +8,6 @@ internal interface IVaultWorkspace
     void Open(DecryptedUserKey userKey);
     void Reload(DecryptedUserKey userKey);
     void Close();
+
+    Task WaitUntilOpened(CancellationToken  cancellationToken);
 }

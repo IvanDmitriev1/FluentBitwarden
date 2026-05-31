@@ -8,14 +8,32 @@ internal static class UiProcessLauncher
     private static readonly string PackageRoot = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
     private static readonly string ExecutablePath = Path.Combine(PackageRoot, UiProjectDirectoryName, UiExecutableName);
 
-    public static void Activate()
+    public static void ActivateMainWindow()
         => StartProcess(string.Empty);
 
     public static void ActivateOverlay()
         => StartProcess("--overlay");
 
+
+    public static void Activate()
+    {
+        if (IsRunning())
+        {
+            ActivateMainWindow();
+        }
+        else
+        {
+            ActivateOverlay();
+        }
+    }
+
     public static void Exit()
-        => StartProcess("--exit");
+    {
+        if (IsRunning())
+        {
+            StartProcess("--exit");
+        }
+    }
 
     public static bool IsRunning()
     {

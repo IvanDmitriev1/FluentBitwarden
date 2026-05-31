@@ -11,7 +11,7 @@ internal sealed class AppHostActivationHandler(IHostApplicationLifetime applicat
         AppHostCliCommand command = AppHostCliCommandExtensions.From(args);
         if (command == AppHostCliCommand.Start)
         {
-            UiProcessLauncher.Activate();
+            UiProcessLauncher.ActivateMainWindow();
         }
     }
 }

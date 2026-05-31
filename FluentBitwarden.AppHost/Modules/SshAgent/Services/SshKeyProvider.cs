@@ -1,3 +1,4 @@
+using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
@@ -13,18 +14,15 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 [Fody.ConfigureAwait(false)]
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
+    IVaultWorkspace vaultWorkspace,
     IUserDialogClient userDialogClient) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
     public async Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {
-        if (!unlockedVault.IsOpen)
-        {
-            //TODO
-            //We should open the app and wait then ui server sends unlocked message or do something else
-            //But we don't need to resieve the event the ui because we can create account unlocked event. But there is problem with concurrency because we are running >1 Named pipe server
-        }
+        if (!await WaitForVaultWorkspaceAsync(token))
+            return SshIdentityQueryResult.Denied;
 
         var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
             .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
@@ -35,7 +33,7 @@ internal sealed class SshKeyProvider(
 
     public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!unlockedVault.IsOpen || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
+        if (!await WaitForVaultWorkspaceAsync(token) || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
@@ -47,7 +45,6 @@ internal sealed class SshKeyProvider(
                 IsForwarded: false);
 
             var userAction = await userDialogClient.ShowSshDialogAsync(requestDialog, token);
-
             if (userAction == UserActionDialogOutcome.Denied)
                 return SshSignatureResult.Failed;
         }
@@ -58,9 +55,32 @@ internal sealed class SshKeyProvider(
         return new SshSignatureResult(OpenSshEd25519Key.AlgorithmName, signedData);
     }
 
+    private async Task<bool> WaitForVaultWorkspaceAsync(CancellationToken token)
+    {
+        if (vaultWorkspace.IsOpen)
+            return true;
+
+        UiProcessLauncher.Activate();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        cts.CancelAfter(TimeSpan.FromSeconds(45));
+
+        try
+        {
+            await vaultWorkspace.WaitUntilOpened(cts.Token);
+            return vaultWorkspace.IsOpen;
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
     private SshKeyVaultCipher? GetShhCipher(ReadOnlyMemory<byte> publicKeyBlob)
     {
-        return unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
-        .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
+        return unlockedVault
+            .GetCiphers(SshCipherQuery)
+            .OfType<SshKeyVaultCipher>()
+            .FirstOrDefault(c =>
+                c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
     }
 }

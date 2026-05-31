@@ -13,6 +13,7 @@ internal sealed class AccountUnlockService(
     MasterPasswordAccountUnlockMethod masterPasswordUnlockMethod,
     WindowsHelloAccountUnlockMethod windowsHelloUnlockMethod) : IAccountUnlockService, IUnlockedAccountAccessor, IBitwardenEnvironmentAccessor
 {
+    private TaskCompletionSource _whenUnlocked = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private DecryptedUserKey? _decryptedUserKey;
 
     [property:AllowNull]
@@ -62,5 +63,6 @@ internal sealed class AccountUnlockService(
     {
         _decryptedUserKey?.Dispose();
         CurrentAccount = null;
+        _whenUnlocked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 }

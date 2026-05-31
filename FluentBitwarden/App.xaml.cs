@@ -92,6 +92,12 @@ public partial class App : IXamlMetadataServiceProvider
     private void ShowWindow<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TWindow>() where TWindow : WindowEx
     {
         var windowManager = GetRequiredService<IWindowManager>();
+        if (windowManager.ActiveWindow is not null)
+        {
+            windowManager.ActiveWindow.ShowAndActivate();
+            return;
+        }
+
         var window = ActivatorUtilities.CreateInstance<TWindow>(_services);
         windowManager.SetWindow(window);
     }

@@ -7,6 +7,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
 internal sealed class VaultWorkspace(VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
 {
+    private TaskCompletionSource _waitUntilOpen = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private LoadedVaultData _vaultData = new([], [], []);
 
     public UserId OpenedForUserId { get; private set; } = UserId.Empty;
@@ -18,6 +19,7 @@ internal sealed class VaultWorkspace(VaultLoader vaultLoader) : IVaultWorkspace,
         Volatile.Write(ref _vaultData, data);
 
         OpenedForUserId = userKey.UserId;
+        _waitUntilOpen.SetResult();
     }
 
     public void Reload(DecryptedUserKey userKey)
@@ -32,7 +34,14 @@ internal sealed class VaultWorkspace(VaultLoader vaultLoader) : IVaultWorkspace,
     {
         Volatile.Write(ref _vaultData, new LoadedVaultData([], [], []));
         OpenedForUserId = UserId.Empty;
+
+        _waitUntilOpen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     }
+
+    public Task WaitUntilOpened(CancellationToken cancellationToken) =>
+        IsOpen
+            ? Task.CompletedTask
+            : _waitUntilOpen.Task.WaitAsync(cancellationToken);
 
     public VaultCipher? GetCipher(CipherId id)
     {

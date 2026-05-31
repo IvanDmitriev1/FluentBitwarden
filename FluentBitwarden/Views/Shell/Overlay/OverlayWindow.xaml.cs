@@ -1,6 +1,8 @@
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Infrastructure.Implementations;
+using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Startup;
+using FluentBitwarden.Views.Startup.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using WinUIEx;
@@ -21,10 +23,13 @@ public sealed partial class OverlayWindow : WinUIEx.WindowEx
         this.PreventMaximizeOnTitleBarDoubleClick();
         this.CenterOnScreen();
 
-        Frame.Navigate(typeof(LoadingPage));
+        Frame.Navigate(
+            typeof(LoadingPage),
+            PageNavigationParameter.From(LoadingPageParameter.RequestHost));
     }
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;
+    public bool IsRequestHost { get; } = true;
 
     public void ApplyTheme(ElementTheme themeMode)
     {

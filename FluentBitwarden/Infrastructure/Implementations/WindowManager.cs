@@ -10,9 +10,11 @@ namespace FluentBitwarden.Infrastructure.Implementations;
 
 internal sealed class WindowManager : IWindowManager, IThemeService
 {
+    private static readonly TimeSpan RequestHostCloseDelay = TimeSpan.FromMilliseconds(150);
+
     private ElementTheme _theme = SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey);
 
-    public Window? ActiveWindow { get; private set; }
+    public WindowEx? ActiveWindow { get; private set; }
 
     public void SetWindow(WindowEx window)
     {

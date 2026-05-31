@@ -124,7 +124,7 @@ internal sealed class TrayHost : IDisposable
             case TrayIconMessage.LeftButtonDoubleClick:
             case TrayIconMessage.Select:
             case TrayIconMessage.KeySelect:
-                UiProcessLauncher.Activate();
+                UiProcessLauncher.ActivateMainWindow();
                 return;
 
             case TrayIconMessage.ContextMenu:
@@ -140,7 +140,7 @@ internal sealed class TrayHost : IDisposable
         {
             case TrayMenuCommand.Show:
             case TrayMenuCommand.Lock:
-                UiProcessLauncher.Activate();
+                UiProcessLauncher.ActivateMainWindow();
                 return;
 
             case TrayMenuCommand.Exit:
