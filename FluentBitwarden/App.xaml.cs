@@ -4,6 +4,7 @@ using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
@@ -11,7 +12,6 @@ using Windows.ApplicationModel.Activation;
 using FluentBitwarden.Infrastructure;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 
 namespace FluentBitwarden;
 
@@ -24,19 +24,18 @@ public partial class App : IXamlMetadataServiceProvider
 
     public DispatcherQueue DispatcherQueue { get; }
 
-    private IServiceProvider Services = new ServiceCollection()
-        .AddSingleton<MainWindow>()
-        .AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>())
-        .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
-
-        .AddViews()
-        .AddInfrastructureServices()
-        .BuildServiceProvider();
+    private readonly IServiceProvider _services = new ServiceCollection()
+            .AddSingleton<MainWindow>()
+            .AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>())
+            .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
+            .AddViews()
+            .AddInfrastructureServices()
+            .BuildServiceProvider();
 
     public object GetRequiredService(Type type)
-        => Services.GetRequiredService(type);
+        => _services.GetRequiredService(type);
 
-    public T GetRequiredService<T>() where T : notnull => Services.GetRequiredService<T>();
+    public T GetRequiredService<T>() where T : notnull => _services.GetRequiredService<T>();
 
     public App(AppActivationArguments initialActivation)
     {
@@ -52,7 +51,6 @@ public partial class App : IXamlMetadataServiceProvider
         };
 
         DispatcherQueue = DispatcherQueue.GetForCurrentThread();
-
         _initialActivation = initialActivation;
     }
 

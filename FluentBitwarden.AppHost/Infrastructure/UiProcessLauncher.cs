@@ -1,6 +1,6 @@
 namespace FluentBitwarden.AppHost.Infrastructure;
 
-internal static class AppProcessLauncher
+internal static class UiProcessLauncher
 {
     private const string UiExecutableName = "FluentBitwarden.Ui.exe";
     private const string UiProjectDirectoryName = "FluentBitwarden.Ui";

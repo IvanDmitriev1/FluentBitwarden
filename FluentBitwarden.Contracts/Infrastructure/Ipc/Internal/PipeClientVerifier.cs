@@ -12,7 +12,8 @@ internal static class PipeClientVerifier
     private static readonly string[] ExpectedExeNames =
     [
         "FluentBitwarden.ComServer.exe",
-        "FluentBitwarden.Ui.exe"
+        "FluentBitwarden.Ui.exe",
+        "FluentBitwarden.AppHost.exe"
     ];
 
     public static bool IsExpectedClient(NamedPipeServerStream pipe)

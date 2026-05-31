@@ -2,30 +2,36 @@ using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.AppState.Models;
+using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Models;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
+[Fody.ConfigureAwait(false)]
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
-    ISshUserActionPrompt userActionPrompt) : ISshKeyProvider
+    IUserDialogClient userDialogClient) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
     public IReadOnlyList<SshPublicIdentityResponce> ListIdentities()
     {
         if (!unlockedVault.IsOpen)
+        {
             return [];
+        }
 
-        return unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
+        var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
             .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
             .ToList();
+
+        return data;
     }
 
-    public async ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
+    public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
         if (!unlockedVault.IsOpen || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
@@ -33,11 +39,12 @@ internal sealed class SshKeyProvider(
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
         if (userVerificationPolicy == SensitiveActionPolicy.RequireUserAction)
         {
-            var userAction = await userActionPrompt.PromptAsync(
-                new SshUserActionRequestViewModel(
-                    KeyName: cipher.Name,
-                    KeyFingerprint: cipher.KeyFingerprint,
-                    IsForwarded: false));
+            var requestDialog = new SshUserActionRequest(
+                KeyName: cipher.Name,
+                KeyFingerprint: cipher.KeyFingerprint,
+                IsForwarded: false);
+
+            var userAction = await userDialogClient.ShowSshDialogAsync(requestDialog, token);
 
             if (userAction == UserActionDialogOutcome.Denied)
                 return SshSignatureResult.Failed;

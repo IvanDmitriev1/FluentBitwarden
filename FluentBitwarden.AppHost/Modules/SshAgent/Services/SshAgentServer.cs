@@ -13,7 +13,8 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : BackgroundService
 {
     private const string PipeName = "openssh-ssh-agent";
-    public const int MaxPacketLength = 512 * 1024;
+
+    public bool IsRunning => ExecuteTask is not null;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -25,8 +26,8 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
                 NamedPipeServerStream.MaxAllowedServerInstances,
                 PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
-                inBufferSize: 64 * 1024,
-                outBufferSize: 64 * 1024);
+                inBufferSize: 1 * 1024,
+                outBufferSize: 16 * 1024);
 
             try
             {
@@ -47,9 +48,7 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
 
     private async Task HandleClientAsync(Stream stream, CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested && 
-               SshAgentProtocolReader.TryReadLength(stream, out int length) && 
-               length < MaxPacketLength)
+        while (!ct.IsCancellationRequested && SshAgentProtocolReader.TryReadLength(stream, out int length))
         {
             using var bufferOwner = MemoryOwner<byte>.Allocate(length);
             await stream.ReadExactlyAsync(bufferOwner.Memory, ct);

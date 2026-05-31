@@ -9,7 +9,6 @@ using FluentBitwarden.AppHost.Modules.Accounts;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Providers;
 using FluentBitwarden.AppHost.Modules.SshAgent;
 using FluentBitwarden.AppHost.Modules.Vault;
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Modules.Passkey;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -43,10 +42,6 @@ internal static class Program
         builder.Services.AddHostedService<AppHostHostedService>();
 
         builder.Services.AddDatabaseServices();
-        builder.Services.AddApplicationInfrastructureServices();
-        builder.Services.AddIpcServer(IpcConstants.AppHostPipeName);
-        builder.Services.AddIpcRequestHandler<AppHostLifecycleClientHandler>();
-
         builder.Services.AddTransient<IAppSetupService, AppSetupService>();
         builder.Services.AddDatabaseServices();
         builder.Services.AddApplicationInfrastructureServices();

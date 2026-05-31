@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Contracts.Infrastructure.Shared;
+﻿using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Resources.Dialogs;

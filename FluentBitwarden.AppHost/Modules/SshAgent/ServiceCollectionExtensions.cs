@@ -10,7 +10,6 @@ internal static class ServiceCollectionExtensions
     {
         services.AddHostedService<SshAgentServer>();
         services.AddSingleton<ISshKeyProvider, SshKeyProvider>();
-        services.AddSingleton<ISshUserActionPrompt, TmpISshUserActionPrompt>();
 
         return services;
     }

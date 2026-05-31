@@ -7,20 +7,25 @@ namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Services;
 
 internal sealed class PipeIpcServer : BackgroundService
 {
-    private const int MaxConcurrentConnections = 2;
-
+    private readonly int _maxConCurrentConnections;
     private readonly string _pipeName;
     private readonly IReadOnlyDictionary<ushort, IIpcRequestHandlerInvoker> _invokers;
 
-    public PipeIpcServer(string pipeName, IEnumerable<IIpcRequestHandlerInvoker> invokers)
+    public PipeIpcServer(int maxConCurrentConnections, string pipeName, IEnumerable<IIpcRequestHandlerInvoker> invokers)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxConCurrentConnections, 1);
+
+        _maxConCurrentConnections = maxConCurrentConnections;
         _pipeName = pipeName;
         _invokers = invokers.ToDictionary(static i => i.MessageType);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var workers = new Task[MaxConcurrentConnections];
+        if (_maxConCurrentConnections == 1)
+            return ConnectionWorkerAsync(stoppingToken);
+
+        var workers = new Task[_maxConCurrentConnections];
 
         for (int i = 0; i < workers.Length; i++)
         {
@@ -66,7 +71,7 @@ internal sealed class PipeIpcServer : BackgroundService
     private NamedPipeServerStream CreatePipe() => new(
         _pipeName,
         PipeDirection.InOut,
-        maxNumberOfServerInstances: MaxConcurrentConnections,
+        maxNumberOfServerInstances: _maxConCurrentConnections,
         PipeTransmissionMode.Byte,
         PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
         inBufferSize: 4 * 1024,

@@ -30,6 +30,9 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IWindowsHelloUnlockClient, RemoteWindowsHelloUnlockClient>();
         services.AddSingleton<IVaultClient, RemoteVaultClient>();
 
+        services.AddIpcServer(IpcConstants.UiPipeName);
+        services.AddIpcRequestHandler<UserDialogRequestHandler>();
+
         return services;
     }
 }

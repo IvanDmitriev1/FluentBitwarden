@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Infrastructure.Shared;
+﻿namespace FluentBitwarden.Contracts.Infrastructure.UserDialog;
 
 public enum UserActionDialogOutcome
 {

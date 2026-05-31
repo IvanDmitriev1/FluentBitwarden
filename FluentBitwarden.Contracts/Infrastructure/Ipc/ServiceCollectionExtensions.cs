@@ -8,10 +8,13 @@ public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddIpcServer(string pipeName)
+        public IServiceCollection AddIpcServer(string pipeName, int maxConcurrentConnections = 1)
         {
             services.AddHostedService(sp =>
-                new PipeIpcServer(pipeName, sp.GetServices<IIpcRequestHandlerInvoker>()));
+                new PipeIpcServer(
+                    maxConcurrentConnections,
+                    pipeName,
+                    sp.GetServices<IIpcRequestHandlerInvoker>()));
 
             return services;
         }

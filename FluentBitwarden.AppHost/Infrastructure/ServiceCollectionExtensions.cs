@@ -1,5 +1,8 @@
+using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.Contracts.Infrastructure.Ipc;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Infrastructure;
@@ -16,6 +19,11 @@ internal static class ServiceCollectionExtensions
         });
 
         services.AddTransient<IAppSetupService, AppSetupService>();
+
+        services.AddIpcServer(IpcConstants.AppHostPipeName, 2);
+        services.AddIpcClient(IpcConstants.UiPipeName);
+        services.AddIpcRequestHandler<AppHostLifecycleClientHandler>();
+        services.AddSingleton<IUserDialogClient, UserDialogClient>();
 
         return services;
     }

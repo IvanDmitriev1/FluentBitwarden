@@ -6,6 +6,7 @@ using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
 using FluentBitwarden.Views.Vault.Models;
+using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
@@ -25,16 +26,23 @@ public sealed partial class ShellPage : Page
         TagByPage = pageByTag.ToDictionary(static pair => pair.Value, static pair => pair.Key);
     }
 
-    public ShellPage(IVaultClient vaultService, IMessenger messenger)
+    public ShellPage(
+        IVaultClient vaultService,
+        IMessenger messenger,
+        IEnumerable<IHostedService> hostedServices)
     {
         _vaultService = vaultService;
         _messenger = messenger;
+        _hostedServices = hostedServices;
         InitializeComponent();
         ContentFrame.Navigate(typeof(VaultPage));
+
+        Loaded += OnLoaded;
     }
 
     private readonly IVaultClient _vaultService;
     private readonly IMessenger _messenger;
+    private readonly IEnumerable<IHostedService> _hostedServices;
 
     private static readonly IReadOnlyDictionary<string, Type> PageByTag;
     private static readonly IReadOnlyDictionary<Type, string> TagByPage;
@@ -43,6 +51,27 @@ public sealed partial class ShellPage : Page
     private void PaneToggle()
     {
         Nav.IsPaneOpen = !Nav.IsPaneOpen;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoaded;
+        _ = StartHostedServicesAsync();
+    }
+
+    private async Task StartHostedServicesAsync()
+    {
+        try
+        {
+            foreach (var hostedService in _hostedServices)
+            {
+                await hostedService.StartAsync(CancellationToken.None);
+            }
+        }
+        catch (Exception exception)
+        {
+            UnhandledExceptionLogger.WriteException(exception);
+        }
     }
 
     private void Nav_OnItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
@@ -114,4 +143,6 @@ public sealed partial class ShellPage : Page
         else
             _messenger.Send(message);
     }
+
+
 }

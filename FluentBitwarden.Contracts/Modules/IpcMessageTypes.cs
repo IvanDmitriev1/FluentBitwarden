@@ -44,13 +44,6 @@ public static class IpcMessageTypes
 
     public static class Ui
     {
-        public const ushort ShowPasskeyOverlay = 400;
-        public const ushort ShowSshUserActionPrompt = 401;
-    }
-
-    public static class SshAgent
-    {
-        public const ushort GetAvailableKeys = 500;
-        public const ushort Sign = 501;
+        public const ushort ShowSshDialog = 400;
     }
 }
