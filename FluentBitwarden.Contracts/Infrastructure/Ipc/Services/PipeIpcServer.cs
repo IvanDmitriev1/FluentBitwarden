@@ -6,28 +6,35 @@ using System.IO.Pipes;
 namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Services;
 
 internal sealed class PipeIpcServer : BackgroundService
-{ 
+{
+    private const int MaxConcurrentConnections = 2;
+
+    private readonly string _pipeName;
+    private readonly IReadOnlyDictionary<ushort, IIpcRequestHandlerInvoker> _invokers;
+
     public PipeIpcServer(string pipeName, IEnumerable<IIpcRequestHandlerInvoker> invokers)
     {
         _pipeName = pipeName;
         _invokers = invokers.ToDictionary(static i => i.MessageType);
     }
 
-    private readonly string _pipeName;
-    private readonly IReadOnlyDictionary<ushort, IIpcRequestHandlerInvoker> _invokers;
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var workers = new Task[MaxConcurrentConnections];
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        for (int i = 0; i < workers.Length; i++)
+        {
+            workers[i] = ConnectionWorkerAsync(stoppingToken);
+        }
+
+        return Task.WhenAll(workers);
+    }
+
+    private async Task ConnectionWorkerAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await using var pipe = new NamedPipeServerStream(
-                _pipeName,
-                PipeDirection.InOut,
-                maxNumberOfServerInstances: 1,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
-                inBufferSize: 4 * 1024,
-                outBufferSize: 8 * 1024);
+            await using var pipe = CreatePipe();
 
             try
             {
@@ -35,19 +42,7 @@ internal sealed class PipeIpcServer : BackgroundService
                 await pipe.WaitForConnectionAsync(stoppingToken);
                 Debug.WriteLine("Named pipe client connected.");
 
-                if (!PipeClientVerifier.IsExpectedClient(pipe))
-                {
-                    Debug.WriteLine("Rejected unauthorized IPC pipe client.");
-                    continue;
-                }
-
-                var header = await RequestHeader.ReadAsync(pipe);
-                if (!_invokers.TryGetValue(header.MessageType, out var invoker))
-                    return;
-
-                await invoker.InvokeAsync(pipe, header.PayloadLength, stoppingToken);
-                await pipe.FlushAsync(stoppingToken);
-                //pipe.c();
+                await ProcessRequestAsync(pipe, stoppingToken);
             }
             catch (EndOfStreamException)
             {
@@ -68,6 +63,42 @@ internal sealed class PipeIpcServer : BackgroundService
         }
     }
 
-    private static bool IsClientDisconnect(IOException exception) =>
-        exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_BROKEN_PIPE);
+    private NamedPipeServerStream CreatePipe() => new(
+        _pipeName,
+        PipeDirection.InOut,
+        maxNumberOfServerInstances: MaxConcurrentConnections,
+        PipeTransmissionMode.Byte,
+        PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
+        inBufferSize: 4 * 1024,
+        outBufferSize: 8 * 1024);
+
+    private async Task ProcessRequestAsync(
+        NamedPipeServerStream pipe,
+        CancellationToken stoppingToken)
+    {
+        if (!PipeClientVerifier.IsExpectedClient(pipe))
+        {
+            Debug.WriteLine("Rejected unauthorized IPC pipe client.");
+            return;
+        }
+
+        var header = await RequestHeader.ReadAsync(pipe);
+
+        if (!_invokers.TryGetValue(header.MessageType, out var invoker))
+        {
+            Debug.WriteLine($"Rejected unknown IPC message type: {header.MessageType}.");
+            return;
+        }
+
+        await invoker.InvokeAsync(pipe, header.PayloadLength, stoppingToken);
+        await pipe.FlushAsync(stoppingToken);
+    }
+
+
+    private static bool IsClientDisconnect(IOException exception)
+    {
+        return exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_BROKEN_PIPE)
+               || exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_NO_DATA)
+               || exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_PIPE_NOT_CONNECTED);
+    }
 }

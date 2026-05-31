@@ -13,6 +13,8 @@ namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
 {
+    private readonly IAppHostLifetimeService _appHostLifetimeService;
+
     [field: MaybeNull]
     public static MainWindow Instance
     {
@@ -20,10 +22,14 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
         private set;
     }
 
-    public MainWindow(NavigationService navigationService)
+    public MainWindow(
+        NavigationService navigationService,
+        IAppHostLifetimeService appHostLifetimeService)
     {
+        _appHostLifetimeService = appHostLifetimeService;
         Instance = this;
         InitializeComponent();
+        Closed += OnClosed;
 
         TitlebarProperties.SetTargetTitleBar(AppTitleBar);
         navigationService.Initialize(RootFrame);
@@ -42,13 +48,9 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
         RootElement.RequestedTheme = themeMode;
     }
 
-    public void RequestExit()
-    {
-        App.Current.Exit();
-    }
-
     public void ShowWindow()
     {
+        IsShownInSwitchers = true;
         this.Show();
         this.Restore();
 
@@ -57,18 +59,15 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
             Activate();
     }
 
-    private void OnClosed(object sender, WindowEventArgs args)
+    private async void OnClosed(object sender, WindowEventArgs args)
     {
-        if (!SettingsStore.Instance.Get(AppSettingKeys.App.CloseToTrayKey))
-        {
-            RequestExit();
+        if (SettingsStore.Instance.Get(AppSettingKeys.App.CloseToTrayKey))
             return;
-        }
-
-        args.Handled = true;
 
         IsShownInSwitchers = false;
         this.Hide();
+
+        await _appHostLifetimeService.ShutdownAppHostAsync();
     }
 
     private void ReleaseWindowResources()

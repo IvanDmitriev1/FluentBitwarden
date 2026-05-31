@@ -22,6 +22,7 @@ internal static class ServiceCollectionExtensions
 
         services.AddSingleton<IContentDialogService, ContentDialogService>();
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
+        services.AddSingleton<IAppHostLifetimeService, AppHostLifetimeService>();
 
 
         services.AddIpcClient(IpcConstants.AppHostPipeName);

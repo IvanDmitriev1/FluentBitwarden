@@ -45,6 +45,7 @@ internal static class Program
         builder.Services.AddDatabaseServices();
         builder.Services.AddApplicationInfrastructureServices();
         builder.Services.AddIpcServer(IpcConstants.AppHostPipeName);
+        builder.Services.AddIpcRequestHandler<AppHostLifecycleClientHandler>();
 
         builder.Services.AddTransient<IAppSetupService, AppSetupService>();
         builder.Services.AddDatabaseServices();
