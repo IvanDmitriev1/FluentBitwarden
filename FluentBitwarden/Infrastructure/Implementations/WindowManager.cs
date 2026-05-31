@@ -1,7 +1,7 @@
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
-using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Shell.Main;
 using FluentBitwarden.Views.Shell.Overlay;
 using Microsoft.UI.Xaml;
 using WinUIEx;

@@ -1,6 +1,6 @@
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Views.Passkey;
-using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Shell.Main;
 using FluentBitwarden.Views.Shell.Overlay;
 using Microsoft.UI.Xaml;
 using WinRT.Interop;

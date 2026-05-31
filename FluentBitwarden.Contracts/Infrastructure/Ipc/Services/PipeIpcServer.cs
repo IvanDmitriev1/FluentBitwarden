@@ -49,17 +49,13 @@ internal sealed class PipeIpcServer : BackgroundService
 
                 await ProcessRequestAsync(pipe, stoppingToken);
             }
-            catch (EndOfStreamException)
-            {
-                Debug.WriteLine("Client disconnected before the full IPC message was read.");
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.WriteLine("IPC pipe server cancellation requested.");
-            }
-            catch (IOException ioException) when (IsClientDisconnect(ioException))
+            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
             {
                 Debug.WriteLine("IPC client disconnected before the server response was delivered.");
+            }
+            catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
+            {
+                //
             }
             catch (Exception e)
             {
@@ -97,13 +93,5 @@ internal sealed class PipeIpcServer : BackgroundService
 
         await invoker.InvokeAsync(pipe, header.PayloadLength, stoppingToken);
         await pipe.FlushAsync(stoppingToken);
-    }
-
-
-    private static bool IsClientDisconnect(IOException exception)
-    {
-        return exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_BROKEN_PIPE)
-               || exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_NO_DATA)
-               || exception.HResult == PInvoke.HRESULT_FROM_WIN32(WIN32_ERROR.ERROR_PIPE_NOT_CONNECTED);
     }
 }

@@ -1,12 +1,12 @@
-﻿using FluentBitwarden.Views.Settings;
-using FluentBitwarden.Views.Shell;
-using FluentBitwarden.Views.LogIn;
-using FluentBitwarden.Views.Unlock;
+using FluentBitwarden.Views.Settings;
+using FluentBitwarden.Views.Accounts.LogIn;
+using FluentBitwarden.Views.Accounts.Unlock;
 using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Views.Shell.Loading;
+using FluentBitwarden.Views.Shell.Main;
 using FluentBitwarden.Views.Shell.Offline;
+using FluentBitwarden.Views.Startup;
 
 namespace FluentBitwarden.Views;
 
@@ -16,10 +16,11 @@ internal static class ServiceCollectionExtensions
     {
         services.AddTransient<ShellPage>();
 
-        return services.AddView<LoadingPage, LoadingPageViewModel>()
+        return services
+            .AddView<LoadingPage, LoadingPageViewModel>()
+            .AddView<UnlockPage, UnlockPageViewModel>()
             .AddView<OfflinePage, OfflinePageViewModel>()
             .AddView<LogInFlowPage, LogInFlowPageViewModel>()
-            .AddView<UnlockPage, UnlockPageViewModel>()
             .AddView<SettingsPage, SettingsPageViewModel>()
             .AddView<VaultPage, VaultPageViewModel>();
     }

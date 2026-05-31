@@ -34,13 +34,16 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
                 await server.WaitForConnectionAsync(stoppingToken);
                 await HandleClientAsync(server, stoppingToken);
             }
+            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
+            {
+                Debug.WriteLine("IPC client disconnected before the server response was delivered.");
+            }
             catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
             {
                 //
             }
             catch (Exception e)
             {
-                await SshAgentProtocolWriter.WriteFailureAsync(server, stoppingToken);
                 UnhandledExceptionLogger.WriteException(e);
             }
         }

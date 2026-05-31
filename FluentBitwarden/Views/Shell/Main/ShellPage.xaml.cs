@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using FluentBitwarden.Infrastructure.Abstractions;
 
-namespace FluentBitwarden.Views.Shell;
+namespace FluentBitwarden.Views.Shell.Main;
 
 public sealed partial class ShellPage : Page
 {

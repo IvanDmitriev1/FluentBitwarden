@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Views.Shell.Templates;
+namespace FluentBitwarden.Views.Shell.Main.Templates;
 
 public partial class CipherAutosuggestItemTemplates : ResourceDictionary
 {

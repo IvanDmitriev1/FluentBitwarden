@@ -6,7 +6,12 @@ namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
 internal sealed class UserDialogClient(IIpcClient ipcClient) : IUserDialogClient
 {
-    private static readonly TimeSpan UiStartupTimeout = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan UiStartupTimeout = TimeSpan.FromSeconds(30);
+
+    public ValueTask<UserActionDialogOutcome> ShowUnlockDialogAsync(
+        UnlockVaultUserActionRequest request,
+        CancellationToken cancellationToken = default)
+        => SendRequest(request, cancellationToken);
 
     public ValueTask<UserActionDialogOutcome> ShowSshDialogAsync(
         SshUserActionRequest request,

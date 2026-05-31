@@ -5,7 +5,7 @@ using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Views;
-using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Shell.Main;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;

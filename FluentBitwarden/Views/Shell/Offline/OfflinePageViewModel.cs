@@ -2,7 +2,7 @@ using Windows.Networking.Connectivity;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.UI.Controls.Lifecycle;
-using FluentBitwarden.Views.Shell.Loading;
+using FluentBitwarden.Views.Startup;
 using FluentBitwarden.Views.Shell.Offline.Models;
 
 namespace FluentBitwarden.Views.Shell.Offline;

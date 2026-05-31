@@ -6,25 +6,22 @@ using WinUIEx;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Views.Shell.Loading;
+using FluentBitwarden.Views.Startup;
 
-namespace FluentBitwarden.Views.Shell;
+namespace FluentBitwarden.Views.Shell.Main;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx
 {
     private readonly IAppHostLifetimeService _appHostLifetimeService;
-    private readonly IUiHostedServiceStarter _hostedServiceStarter;
 
     public MainWindow(
         NavigationService navigationService,
-        IAppHostLifetimeService appHostLifetimeService,
-        IUiHostedServiceStarter hostedServiceStarter)
+        IAppHostLifetimeService appHostLifetimeService)
     {
         _appHostLifetimeService = appHostLifetimeService;
-        _hostedServiceStarter = hostedServiceStarter;
+
         InitializeComponent();
         Closed += OnClosed;
-        RootElement.Loaded += OnLoaded;
 
         TitlebarProperties.SetTargetTitleBar(AppTitleBar);
         navigationService.Initialize(RootFrame);
@@ -52,12 +49,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         this.Hide();
 
         await _appHostLifetimeService.ShutdownAppHostAsync();
-    }
-
-    private async void OnLoaded(object sender, RoutedEventArgs args)
-    {
-        RootElement.Loaded -= OnLoaded;
-        await _hostedServiceStarter.EnsureStartedAsync();
     }
 
     private void ReleaseWindowResources()

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
-    x:Class="FluentBitwarden.Views.Shell.Templates.CipherAutosuggestItemTemplates"
+    x:Class="FluentBitwarden.Views.Shell.Main.Templates.CipherAutosuggestItemTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.UI.Controls"
