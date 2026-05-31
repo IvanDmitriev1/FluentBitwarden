@@ -1,9 +1,7 @@
-using MemoryPack;
-
-namespace FluentBitwarden.Modules.Passkey.Models;
+namespace FluentBitwarden.Contracts.Modules.Passkey;
 
 [MemoryPackable]
-internal sealed partial class PasskeyAssertionResponse
+public sealed partial class PasskeyAssertionResponse
 {
     public required byte[] CredentialId { get; init; }
     public required byte[] UserId { get; init; }

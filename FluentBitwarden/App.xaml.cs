@@ -1,16 +1,20 @@
 using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Application.Activation;
+using FluentBitwarden.Infrastructure;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
+using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Views;
 using FluentBitwarden.Views.Shell;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
-using Windows.ApplicationModel.Activation;
-using FluentBitwarden.Infrastructure;
+using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Views.Shell.Overlay;
 using WinUI.DependencyInjection;
+using WinUIEx;
+using AppWindowManager = FluentBitwarden.Infrastructure.Implementations.WindowManager;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 namespace FluentBitwarden;
@@ -25,8 +29,10 @@ public partial class App : IXamlMetadataServiceProvider
     public DispatcherQueue DispatcherQueue { get; }
 
     private readonly IServiceProvider _services = new ServiceCollection()
-            .AddSingleton<MainWindow>()
-            .AddSingleton<IThemeService>(static sp => sp.GetRequiredService<MainWindow>())
+            .AddSingleton<AppWindowManager>()
+            .AddSingleton<IWindowManager>(static sp => sp.GetRequiredService<AppWindowManager>())
+            .AddSingleton<IThemeService>(static sp => sp.GetRequiredService<AppWindowManager>())
+            .AddSingleton<IUiHostedServiceStarter, UiHostedServiceStarter>()
             .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
             .AddViews()
             .AddInfrastructureServices()
@@ -54,26 +60,39 @@ public partial class App : IXamlMetadataServiceProvider
         _initialActivation = initialActivation;
     }
 
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
-    {
-        _ = GetRequiredService<MainWindow>();
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) =>
         HandleActivation(_initialActivation);
-    }
 
     public void HandleActivation(AppActivationArguments args)
     {
-        var lunchArgs = (ILaunchActivatedEventArgs)args.Data;
-        var parameters = lunchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1);
-        var firstParameter = parameters.FirstOrDefault();
+        var command = UiActivationCommandParser.From(args);
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, () => HandleActivation(command));
+    }
 
-        switch (firstParameter)
+    private void HandleActivation(UiActivationCommand command)
+    {
+        switch (command)
         {
-            case "--exit":
-                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, Exit);
+            case UiActivationCommand.Exit:
+                Exit();
+                break;
+
+            case UiActivationCommand.ShowOverlay:
+                ShowWindow<OverlayWindow>();
+                break;
+
+            case UiActivationCommand.ShowMainWindow:
+                ShowWindow<MainWindow>();
                 break;
             default:
-                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.High, MainWindow.Instance.ShowWindow);
-                break;
+                throw new ArgumentOutOfRangeException(nameof(command), command, null);
         }
+    }
+
+    private void ShowWindow<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TWindow>() where TWindow : WindowEx
+    {
+        var windowManager = GetRequiredService<IWindowManager>();
+        var window = ActivatorUtilities.CreateInstance<TWindow>(_services);
+        windowManager.SetWindow(window);
     }
 }

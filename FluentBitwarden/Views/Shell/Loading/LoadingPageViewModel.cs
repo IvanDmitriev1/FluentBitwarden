@@ -1,15 +1,14 @@
 using Windows.Networking.Connectivity;
-using FluentBitwarden.UI.Controls.Lifecycle;
-using FluentBitwarden.Views.Offline;
-using FluentBitwarden.Views.Offline.Models;
-using FluentBitwarden.Views.Shell;
-using FluentBitwarden.Views.LogIn;
-using FluentBitwarden.Views.Unlock;
-using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Views.Passkey;
 using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Infrastructure.Abstractions;
+using FluentBitwarden.UI.Controls.Lifecycle;
+using FluentBitwarden.Views.LogIn;
+using FluentBitwarden.Views.Shell.Offline;
+using FluentBitwarden.Views.Shell.Offline.Models;
+using FluentBitwarden.Views.Unlock;
+using FluentBitwarden.Views.Unlock.Models;
 
-namespace FluentBitwarden.Views.Loading;
+namespace FluentBitwarden.Views.Shell.Loading;
 
 public partial class LoadingPageViewModel(
     INavigationService navigationService,
@@ -33,7 +32,7 @@ public partial class LoadingPageViewModel(
             return;
         }
 
-        var unlockedAccount = await accountsClient.GetUnlockedAccount();
+        var unlockedAccount = await accountsClient.GetUnlockedAccount(cancellationToken);
         if (unlockedAccount is not null)
         {
             navigationService.NavigateTo<ShellPage>();

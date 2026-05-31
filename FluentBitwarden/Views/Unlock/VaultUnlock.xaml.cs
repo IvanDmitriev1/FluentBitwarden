@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Infrastructure.Abstractions;
+using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.UI.Controls;
 using Microsoft.UI.Xaml;
 using System.Windows.Input;
-using FluentBitwarden.Views.Shell;
-using WinUIEx;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
@@ -24,6 +24,7 @@ public sealed partial class VaultUnlock : UserControl
 
         _accountsClient = App.Current.GetRequiredService<IAccountsClient>();
         _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<IWindowsHelloUnlockClient>();
+        _windowManager = App.Current.GetRequiredService<IWindowManager>();
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -31,6 +32,7 @@ public sealed partial class VaultUnlock : UserControl
 
     private readonly IAccountsClient _accountsClient;
     private readonly IWindowsHelloUnlockClient _windowsHelloAccountUnlockMethod;
+    private readonly IWindowManager _windowManager;
 
     public string Password => PasswordBox.Password;
 
@@ -82,7 +84,7 @@ public sealed partial class VaultUnlock : UserControl
     private Task UnlockWithWindowsHello()
     {
         ArgumentNullException.ThrowIfNull(Account);
-        return OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account, MainWindow.Instance.GetWindowHandle()));
+        return OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account, _windowManager.GetActiveWindowHandle()));
     }
 
     private async Task OnUnlockCore(AccountUnlockRequest request)

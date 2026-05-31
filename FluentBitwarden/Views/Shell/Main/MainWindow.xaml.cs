@@ -1,62 +1,46 @@
 using FluentBitwarden.Resources.AttachedProperties;
-using FluentBitwarden.Views.Loading;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
-using System.Diagnostics.CodeAnalysis;
 using WinUIEx;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Views.Shell.Loading;
 
 namespace FluentBitwarden.Views.Shell;
 
-public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
+public sealed partial class MainWindow : WinUIEx.WindowEx
 {
     private readonly IAppHostLifetimeService _appHostLifetimeService;
-
-    [field: MaybeNull]
-    public static MainWindow Instance
-    {
-        get => field ?? throw new InvalidOperationException("MainWindow instance is not initialized");
-        private set;
-    }
+    private readonly IUiHostedServiceStarter _hostedServiceStarter;
 
     public MainWindow(
         NavigationService navigationService,
-        IAppHostLifetimeService appHostLifetimeService)
+        IAppHostLifetimeService appHostLifetimeService,
+        IUiHostedServiceStarter hostedServiceStarter)
     {
         _appHostLifetimeService = appHostLifetimeService;
-        Instance = this;
+        _hostedServiceStarter = hostedServiceStarter;
         InitializeComponent();
         Closed += OnClosed;
+        RootElement.Loaded += OnLoaded;
 
         TitlebarProperties.SetTargetTitleBar(AppTitleBar);
         navigationService.Initialize(RootFrame);
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-        Apply(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
+        ApplyTheme(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
         RootFrame.Navigate(typeof(LoadingPage));
     }
 
     public bool IsHidden => !AppWindow.IsVisible;
     public XamlRoot XamlRoot => RootElement.XamlRoot;
 
-    public void Apply(ElementTheme themeMode)
+    public void ApplyTheme(ElementTheme themeMode)
     {
         RootElement.RequestedTheme = themeMode;
-    }
-
-    public void ShowWindow()
-    {
-        IsShownInSwitchers = true;
-        this.Show();
-        this.Restore();
-
-        bool focused = this.SetForegroundWindow();
-        if (!focused)
-            Activate();
     }
 
     private async void OnClosed(object sender, WindowEventArgs args)
@@ -68,6 +52,12 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeService
         this.Hide();
 
         await _appHostLifetimeService.ShutdownAppHostAsync();
+    }
+
+    private async void OnLoaded(object sender, RoutedEventArgs args)
+    {
+        RootElement.Loaded -= OnLoaded;
+        await _hostedServiceStarter.EnsureStartedAsync();
     }
 
     private void ReleaseWindowResources()

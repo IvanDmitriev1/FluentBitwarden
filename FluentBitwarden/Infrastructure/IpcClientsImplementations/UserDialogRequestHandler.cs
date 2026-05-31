@@ -2,10 +2,12 @@ using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
+using FluentBitwarden.Views.Shell.Overlay;
 
 namespace FluentBitwarden.Infrastructure.IpcClientsImplementations;
 
-internal sealed class UserDialogRequestHandler(IContentDialogService contentDialogService)
+internal sealed class UserDialogRequestHandler(
+    IContentDialogService contentDialogService)
     : IUserDialogClient, IIpcRequestsHandler
 {
     private static readonly ContentDialogOptions SshDialogOptions = new(
@@ -19,10 +21,8 @@ internal sealed class UserDialogRequestHandler(IContentDialogService contentDial
         SshUserActionRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await contentDialogService.ShowUserActionAsync(
+        return await contentDialogService.ShowUserActionAsync(
             request,
             SshDialogOptions);
-
-        return result;
     }
 }

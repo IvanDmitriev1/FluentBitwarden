@@ -2,9 +2,9 @@ using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Views.Loading;
 using FluentBitwarden.Views.LogIn.Models;
 using FluentBitwarden.Views.LogIn.States;
+using FluentBitwarden.Views.Shell.Loading;
 
 namespace FluentBitwarden.Views.LogIn;
 
@@ -12,14 +12,17 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
 {
     public LogInFlowPageViewModel(
         IAccountsClient accountsClient,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IWindowManager windowManager)
     {
         _navigationService = navigationService;
+        _windowManager = windowManager;
         AccountsClient = accountsClient;
-        CurrentStep = new LogInEmailStepViewModel(this);
+        CurrentStep = new LogInEmailStepViewModel(this, _windowManager);
     }
 
     private readonly INavigationService _navigationService;
+    private readonly IWindowManager _windowManager;
 
     internal IAccountsClient AccountsClient { get; }
     internal LogInFlowContext Context { get; } = new();
@@ -33,7 +36,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
 
     internal void ShowEmailStep()
     {
-        CurrentStep = new LogInEmailStepViewModel(this);
+        CurrentStep = new LogInEmailStepViewModel(this, _windowManager);
     }
 
     internal void ShowPasswordStep()

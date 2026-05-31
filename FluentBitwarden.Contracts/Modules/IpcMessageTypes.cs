@@ -10,8 +10,7 @@ public static class IpcMessageTypes
 
     public static class Passkey
     {
-        // Keep this stable if the native COM server already uses message type 2.
-        public const ushort GetAssertion = 2;
+        public const ushort GetAssertion = 50;
     }
 
     public static class Vault
@@ -45,5 +44,6 @@ public static class IpcMessageTypes
     public static class Ui
     {
         public const ushort ShowSshDialog = 400;
+        public const ushort ShowUnlockDialog = 401;
     }
 }

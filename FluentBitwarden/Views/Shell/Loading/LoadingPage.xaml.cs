@@ -1,6 +1,6 @@
 using FluentBitwarden.UI.Controls.Lifecycle;
 
-namespace FluentBitwarden.Views.Loading;
+namespace FluentBitwarden.Views.Shell.Loading;
 
 public sealed partial class LoadingPage : LifecyclePage
 {

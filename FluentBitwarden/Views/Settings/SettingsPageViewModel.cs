@@ -17,7 +17,8 @@ namespace FluentBitwarden.Views.Settings;
 
 public sealed partial class SettingsPageViewModel(
     IThemeService themeService,
-    IWindowsHelloUnlockClient windowsHelloUnlockClient)
+    IWindowsHelloUnlockClient windowsHelloUnlockClient,
+    IWindowManager windowManager)
     : ObservableObject, IPageLifecycleAware
 {
     public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(themeService.Apply);
@@ -36,7 +37,7 @@ public sealed partial class SettingsPageViewModel(
     public SettingValue<SensitiveActionPolicy> PasskeyUserVerificationPolicy { get; } = AppSettingKeys.Passkeys.UserVerificationPolicyKey.CreateSettingValue();
     public SettingValue<SensitiveActionPolicy> SshUserVerificationPolicy { get; } = AppSettingKeys.SshAgent.UserVerificationPolicyKey.CreateSettingValue();
 
-    public WindowsHelloSettingValue WindowsHello { get; } = new(windowsHelloUnlockClient);
+    public WindowsHelloSettingValue WindowsHello { get; } = new(windowsHelloUnlockClient, windowManager);
     public PasskeyPluginSettingValue PasskeyPlugin { get; } = new();
 
     public string AppVersion { get; } = ResolveAppVersion();

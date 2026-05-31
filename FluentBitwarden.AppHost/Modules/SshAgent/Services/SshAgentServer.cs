@@ -70,7 +70,14 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
 
     private async Task HandleRequestIdentitiesAsync(Stream stream, CancellationToken ct)
     {
-        var identities = sshKeyProvider.ListIdentities();
+        var identityQuery = await sshKeyProvider.ListIdentitiesAsync(ct);
+        if (identityQuery.IsDenied)
+        {
+            await SshAgentProtocolWriter.WriteFailureAsync(stream, ct);
+            return;
+        }
+
+        var identities = identityQuery.Identities;
         int identitiesLength = identities.Sum(static i =>
             4 + i.PublicKey.Length +
             4 + Encoding.UTF8.GetByteCount(i.Comment));

@@ -1,7 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Security.Cryptography;
 
-namespace FluentBitwarden.Modules.Passkey.Internal;
+namespace FluentBitwarden.AppHost.Modules.Passkey;
 
 internal static class WebAuthnAssertion
 {

@@ -1,16 +1,16 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
+using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Abstractions.Dialog;
+using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.Resources.Dialogs;
-using FluentBitwarden.Views.Shell;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using WinUIEx;
 
 namespace FluentBitwarden.Infrastructure.Implementations;
 
-internal sealed class ContentDialogService : IContentDialogService
+internal sealed class ContentDialogService(IWindowManager windowManager) : IContentDialogService
 {
     public Task<UserActionDialogOutcome> ShowUserActionAsync(object viewModel, ContentDialogOptions options) =>
         App.Current.DispatcherQueue.EnqueueAsync(async () =>
@@ -20,20 +20,14 @@ internal sealed class ContentDialogService : IContentDialogService
 
             var dialog = new UserActionContentDialog(viewModel, template)
             {
-                XamlRoot = MainWindow.Instance.XamlRoot,
                 Title = options.Title,
                 PrimaryButtonText = options.PrimaryButtonText,
                 SecondaryButtonText = options.SecondaryButtonText,
                 DefaultButton = options.DefaultButton,
             };
 
-            bool wasHidden = MainWindow.Instance.IsHidden;
-
-            MainWindow.Instance.ShowWindow();
+            dialog.XamlRoot = windowManager.GetActiveXamlRoot();
             var result = await dialog.ShowAsync();
-
-            if (wasHidden)
-                MainWindow.Instance.Hide();
 
             return result;
         }, DispatcherQueuePriority.High);

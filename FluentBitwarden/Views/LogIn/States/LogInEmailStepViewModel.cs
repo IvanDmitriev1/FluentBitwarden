@@ -6,16 +6,19 @@ using FluentBitwarden.Views.LogIn.ValidationAttributes;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
-using FluentBitwarden.Views.Shell;
-using WinUIEx;
+using FluentBitwarden.Infrastructure.Abstractions;
+using FluentBitwarden.Infrastructure.Extensions;
 
 namespace FluentBitwarden.Views.LogIn.States;
 
 internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
 {
-    public LogInEmailStepViewModel(LogInFlowPageViewModel flow)
+    public LogInEmailStepViewModel(
+        LogInFlowPageViewModel flow,
+        IWindowManager windowManager)
     {
         _flow = flow;
+        _windowManager = windowManager;
 
         Environments =
         [
@@ -28,6 +31,7 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
     }
 
     private readonly LogInFlowPageViewModel _flow;
+    private readonly IWindowManager _windowManager;
 
     public LogInEnvironmentOption[] Environments { get; }
 
@@ -101,7 +105,7 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
         _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
 
         var outcome = await _flow.AccountsClient.LoginAsync(
-            new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext, MainWindow.Instance.GetWindowHandle()), CancellationToken.None);
+            new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext, _windowManager.GetActiveWindowHandle()), CancellationToken.None);
 
         switch (outcome)
         {

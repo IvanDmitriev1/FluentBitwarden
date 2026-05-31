@@ -1,6 +1,6 @@
 using FluentBitwarden.UI.Controls.Lifecycle;
 
-namespace FluentBitwarden.Views.Offline;
+namespace FluentBitwarden.Views.Shell.Offline;
 
 public sealed partial class OfflinePage : LifecyclePage
 {

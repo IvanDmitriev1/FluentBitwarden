@@ -8,18 +8,26 @@ internal sealed class UserDialogClient(IIpcClient ipcClient) : IUserDialogClient
 {
     private static readonly TimeSpan UiStartupTimeout = TimeSpan.FromMinutes(1);
 
-    public async ValueTask<UserActionDialogOutcome> ShowSshDialogAsync(
+    public ValueTask<UserActionDialogOutcome> ShowSshDialogAsync(
         SshUserActionRequest request,
         CancellationToken cancellationToken = default)
+        => SendRequest(request, cancellationToken);
+
+    private async ValueTask<UserActionDialogOutcome> SendRequest<TRequest>(TRequest request, CancellationToken cancellationToken) 
+        where TRequest : IIpcRequestMessage
     {
-        UiProcessLauncher.Activate();
+        bool uiProcessRunning = UiProcessLauncher.IsRunning();
+        if (!uiProcessRunning)
+        {
+            UiProcessLauncher.ActivateOverlay();
+        }
 
         using var timeOutTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeOutTokenSource.CancelAfter(UiStartupTimeout);
 
         try
         {
-            return await ipcClient.SendAsync<SshUserActionRequest, UserActionDialogOutcome>(
+            return await ipcClient.SendAsync<TRequest, UserActionDialogOutcome>(
                 request,
                 timeOutTokenSource.Token);
         }
@@ -31,10 +39,6 @@ internal sealed class UserDialogClient(IIpcClient ipcClient) : IUserDialogClient
         {
             Debug.WriteLine($"UI dialog IPC failed: {exception}");
             return UserActionDialogOutcome.Denied;
-        }
-        finally
-        {
-            UiProcessLauncher.Exit();
         }
     }
 }

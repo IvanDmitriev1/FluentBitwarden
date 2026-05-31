@@ -17,18 +17,20 @@ internal sealed class SshKeyProvider(
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
-    public IReadOnlyList<SshPublicIdentityResponce> ListIdentities()
+    public async Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {
         if (!unlockedVault.IsOpen)
         {
-            return [];
+            //TODO
+            //We should open the app and wait then ui server sends unlocked message or do something else
+            //But we don't need to resieve the event the ui because we can create account unlocked event. But there is problem with concurrency because we are running >1 Named pipe server
         }
 
         var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
             .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
             .ToList();
 
-        return data;
+        return SshIdentityQueryResult.Success(data);
     }
 
     public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)

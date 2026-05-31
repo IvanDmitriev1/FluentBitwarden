@@ -10,6 +10,15 @@ public static class WindowExtensions
     private const nuint SubclassId = 0x1234_5678;
     private const uint WM_NCLBUTTONDBLCLK = 0x00A3;
 
+    public static void ShowAndActivate(this WindowEx window)
+    {
+        window.Show();
+        window.Restore();
+
+        if (!window.SetForegroundWindow())
+            window.Activate();
+    }
+
     public static unsafe void PreventMaximizeOnTitleBarDoubleClick(this Window window)
     {
         var hwnd = new HWND(window.GetWindowHandle());

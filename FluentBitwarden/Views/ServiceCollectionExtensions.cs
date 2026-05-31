@@ -1,12 +1,12 @@
-﻿using FluentBitwarden.Views.Loading;
-using FluentBitwarden.Views.Offline;
-using FluentBitwarden.Views.Settings;
+﻿using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.LogIn;
 using FluentBitwarden.Views.Unlock;
 using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Views.Shell.Loading;
+using FluentBitwarden.Views.Shell.Offline;
 
 namespace FluentBitwarden.Views;
 

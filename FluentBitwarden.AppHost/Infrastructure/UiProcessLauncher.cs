@@ -11,8 +11,17 @@ internal static class UiProcessLauncher
     public static void Activate()
         => StartProcess(string.Empty);
 
+    public static void ActivateOverlay()
+        => StartProcess("--overlay");
+
     public static void Exit()
         => StartProcess("--exit");
+
+    public static bool IsRunning()
+    {
+        var processes = Process.GetProcessesByName("FluentBitwarden.Ui");
+        return processes.Length > 0;
+    }
 
     private static void StartProcess(string arguments)
     {

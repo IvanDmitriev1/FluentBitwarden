@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Views.Offline.Models;
+namespace FluentBitwarden.Views.Shell.Offline.Models;
 
 public enum OfflinePageReason
 {

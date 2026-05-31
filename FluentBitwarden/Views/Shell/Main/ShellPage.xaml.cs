@@ -6,10 +6,10 @@ using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
 using FluentBitwarden.Views.Vault.Models;
-using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using FluentBitwarden.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Views.Shell;
 
@@ -29,11 +29,11 @@ public sealed partial class ShellPage : Page
     public ShellPage(
         IVaultClient vaultService,
         IMessenger messenger,
-        IEnumerable<IHostedService> hostedServices)
+        IUiHostedServiceStarter hostedServiceStarter)
     {
         _vaultService = vaultService;
         _messenger = messenger;
-        _hostedServices = hostedServices;
+        _hostedServiceStarter = hostedServiceStarter;
         InitializeComponent();
         ContentFrame.Navigate(typeof(VaultPage));
 
@@ -42,7 +42,7 @@ public sealed partial class ShellPage : Page
 
     private readonly IVaultClient _vaultService;
     private readonly IMessenger _messenger;
-    private readonly IEnumerable<IHostedService> _hostedServices;
+    private readonly IUiHostedServiceStarter _hostedServiceStarter;
 
     private static readonly IReadOnlyDictionary<string, Type> PageByTag;
     private static readonly IReadOnlyDictionary<Type, string> TagByPage;
@@ -56,22 +56,7 @@ public sealed partial class ShellPage : Page
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoaded;
-        _ = StartHostedServicesAsync();
-    }
-
-    private async Task StartHostedServicesAsync()
-    {
-        try
-        {
-            foreach (var hostedService in _hostedServices)
-            {
-                await hostedService.StartAsync(CancellationToken.None);
-            }
-        }
-        catch (Exception exception)
-        {
-            UnhandledExceptionLogger.WriteException(exception);
-        }
+        _ = _hostedServiceStarter.EnsureStartedAsync();
     }
 
     private void Nav_OnItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)

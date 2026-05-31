@@ -6,13 +6,14 @@ namespace FluentBitwarden;
 
 public static class Program
 {
+    private const string KeyInstance = "FluentBitwardenUiSingleInstance";
     private static Microsoft.Win32.SafeHandles.SafeFileHandle? _redirectEventHandle;
 
     [STAThread]
     static int Main()
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
-        AppInstance keyInstance = AppInstance.FindOrRegisterForKey("FluentBitwardenUiSingleInstance");
+        AppInstance keyInstance = AppInstance.FindOrRegisterForKey(KeyInstance);
         var activationEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
 
         if (!keyInstance.IsCurrent)

@@ -1,14 +1,14 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.UI.Controls.Lifecycle;
-using FluentBitwarden.Views.Offline;
-using FluentBitwarden.Views.Offline.Models;
 using FluentBitwarden.Views.Shell;
 using System.Diagnostics.CodeAnalysis;
 using Windows.Networking.Connectivity;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
-using FluentBitwarden.Views.Passkey;
+using FluentBitwarden.Views.Shell.Offline;
+using FluentBitwarden.Views.Shell.Offline.Models;
+using FluentBitwarden.Views.Unlock.Models;
 
 namespace FluentBitwarden.Views.Unlock;
 
