@@ -4,10 +4,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Windows.Storage;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Infrastructure;
 using FluentBitwarden.Infrastructure.Abstractions;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Services;
+namespace FluentBitwarden.Infrastructure.Implementations;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISiteIconCache
@@ -52,7 +51,11 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
         }
         catch (Exception e) when (e is TaskCanceledException or OperationCanceledException)
         {
-            Debug.WriteLine($"Site icon cache preload was canceled: {e.Message}");
+            //
+        }
+        catch (Exception e)
+        {
+            UnhandledExceptionLogger.WriteException(e);
         }
     }
 

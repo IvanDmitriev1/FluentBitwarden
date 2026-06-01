@@ -1,4 +1,3 @@
-using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;

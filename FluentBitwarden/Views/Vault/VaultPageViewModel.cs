@@ -1,19 +1,22 @@
 using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Infrastructure.Extensions;
 using FluentBitwarden.UI.Controls.Lifecycle;
 using FluentBitwarden.Views.Vault.Models;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Windows.Networking.Connectivity;
-using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Infrastructure.Abstractions;
 
 namespace FluentBitwarden.Views.Vault;
 
 public sealed partial class VaultPageViewModel(
     IMessenger messenger,
-    IVaultClient vaultClient) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
+    IVaultClient vaultClient,
+    ISiteIconCache siteIconCache) : ObservableRecipient(messenger), IPageLifecycleAware, IPageLifecycleRecipientAware<ShowVaultCipherMessage>
 {
     [ObservableProperty]
     public partial VaultCipher[] FilteredCiphers { get; private set; } = [];
@@ -86,22 +89,21 @@ public sealed partial class VaultPageViewModel(
         if (result == VaultSyncResult.Synced)
         {
             await RefreshCollections();
-            return;
         }
 
         return;
-
         async Task RefreshCollections()
         {
             var selectedCipherId = SelectedCipher?.Id;
 
             await QueryCiphersAsync();
-
             Folders.ReplaceWith(await vaultClient.GetFoldersAsync(cancellationToken));
 
             SelectedCipher = selectedCipherId is null
                 ? null
                 : FilteredCiphers.FirstOrDefault(cipher => cipher.Id == selectedCipherId);
+
+            _ = PreloadSiteIconsAsync();
         }
     }
 
@@ -118,4 +120,17 @@ public sealed partial class VaultPageViewModel(
         FilteredCiphers = ciphers;
     }
 
+    private Task PreloadSiteIconsAsync()
+    {
+        var urls = FilteredCiphers
+            .OfType<LoginVaultCipher>()
+            .Select(static c => c.Uris.FirstOrDefault())
+            .Where(static s => !string.IsNullOrWhiteSpace(s))
+            .Select(static s => Uri.TryCreate(s, UriKind.Absolute, out var uri) ? uri : null)
+            .Where(static uri => uri is not null)
+            .Cast<Uri>()
+            .ToList();
+
+        return siteIconCache.PreloadAsync(urls);
+    }
 }
