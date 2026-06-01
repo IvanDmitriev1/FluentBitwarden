@@ -9,12 +9,6 @@
     Title="FluentBitwarden"
     Width="560"
     Height="460"
-    IsAlwaysOnTop="True"
-    IsMaximizable="False"
-    IsMinimizable="False"
-    IsResizable="False"
-    IsShownInSwitchers="False"
-    IsTitleBarVisible="False"
     mc:Ignorable="d">
 
     <winex:WindowEx.SystemBackdrop>
@@ -31,14 +25,15 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <Grid
+            x:Name="DragArea"
+            Grid.Row="0"
+            Background="Transparent"
+            Canvas.ZIndex="1000" />
+
         <Frame
             x:Name="Frame"
             Grid.Row="0"
             Grid.RowSpan="2" />
-
-        <Grid
-            x:Name="DragArea"
-            Grid.Row="0"
-            Background="Transparent" />
     </Grid>
 </winex:WindowEx>

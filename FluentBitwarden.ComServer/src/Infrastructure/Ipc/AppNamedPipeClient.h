@@ -1,6 +1,6 @@
 #pragma once
 #include <pch.h>
-#include "IpcProtocol.h"
+#include "Infrastructure/Ipc/IpcProtocol.h"
 
 namespace FluentBitwarden::ComServer::Ipc
 {

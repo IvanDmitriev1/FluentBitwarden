@@ -3,7 +3,6 @@ using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.Abstractions;
-using FluentBitwarden.Infrastructure.Abstractions.Dialog;
 using FluentBitwarden.Infrastructure.Implementations;
 using FluentBitwarden.Infrastructure.IpcClientsImplementations;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +19,6 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(static sp => sp.GetRequiredService<NavigationService>());
 
-        services.AddSingleton<IContentDialogService, ContentDialogService>();
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
         services.AddSingleton<IAppHostLifetimeService, AppHostLifetimeService>();
 

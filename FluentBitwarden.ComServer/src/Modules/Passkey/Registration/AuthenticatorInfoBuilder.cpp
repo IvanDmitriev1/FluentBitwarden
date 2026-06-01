@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "AuthenticatorInfoBuilder.h"
-#include "Cbor/CborWriter.h"
+#include "Modules/Passkey/Registration/AuthenticatorInfoBuilder.h"
+#include "Infrastructure/Cbor/CborWriter.h"
 
 namespace FluentBitwarden::ComServer::PasskeyPlugin::Registration
 {

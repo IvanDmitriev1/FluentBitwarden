@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "HashingFunctions.h"
+#include "Infrastructure/Cryptography/HashingFunctions.h"
 
 #include <bcrypt.h>
 

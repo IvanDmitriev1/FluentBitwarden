@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "PipeWin32.h"
+#include "Infrastructure/Ipc/PipeWin32.h"
 
 namespace FluentBitwarden::ComServer::Ipc::PipeWin32
 {

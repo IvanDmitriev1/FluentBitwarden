@@ -16,12 +16,20 @@ public sealed partial class OverlayWindow : WinUIEx.WindowEx
     {
         InitializeComponent();
 
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(DragArea);
-
         navigationService.Initialize(Frame);
         this.PreventMaximizeOnTitleBarDoubleClick();
         this.CenterOnScreen();
+
+        IsAlwaysOnTop = true;
+        IsShownInSwitchers = false;
+        IsResizable = false;
+        IsMaximizable = false;
+        IsMinimizable = false;
+        IsResizable = false;
+
+        IsTitleBarVisible = false;
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(DragArea);
 
         Frame.Navigate(
             typeof(LoadingPage),

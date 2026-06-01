@@ -43,7 +43,7 @@ public static class IpcMessageTypes
 
     public static class Ui
     {
-        public const ushort ShowSshDialog = 400;
-        public const ushort ShowUnlockDialog = 401;
+        public const ushort ShowUnlockDialog = 400;
+        public const ushort ShowSshDialog = 401;
     }
 }

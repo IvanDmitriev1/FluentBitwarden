@@ -1,5 +1,5 @@
 #include <pch.h>
-#include "CborWriter.h"
+#include "Infrastructure/Cbor/CborWriter.h"
 #include <cbor-lite/codec.h>
 
 namespace FluentBitwarden::ComServer

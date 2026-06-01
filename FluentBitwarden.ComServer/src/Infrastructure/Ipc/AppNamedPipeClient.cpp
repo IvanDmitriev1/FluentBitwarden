@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "AppNamedPipeClient.h"
-#include "PipeWin32.h"
-#include "IpcProtocol.h"
+#include "Infrastructure/Ipc/AppNamedPipeClient.h"
+#include "Infrastructure/Ipc/PipeWin32.h"
+#include "Infrastructure/Ipc/IpcProtocol.h"
 
 namespace FluentBitwarden::ComServer::Ipc
 {
@@ -18,20 +18,16 @@ namespace FluentBitwarden::ComServer::Ipc
 
 	wil::task<void> AppNamedPipeClient::WritePayload(uint16_t messageType, std::vector<std::byte> payload)
 	{
-		THROW_HR_IF(E_INVALIDARG, payload.size() > Constants::MaxPayloadLength);
-
 		RequestHeader header
 		{
 			.MessageType = messageType,
-			.PayloadLength =  static_cast<std::uint32_t>(payload.size())
+			.PayloadLength =  static_cast<std::int32_t>(payload.size())
 		};
 
 		const auto headerBytes = header.Write();
 
 		co_await PipeWin32::WriteExactly(m_pipe.get(), headerBytes);
-		co_await PipeWin32::WriteExactly(
-			m_pipe.get(),
-			std::span<const std::byte>{ payload.data(), payload.size() });
+		co_await PipeWin32::WriteExactly(m_pipe.get(), std::span<const std::byte>{ payload.data(), payload.size() });
 		co_return;
 	}
 
@@ -41,6 +37,8 @@ namespace FluentBitwarden::ComServer::Ipc
 		const auto responseHeader = ResponseHeader::Parse(
 			std::span<const std::byte>{ responseHeaderBuffer.data(), responseHeaderBuffer.size() });
 
-		co_return co_await PipeWin32::ReadExactly(m_pipe.get(), responseHeader.PayloadLength);
+		co_return co_await PipeWin32::ReadExactly(
+			m_pipe.get(),
+			static_cast<std::size_t>(responseHeader.PayloadLength));
 	}
 }

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "AssertionResponseBuilder.h"
+#include "Modules/Passkey/WebAuthn/AssertionResponseBuilder.h"
 
 namespace FluentBitwarden::ComServer::WebAuthn::AssertionResponseBuilder
 {

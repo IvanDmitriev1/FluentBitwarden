@@ -4,7 +4,7 @@ namespace FluentBitwarden.Contracts.Modules.Passkey;
 
 public interface IPasskeyClient
 {
-    ValueTask<Fido2Credential> SelectCredentialAsync(
+    ValueTask<PasskeyAssertionResponse> SelectCredentialAsync(
         PasskeyGetAssertionRequest request,
         CancellationToken cancellationToken);
 }

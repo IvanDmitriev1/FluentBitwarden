@@ -2,8 +2,11 @@ using BitwardenApi.Models;
 
 namespace FluentBitwarden.Views.Passkey;
 
-public sealed partial class PasskeySelectPageViewModel(Action<Fido2Credential> onCredentialSelection) : ObservableObject
+public sealed partial class PasskeySelectPageViewModel : ObservableObject
 {
+    private readonly TaskCompletionSource<Fido2Credential> _selectedCredential = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasItems))]
     [NotifyPropertyChangedFor(nameof(HasNoItems))]
@@ -15,11 +18,14 @@ public sealed partial class PasskeySelectPageViewModel(Action<Fido2Credential> o
     public bool HasItems => Items.Count > 0;
     public bool HasNoItems => !HasItems;
 
+    public Task<Fido2Credential> WaitUntilSelectedAsync(CancellationToken cancellationToken) =>
+        _selectedCredential.Task.WaitAsync(cancellationToken);
+
     partial void OnSelectedItemChanged(Fido2Credential? value)
     {
         if (value is not null)
         {
-            onCredentialSelection.Invoke(value);
+            _selectedCredential.TrySetResult(value);
         }
     }
 }

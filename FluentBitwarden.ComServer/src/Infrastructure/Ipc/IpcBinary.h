@@ -12,7 +12,7 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 	static_assert(std::endian::native == std::endian::little,
 				  "This IPC code assumes a little-endian Windows target.");
 
-	template <std::unsigned_integral T>
+	template <std::integral T>
 	[[nodiscard]] T ReadLe(std::span<const std::byte> bytes)
 	{
 		if (bytes.size() != sizeof(T))
@@ -25,7 +25,7 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 		return value;
 	}
 
-	template <std::unsigned_integral T>
+	template <std::integral T>
 	void WriteLe(std::span<std::byte> bytes, T value)
 	{
 		if (bytes.size() != sizeof(T))

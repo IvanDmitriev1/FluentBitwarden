@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "DecodedWebAuthnGetAssertionRequest.h"
-#include "Utils/HashingFunctions.h"
+#include "Modules/Passkey/WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
+#include "Infrastructure/Cryptography/HashingFunctions.h"
 
 namespace FluentBitwarden::ComServer::WebAuthn
 {

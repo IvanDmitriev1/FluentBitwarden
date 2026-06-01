@@ -1,7 +1,7 @@
 #pragma once
 #include <pch.h>
-#include "Ipc/IpcBinary.h"
-#include "Ipc/IpcProtocol.h"
+#include "Infrastructure/Ipc/IpcBinary.h"
+#include "Infrastructure/Ipc/IpcProtocol.h"
 
 namespace FluentBitwarden::ComServer::WebAuthn
 {
@@ -26,7 +26,7 @@ namespace FluentBitwarden::ComServer::WebAuthn
 		std::vector<std::uint8_t> RpIdHash;
 		std::vector<std::uint8_t> ClientDataHash;
 
-		static constexpr std::uint16_t MessageType = 2;
+		static constexpr std::uint16_t MessageType = 50;
 
 		[[nodiscard]] std::vector<std::byte> ToPayload() const
 		{
@@ -57,6 +57,7 @@ namespace FluentBitwarden::ComServer::WebAuthn
 		[[nodiscard]] static PasskeyAssertionResponse FromPayload(std::span<const std::byte> payload)
 		{
 			Ipc::Binary::PayloadReader reader{ payload };
+			reader.ReadObjectHeader(1);
 			reader.ReadObjectHeader(PasskeyPayload::ResponseMemberCount);
 
 			auto credentialId = reader.ReadBytes();

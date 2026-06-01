@@ -14,7 +14,7 @@
         <converters:StringToUriConverter x:Name="StringToUriConverter" />
     </Page.Resources>
 
-    <Grid Margin="24" RowSpacing="18">
+    <Grid Margin="0" RowSpacing="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -101,7 +101,7 @@
         <StackPanel
             x:Name="EmptyStatePanel"
             Grid.Row="1"
-            Margin="0,28,0,0"
+            Margin="0,0,0,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             x:Load="{x:Bind ViewModel.HasNoItems, Mode=OneWay}"

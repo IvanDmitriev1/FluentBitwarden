@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "AppActivationLauncher.h"
+#include "Application/Activation/AppActivationLauncher.h"
 
 namespace FluentBitwarden::ComServer::AppActivationLauncher
 {

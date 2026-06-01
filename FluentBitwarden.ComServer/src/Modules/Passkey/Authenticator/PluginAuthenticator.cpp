@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "PluginAuthenticator.h"
-#include "AppActivationLauncher.h"
-#include "Ipc/AppNamedPipeClient.h"
+#include "Modules/Passkey/Authenticator/PluginAuthenticator.h"
+#include "Application/Activation/AppActivationLauncher.h"
+#include "Infrastructure/Ipc/AppNamedPipeClient.h"
 
-#include "WebAuthn/OperationRequestVerifier.h"
-#include "WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
-#include "WebAuthn/AssertionResponseBuilder.h"
+#include "Modules/Passkey/WebAuthn/OperationRequestVerifier.h"
+#include "Modules/Passkey/WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
+#include "Modules/Passkey/WebAuthn/AssertionResponseBuilder.h"
 
 namespace FluentBitwarden::ComServer
 {
@@ -42,8 +42,7 @@ namespace FluentBitwarden::ComServer
 
 			*response = {};
 
-			WebAuthn::DecodedGetAssertionRequest decodedRequest =
-				WebAuthn::DecodedGetAssertionRequest::Decode(request);
+			WebAuthn::DecodedGetAssertionRequest decodedRequest = WebAuthn::DecodedGetAssertionRequest::Decode(request);
 			WebAuthn::PasskeyGetAssertionRequest ipcRequest = decodedRequest.ToIpcRequest();
 
 			Ipc::AppNamedPipeClient m_pipeClient;

@@ -1,6 +1,6 @@
 #include <pch.h>
-#include "IpcProtocol.h"
-#include "IpcBinary.h"
+#include "Infrastructure/Ipc/IpcProtocol.h"
+#include "Infrastructure/Ipc/IpcBinary.h"
 
 namespace FluentBitwarden::ComServer::Ipc
 {
@@ -22,11 +22,11 @@ namespace FluentBitwarden::ComServer::Ipc
 		const auto messageType = Binary::ReadLe<std::uint16_t>(
 			bytes.subspan(MessageTypeOffset, sizeof(std::uint16_t)));
 
-		const auto payloadLength = Binary::ReadLe<std::uint32_t>(
-			bytes.subspan(PayloadLengthOffset, sizeof(std::uint32_t)));
+		const auto payloadLength = Binary::ReadLe<std::int32_t>(
+			bytes.subspan(PayloadLengthOffset, sizeof(std::int32_t)));
 
 
-		if (payloadLength == 0 || payloadLength > Constants::MaxPayloadLength)
+		if (payloadLength < 0)
 		{
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
@@ -40,7 +40,7 @@ namespace FluentBitwarden::ComServer::Ipc
 
 	std::array<std::byte, RequestHeader::Size> RequestHeader::Write() const
 	{
-		if (PayloadLength == 0 || PayloadLength > Constants::MaxPayloadLength)
+		if (PayloadLength < 0)
 		{
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
@@ -56,8 +56,8 @@ namespace FluentBitwarden::ComServer::Ipc
 			span.subspan(MessageTypeOffset, sizeof(std::uint16_t)),
 			MessageType);
 
-		Binary::WriteLe<std::uint32_t>(
-			span.subspan(PayloadLengthOffset, sizeof(std::uint32_t)),
+		Binary::WriteLe<std::int32_t>(
+			span.subspan(PayloadLengthOffset, sizeof(std::int32_t)),
 			PayloadLength);
 
 		return bytes;
@@ -78,10 +78,10 @@ namespace FluentBitwarden::ComServer::Ipc
 			throw std::runtime_error("Incompatible IPC protocol version.");
 		}
 
-		const auto payloadLength = Binary::ReadLe<std::uint32_t>(
-			bytes.subspan(PayloadLengthOffset, sizeof(std::uint32_t)));
+		const auto payloadLength = Binary::ReadLe<std::int32_t>(
+			bytes.subspan(PayloadLengthOffset, sizeof(std::int32_t)));
 
-		if (payloadLength == 0 || payloadLength > Constants::MaxPayloadLength)
+		if (payloadLength < 0)
 		{
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
