@@ -8,6 +8,7 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
+using WinUIEx;
 
 namespace FluentBitwarden.Views.Accounts.Unlock;
 
@@ -84,7 +85,8 @@ public sealed partial class VaultUnlock : UserControl
     private Task UnlockWithWindowsHello()
     {
         ArgumentNullException.ThrowIfNull(Account);
-        return OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account, _windowManager.GetActiveWindowHandle()));
+        ArgumentNullException.ThrowIfNull(_windowManager.ActiveWindow);
+        return OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account, _windowManager.ActiveWindow.GetWindowHandle()));
     }
 
     private async Task OnUnlockCore(AccountUnlockRequest request)

@@ -21,13 +21,6 @@ internal sealed class PipeRequestCommandInvoker<
         int payloadLength,
         CancellationToken cancellationToken)
     {
-        if (payloadLength != 0)
-        {
-            throw new InvalidOperationException(
-                $"IPC message '{MessageType}' does not accept a request payload, " +
-                $"but received '{payloadLength}' bytes.");
-        }
-
         var request = await PipeProtocol.ReadRequestPayloadAsync<TRequest>(
             stream,
             payloadLength,

@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Infrastructure.Abstractions;
 using FluentBitwarden.Infrastructure.Extensions;
+using WinUIEx;
 
 namespace FluentBitwarden.Views.Accounts.LogIn.States;
 
@@ -104,8 +105,10 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
         _flow.Context.Email = Email.Trim();
         _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
 
+        ArgumentNullException.ThrowIfNull(_windowManager.ActiveWindow);
+
         var outcome = await _flow.AccountsClient.LoginAsync(
-            new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext, _windowManager.GetActiveWindowHandle()), CancellationToken.None);
+            new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext, _windowManager.ActiveWindow.GetWindowHandle()), CancellationToken.None);
 
         switch (outcome)
         {

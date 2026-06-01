@@ -42,9 +42,9 @@ internal sealed class AccountLoginService(
             LastSyncAt: DateTimeOffset.MinValue));
 
         unitOfWork.AccountKeyMaterialRepository.Upsert(accountSignIn.AccountKeyMaterial);
-        unitOfWork.SaveChanges();
-
         unitOfWork.SecureRefreshTokenStore.Store(accountSignIn.UserId, accountSignIn.AuthenticationTokens.RefreshToken);
+
+        unitOfWork.SaveChanges();
         return new AccountLoginOutcome.Success();
     }
 
