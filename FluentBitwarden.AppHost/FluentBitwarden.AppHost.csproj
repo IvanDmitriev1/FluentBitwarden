@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\FluentBitwarden\Assets\Bitwarden_icon.ico" Link="Assets\Bitwarden_icon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\FluentBitwarden.Ui\Assets\Bitwarden_icon.ico" Link="Assets\Bitwarden_icon.ico" CopyToOutputDirectory="PreserveNewest" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
