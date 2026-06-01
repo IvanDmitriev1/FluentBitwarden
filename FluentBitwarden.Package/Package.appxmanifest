@@ -51,7 +51,7 @@
 
 				<desktop:Extension
 					Category="windows.fullTrustProcess"
-					Executable="FluentBitwarden.ComServer.exe" />
+					Executable="FluentBitwarden.ComServer\FluentBitwarden.ComServer.exe" />
 			</Extensions>
 		</Application>
 
@@ -72,7 +72,7 @@
 
 		<!-- Native helper / COM server -->
 		<Application Id="ComServerApp"
-					 Executable="FluentBitwarden.ComServer.exe"
+					 Executable="FluentBitwarden.ComServer\FluentBitwarden.ComServer.exe"
 					 EntryPoint="windows.fullTrustApplication">
 			<uap:VisualElements
 			  DisplayName="FluentBitwarden Passkey Plugin"
@@ -88,7 +88,7 @@
 				<com:Extension Category="windows.comServer">
 					<com:ComServer>
 						<com:ExeServer
-						  Executable="FluentBitwarden.ComServer.exe"
+						  Executable="FluentBitwarden.ComServer\FluentBitwarden.ComServer.exe"
 						  Arguments="-PluginActivated"
 						  DisplayName="FluentBitwarden Passkey Plugin">
 							<com:Class

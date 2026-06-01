@@ -1,7 +1,7 @@
-﻿using FluentBitwarden.Modules.SshAgent.Models;
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
-namespace FluentBitwarden.Modules.SshAgent.Internal;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 
 internal static class SshAgentProtocolReader
 {

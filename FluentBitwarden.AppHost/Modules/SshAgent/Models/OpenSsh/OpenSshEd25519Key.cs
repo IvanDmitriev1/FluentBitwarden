@@ -1,9 +1,9 @@
 using BitwardenApi.Extensions;
-using FluentBitwarden.Modules.SshAgent.Internal;
+using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 
-namespace FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
 
 internal readonly ref struct OpenSshEd25519Key
 {

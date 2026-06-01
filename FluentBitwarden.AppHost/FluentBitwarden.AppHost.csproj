@@ -1,22 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+	<Configurations>Debug;Release</Configurations>
+	<Platforms>x64;ARM64</Platforms>
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
-    <CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks> 
-	<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\FluentBitwarden\Assets\Bitwarden_icon.ico" Link="Assets\Bitwarden_icon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\FluentBitwarden.Ui\Assets\Bitwarden_icon.ico" Link="Assets\Bitwarden_icon.ico" CopyToOutputDirectory="PreserveNewest" />
     <Manifest Include="$(ApplicationManifest)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\BitwardenApi\BitwardenApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,8 +21,6 @@
     </PackageReference>
     <PackageReference Include="Dapper" />
     <PackageReference Include="Dapper.AOT" />
-    <PackageReference Include="JetBrains.Annotations" />
-    <PackageReference Include="MemoryPack" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />
@@ -35,9 +28,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" />
     <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
   </ItemGroup>
 </Project>

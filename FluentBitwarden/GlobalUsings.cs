@@ -1,9 +1,0 @@
-global using System;
-global using System.Collections.Generic;
-global using System.IO;
-global using System.Threading;
-global using System.Threading.Tasks;
-global using BitwardenApi.Cryptography.Enc;
-global using CommunityToolkit.Mvvm.ComponentModel;
-global using DependencyPropertyGenerator;
-global using Microsoft.UI.Xaml.Controls;

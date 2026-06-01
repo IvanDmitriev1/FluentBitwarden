@@ -1,0 +1,58 @@
+using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Views.Settings.Theming;
+using FluentBitwarden.Views.Shell.Main;
+using FluentBitwarden.Views.Shell.Overlay;
+using Microsoft.UI.Xaml;
+using WinUIEx;
+
+namespace FluentBitwarden.Platform.Windowing;
+
+internal sealed class WindowManager : IWindowManager, IThemeService
+{
+    private static readonly TimeSpan RequestHostCloseDelay = TimeSpan.FromMilliseconds(150);
+
+    private ElementTheme _theme = SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey);
+
+    public WindowEx? ActiveWindow { get; private set; }
+
+    public void SetWindow(WindowEx window)
+    {
+        ActiveWindow?.Close();
+        ActiveWindow = window;
+        window.Closed += OnWindowClosed;
+        window.ShowAndActivate();
+    }
+
+    public void CloseWindow()
+    {
+        var window = ActiveWindow;
+        ActiveWindow = null;
+        window?.Close();
+    }
+
+    public void Apply(ElementTheme themeMode)
+    {
+        _theme = themeMode;
+        ApplyThemeToWindow(ActiveWindow);
+    }
+
+    private void ApplyThemeToWindow(Window? window)
+    {
+        switch (window)
+        {
+            case MainWindow mainWindow:
+                mainWindow.ApplyTheme(_theme);
+                break;
+
+            case OverlayWindow overlayWindow:
+                overlayWindow.ApplyTheme(_theme);
+                break;
+        }
+    }
+
+    private void OnWindowClosed(object sender, WindowEventArgs args)
+    {
+        if (ReferenceEquals(ActiveWindow, sender))
+            ActiveWindow = null;
+    }
+}

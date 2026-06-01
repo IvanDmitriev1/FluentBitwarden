@@ -23,7 +23,7 @@
   </ItemGroup>
   <PropertyGroup>
     <WapProjPath Condition="'$(WapProjPath)'==''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
-    <PathToXAMLWinRTImplementations>FluentBitwarden\</PathToXAMLWinRTImplementations>
+    <PathToXAMLWinRTImplementations>FluentBitwarden.Ui\</PathToXAMLWinRTImplementations>
     <WinUISDKReferences>false</WinUISDKReferences>
   </PropertyGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
@@ -52,21 +52,15 @@
     <Content Include="Images\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
     <ProjectReference Include="..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
-    <ProjectReference Include="..\FluentBitwarden\FluentBitwarden.Ui.csproj">
+    <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
+    <ProjectReference Include="..\FluentBitwarden.Ui\FluentBitwarden.Ui.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
   </ItemGroup>
-	<ItemGroup>
-		<Content Include="..\FluentBitwarden.ComServer\bin\$(Platform)\$(Configuration)\FluentBitwarden.ComServer.exe">
-			<PackagePath>\FluentBitwarden.ComServer</PackagePath>
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>

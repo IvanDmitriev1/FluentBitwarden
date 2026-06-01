@@ -1,0 +1,83 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>FluentBitwarden</RootNamespace>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+	<UseWinUI>true</UseWinUI>
+	<Configurations>Debug;Release</Configurations>
+	<Platforms>x64;ARM64</Platforms>
+	<WinUISDKReferences>false</WinUISDKReferences>
+	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+	<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+	<ItemGroup>
+	<PackageReference Include="CommunityToolkit.Mvvm" />
+	<PackageReference Include="CommunityToolkit.WinUI.Animations" />
+	<PackageReference Include="CommunityToolkit.WinUI.Behaviors" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
+	<PackageReference Include="CommunityToolkit.WinUI.Converters" />
+	<PackageReference Include="CommunityToolkit.WinUI.Extensions" />
+	<PackageReference Include="CommunityToolkit.WinUI.Helpers" />
+	<PackageReference Include="ConfigureAwait.Fody" PrivateAssets="all" ExcludeAssets="runtime">
+	  <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="DependencyPropertyGenerator">
+		<PrivateAssets>all</PrivateAssets>
+		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+	<PackageReference Include="Microsoft.Windows.CsWin32">
+		<PrivateAssets>all</PrivateAssets>
+		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+	<PackageReference Include="Microsoft.WindowsAppSDK">
+		<IncludeAssets>build</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
+	<PackageReference Include="WinUI.DependencyInjection" />
+	<PackageReference Include="WinUIEx" />
+</ItemGroup>
+
+<!-- Publish Properties -->
+<PropertyGroup>
+	<PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+	<PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+	<PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+	<PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+	<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
+	<UserSecretsId>edb536ff-1bce-4891-af57-fe1708de56cf</UserSecretsId>
+</PropertyGroup>
+
+<!-- Partial trimming still needs these roots for WinUI/XAML activation paths such as XamlControlsResources. -->
+<ItemGroup Condition="'$(PublishTrimmed)' == 'true'">
+	<TrimmerRootAssembly Include="Microsoft.WinUI" />
+	<TrimmerRootAssembly Include="WinUIEx" />
+	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
+</ItemGroup>
+
+</Project>

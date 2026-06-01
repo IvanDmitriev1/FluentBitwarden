@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.AppHost.Infrastructure;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Application.Tray;
@@ -124,7 +124,7 @@ internal sealed class TrayHost : IDisposable
             case TrayIconMessage.LeftButtonDoubleClick:
             case TrayIconMessage.Select:
             case TrayIconMessage.KeySelect:
-                AppProcessLauncher.Activate();
+                UiProcessLauncher.ActivateMainWindow();
                 return;
 
             case TrayIconMessage.ContextMenu:
@@ -140,11 +140,11 @@ internal sealed class TrayHost : IDisposable
         {
             case TrayMenuCommand.Show:
             case TrayMenuCommand.Lock:
-                AppProcessLauncher.Activate();
+                UiProcessLauncher.ActivateMainWindow();
                 return;
 
             case TrayMenuCommand.Exit:
-                AppProcessLauncher.Exit();
+                UiProcessLauncher.Exit();
                 _applicationLifetime.StopApplication();
                 return;
         }

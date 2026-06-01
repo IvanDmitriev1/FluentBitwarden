@@ -1,6 +1,6 @@
-﻿using FluentBitwarden.Modules.SshAgent.Internal;
+﻿using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 
-namespace FluentBitwarden.Modules.SshAgent.Models;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
 public readonly record struct SshAgentPacket(
     SshAgentMessageRequests Message,

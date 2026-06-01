@@ -22,8 +22,29 @@ This repository is an active work in progress. Core sign-in, sync, unlock, and v
 - WinUI 3 and Windows App SDK for the desktop UI.
 - .NET 10.
 - SQLite, Dapper, and Dapper.AOT for local storage.
+- MemoryPack over current-user named pipes for internal IPC.
 - `BitwardenApi` for identity, vault, attachment, and notification backend calls.
 - C++/WinRT COM server.
+
+## App and IPC Architecture
+
+FluentBitwarden is packaged as a multi-process desktop app. The MSIX package declares a visible `MainApp` entry point plus hidden helper applications:
+
+- `FluentBitwarden.AppHost.exe` is the long-running host process. It enforces the AppHost single instance, owns the tray/message loop, initializes local data, and hosts account, unlock, vault, passkey, Windows Hello, and SSH-agent services.
+- `FluentBitwarden.Ui.exe` is the WinUI presentation process. It enforces its own single instance, owns windows and dialogs, and is launched or foregrounded by the AppHost for the main window or overlay prompts.
+- `FluentBitwarden.ComServer.exe` is the native C++/WinRT WebAuthn plugin COM server. It handles Windows passkey plugin calls, decodes WebAuthn requests, and forwards assertion work to the AppHost.
+- `FluentBitwarden.Contracts` contains the shared .NET IPC contracts: message ids, request/response models, named-pipe client/server services, and MemoryPack serialization setup. The COM server mirrors the small binary protocol subset it needs for passkey messages.
+
+### Pipe Endpoints
+
+Internal app traffic uses one request per named-pipe connection:
+
+| Pipe | Server | Clients | Purpose |
+| --- | --- | --- | --- |
+| `LOCAL\FluentBitwarden.v2` | `FluentBitwarden.AppHost.exe` | UI process and COM server | Account, vault, Windows Hello, passkey assertion, and lifecycle requests. |
+| `LOCAL\FluentBitwarden.Ui.v2` | `FluentBitwarden.Ui.exe` | AppHost process | User-facing prompts such as SSH approval and passkey credential selection. |
+
+The AppHost also exposes the OpenSSH-compatible `openssh-ssh-agent` pipe for SSH-agent clients. That pipe uses the OpenSSH agent protocol, not the FluentBitwarden IPC protocol.
 
 ## Requirements
 
@@ -31,22 +52,6 @@ This repository is an active work in progress. Core sign-in, sync, unlock, and v
 - .NET 10 SDK.
 - Windows SDK / Windows App SDK environment compatible with SDK version `10.0.26100.0`.
 - Visual Studio with C++ desktop tooling when building the COM server or MSIX package.
-
-## Build
-
-Restore packages:
-
-```powershell
-dotnet restore
-```
-
-Build the x64 solution:
-
-```powershell
-dotnet build FluentBitwarden.slnx -p:Platform=x64
-```
-
-The solution contains the WinUI app, the `BitwardenApi` library, the C++/WinRT COM server, and the MSIX packaging project.
 
 ## License
 

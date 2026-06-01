@@ -1,3 +1,5 @@
+using MemoryPack;
+
 namespace BitwardenApi.Models;
 
 public enum Fido2CredentialKeyType
@@ -16,7 +18,8 @@ public enum Fido2CredentialKeyCurve
 }
 
 
-public sealed class Fido2Credential
+[MemoryPackable]
+public sealed partial class Fido2Credential
 {
     public required byte[] CredentialId { get; init; }
     public required Fido2CredentialKeyType KeyType { get; init; }

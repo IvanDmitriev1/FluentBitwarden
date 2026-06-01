@@ -1,37 +1,50 @@
-using BitwardenApi.Models;
-using FluentBitwarden.Modules.AppState;
-using FluentBitwarden.Modules.Session.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Models;
-using FluentBitwarden.Modules.SshAgent.Models.OpenSsh;
-using FluentBitwarden.Modules.Vault.Abstractions;
-using FluentBitwarden.Resources.Dialogs.Models;
-using FluentBitwarden.Modules.AppState.Models;
+using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
+using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Modules.AppState.Models;
+using FluentBitwarden.Contracts.Modules.Ssh;
+using FluentBitwarden.Contracts.Modules.Vault.Models;
 
-namespace FluentBitwarden.Modules.SshAgent.Services;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
+[Fody.ConfigureAwait(false)]
 internal sealed class SshKeyProvider(
-    IAccountSessionManager accountSessionManager,
-    IVaultService vaultService,
-    ISshUserActionPrompt userActionPrompt) : ISshKeyProvider
+    IUnlockedVaultReader unlockedVault,
+    IVaultWorkspace vaultWorkspace,
+    IUserDialogClient userDialogClient) : ISshKeyProvider
 {
-    public IReadOnlyList<SshPublicIdentityResponce> ListIdentities() =>
-        accountSessionManager.ActiveSession is null ? [] : vaultService.GetAvailableSshKeys();
+    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
-    public async ValueTask<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
+    public async Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {
-        if (accountSessionManager.ActiveSession is null || vaultService.GetSsh(request.PublicKeyBlob) is not { } cipher)
+        if (!await WaitForVaultWorkspaceAsync(token))
+            return SshIdentityQueryResult.Denied;
+
+        var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
+            .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
+            .ToList();
+
+        return SshIdentityQueryResult.Success(data);
+    }
+
+    public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
+    {
+        if (!await WaitForVaultWorkspaceAsync(token) || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
         if (userVerificationPolicy == SensitiveActionPolicy.RequireUserAction)
         {
-            var userAction = await userActionPrompt.PromptAsync(
-                new SshUserActionRequestViewModel(
-                    KeyName: cipher.Name,
-                    KeyFingerprint: cipher.KeyFingerprint,
-                    IsForwarded: false));
+            var requestDialog = new SshUserActionRequest(
+                KeyName: cipher.Name,
+                KeyFingerprint: cipher.KeyFingerprint,
+                IsForwarded: false);
 
+            var userAction = await userDialogClient.ShowSshDialogAsync(requestDialog, token);
             if (userAction == UserActionDialogOutcome.Denied)
                 return SshSignatureResult.Failed;
         }
@@ -40,5 +53,34 @@ internal sealed class SshKeyProvider(
         var signedData = privateKey.Sign(request.Data);
 
         return new SshSignatureResult(OpenSshEd25519Key.AlgorithmName, signedData);
+    }
+
+    private async Task<bool> WaitForVaultWorkspaceAsync(CancellationToken token)
+    {
+        if (vaultWorkspace.IsOpen)
+            return true;
+
+        UiProcessLauncher.Activate();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        cts.CancelAfter(TimeSpan.FromSeconds(45));
+
+        try
+        {
+            await vaultWorkspace.WaitUntilOpened(cts.Token);
+            return vaultWorkspace.IsOpen;
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
+    private SshKeyVaultCipher? GetShhCipher(ReadOnlyMemory<byte> publicKeyBlob)
+    {
+        return unlockedVault
+            .GetCiphers(SshCipherQuery)
+            .OfType<SshKeyVaultCipher>()
+            .FirstOrDefault(c =>
+                c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
     }
 }

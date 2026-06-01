@@ -7,6 +7,7 @@
   <Project Path="FluentBitwarden.ComServer/FluentBitwarden.ComServer.vcxproj" Id="3d215336-3b24-4e4e-9d57-868a7ad2b216">
     <Platform Project="x64" />
   </Project>
+  <Project Path="FluentBitwarden.Contracts/FluentBitwarden.Contracts.csproj" Id="8e7aa922-6bab-4181-b4ca-87505ded7896" />
   <Project Path="FluentBitwarden.Package/FluentBitwarden.Package.wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5" Id="7dc711cb-4f28-45a8-9cfd-524e411d2031">
     <Deploy />
   </Project>
@@ -14,7 +15,7 @@
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
   </Project>
-  <Project Path="FluentBitwarden/FluentBitwarden.Ui.csproj">
+  <Project Path="FluentBitwarden.Ui/FluentBitwarden.Ui.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
     <Deploy />

@@ -1,14 +1,13 @@
-using BitwardenApi.Contracts;
-using BitwardenApi.Vault.Infrastructure;
 using BitwardenApi.Common.Http;
+using BitwardenApi.Contracts;
 using BitwardenApi.Identity.Infrastructure;
 using BitwardenApi.Notifications.Infrastructure;
+using BitwardenApi.Vault.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using System.Diagnostics.CodeAnalysis;
-
-[assembly: Fody.ConfigureAwait(false)]
+using System.Net;
 
 namespace BitwardenApi;
 
@@ -20,16 +19,20 @@ public static class BitwardenApiServiceCollectionExtensions
         services.AddTransient<BitwardenRequiredHeadersHandler>();
         services.AddTransient<TAuthHandler>();
 
-        services.AddHttpClient("BitwardenApiIdentityHttpClient", client =>
+        services.AddHttpClient("BitwardenApiIdentityHttpClient", static client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
+                client.DefaultRequestVersion = HttpVersion.Version20;
+                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddBitwardenReadRetry();
 
-        services.AddHttpClient("BitwardenApiVaultHttpClient", client =>
+        services.AddHttpClient("BitwardenApiVaultHttpClient", static client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
+                client.DefaultRequestVersion = HttpVersion.Version20;
+                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<TAuthHandler>()

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:animatedVisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
+    xmlns:controls="using:FluentBitwarden.Views.Vault.Browse.Controls">
+
+    <Style TargetType="controls:CipherFieldChrome">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:CipherFieldChrome">
+                    <Grid ColumnSpacing="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                            x:Name="ChromeBorder"
+                            Grid.Column="0"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="0">
+
+                            <Grid
+                                Grid.Column="0"
+                                Padding="12,8"
+                                ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock
+                                        x:Name="LabelTextBlock"
+                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="{TemplateBinding Label}" />
+
+                                    <ContentPresenter
+                                        x:Name="ContentPresenter"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    x:Name="ActionTextBlock"
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Opacity="0"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                    Text="{TemplateBinding ActionText}" />
+                            </Grid>
+                        </Border>
+
+                        <Button
+                            x:Name="PART_MenuButton"
+                            Grid.Column="1"
+                            Width="43"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            CornerRadius="0"
+                            Flyout="{TemplateBinding MenuFlyout}"
+                            IsHitTestVisible="True"
+                            Opacity="0"
+                            Visibility="{TemplateBinding MenuButtonVisibility}">
+                            <AnimatedIcon x:Name="SearchAnimatedIcon">
+                                <AnimatedIcon.Source>
+                                    <animatedVisuals:AnimatedChevronDownSmallVisualSource />
+                                </AnimatedIcon.Source>
+                            </AnimatedIcon>
+                        </Button>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="ChromeBorder.Background" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
+                                        <Setter Target="LabelTextBlock.Foreground" Value="{ThemeResource AccentTextFillColorSecondaryBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                        <Setter Target="PART_MenuButton.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="ChromeBorder.Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+                                        <Setter Target="LabelTextBlock.Foreground" Value="{ThemeResource AccentTextFillColorSecondaryBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
+                                        <Setter Target="PART_MenuButton.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.55" />
+                                        <Setter Target="ActionTextBlock.Opacity" Value="0" />
+                                        <Setter Target="PART_MenuButton.Opacity" Value="0" />
+                                        <Setter Target="PART_MenuButton.IsHitTestVisible" Value="False" />
+                                        <Setter Target="LabelTextBlock.Foreground" Value="{ThemeResource TextOnAccentFillColorDisabledBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

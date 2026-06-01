@@ -1,8 +1,10 @@
 using BitwardenApi.Extensions;
+using MemoryPack;
 
 namespace BitwardenApi.OpenSsh;
 
-public readonly record struct OpenSshPublicKey(
+[MemoryPackable]
+public readonly partial record struct OpenSshPublicKey(
     string RawKey,
     byte[] KeyBlob)
 {

@@ -1,9 +1,15 @@
+using BitwardenApi;
 using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Application.Activation;
-using FluentBitwarden.AppHost.Infrastructure.Services.Abstractions;
-using FluentBitwarden.Data;
-using FluentBitwarden.Infrastructure.Ipc;
-using FluentBitwarden.Infrastructure.Services;
+using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.AppHost.Modules.Accounts;
+using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Providers;
+using FluentBitwarden.AppHost.Modules.Passkey;
+using FluentBitwarden.AppHost.Modules.SshAgent;
+using FluentBitwarden.AppHost.Modules.Vault;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Win32.SafeHandles;
@@ -36,8 +42,15 @@ internal static class Program
         builder.Services.AddHostedService<AppHostHostedService>();
 
         builder.Services.AddDatabaseServices();
+        builder.Services.AddTransient<IAppSetupService, AppSetupService>();
+        builder.Services.AddDatabaseServices();
         builder.Services.AddApplicationInfrastructureServices();
-        builder.Services.AddIpcServer(IpcConstants.AppHostPipeName);
+        
+        builder.Services.AddBitwardenApi<BearerAuthTokenProvider>();
+        builder.Services.AddAccountModule();
+        builder.Services.AddVaultServices();
+        builder.Services.AddPasskeyModule();
+        builder.Services.AddSshAgent();
 
         var host = builder.Build();
 

@@ -1,20 +1,20 @@
-﻿using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.AppHost.Infrastructure.Diagnostics;
-using FluentBitwarden.Modules.SshAgent.Abstractions;
-using FluentBitwarden.Modules.SshAgent.Internal;
-using FluentBitwarden.Modules.SshAgent.Models;
-using System.IO.Pipes;
-using System.Linq;
+﻿using System.IO.Pipes;
 using System.Text;
+using CommunityToolkit.HighPerformance.Buffers;
+using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
+using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
+using FluentBitwarden.AppHost.Modules.SshAgent.Models;
+using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.Extensions.Hosting;
 
-namespace FluentBitwarden.Modules.SshAgent.Services;
+namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : BackgroundService
 {
     private const string PipeName = "openssh-ssh-agent";
-    public const int MaxPacketLength = 512 * 1024;
+
+    public bool IsRunning => ExecuteTask is not null;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -26,13 +26,17 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
                 NamedPipeServerStream.MaxAllowedServerInstances,
                 PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
-                inBufferSize: 64 * 1024,
-                outBufferSize: 64 * 1024);
+                inBufferSize: 1 * 1024,
+                outBufferSize: 16 * 1024);
 
             try
             {
                 await server.WaitForConnectionAsync(stoppingToken);
                 await HandleClientAsync(server, stoppingToken);
+            }
+            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
+            {
+                Debug.WriteLine("IPC client disconnected before the server response was delivered.");
             }
             catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
             {
@@ -40,7 +44,6 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
             }
             catch (Exception e)
             {
-                await SshAgentProtocolWriter.WriteFailureAsync(server, stoppingToken);
                 UnhandledExceptionLogger.WriteException(e);
             }
         }
@@ -48,9 +51,7 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
 
     private async Task HandleClientAsync(Stream stream, CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested && 
-               SshAgentProtocolReader.TryReadLength(stream, out int length) && 
-               length < MaxPacketLength)
+        while (!ct.IsCancellationRequested && SshAgentProtocolReader.TryReadLength(stream, out int length))
         {
             using var bufferOwner = MemoryOwner<byte>.Allocate(length);
             await stream.ReadExactlyAsync(bufferOwner.Memory, ct);
@@ -72,7 +73,14 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
 
     private async Task HandleRequestIdentitiesAsync(Stream stream, CancellationToken ct)
     {
-        var identities = sshKeyProvider.ListIdentities();
+        var identityQuery = await sshKeyProvider.ListIdentitiesAsync(ct);
+        if (identityQuery.IsDenied)
+        {
+            await SshAgentProtocolWriter.WriteFailureAsync(stream, ct);
+            return;
+        }
+
+        var identities = identityQuery.Identities;
         int identitiesLength = identities.Sum(static i =>
             4 + i.PublicKey.Length +
             4 + Encoding.UTF8.GetByteCount(i.Comment));

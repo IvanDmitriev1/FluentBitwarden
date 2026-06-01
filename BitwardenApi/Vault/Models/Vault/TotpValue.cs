@@ -1,27 +1,31 @@
+using BitwardenApi.Extensions;
+using BitwardenApi.Vault.Internal;
+using MemoryPack;
 using OtpNet;
 using System.Buffers.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using BitwardenApi.Extensions;
-using BitwardenApi.Vault.Internal;
 
 namespace BitwardenApi.Models;
 
-public sealed class TotpValue
+public sealed partial class TotpValue(TotpValue.State state)
 {
-    public TotpValue(OtpType type, OtpHashMode hashMode, byte[] secretBytes, int digits, int periodSeconds)
-    {
-        Step = periodSeconds;
+    [MemoryPackable]
+    public partial record State(
+        OtpType Type,
+        OtpHashMode HashMode,
+        byte[] SecretBytes,
+        int Digits,
+        int PeriodSeconds);
 
-        _totp = new Totp(secretBytes,
-            step: periodSeconds,
-            mode: hashMode,
-            totpSize: digits);
-    }
+    internal readonly State StateObj = state;
 
-    private readonly Totp _totp;
+    private readonly Totp _totp = new(state.SecretBytes,
+        step: state.PeriodSeconds,
+        mode: state.HashMode,
+        totpSize: state.Digits);
 
-    public int Step { get; }
+    public int Step { get; } = state.PeriodSeconds;
 
     public string ComputeTotp() => _totp.ComputeTotp();
 
@@ -52,7 +56,7 @@ public sealed class TotpValue
             return false;
         }
 
-        totpValue = new TotpValue(OtpType.Totp, OtpHashMode.Sha1, secretBytes[..written].ToArray(), 6, 30);
+        totpValue = new TotpValue(new State(OtpType.Totp, OtpHashMode.Sha1, secretBytes[..written].ToArray(), 6, 30));
         return true;
     }
 
@@ -99,7 +103,7 @@ public sealed class TotpValue
             return false;
 
         var secretBytes = Base32Encoding.ToBytes(secret);
-        result = new TotpValue(type, algorithm, secretBytes, digits, period);
+        result = new TotpValue(new State(type, algorithm, secretBytes, digits, period));
         return true;
     }
 

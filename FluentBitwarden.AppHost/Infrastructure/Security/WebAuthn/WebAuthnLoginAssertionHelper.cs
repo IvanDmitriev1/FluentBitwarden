@@ -1,9 +1,5 @@
-using BitwardenApi.Models;
 using System.Buffers.Text;
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using Windows.Win32.Security.Authentication.WebAuthn;
 
 namespace FluentBitwarden.Infrastructure.Security.WebAuthn;
