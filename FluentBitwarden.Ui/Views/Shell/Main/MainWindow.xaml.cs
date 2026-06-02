@@ -1,9 +1,8 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
-using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Views.Startup.Loading;
-using FluentBitwarden.Views.Settings.Theming;
+using FluentBitwarden.Platform;
 
 namespace FluentBitwarden.Views.Shell.Main;
 

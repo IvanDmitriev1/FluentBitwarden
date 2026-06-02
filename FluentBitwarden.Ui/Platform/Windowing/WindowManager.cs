@@ -1,5 +1,3 @@
-using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Views.Settings.Theming;
 using FluentBitwarden.Views.Shell.Main;
 using FluentBitwarden.Views.Shell.Overlay;
 using Microsoft.UI.Xaml;

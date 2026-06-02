@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Modules.AppState.Models;
+﻿namespace FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 
 public enum VaultTimeoutTrigger : byte
 {

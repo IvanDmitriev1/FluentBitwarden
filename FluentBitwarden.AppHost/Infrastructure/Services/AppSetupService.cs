@@ -1,5 +1,6 @@
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Settings;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
 using FluentBitwarden.Contracts.Modules.AppState;
 

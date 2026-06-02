@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Views.Settings.Theming;
+namespace FluentBitwarden.Platform.Windowing;
 
 public interface IThemeService
 {

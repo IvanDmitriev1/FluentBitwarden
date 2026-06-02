@@ -1,7 +1,8 @@
-using FluentBitwarden.Contracts.Modules.AppState.Models;
+using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
+using FluentBitwarden.Views.Vault.Browse.Models;
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Views.Settings.Theming;
+namespace FluentBitwarden.Platform;
 
 internal static class UiSettingKeys
 {
@@ -12,5 +13,11 @@ internal static class UiSettingKeys
 
         public static readonly SettingKey<string> LanguageKey =
             new("appearance.language", "system");
+    }
+
+    public static class Vault
+    {
+        public static readonly CompositeSettingKey<VaultBrowseState> StateKey =
+            new("vault.state", VaultBrowseState.Default);
     }
 }

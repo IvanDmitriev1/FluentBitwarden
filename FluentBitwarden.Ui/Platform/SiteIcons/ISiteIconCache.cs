@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Views.Vault.Browse.SiteIcons;
+namespace FluentBitwarden.Platform.SiteIcons;
 
 public sealed class SiteIconCachedEventArgs(Uri host, string filePath) : EventArgs
 {

@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.Views.Vault.Browse.Controls"
-    xmlns:extensions="using:FluentBitwarden.Views.Vault.Browse.Presentation"
+    xmlns:extensions1="using:FluentBitwarden.Views.Vault.Browse.Models"
     xmlns:models="using:BitwardenApi.Models">
 
     <x:Double x:Key="CipherListItemDataTemplateIconSize">22</x:Double>
@@ -15,9 +15,9 @@
             Orientation="Horizontal"
             Spacing="8">
             <controls:SiteIcon
-                FallbackGlyph="{x:Bind extensions:CipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
+                FallbackGlyph="{x:Bind extensions1:CipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
                 Size="{StaticResource CipherListItemDataTemplateIconSize}"
-                Uri="{x:Bind extensions:CipherExtensions.GetDefaultSiteIconUri((models:VaultCipher))}" />
+                Uri="{x:Bind extensions1:CipherExtensions.GetDefaultSiteIconUri((models:VaultCipher))}" />
 
             <TextBlock
                 Style="{StaticResource BodyStrongTextBlockStyle}"
@@ -26,9 +26,9 @@
 
             <TextBlock
                 x:Name="SubTitle"
-                x:Load="{x:Bind extensions:CipherExtensions.HasSubtitle((models:VaultCipher))}"
+                x:Load="{x:Bind extensions1:CipherExtensions.HasSubtitle((models:VaultCipher))}"
                 Opacity="0.72"
-                Text="{x:Bind extensions:CipherExtensions.GetSubtitle((models:VaultCipher))}"
+                Text="{x:Bind extensions1:CipherExtensions.GetSubtitle((models:VaultCipher))}"
                 TextTrimming="CharacterEllipsis" />
         </StackPanel>
     </DataTemplate>

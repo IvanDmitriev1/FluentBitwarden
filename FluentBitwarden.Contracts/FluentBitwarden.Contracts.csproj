@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConfigureAwait.Fody" />
+    <PackageReference Include="ConfigureAwait.Fody" PrivateAssets='All' />
     <PackageReference Include="MemoryPack" />
     <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" />
     <PackageReference Include="Microsoft.Windows.CsWin32">

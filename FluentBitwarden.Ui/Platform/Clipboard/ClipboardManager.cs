@@ -1,8 +1,8 @@
 using Microsoft.UI.Dispatching;
 using System.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
+using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Contracts.Modules.AppState.Models;
 using WindowsClipboard = Windows.ApplicationModel.DataTransfer.Clipboard;
 
 namespace FluentBitwarden.Platform.Clipboard;

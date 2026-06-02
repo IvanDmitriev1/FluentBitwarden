@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Views.Vault.Browse.SiteIcons;
+using FluentBitwarden.Platform.SiteIcons;
 
 namespace FluentBitwarden.Views.Vault.Browse.Controls;
 

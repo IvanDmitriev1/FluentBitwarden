@@ -2,10 +2,9 @@
 using System.Text.Json;
 using Windows.Foundation;
 using Windows.Storage;
-using FluentBitwarden.Contracts.Modules.AppState.Abstractions;
-using FluentBitwarden.Contracts.Modules.AppState.Models;
+using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 
-namespace FluentBitwarden.Contracts.Modules.AppState.Services;
+namespace FluentBitwarden.Contracts.Infrastructure.Settings;
 
 internal sealed class ApplicationDataSettingsStore : ISettingsStore
 {
@@ -56,31 +55,31 @@ internal sealed class ApplicationDataSettingsStore : ISettingsStore
         return removed;
     }
 
-    public T GetComposite<T>(CompositeSettingKey<T> key) where T : notnull
+    public T GetComposite<T>(CompositeSettingKey<T> key) where T : ICompositeSettingValue<T>
     {
-        if (!_container.Values.TryGetValue(key.Name, out var raw) || 
+        if (!_container.Values.TryGetValue(key.Name, out var raw) ||
             raw is not ApplicationDataCompositeValue composite)
         {
             return key.DefaultValue;
         }
 
-        return key.TryRead.Invoke(composite, out var value)
+        return T.TryRead(composite, out var value)
             ? value
             : key.DefaultValue;
     }
 
-    public void SetComposite<T>(CompositeSettingKey<T> key, T value) where T : notnull
+    public void SetComposite<T>(CompositeSettingKey<T> key, T value) where T : ICompositeSettingValue<T>
     {
         using var _ = _lock.EnterScope();
 
         var composite = new ApplicationDataCompositeValue();
-        key.Write.Invoke(composite, value);
+        T.Write(composite, value);
         _container.Values[key.Name] = composite;
 
         OnChanged(key.Name);
     }
 
-    public bool RemoveComposite<T>(CompositeSettingKey<T> key) where T : notnull
+    public bool RemoveComposite<T>(CompositeSettingKey<T> key) where T : ICompositeSettingValue<T>
     {
         using var _ = _lock.EnterScope();
 

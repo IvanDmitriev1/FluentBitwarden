@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Contracts.Modules.AppState.Models;
+﻿using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 
 namespace FluentBitwarden.Views.Settings.Models;
 

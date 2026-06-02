@@ -6,6 +6,7 @@ global using System.Threading.Tasks;
 global using CommunityToolkit.Mvvm.ComponentModel;
 global using DependencyPropertyGenerator;
 global using FluentBitwarden.Composition;
+global using FluentBitwarden.Contracts.Infrastructure.Settings;
 global using FluentBitwarden.Contracts.Infrastructure.Shared;
 global using FluentBitwarden.Contracts.Modules.Vault.Models;
 global using FluentBitwarden.Platform.Windowing;

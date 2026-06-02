@@ -5,7 +5,7 @@ using System.Text;
 using Windows.Storage;
 using CommunityToolkit.HighPerformance.Buffers;
 
-namespace FluentBitwarden.Views.Vault.Browse.SiteIcons;
+namespace FluentBitwarden.Platform.SiteIcons;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISiteIconCache

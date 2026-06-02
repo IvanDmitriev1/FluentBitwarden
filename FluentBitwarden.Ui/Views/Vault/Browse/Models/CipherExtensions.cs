@@ -1,6 +1,6 @@
 using BitwardenApi.Models;
 
-namespace FluentBitwarden.Views.Vault.Browse.Presentation;
+namespace FluentBitwarden.Views.Vault.Browse.Models;
 
 public static class CipherExtensions
 {

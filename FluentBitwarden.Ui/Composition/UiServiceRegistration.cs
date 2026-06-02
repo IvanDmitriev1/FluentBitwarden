@@ -2,10 +2,9 @@ using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Platform.Hosting;
+using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Views.Accounts.Unlock.Client;
-using FluentBitwarden.Views.Settings.Theming;
 using FluentBitwarden.Views.SshAgent.UserApproval;
-using FluentBitwarden.Views.Vault.Browse.SiteIcons;
 using FluentBitwarden.Views.Vault.Client;
 using Microsoft.Extensions.DependencyInjection;
 

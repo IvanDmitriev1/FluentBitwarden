@@ -3,9 +3,10 @@ using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.Settings;
+using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Contracts.Modules.AppState.Models;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Models;
 
