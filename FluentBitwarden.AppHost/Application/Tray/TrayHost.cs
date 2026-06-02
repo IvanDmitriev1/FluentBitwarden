@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Application.Tray;
@@ -18,12 +18,14 @@ internal sealed class TrayHost : IDisposable
     private readonly HWND _windowHandle;
     private readonly NotificationIcon _trayIcon;
     private readonly IHostApplicationLifetime _applicationLifetime;
+    private readonly IUiProcessLauncher _uiProcessLauncher;
     private bool _windowDestroyed;
     private bool _disposed;
 
-    public TrayHost(IHostApplicationLifetime applicationLifetime)
+    public TrayHost(IHostApplicationLifetime applicationLifetime, IUiProcessLauncher uiProcessLauncher)
     {
         _applicationLifetime = applicationLifetime;
+        _uiProcessLauncher = uiProcessLauncher;
         _moduleHandle = PInvoke.GetModuleHandle(default(PCWSTR));
         RegisterWindowClass();
 
@@ -124,7 +126,7 @@ internal sealed class TrayHost : IDisposable
             case TrayIconMessage.LeftButtonDoubleClick:
             case TrayIconMessage.Select:
             case TrayIconMessage.KeySelect:
-                UiProcessLauncher.ActivateMainWindow();
+                _uiProcessLauncher.ActivateMainWindow();
                 return;
 
             case TrayIconMessage.ContextMenu:
@@ -140,11 +142,11 @@ internal sealed class TrayHost : IDisposable
         {
             case TrayMenuCommand.Show:
             case TrayMenuCommand.Lock:
-                UiProcessLauncher.ActivateMainWindow();
+                _uiProcessLauncher.ActivateMainWindow();
                 return;
 
             case TrayMenuCommand.Exit:
-                UiProcessLauncher.Exit();
+                _uiProcessLauncher.Exit();
                 _applicationLifetime.StopApplication();
                 return;
         }

@@ -1,3 +1,4 @@
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
@@ -5,7 +6,9 @@ using FluentBitwarden.Contracts.Modules.Ssh;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
-internal sealed class UserDialogClient(IIpcClient ipcClient) : IUserDialogClient
+internal sealed class UserDialogClient(
+    IIpcClient ipcClient,
+    IUiProcessLauncher uiProcessLauncher) : IUserDialogClient
 {
     public ValueTask<UserActionDialogOutcome> ShowSshDialogAsync(
         SshUserActionRequest request,
@@ -16,7 +19,7 @@ internal sealed class UserDialogClient(IIpcClient ipcClient) : IUserDialogClient
         PasskeyGetAssertionRequest request,
         CancellationToken cancellationToken)
     {
-        UiProcessLauncher.Activate();
+        uiProcessLauncher.Activate();
 
         return ipcClient.SendAsync<PasskeyGetAssertionRequest, Fido2Credential>(
             request,
@@ -26,7 +29,7 @@ internal sealed class UserDialogClient(IIpcClient ipcClient) : IUserDialogClient
     private async ValueTask<UserActionDialogOutcome> SendRequest<TRequest>(TRequest request, CancellationToken cancellationToken) 
         where TRequest : IIpcRequestMessage
     {
-        UiProcessLauncher.Activate();
+        uiProcessLauncher.Activate();
 
         try
         {

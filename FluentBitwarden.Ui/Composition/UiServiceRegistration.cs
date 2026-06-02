@@ -1,7 +1,6 @@
 using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Platform.AppHost.Lifetime;
 using FluentBitwarden.Platform.Hosting;
 using FluentBitwarden.Views.Accounts.Unlock.Client;
 using FluentBitwarden.Views.Settings.Theming;
@@ -28,7 +27,6 @@ internal static class UiServiceRegistration
         services.AddSingleton<INavigationService>(static sp => sp.GetRequiredService<NavigationService>());
 
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
-        services.AddSingleton<IAppHostLifetimeService, AppHostLifetimeService>();
 
         services.AddIpcClient(IpcConstants.AppHostPipeName);
         services.AddSingleton<IAccountsClient, RemoteAccountsClient>();

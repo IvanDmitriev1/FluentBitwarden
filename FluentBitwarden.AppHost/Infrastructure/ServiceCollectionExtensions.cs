@@ -22,7 +22,7 @@ internal static class ServiceCollectionExtensions
 
         services.AddIpcServer(IpcConstants.AppHostPipeName, 2);
         services.AddIpcClient(IpcConstants.UiPipeName);
-        services.AddIpcRequestHandler<AppHostLifecycleClientHandler>();
+        services.AddSingleton<IUiProcessLauncher, UiProcessLauncher>();
         services.AddSingleton<IUserDialogClient, UserDialogClient>();
 
         return services;

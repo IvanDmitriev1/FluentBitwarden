@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
@@ -15,7 +15,8 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
     IVaultWorkspace vaultWorkspace,
-    IUserDialogClient userDialogClient) : ISshKeyProvider
+    IUserDialogClient userDialogClient,
+    IUiProcessLauncher uiProcessLauncher) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
@@ -60,7 +61,7 @@ internal sealed class SshKeyProvider(
         if (vaultWorkspace.IsOpen)
             return true;
 
-        UiProcessLauncher.Activate();
+        uiProcessLauncher.Activate();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
         cts.CancelAfter(TimeSpan.FromSeconds(45));
 

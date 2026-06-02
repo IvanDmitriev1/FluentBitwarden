@@ -5,7 +5,6 @@ public static class IpcMessageTypes
     public static class System
     {
         public const ushort Ping = 1;
-        public const ushort ShutdownAppHost = 3;
     }
 
     public static class Passkey

@@ -1,17 +1,16 @@
-using FluentBitwarden.AppHost.Infrastructure;
-using Microsoft.Extensions.Hosting;
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.AppHost.Application.Activation;
 
-internal sealed class AppHostActivationHandler(IHostApplicationLifetime applicationLifetime)
+internal sealed class AppHostActivationHandler(IUiProcessLauncher uiProcessLauncher)
 {
     public void Handle(AppActivationArguments args)
     {
         AppHostCliCommand command = AppHostCliCommandExtensions.From(args);
         if (command == AppHostCliCommand.Start)
         {
-            UiProcessLauncher.ActivateMainWindow();
+            uiProcessLauncher.ActivateMainWindow();
         }
     }
 }
