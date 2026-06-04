@@ -18,7 +18,6 @@ internal static class UiServiceRegistration
 
         services.AddSingleton<WindowManager>();
         services.AddSingleton<IWindowManager>(static sp => sp.GetRequiredService<WindowManager>());
-        services.AddSingleton<IThemeService>(static sp => sp.GetRequiredService<WindowManager>());
         services.AddSingleton<IUiHostedServiceStarter, UiHostedServiceStarter>();
 
         services.AddSingleton<INotificationService, NotificationService>();

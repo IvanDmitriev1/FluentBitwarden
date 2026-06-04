@@ -7,18 +7,18 @@ internal sealed class UiHostedServiceStarter(IEnumerable<IHostedService> hostedS
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public bool IsStarted { get; private set; }
+    private bool _isStarted;
 
     public async Task EnsureStartedAsync()
     {
-        if (IsStarted)
+        if (_isStarted)
             return;
 
         await _gate.WaitAsync();
 
         try
         {
-            if (IsStarted)
+            if (_isStarted)
                 return;
 
             foreach (var hostedService in hostedServices)
@@ -26,7 +26,7 @@ internal sealed class UiHostedServiceStarter(IEnumerable<IHostedService> hostedS
                 await hostedService.StartAsync(CancellationToken.None);
             }
 
-            IsStarted = true;
+            _isStarted = true;
         }
         catch (Exception exception)
         {

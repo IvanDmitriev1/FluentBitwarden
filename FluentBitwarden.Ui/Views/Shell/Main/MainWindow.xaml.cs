@@ -2,11 +2,10 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using FluentBitwarden.Views.Startup.Loading;
-using FluentBitwarden.Platform;
 
 namespace FluentBitwarden.Views.Shell.Main;
 
-public sealed partial class MainWindow : WinUIEx.WindowEx
+public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeChangeable
 {
     public MainWindow(
         NavigationService navigationService)
@@ -18,7 +17,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-        ApplyTheme(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
         RootFrame.Navigate(
             typeof(LoadingPage),
             PageNavigationParameter.From(LoadingPageParameter.MainShell));

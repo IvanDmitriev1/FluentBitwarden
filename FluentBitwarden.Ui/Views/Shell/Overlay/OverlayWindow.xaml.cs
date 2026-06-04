@@ -6,7 +6,7 @@ using WinUIEx;
 
 namespace FluentBitwarden.Views.Shell.Overlay;
 
-public sealed partial class OverlayWindow : WinUIEx.WindowEx
+public sealed partial class OverlayWindow : WinUIEx.WindowEx, IThemeChangeable
 {
     public OverlayWindow(
         NavigationService navigationService)

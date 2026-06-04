@@ -13,12 +13,11 @@ using FluentBitwarden.Platform;
 namespace FluentBitwarden.Views.Settings;
 
 public sealed partial class SettingsPageViewModel(
-    IThemeService themeService,
     IWindowsHelloUnlockClient windowsHelloUnlockClient,
     IWindowManager windowManager)
     : ObservableObject, IPageLifecycleAware
 {
-    public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(themeService.Apply);
+    public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(windowManager.ApplyTheme);
     public SettingValue<string> Language { get; } = UiSettingKeys.Appearance.LanguageKey.CreateSettingValue();
     public SettingValue<bool> CloseToTray { get; } = AppSettingKeys.App.CloseToTrayKey.CreateSettingValue();
 

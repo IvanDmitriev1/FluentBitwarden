@@ -1,4 +1,3 @@
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 
@@ -16,7 +15,6 @@ public abstract class LifecyclePage : Page
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
-
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
@@ -78,7 +76,7 @@ public abstract class LifecyclePage : Page
         {
             Task loadingTask = Task.CompletedTask;
             if (navParameter is not null)
-                loadingTask = navParameter.Load(DataContext, token);
+                loadingTask = navParameter.LoadAsync(DataContext, token);
             else if (DataContext is IPageLifecycleAware aware)
                 loadingTask = aware.OnLoadingAsync(token);
 

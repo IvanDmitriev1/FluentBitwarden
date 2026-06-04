@@ -5,52 +5,51 @@ using WinUIEx;
 
 namespace FluentBitwarden.Platform.Windowing;
 
-internal sealed class WindowManager : IWindowManager, IThemeService
+internal sealed class WindowManager : IWindowManager
 {
-    private static readonly TimeSpan RequestHostCloseDelay = TimeSpan.FromMilliseconds(150);
+    private WindowEx? _window;
 
-    private ElementTheme _theme = SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey);
+    public bool HasWindow => _window != null;
 
-    public WindowEx? ActiveWindow { get; private set; }
+    public WindowEx ActiveWindow =>
+        _window ?? throw new InvalidOperationException("No FluentBitwarden window is active.");
+
+    public XamlRoot ActiveXamlRoot => ActiveWindow switch
+    {
+        MainWindow mainWindow => mainWindow.XamlRoot,
+        OverlayWindow overlayWindow => overlayWindow.XamlRoot,
+        { Content: FrameworkElement content } => content.XamlRoot,
+        _ => throw new InvalidOperationException("The active FluentBitwarden window does not expose a XamlRoot.")
+    };
 
     public void SetWindow(WindowEx window)
     {
-        ActiveWindow?.Close();
-        ActiveWindow = window;
+        _window?.Close();
+        _window = window;
+        
+        var currentTheme = SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey);
+        ApplyTheme(currentTheme);
+
         window.Closed += OnWindowClosed;
         window.ShowAndActivate();
     }
 
     public void CloseWindow()
     {
-        var window = ActiveWindow;
-        ActiveWindow = null;
+        var window = _window;
+        _window = null;
         window?.Close();
     }
 
-    public void Apply(ElementTheme themeMode)
+    public void ApplyTheme(ElementTheme themeMode)
     {
-        _theme = themeMode;
-        ApplyThemeToWindow(ActiveWindow);
-    }
-
-    private void ApplyThemeToWindow(Window? window)
-    {
-        switch (window)
-        {
-            case MainWindow mainWindow:
-                mainWindow.ApplyTheme(_theme);
-                break;
-
-            case OverlayWindow overlayWindow:
-                overlayWindow.ApplyTheme(_theme);
-                break;
-        }
+        var themeChangeable = ActiveWindow as IThemeChangeable;
+        themeChangeable?.ApplyTheme(themeMode);
     }
 
     private void OnWindowClosed(object sender, WindowEventArgs args)
     {
-        if (ReferenceEquals(ActiveWindow, sender))
-            ActiveWindow = null;
+        if (ReferenceEquals(_window, sender))
+            _window = null;
     }
 }

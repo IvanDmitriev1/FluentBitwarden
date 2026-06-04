@@ -3,9 +3,9 @@
     x:Class="FluentBitwarden.Views.Vault.Browse.VaultPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:attachedProperties="using:FluentBitwarden.Shared.AttachedProperties"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:extensions="using:FluentBitwarden.Views.Vault.Browse.Presentation"
     xmlns:lifecycle="using:FluentBitwarden.Shared.Navigation.Lifecycle"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.Views.Vault.Browse.Models"
@@ -95,8 +95,10 @@
                 </sharedControls:SearchFilterBar>
 
                 <ListView
+                    x:Name="VaultCipherList"
                     Grid.Row="1"
                     Grid.Column="0"
+                    attachedProperties:VaultListSelectionBehavior.BringToView="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
                     IsItemClickEnabled="False"
                     ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
                     ItemTemplate="{StaticResource CipherListItemDataTemplate}"

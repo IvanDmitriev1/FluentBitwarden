@@ -23,10 +23,10 @@ public partial class App : IXamlMetadataServiceProvider
     public DispatcherQueue DispatcherQueue { get; }
 
     private readonly IServiceProvider _services = new ServiceCollection()
-            .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
-            .AddFeatureViews()
-            .AddUiServices()
-            .BuildServiceProvider();
+        .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
+        .AddFeatureViews()
+        .AddUiServices()
+        .BuildServiceProvider();
 
     public object GetRequiredService(Type type)
         => _services.GetRequiredService(type);
@@ -50,8 +50,10 @@ public partial class App : IXamlMetadataServiceProvider
         _initialActivation = initialActivation;
     }
 
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) =>
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    {
         HandleActivation(_initialActivation);
+    }
 
     public void HandleActivation(AppActivationArguments args)
     {
@@ -82,7 +84,7 @@ public partial class App : IXamlMetadataServiceProvider
     private void ShowWindow<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TWindow>() where TWindow : WindowEx
     {
         var windowManager = GetRequiredService<IWindowManager>();
-        if (windowManager.ActiveWindow is not null)
+        if (windowManager.HasWindow)
         {
             windowManager.ActiveWindow.ShowAndActivate();
             return;

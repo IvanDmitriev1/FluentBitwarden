@@ -4,7 +4,6 @@ using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 using FluentBitwarden.Contracts.Modules.Ssh;
-using FluentBitwarden.Shared.Dialogs;
 using FluentBitwarden.Views.Passkeys.CredentialSelection;
 using FluentBitwarden.Views.Shell.Overlay;
 using Microsoft.UI.Dispatching;
@@ -100,7 +99,7 @@ internal sealed class UserDialogRequestHandler(IWindowManager windowManager, IVa
             Content = new PasskeySelectPage(viewModel),
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
-            XamlRoot = windowManager.GetActiveXamlRoot()
+            XamlRoot = windowManager.ActiveXamlRoot
         };
     }
 
@@ -120,7 +119,7 @@ internal sealed class UserDialogRequestHandler(IWindowManager windowManager, IVa
             PrimaryButtonText = options.PrimaryButtonText,
             SecondaryButtonText = options.SecondaryButtonText,
             DefaultButton = options.DefaultButton,
-            XamlRoot = windowManager.GetActiveXamlRoot()
+            XamlRoot = windowManager.ActiveXamlRoot
         };
 
         return await dialog.ShowAsync();

@@ -5,7 +5,7 @@ public sealed class PageNavigationParameter<TParam>(TParam value) : IPageNavigat
 {
     public TParam Value { get; } = value;
 
-    public Task Load(object dataContext, CancellationToken cancellationToken) => dataContext switch
+    public Task LoadAsync(object dataContext, CancellationToken cancellationToken) => dataContext switch
     {
         IPageLifecycleAware<TParam> aware => aware.OnLoadingAsync(Value, cancellationToken),
         _ => throw new ArgumentOutOfRangeException(nameof(dataContext), dataContext, null)
