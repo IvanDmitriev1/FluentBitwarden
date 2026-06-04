@@ -45,17 +45,9 @@ internal sealed class VaultApiClient(
 
         response.EnsureSuccess("Vault sync", cancellationToken);
 
-        try
-        {
-            return await response.Content.ReadFromJsonAsync<VaultSyncResponse>(BitwardenVaultJsonContext
-                       .ConfiguredDefault.VaultSyncResponse) ??
-                   throw new InvalidOperationException();
-        }
-        catch (JsonException e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+        return await response.Content.ReadFromJsonAsync<VaultSyncResponse>(
+            BitwardenVaultJsonContext.ConfiguredDefault.VaultSyncResponse,
+            cancellationToken: cancellationToken) ?? throw new InvalidOperationException();
     }
 
     public async Task<VaultCipherDto> GetCipherAsync(CipherId cipherId, CancellationToken cancellationToken = default)

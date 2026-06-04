@@ -80,13 +80,11 @@ public sealed partial class VaultPageViewModel(
     public async void Receive(ShowVaultCipherMessage message)
     {
         _applyingParameter = true;
-
         SearchText = message.SearchText;
         SelectedCipherType = null;
 
         await QueryCiphersAsync();
         SelectedCipher = FilteredCiphers.FirstOrDefault(c => c.Id == message.SelectedCipher.Id);
-
         _applyingParameter = false;
     }
 
@@ -110,11 +108,7 @@ public sealed partial class VaultPageViewModel(
 
         await QueryCiphersAsync();
         SelectedCipher = FilteredCiphers.FirstOrDefault(c => c.Id == state.SelectedCipherId);
-
         _applyingParameter = false;
-
-        if (!NetworkInformation.HasInternetAccess)
-            return;
 
         var result = await vaultClient.SyncVaultAsync(cancellationToken);
         if (result != VaultSyncResult.Synced)

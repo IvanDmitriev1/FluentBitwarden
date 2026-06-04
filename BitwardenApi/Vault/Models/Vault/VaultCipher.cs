@@ -24,6 +24,7 @@ public abstract partial class VaultCipher
 
     [StronglyTypedIdFormatter<FolderId>]
     public FolderId FolderId { get; set; }
+
     public required string Name { get; set; }
     public string? Notes { get; set; }
     public required bool Favorite { get; set; }

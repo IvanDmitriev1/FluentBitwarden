@@ -11,11 +11,11 @@ internal sealed class AppSetupService(IDataInitializationService dataInitializat
 {
     public void Initialize()
     {
+        dataInitializationService.Initialize();
+
         var setupCompleted = SettingsStore.Instance.Get(AppSettingKeys.App.SetupCompletedKey);
         if (setupCompleted)
             return;
-
-        dataInitializationService.Initialize();
 
         if (PasskeyPluginSetupService.IsSupported())
         {

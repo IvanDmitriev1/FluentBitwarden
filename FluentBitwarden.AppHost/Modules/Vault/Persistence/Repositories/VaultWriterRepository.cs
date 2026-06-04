@@ -8,20 +8,69 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 {
     private readonly string _userIdStr = userId.ToString();
 
+    public void WriteOrganizations(ReadOnlySpan<VaultOrganizationDto> organizations)
+    {
+        if (organizations.Length == 0)
+            return;
+
+        Connection.Execute("DELETE FROM vault_organization WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+
+        foreach (ref readonly var dto in organizations)
+        {
+            Connection.Execute(
+                """
+                INSERT INTO vault_organization (
+                    user_id,
+                    organization_id,
+                    organization_user_id,
+                    organization_name,
+                    is_enabled,
+                    use_key_connector,
+                    member_status,
+                    member_type,
+                    encrypted_organization_key)
+                VALUES (
+                    @UserId,
+                    @OrganizationId,
+                    @OrganizationUserId,
+                    @OrganizationName,
+                    @IsEnabled,
+                    @UseKeyConnector,
+                    @MemberStatus,
+                    @MemberType,
+                    @EncryptedOrganizationKey)
+                """,
+                new
+                {
+                    UserId = _userIdStr,
+                    OrganizationId = dto.Id.ToString(),
+                    OrganizationUserId = dto.OrganizationUserId?.ToString(),
+                    OrganizationName = dto.Name,
+                    IsEnabled = dto.Enabled ? 1 : 0,
+                    UseKeyConnector = dto.UseKeyConnector ? 1 : 0,
+                    MemberStatus = dto.Status,
+                    MemberType = dto.MemberType,
+                    EncryptedOrganizationKey = dto.EncryptedOrganizationKey.IsEmpty
+                        ? null
+                        : dto.EncryptedOrganizationKey.ToByteArray()
+                },
+                transaction: Transaction);
+        }
+    }
+
     public void WriteFolders(ReadOnlySpan<VaultFolderDto> folders)
     {
         if (folders.Length == 0)
             return;
 
+        Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+
         foreach (ref readonly var dto in folders)
         {
             Connection.Execute(
                 """
-                INSERT INTO folders (user_id, folder_id, revision_date_unix_ms, encrypted_name)
+                INSERT INTO vault_folder (user_id, folder_id, revision_date_unix_ms, encrypted_name)
                 VALUES (@UserId, @FolderId, @RevisionDateUnixMs, @EncryptedName)
-                ON CONFLICT (user_id, folder_id) DO UPDATE SET
-                    revision_date_unix_ms = excluded.revision_date_unix_ms,
-                    encrypted_name = excluded.encrypted_name
                 """,
                 new
                 {
@@ -38,16 +87,19 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
     {
         if (collections.Length == 0)
             return;
+
+        Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+
         foreach (ref readonly var dto in collections)
         {
             Connection.Execute(
                 """
-                INSERT INTO collections (
+                INSERT INTO vault_collection (
                     user_id,
                     collection_id,
                     organization_id,
-                    read_only,
-                    manage,
+                    is_read_only,
+                    can_manage,
                     hide_passwords,
                     collection_type,
                     encrypted_name)
@@ -60,19 +112,14 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @HidePasswords,
                     @CollectionType,
                     @EncryptedName)
-                ON CONFLICT (user_id, collection_id) DO UPDATE SET
-                    organization_id = excluded.organization_id,
-                    read_only = excluded.read_only,
-                    manage = excluded.manage,
-                    hide_passwords = excluded.hide_passwords,
-                    collection_type = excluded.collection_type,
-                    encrypted_name = excluded.encrypted_name
                 """,
                 new
                 {
                     UserId = _userIdStr,
                     CollectionId = dto.Id.ToString(),
-                    OrganizationId = dto.OrganizationId?.ToString(),
+                    OrganizationId = dto.OrganizationId.IsEmpty
+                        ? null
+                        : dto.OrganizationId.ToString(),
                     ReadOnly = dto.ReadOnly ? 1 : 0,
                     Manage = dto.Manage ? 1 : 0,
                     HidePasswords = dto.HidePasswords ? 1 : 0,
@@ -88,31 +135,32 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
         if (ciphers.Length == 0)
             return;
 
+        Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+
         foreach (ref readonly var dto in ciphers)
         {
+            var cipherId = dto.Id.ToString();
             var rowId = Connection.ExecuteScalar<long>(
                 """
-                INSERT INTO ciphers (
+                INSERT INTO vault_cipher (
                     user_id,
                     cipher_id,
                     organization_id,
-                    folder_id,
                     cipher_type,
                     revision_date_unix_ms,
                     creation_date_unix_ms,
                     deleted_date_unix_ms,
                     archived_date_unix_ms,
-                    favorite,
+                    is_favorite,
                     reprompt,
-                    edit,
-                    view_password,
-                    encrypted_key,
-                    payload)
+                    can_edit,
+                    can_view_password,
+                    encrypted_cipher_key,
+                    encrypted_payload)
                 VALUES (
                     @UserId,
                     @CipherId,
                     @OrganizationId,
-                    @FolderId,
                     @CipherType,
                     @RevisionDateUnixMs,
                     @CreationDateUnixMs,
@@ -124,28 +172,15 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @ViewPassword,
                     @EncryptedKey,
                     zeroblob(@Size))
-                ON CONFLICT (user_id, cipher_id) DO UPDATE SET
-                    organization_id = excluded.organization_id,
-                    folder_id = excluded.folder_id,
-                    cipher_type = excluded.cipher_type,
-                    revision_date_unix_ms = excluded.revision_date_unix_ms,
-                    creation_date_unix_ms = excluded.creation_date_unix_ms,
-                    deleted_date_unix_ms = excluded.deleted_date_unix_ms,
-                    archived_date_unix_ms = excluded.archived_date_unix_ms,
-                    favorite = excluded.favorite,
-                    reprompt = excluded.reprompt,
-                    edit = excluded.edit,
-                    view_password = excluded.view_password,
-                    encrypted_key = excluded.encrypted_key,
-                    payload = zeroblob(@Size)
                 RETURNING row_id
                 """,
                 new
                 {
                     UserId = _userIdStr,
-                    CipherId = dto.Id.ToString(),
-                    OrganizationId = dto.OrganizationId?.ToString(),
-                    FolderId = dto.FolderId?.ToString(),
+                    CipherId = cipherId,
+                    OrganizationId = dto.OrganizationId.IsEmpty
+                        ? null
+                        : dto.OrganizationId.ToString(),
                     CipherType = (int)dto.CipherType,
                     RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
                     CreationDateUnixMs = dto.CreationDate.ToUnixTimeMilliseconds(),
@@ -155,29 +190,70 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     Reprompt = dto.Reprompt ? 1 : 0,
                     Edit = dto.Edit ? 1 : 0,
                     ViewPassword = dto.ViewPassword ? 1 : 0,
-                    EncryptedKey = dto.EncryptedKey?.ToByteArray(),
+                    EncryptedKey = dto.EncryptedKey.IsEmpty
+                        ? null
+                        : dto.EncryptedKey.ToByteArray(),
                     Size = dto.Data.Length
                 },
                 transaction: Transaction);
 
-            WriteBlob("ciphers", rowId, dto.Data);
+            WritePayloadBlob(rowId, dto.Data);
+            WriteCipherAssignments(cipherId, dto.FolderId, dto.CollectionIds);
         }
     }
 
-    public void DeleteVaultData()
+    private void WriteCipherAssignments(string cipherId, FolderId folderId, CollectionId[] collectionIds)
     {
-        const string sql = """
-                           DELETE FROM ciphers     WHERE user_id = @UserId;
-                           DELETE FROM collections WHERE user_id = @UserId;
-                           DELETE FROM folders     WHERE user_id = @UserId;
-                           """;
+        Connection.Execute(
+            """
+            DELETE FROM vault_cipher_collection WHERE user_id = @UserId AND cipher_id = @CipherId;
+            DELETE FROM vault_cipher_folder WHERE user_id = @UserId AND cipher_id = @CipherId;
+            """,
+            new { UserId = _userIdStr, CipherId = cipherId },
+            transaction: Transaction);
 
-        Connection.Execute(sql, new { UserId = _userIdStr }, transaction: Transaction);
+        if (!folderId.IsEmpty)
+        {
+            Connection.Execute(
+                """
+                INSERT INTO vault_cipher_folder (user_id, cipher_id, folder_id)
+                VALUES (@UserId, @CipherId, @FolderId)
+                """,
+                new
+                {
+                    UserId = _userIdStr,
+                    CipherId = cipherId,
+                    FolderId = folderId.ToString()
+                },
+                transaction: Transaction);
+        }
+
+        if (collectionIds.Length == 0)
+            return;
+
+        foreach (var collectionId in collectionIds)
+        {
+            if (collectionId.IsEmpty)
+                continue;
+
+            Connection.Execute(
+                """
+                INSERT OR IGNORE INTO vault_cipher_collection (user_id, cipher_id, collection_id)
+                VALUES (@UserId, @CipherId, @CollectionId)
+                """,
+                new
+                {
+                    UserId = _userIdStr,
+                    CipherId = cipherId,
+                    CollectionId = collectionId.ToString()
+                },
+                transaction: Transaction);
+        }
     }
 
-    private void WriteBlob(string table, long rowId, ReadOnlySpan<byte> data)
+    private void WritePayloadBlob(long rowId, ReadOnlySpan<byte> data)
     {
-        using var blob = new SqliteBlob(Connection, table, "payload", rowId);
+        using var blob = new SqliteBlob(Connection, "vault_cipher", "encrypted_payload", rowId);
         blob.Write(data);
     }
 }

@@ -21,21 +21,22 @@ internal sealed class SshKeyProvider(
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
-    public async Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
+    public Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {
-        if (!await WaitForVaultWorkspaceAsync(token))
-            return SshIdentityQueryResult.Denied;
+        //TODO implement userDialogClient.Unlock to ask user to unlock vault if it's locked instead of just denying the request
+        if (!vaultWorkspace.IsOpen)
+            return Task.FromResult(SshIdentityQueryResult.Denied);
 
         var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
             .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
             .ToList();
 
-        return SshIdentityQueryResult.Success(data);
+        return Task.FromResult(SshIdentityQueryResult.Success(data));
     }
 
     public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!await WaitForVaultWorkspaceAsync(token) || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
+        if (!vaultWorkspace.IsOpen || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
@@ -55,26 +56,6 @@ internal sealed class SshKeyProvider(
         var signedData = privateKey.Sign(request.Data);
 
         return new SshSignatureResult(OpenSshEd25519Key.AlgorithmName, signedData);
-    }
-
-    private async Task<bool> WaitForVaultWorkspaceAsync(CancellationToken token)
-    {
-        if (vaultWorkspace.IsOpen)
-            return true;
-
-        uiProcessLauncher.Activate();
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-        cts.CancelAfter(TimeSpan.FromSeconds(45));
-
-        try
-        {
-            await vaultWorkspace.WaitUntilOpened(cts.Token);
-            return vaultWorkspace.IsOpen;
-        }
-        catch (OperationCanceledException) when (!token.IsCancellationRequested)
-        {
-            return false;
-        }
     }
 
     private SshKeyVaultCipher? GetShhCipher(ReadOnlyMemory<byte> publicKeyBlob)

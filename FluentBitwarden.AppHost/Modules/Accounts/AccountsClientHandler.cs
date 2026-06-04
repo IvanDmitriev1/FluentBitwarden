@@ -11,6 +11,7 @@ using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts;
 
+[Fody.ConfigureAwait(false)]
 internal sealed class AccountsClientHandler(
     IStoredAccountStore accountStore,
     IAccountUnlockService accountUnlockService,
@@ -34,15 +35,14 @@ internal sealed class AccountsClientHandler(
     public ValueTask<AccountLoginOutcome> LoginAsync(AccountLoginRequest request,
         CancellationToken cancellationToken = default) => accountLoginService.LoginAsync(request, cancellationToken);
 
-    public ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request,
+    public async ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request,
         CancellationToken cancellationToken = default)
     {
         var result = accountUnlockService.Unlock(request);
-        if (result is AccountUnlockOutcome.Success)
-        {
-            vaultWorkspace.Open(unlockedAccountAccessor.UserKey);
-        }
+        if (result is not AccountUnlockOutcome.Success)
+            return result;
 
-        return ValueTask.FromResult(result);
+        await vaultWorkspace.OpenAsync(unlockedAccountAccessor.UserKey, cancellationToken);
+        return result;
     }
 }

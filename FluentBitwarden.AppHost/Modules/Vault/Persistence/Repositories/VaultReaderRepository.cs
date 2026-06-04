@@ -20,7 +20,30 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
                 folder_id,
                 revision_date_unix_ms,
                 encrypted_name
-            FROM folders
+            FROM vault_folder
+            WHERE user_id = @UserId
+            ORDER BY row_id;
+            """,
+            new { UserId = userId.ToString() },
+            transaction: Transaction);
+
+        return rows.Select(static row => ToDto(row)).ToArray();
+    }
+
+    public VaultOrganizationDto[] GetAllOrganizations(UserId userId)
+    {
+        var rows = Connection.Query<OrganizationRow>(
+            """
+            SELECT
+                organization_id,
+                organization_user_id,
+                organization_name,
+                is_enabled,
+                use_key_connector,
+                member_status,
+                member_type,
+                encrypted_organization_key
+            FROM vault_organization
             WHERE user_id = @UserId
             ORDER BY row_id;
             """,
@@ -37,12 +60,12 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             SELECT
                 collection_id,
                 organization_id,
-                read_only,
-                manage,
+                is_read_only,
+                can_manage,
                 hide_passwords,
                 collection_type,
                 encrypted_name
-            FROM collections
+            FROM vault_collection
             WHERE user_id = @UserId
             ORDER BY row_id;
             """,
@@ -54,55 +77,81 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
 
     public void ReadAllCiphers<TState>(UserId userId, TState stateObj, CipherVisitor<TState> onCipher)
     {
+        var userIdString = userId.ToString();
+        var collectionIdsByCipherId = GetCollectionIdsByCipherId(userIdString);
         var cipherRows = Connection.Query<CipherRow>(
             """
             SELECT
-                row_id,
-                cipher_id,
-                organization_id,
-                folder_id,
-                encrypted_key,
-                cipher_type,
-                revision_date_unix_ms,
-                creation_date_unix_ms,
-                deleted_date_unix_ms,
-                archived_date_unix_ms,
-                favorite,
-                reprompt,
-                edit,
-                view_password
-            FROM ciphers
-            WHERE user_id = @UserId
-            ORDER BY row_id;
+                vc.row_id,
+                vc.cipher_id,
+                vc.organization_id,
+                vcf.folder_id,
+                vc.encrypted_cipher_key,
+                vc.cipher_type,
+                vc.revision_date_unix_ms,
+                vc.creation_date_unix_ms,
+                vc.deleted_date_unix_ms,
+                vc.archived_date_unix_ms,
+                vc.is_favorite,
+                vc.reprompt,
+                vc.can_edit,
+                vc.can_view_password
+            FROM vault_cipher vc
+            LEFT JOIN vault_cipher_folder vcf
+                ON vcf.user_id = vc.user_id
+                AND vcf.cipher_id = vc.cipher_id
+            WHERE vc.user_id = @UserId
+            ORDER BY vc.row_id;
             """,
-            new { UserId = userId.ToString() },
+            new { UserId = userIdString },
             transaction: Transaction);
 
 
         int? bufferLength = Connection.ExecuteScalar<int?>(
             """
-            SELECT MAX(length(payload))
-            FROM ciphers
+            SELECT MAX(length(encrypted_payload))
+            FROM vault_cipher
             WHERE user_id = @UserId
             """,
-            new { UserId = userId.ToString() },
+            new { UserId = userIdString },
             transaction: Transaction);
 
         if (bufferLength is null)
             return;
-        
+
         using var bufferOwner = SpanOwner<byte>.Allocate(bufferLength.Value);
 
         foreach (var row in cipherRows)
         {
-            using var blob = new SqliteBlob(Connection, "ciphers", "payload", row.RowId, readOnly: true);
+            using var blob = new SqliteBlob(Connection, "vault_cipher", "encrypted_payload", row.RowId, readOnly: true);
             bufferOwner.Span.Clear();
             int bytesWritten = blob.Read(bufferOwner.Span);
 
-            var dto = ToDto(row);
+            collectionIdsByCipherId.TryGetValue(row.CipherId, out var collectionIds);
+            var dto = ToDto(row, collectionIds ?? []);
             onCipher.Invoke(stateObj, ref dto, bufferOwner.Span[..bytesWritten]);
         }
     }
 
+    private Dictionary<string, CollectionId[]> GetCollectionIdsByCipherId(string userId)
+    {
+        var rows = Connection.Query<CipherCollectionRow>(
+            """
+            SELECT
+                cipher_id,
+                collection_id
+            FROM vault_cipher_collection
+            WHERE user_id = @UserId
+            ORDER BY cipher_id, collection_id;
+            """,
+            new { UserId = userId },
+            transaction: Transaction);
 
+        return rows
+            .GroupBy(static row => row.CipherId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                static group => group.Key,
+                static group => group.Select(static row => CollectionId.Parse(row.CollectionId)).ToArray(),
+                StringComparer.OrdinalIgnoreCase);
+    }
 }

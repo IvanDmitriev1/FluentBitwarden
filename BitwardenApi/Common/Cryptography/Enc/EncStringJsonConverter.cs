@@ -11,7 +11,7 @@ public sealed class EncStringJsonConverter : JsonConverter<EncString>
         JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null)
-            throw new JsonException("Expected non-null EncString.");
+            return EncString.Empty;
 
         return EncString.CreateFrom(ref reader);
     }

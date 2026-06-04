@@ -21,7 +21,7 @@ public static partial class VaultListSelectionBehavior
 
         listView.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
         {
-            listView.ScrollIntoView(item, ScrollIntoViewAlignment.Default);
+            listView.ScrollIntoView(item, ScrollIntoViewAlignment.Leading);
         });
     }
 }

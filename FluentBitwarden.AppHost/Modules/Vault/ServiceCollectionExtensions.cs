@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.AppHost.Modules.Vault.Synchronization;
-using FluentBitwarden.AppHost.Modules.Vault.Workspace;
+﻿using FluentBitwarden.AppHost.Modules.Vault.Workspace;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.Contracts.Infrastructure.Ipc;

@@ -7,7 +7,7 @@ using CommunityToolkit.HighPerformance.Buffers;
 namespace BitwardenApi.Cryptography.Enc;
 
 [JsonConverter(typeof(EncStringJsonConverter))]
-public readonly struct EncString
+public readonly struct EncString : IEquatable<EncString>
 {
     private const int HeaderLength = 13;
     private const int MaxStackByteCount = 512;
@@ -23,14 +23,42 @@ public readonly struct EncString
 
     public EncString()
     {
-        throw new InvalidOperationException("EncString is not constructable");
+        _bytes = [];
+        _layout = default;
     }
 
     public int MaxPlaintextByteCount => _layout.DataLength;
+    public bool IsEmpty => _bytes is not { Length: > 0 };
+    public byte[] ToByteArray() => _bytes ?? [];
 
-    public byte[] ToByteArray() => _bytes;
+    public bool Equals(EncString other)
+    {
+        if (IsEmpty)
+            return other.IsEmpty;
 
-    public static readonly EncString Empty = new EncString([], new SegmentLayout());
+        return !other.IsEmpty && _bytes.AsSpan().SequenceEqual(other._bytes);
+    }
+    public override bool Equals(object? obj) => obj is EncString other && Equals(other);
+    public override int GetHashCode()
+    {
+        if (IsEmpty)
+            return 0;
+
+        var hashCode = new HashCode();
+        foreach (byte value in _bytes)
+        {
+            hashCode.Add(value);
+        }
+
+        return hashCode.ToHashCode();
+    }
+    public static bool operator ==(EncString left, EncString right) => left.Equals(right);
+    public static bool operator !=(EncString left, EncString right) => !left.Equals(right);
+
+    internal EncStringParts CreateParts() => _layout.CreateParts(_bytes);
+
+
+    public static readonly EncString Empty = new();
 
     public static EncString FromBytes(byte[] packedBytes)
     {
@@ -75,57 +103,7 @@ public readonly struct EncString
             SegmentLayout.CreatePacked(parts.Type, parts.Iv.Length, parts.Data.Length, parts.Mac.Length));
     }
 
-    public static string Decode(ReadOnlySpan<byte> encodedUtf8, ReadOnlySpan<byte> key)
-    {
-        SegmentLayout layout = ParseEncodedLayoutOrThrow(encodedUtf8);
-        using var dataOwner = SpanOwner<byte>.Allocate(layout.DataLength);
-
-        Span<byte> dataBuffer = dataOwner.Span;
-        Span<byte> ivBuffer = layout.HasIv
-            ? stackalloc byte[layout.IvLength]
-            : default;
-        Span<byte> macBuffer = layout.HasMac
-            ? stackalloc byte[layout.MacLength]
-            : default;
-
-        EncStringParts parts = DecodeEncodedSegments(encodedUtf8, layout, dataBuffer, ivBuffer, macBuffer);
-        return AesCbcHmac.Decrypt(parts, key);
-    }
-
-    public static int DecodeInPlace(Span<byte> encodedUtf8, ReadOnlySpan<byte> key)
-    {
-        SegmentLayout layout = ParseEncodedLayoutOrThrow(encodedUtf8);
-
-        Span<byte> dataBuffer = encodedUtf8[..layout.DataLength];
-        Span<byte> ivBuffer = layout.HasIv
-            ? stackalloc byte[layout.IvLength]
-            : default;
-        Span<byte> macBuffer = layout.HasMac
-            ? stackalloc byte[layout.MacLength]
-            : default;
-
-        EncStringParts parts = DecodeEncodedSegments(encodedUtf8, layout, dataBuffer, ivBuffer, macBuffer);
-
-        int bytesWritten = AesCbcHmac.DecryptTo(parts, key, dataBuffer);
-        return bytesWritten;
-    }
-
-    public string Decode(ReadOnlySpan<byte> key)
-    {
-        if (_bytes.Length == 0)
-            return string.Empty;
-
-        EncStringParts parts = _layout.CreateParts(_bytes);
-        return AesCbcHmac.Decrypt(parts, key);
-    }
-
-    public int DecodeTo(ReadOnlySpan<byte> key, Span<byte> destination)
-    {
-        EncStringParts parts = _layout.CreateParts(_bytes);
-        return AesCbcHmac.DecryptTo(parts, key, destination);
-    }
-
-    private static SegmentLayout ParseEncodedLayoutOrThrow(ReadOnlySpan<byte> encodedUtf8)
+    internal static SegmentLayout ParseEncodedLayoutOrThrow(ReadOnlySpan<byte> encodedUtf8)
     {
         if (!TryParseEncodedLayout(encodedUtf8, out var layout))
             throw new FormatException("The provided value is not a valid EncString.");
@@ -133,7 +111,7 @@ public readonly struct EncString
         return layout;
     }
 
-    private static EncStringParts DecodeEncodedSegments(
+    internal static EncStringParts DecodeEncodedSegments(
         ReadOnlySpan<byte> encodedUtf8,
         in SegmentLayout layout,
         Span<byte> dataBuffer,
@@ -287,7 +265,7 @@ public readonly struct EncString
         return layout.DataLength > 0;
     }
 
-    private readonly record struct SegmentLayout(
+    internal readonly record struct SegmentLayout(
         EncStringType Type,
         int DataOffset,
         int DataLength,
@@ -306,13 +284,10 @@ public readonly struct EncString
             return new SegmentLayout(type, dataOffset, dataLength, HeaderLength, ivLength, macOffset, macLength);
         }
 
-        public EncStringParts CreateParts(ReadOnlySpan<byte> bytes)
-        {
-            return new EncStringParts(
-                Type,
-                bytes.Slice(DataOffset, DataLength),
-                bytes.Slice(IvOffset, IvLength),
-                bytes.Slice(MacOffset, MacLength));
-        }
+        public EncStringParts CreateParts(ReadOnlySpan<byte> bytes) => new(
+            Type,
+            bytes.Slice(DataOffset, DataLength),
+            bytes.Slice(IvOffset, IvLength),
+            bytes.Slice(MacOffset, MacLength));
     }
 }

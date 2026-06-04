@@ -7,6 +7,9 @@ namespace BitwardenApi.Vault.Serialization;
     JsonSerializerDefaults.Web,
     GenerationMode = JsonSourceGenerationMode.Metadata)]
 [JsonSerializable(typeof(VaultSyncResponse))]
+[JsonSerializable(typeof(VaultProfileDto))]
+[JsonSerializable(typeof(VaultOrganizationDto))]
+[JsonSerializable(typeof(List<VaultOrganizationDto>))]
 [JsonSerializable(typeof(List<VaultFolderDto>))]
 [JsonSerializable(typeof(List<VaultCollectionDto>))]
 [JsonSerializable(typeof(List<VaultCipherDto>))]

@@ -5,9 +5,7 @@ internal interface IVaultWorkspace
     bool IsOpen { get; }
     UserId OpenedForUserId { get; }
 
-    void Open(DecryptedUserKey userKey);
+    ValueTask OpenAsync(DecryptedUserKey userKey, CancellationToken cancellationToken);
     void Reload(DecryptedUserKey userKey);
     void Close();
-
-    Task WaitUntilOpened(CancellationToken  cancellationToken);
 }

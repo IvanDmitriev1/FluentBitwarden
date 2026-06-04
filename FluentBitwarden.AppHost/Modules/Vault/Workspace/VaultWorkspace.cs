@@ -2,46 +2,47 @@
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
-internal sealed class VaultWorkspace(VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
+[Fody.ConfigureAwait(false)]
+internal sealed class VaultWorkspace(
+    IVaultSynchronizer vaultSynchronizer, 
+    VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
 {
-    private TaskCompletionSource _waitUntilOpen = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private LoadedVaultData _vaultData = new([], [], []);
+    private LoadedVaultData _vaultData = new([], [], [], []);
 
     public UserId OpenedForUserId { get; private set; } = UserId.Empty;
     public bool IsOpen => OpenedForUserId != UserId.Empty;
 
-    public void Open(DecryptedUserKey userKey)
+    public async ValueTask OpenAsync(DecryptedUserKey userKey, CancellationToken cancellationToken)
     {
-        var data = vaultLoader.Load(userKey);
-        Volatile.Write(ref _vaultData, data);
+        Reload(userKey);
 
-        OpenedForUserId = userKey.UserId;
-        _waitUntilOpen.SetResult();
+        var data = Volatile.Read(ref _vaultData);
+        if (data.CiphersById.Count > 0)
+            return;
+
+        var result = await vaultSynchronizer.SyncAsync(userKey, force: true, cancellationToken);
+        if (result == VaultSyncResult.Synced)
+        {
+            Reload(userKey);
+        }
     }
 
     public void Reload(DecryptedUserKey userKey)
     {
         var data = vaultLoader.Load(userKey);
         Volatile.Write(ref _vaultData, data);
-
         OpenedForUserId = userKey.UserId;
     }
 
     public void Close()
     {
-        Volatile.Write(ref _vaultData, new LoadedVaultData([], [], []));
+        Volatile.Write(ref _vaultData, new LoadedVaultData([], [], [], []));
         OpenedForUserId = UserId.Empty;
-
-        _waitUntilOpen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     }
-
-    public Task WaitUntilOpened(CancellationToken cancellationToken) =>
-        IsOpen
-            ? Task.CompletedTask
-            : _waitUntilOpen.Task.WaitAsync(cancellationToken);
 
     public VaultCipher? GetCipher(CipherId id)
     {
@@ -61,8 +62,16 @@ internal sealed class VaultWorkspace(VaultLoader vaultLoader) : IVaultWorkspace,
         if (!query.IncludeDeleted)
             result = result.Where(static x => x.DeletedDate is null);
 
-        if (query.FolderId != FolderId.Empty)
+        if (!query.FolderId.IsEmpty)
             result = result.Where(x => x.FolderId == query.FolderId);
+
+        if (!query.CollectionId.IsEmpty)
+        {
+            if (!data.CipherIdsByCollectionId.TryGetValue(query.CollectionId, out var cipherIds))
+                return [];
+
+            result = result.Where(x => cipherIds.Contains(x.Id));
+        }
 
         if (query.CipherType is not null)
             result = result.Where(x => x.Type == query.CipherType.Value);

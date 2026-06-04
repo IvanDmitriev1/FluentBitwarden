@@ -30,7 +30,7 @@ internal static class EncryptedJsonValueReader
 
         try
         {
-            bytesWritten = EncString.DecodeInPlace(buffer[..bytesWritten], key);
+            bytesWritten = buffer[..bytesWritten].DecodeEncStringInPlace(key);
             return parser(buffer[..bytesWritten]);
         }
         finally

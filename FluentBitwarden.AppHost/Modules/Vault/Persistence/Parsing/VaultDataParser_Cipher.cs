@@ -1,27 +1,55 @@
 using BitwardenApi.OpenSsh;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
+using CommunityToolkit.HighPerformance.Buffers;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 public static partial class VaultDataParser
 {
-    public static VaultCipher ParseAndDecryptCipher(ref readonly VaultCipherDto dto, ReadOnlySpan<byte> payload, DecryptedUserKey decryptedUserKey)
+    public static VaultCipher ParseAndDecryptCipher(
+        ref readonly VaultCipherDto dto,
+        ReadOnlySpan<byte> payload,
+        scoped ReadOnlySpan<byte> baseKey)
     {
         var cipher = CreateCipher(in dto);
         var reader = CreateObjectReader(payload);
 
-        Span<byte> keyBuffer = dto.EncryptedKey is null
-            ? Span<byte>.Empty
-            : stackalloc byte[64];
+        if (dto.EncryptedKey.IsEmpty)
+        {
+            return ParseWithKey(in dto, cipher, ref reader, baseKey);
+        }
 
-        dto.EncryptedKey?.DecodeTo(decryptedUserKey.Key, keyBuffer);
+        var encryptedKey = dto.EncryptedKey;
+        bool useStackBuffer = encryptedKey.MaxPlaintextByteCount <= 256;
 
-        ReadOnlySpan<byte> decryptionKey = dto.EncryptedKey is null
-            ? decryptedUserKey.Key
-            : keyBuffer;
+        using var keyBufferOwner = useStackBuffer
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(encryptedKey.MaxPlaintextByteCount);
 
+        Span<byte> keyBuffer = useStackBuffer
+            ? stackalloc byte[encryptedKey.MaxPlaintextByteCount]
+            : keyBufferOwner.Span;
+
+        try
+        {
+            int bytesWritten = encryptedKey.DecodeTo(baseKey, keyBuffer);
+            return ParseWithKey(in dto, cipher, ref reader, keyBuffer[..bytesWritten]);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(keyBuffer);
+        }
+    }
+
+    private static VaultCipher ParseWithKey(
+        ref readonly VaultCipherDto dto,
+        VaultCipher cipher,
+        ref Utf8JsonReader reader,
+        scoped ReadOnlySpan<byte> decryptionKey)
+    {
         return dto.CipherType switch
         {
             CipherType.Login => ParseLoginCipher((LoginVaultCipher)cipher, ref reader, decryptionKey),
@@ -178,7 +206,7 @@ public static partial class VaultDataParser
         CipherType.Login => new LoginVaultCipher
         {
             Id = dto.Id,
-            FolderId = dto.FolderId ?? FolderId.Empty,
+            FolderId = dto.FolderId,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -189,7 +217,7 @@ public static partial class VaultDataParser
         CipherType.SecureNote => new SecureNoteVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId ?? FolderId.Empty,
+            FolderId = dto.FolderId,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -200,7 +228,7 @@ public static partial class VaultDataParser
         CipherType.Card => new CardVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId ?? FolderId.Empty,
+            FolderId = dto.FolderId,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -211,7 +239,7 @@ public static partial class VaultDataParser
         CipherType.Identity => new IdentityVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId ?? FolderId.Empty,
+            FolderId = dto.FolderId,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,
@@ -222,7 +250,7 @@ public static partial class VaultDataParser
         CipherType.SshKey => new SshKeyVaultCipher()
         {
             Id = dto.Id,
-            FolderId = dto.FolderId ?? FolderId.Empty,
+            FolderId = dto.FolderId,
             Name = string.Empty,
             Favorite = dto.Favorite,
             Reprompt = dto.Reprompt,

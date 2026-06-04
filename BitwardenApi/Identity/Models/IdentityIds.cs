@@ -28,4 +28,7 @@ public readonly partial struct AuthRequestId;
 
 [MemoryPackable]
 [StronglyTypedId(Template.Guid)]
-public readonly partial struct OrganizationId;
+public readonly partial struct OrganizationId
+{
+    public bool IsEmpty => Value == Guid.Empty;
+}

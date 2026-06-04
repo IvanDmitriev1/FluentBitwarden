@@ -21,6 +21,10 @@ public sealed partial class VaultCipherQuery : IIpcRequestMessage
 
     [StronglyTypedIdFormatter<FolderId>]
     public FolderId FolderId { get; init; } = FolderId.Empty;
+
+    [StronglyTypedIdFormatter<CollectionId>]
+    public CollectionId CollectionId { get; init; } = CollectionId.Empty;
+
     public bool FavoritesOnly { get; init; }
     public bool IncludeDeleted { get; init; }
     public bool IncludeArchived { get; init; }
