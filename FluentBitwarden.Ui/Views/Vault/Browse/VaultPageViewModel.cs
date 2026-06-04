@@ -93,7 +93,7 @@ public sealed partial class VaultPageViewModel(
 
     private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
     {
-        if (_hasInitialized || !NetworkInformation.HasInternetAccess)
+        if (_hasInitialized)
             return;
 
         _hasInitialized = true;
@@ -110,20 +110,7 @@ public sealed partial class VaultPageViewModel(
         SelectedCipher = FilteredCiphers.FirstOrDefault(c => c.Id == state.SelectedCipherId);
         _applyingParameter = false;
 
-        var result = await vaultClient.SyncVaultAsync(cancellationToken);
-        if (result != VaultSyncResult.Synced)
-            return;
-
-        Folders.ReplaceWith(await vaultClient.GetFoldersAsync(cancellationToken));
-
-        var selectedCipherId = SelectedCipher?.Id;
-        await QueryCiphersAsync();
-
-        SelectedCipher = selectedCipherId is null
-            ? null
-            : FilteredCiphers.FirstOrDefault(cipher => cipher.Id == selectedCipherId);
-
-        _ = PreloadSiteIconsAsync();
+        await SyncVault(cancellationToken);
     }
 
     private async Task QueryCiphersAsync()
@@ -139,6 +126,27 @@ public sealed partial class VaultPageViewModel(
         FilteredCiphers = ciphers;
     }
 
+    private async Task SyncVault(CancellationToken cancellationToken)
+    {
+        var result = await vaultClient.SyncVaultAsync(cancellationToken);
+        if (result != VaultSyncResult.Synced)
+            return;
+
+        Folders.ReplaceWith(await vaultClient.GetFoldersAsync(cancellationToken));
+
+        var selectedCipherId = SelectedCipher?.Id;
+        await QueryCiphersAsync();
+
+        SelectedCipher = selectedCipherId is null
+            ? null
+            : FilteredCiphers.FirstOrDefault(cipher => cipher.Id == selectedCipherId);
+
+        if (NetworkInformation.HasInternetAccess)
+        {
+            _ = PreloadSiteIconsAsync();
+        }
+    }
+    
     private Task PreloadSiteIconsAsync()
     {
         var urls = FilteredCiphers

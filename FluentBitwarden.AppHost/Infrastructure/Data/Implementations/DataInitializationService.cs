@@ -76,7 +76,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             row_id INTEGER PRIMARY KEY,
             user_id TEXT NOT NULL COLLATE NOCASE REFERENCES account_profiles(user_id) ON DELETE CASCADE CHECK (length(user_id) > 0),
             collection_id TEXT NOT NULL COLLATE NOCASE CHECK (length(collection_id) > 0),
-            organization_id TEXT NULL COLLATE NOCASE CHECK (organization_id IS NULL OR length(organization_id) > 0),
+            organization_id TEXT NOT NULL COLLATE NOCASE CHECK (length(organization_id) > 0),
             is_read_only INTEGER NOT NULL CHECK (is_read_only IN (0, 1)),
             can_manage INTEGER NOT NULL CHECK (can_manage IN (0, 1)),
             hide_passwords INTEGER NOT NULL CHECK (hide_passwords IN (0, 1)),
@@ -84,6 +84,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             encrypted_name BLOB NOT NULL CHECK (length(encrypted_name) > 0),
         
             UNIQUE (user_id, collection_id),
+            UNIQUE (user_id, organization_id, collection_id),
 
             FOREIGN KEY (user_id, organization_id) REFERENCES vault_organization(user_id, organization_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
         );
@@ -106,6 +107,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             encrypted_payload BLOB NOT NULL CHECK (length(encrypted_payload) > 0),
         
             UNIQUE (user_id, cipher_id),
+            UNIQUE (user_id, organization_id, cipher_id),
 
             FOREIGN KEY (user_id, organization_id) REFERENCES vault_organization(user_id, organization_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
         );
@@ -131,12 +133,6 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
             FOREIGN KEY (user_id, cipher_id) REFERENCES vault_cipher(user_id, cipher_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
             FOREIGN KEY (user_id, collection_id) REFERENCES vault_collection(user_id, collection_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
         );
-
-        CREATE INDEX IF NOT EXISTS ix_vault_collection_organization
-            ON vault_collection(user_id, organization_id);
-
-        CREATE INDEX IF NOT EXISTS ix_vault_cipher_organization
-            ON vault_cipher(user_id, organization_id);
         """;
 
     public void Initialize(CancellationToken cancellationToken = default)
@@ -146,7 +142,7 @@ internal sealed class DataInitializationService(ISqliteConnectionFactory connect
                            PRAGMA foreign_keys = ON;
                            PRAGMA journal_mode = WAL;
                            PRAGMA synchronous = NORMAL;
-                           PRAGMA busy_timeout = 5000;
+                           PRAGMA busy_timeout = 1000;
                            """);
 
         using var transaction = connection.BeginTransaction();
