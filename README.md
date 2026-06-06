@@ -1,3 +1,5 @@
+[![Build](https://github.com/IvanDmitriev1/FluentBitwarden/actions/workflows/build.yml/badge.svg)](https://github.com/IvanDmitriev1/FluentBitwarden/actions/workflows/build.yml)
+
 # FluentBitwarden
 
 FluentBitwarden is a work-in-progress native Windows Bitwarden client built with WinUI 3 and .NET 10. The project focuses on a Fluent-style desktop vault experience with local encrypted account data, offline vault caching, and a Windows passkey authenticator integration.
