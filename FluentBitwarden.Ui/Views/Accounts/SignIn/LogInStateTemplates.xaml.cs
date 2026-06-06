@@ -11,7 +11,7 @@ public partial class LogInStateTemplates : ResourceDictionary
     }
 }
 
-public sealed class LogInStateTemplatesSelector : DataTemplateSelector
+public sealed partial class LogInStateTemplatesSelector : DataTemplateSelector
 {
     public DataTemplate? EmailLogInTemplate { get; set; }
     public DataTemplate? PasswordLogInTemplate { get; set; }

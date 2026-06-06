@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <RootNamespace>BitwardenApi</RootNamespace>
-    <IsAotCompatible>true</IsAotCompatible>
-    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 
   <ItemGroup>

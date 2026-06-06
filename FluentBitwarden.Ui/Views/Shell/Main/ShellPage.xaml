@@ -43,7 +43,6 @@
             QueryIcon="Find"
             QuerySubmitted="AutoSuggestBox_OnQuerySubmitted"
             TextChanged="AutoSuggestBox_OnTextChanged"
-            TextMemberPath="Name"
             UpdateTextOnSelect="False" />
     </attachedProperties:TitlebarProperties.Content>
 

@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Shared.Controls;
 
-public sealed class MyTitleBar : TitleBar
+public sealed partial class MyTitleBar : TitleBar
 {
     private static readonly Thickness ContentMargin = new(128, 0, 0, 0);
 

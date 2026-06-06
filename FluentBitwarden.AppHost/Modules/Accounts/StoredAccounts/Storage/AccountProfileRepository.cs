@@ -7,7 +7,7 @@ namespace FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Storage;
 
 internal sealed class AccountProfileRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    internal readonly record struct AccountProfileRow(
+    internal sealed record AccountProfileRow(
         string UserId,
         string Email,
         string ApiBase,
@@ -53,7 +53,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                            WHERE user_id = @UserId COLLATE NOCASE;
                            """;
 
-        var row = Connection.QueryFirstOrDefault<AccountProfileRow>(
+        AccountProfileRow? row = Connection.QueryFirstOrDefault<AccountProfileRow>(
             sql,
             new
             {
@@ -61,7 +61,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             },
             transaction: Transaction);
 
-        return row == default ? null : MapToDomain(row);
+        return row is null ? null : MapToDomain(row);
     }
 
     public DateTimeOffset GetLastSyncTime(UserId accountId)
@@ -186,7 +186,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             transaction: Transaction);
     }
 
-    private static AccountProfile MapToDomain(in AccountProfileRow row) => new(
+    private static AccountProfile MapToDomain(AccountProfileRow row) => new(
         UserId: UserId.Parse(row.UserId),
         Email: row.Email,
         Environment: new BitwardenEnvironment(

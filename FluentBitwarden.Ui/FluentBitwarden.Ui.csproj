@@ -9,9 +9,36 @@
 	<WinUISDKReferences>false</WinUISDKReferences>
 	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 	<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
+	<NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup>
+	<!-- Publish Properties -->
+	<PropertyGroup>
+		<PublishReadyToRun Condition="'$(Configuration)' == 'Debug' or '$(SelfContained)' != 'true'">False</PublishReadyToRun>
+		<PublishReadyToRun Condition="'$(Configuration)' != 'Debug' and '$(SelfContained)' == 'true'">True</PublishReadyToRun>
+		<PublishTrimmed Condition="'$(Configuration)' == 'Debug' or '$(SelfContained)' != 'true'">False</PublishTrimmed>
+		<PublishTrimmed Condition="'$(Configuration)' != 'Debug' and '$(SelfContained)' == 'true'">True</PublishTrimmed>
+		<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
+		<UserSecretsId>edb536ff-1bce-4891-af57-fe1708de56cf</UserSecretsId>
+	</PropertyGroup>
+
+	<!-- Partial trimming still needs these roots for WinUI/XAML activation paths such as XamlControlsResources. -->
+	<ItemGroup Condition="'$(PublishTrimmed)' == 'true'">
+		<TrimmerRootAssembly Include="Microsoft.WinUI" />
+		<TrimmerRootAssembly Include="WinUIEx" />
+		<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Manifest Include="$(ApplicationManifest)" />
+	</ItemGroup>
+
+	<ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
@@ -19,16 +46,6 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-  </ItemGroup>
-
-
-	<ItemGroup>
-		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
-	</ItemGroup>
-	
-
-	<ItemGroup>
-    <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
 	<ItemGroup>
@@ -63,21 +80,5 @@
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
 
-<!-- Publish Properties -->
-<PropertyGroup>
-	<PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-	<PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-	<PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-	<PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
-	<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
-	<UserSecretsId>edb536ff-1bce-4891-af57-fe1708de56cf</UserSecretsId>
-</PropertyGroup>
-
-<!-- Partial trimming still needs these roots for WinUI/XAML activation paths such as XamlControlsResources. -->
-<ItemGroup Condition="'$(PublishTrimmed)' == 'true'">
-	<TrimmerRootAssembly Include="Microsoft.WinUI" />
-	<TrimmerRootAssembly Include="WinUIEx" />
-	<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
-</ItemGroup>
 
 </Project>

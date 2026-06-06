@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Data;
 
 namespace FluentBitwarden.Shared.Converters;
 
-internal sealed class StringToUriConverter : IValueConverter
+internal sealed partial class StringToUriConverter : IValueConverter
 {
     public const string DefaultScheme = "https";
 

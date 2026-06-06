@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Views.Vault.Browse.Templates;
 
-public sealed class VaultCipherTemplateSelector : DataTemplateSelector
+public sealed partial class VaultCipherTemplateSelector : DataTemplateSelector
 {
     public DataTemplate? LoginTemplate { get; set; }
     public DataTemplate? SecureNoteTemplate { get; set; }
