@@ -8,4 +8,9 @@
 	<IsAotCompatible>true</IsAotCompatible>
 	<IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
+
+  <PropertyGroup Label="Windows App Project Configurations" Condition="'$(MSBuildProjectExtension)' == '.csproj' and Exists('$(MSBuildProjectDirectory)\app.manifest')">
+    <Configurations Condition="'$(Configurations)' == ''">Debug;Release</Configurations>
+    <Platforms Condition="'$(Platforms)' == ''">x64;ARM64</Platforms>
+  </PropertyGroup>
 </Project>

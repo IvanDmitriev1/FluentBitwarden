@@ -6,8 +6,6 @@
     <RootNamespace>FluentBitwarden</RootNamespace>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<UseWinUI>true</UseWinUI>
-	<Configurations>Debug;Release</Configurations>
-	<Platforms>x64;ARM64</Platforms>
 	<WinUISDKReferences>false</WinUISDKReferences>
 	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 	<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
