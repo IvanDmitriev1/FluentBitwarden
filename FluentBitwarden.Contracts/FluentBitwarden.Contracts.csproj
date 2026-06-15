@@ -1,8 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-	
-  </PropertyGroup>
+  <Import Project="..\FluentBitwarden.WindowsApp.props" />
 
   <ItemGroup>
     <PackageReference Include="ConfigureAwait.Fody" PrivateAssets='All' />

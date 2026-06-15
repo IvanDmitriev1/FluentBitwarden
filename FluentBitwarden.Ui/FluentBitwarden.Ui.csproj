@@ -1,4 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\FluentBitwarden.WindowsApp.props" />
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FluentBitwarden</RootNamespace>
