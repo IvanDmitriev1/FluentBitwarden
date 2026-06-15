@@ -16,8 +16,7 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
     IVaultWorkspace vaultWorkspace,
-    IUserDialogClient userDialogClient,
-    IUiProcessLauncher uiProcessLauncher) : ISshKeyProvider
+    IUserDialogClient userDialogClient) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 

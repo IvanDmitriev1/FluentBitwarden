@@ -45,4 +45,11 @@ public static class IpcMessageTypes
         public const ushort ShowUnlockDialog = 400;
         public const ushort ShowSshDialog = 401;
     }
+
+    public static class Browser
+    {
+        public const ushort GetVaultStatus = 500;
+        public const ushort GetCredentialAvailability = 501;
+        public const ushort GetCredentialFill = 502;
+    }
 }

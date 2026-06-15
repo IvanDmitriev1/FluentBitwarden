@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Modules.Passkey;
 
 namespace FluentBitwarden.Views.Settings.Models;
 
