@@ -52,6 +52,12 @@ public static class AppSettingKeys
             new("passkeys.userVerificationPolicy", SensitiveActionPolicy.RequireUserAction);
     }
 
+    public static class Browser
+    {
+        public static readonly SettingKey<bool> ExtensionEnabledKey =
+            new("browser.extension.enabled", false);
+    }
+
     public static class SshAgent
     {
         public static readonly SettingKey<SensitiveActionPolicy> UserVerificationPolicyKey =

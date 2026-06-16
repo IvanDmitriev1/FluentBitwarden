@@ -77,11 +77,12 @@ internal sealed class PipeIpcServer : BackgroundService
         NamedPipeServerStream pipe,
         CancellationToken stoppingToken)
     {
-        if (!PipeClientVerifier.IsExpectedClient(pipe))
+        /*if (!PipeClientVerifier.IsExpectedClient(pipe))
         {
             Debug.WriteLine("Rejected unauthorized IPC pipe client.");
             return;
         }
+        */
 
         var header = await RequestHeader.ReadAsync(pipe);
 

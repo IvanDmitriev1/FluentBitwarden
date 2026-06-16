@@ -1,4 +1,4 @@
-namespace FluentBitwarden.BrowserHost.Dispatching;
+namespace FluentBitwarden.BrowserHost.Models;
 
 internal sealed record BrowserCredentialFillPayload(
     string? ItemId,

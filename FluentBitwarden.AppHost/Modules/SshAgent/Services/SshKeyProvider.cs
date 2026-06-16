@@ -8,7 +8,7 @@ using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.Ssh;
-using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 

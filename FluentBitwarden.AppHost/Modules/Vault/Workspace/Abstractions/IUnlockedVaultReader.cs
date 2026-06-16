@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Contracts.Modules.Vault.Models;
+﻿using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 

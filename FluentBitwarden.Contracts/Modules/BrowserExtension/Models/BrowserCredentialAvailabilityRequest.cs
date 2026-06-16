@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Browser;
+namespace FluentBitwarden.Contracts.Modules.BrowserExtension.Models;
 
 [MemoryPackable]
 public sealed partial record BrowserCredentialAvailabilityRequest(

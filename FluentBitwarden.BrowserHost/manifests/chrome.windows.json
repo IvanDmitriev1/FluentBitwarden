@@ -1,9 +1,0 @@
-{
-  "name": "com.fluentbitwarden.browserhost",
-  "description": "FluentBitwarden Browser Host",
-  "path": "__BROWSER_HOST_PATH__",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://__CHROME_EXTENSION_ID__/"
-  ]
-}

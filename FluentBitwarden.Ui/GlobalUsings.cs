@@ -8,7 +8,7 @@ global using DependencyPropertyGenerator;
 global using FluentBitwarden.Composition;
 global using FluentBitwarden.Contracts.Infrastructure.Settings;
 global using FluentBitwarden.Contracts.Infrastructure.Shared;
-global using FluentBitwarden.Contracts.Modules.Vault.Models;
+global using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 global using FluentBitwarden.Platform.Windowing;
 global using FluentBitwarden.Shared.Controls;
 global using FluentBitwarden.Shared.Converters;
