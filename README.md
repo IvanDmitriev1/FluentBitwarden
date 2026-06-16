@@ -18,6 +18,7 @@ This repository is an active work in progress. Core sign-in, sync, unlock, and v
 - App settings for theme and lock behavior.
 - Single-instance launch handling and tray icon support.
 - Windows passkey assertion support through a C++/WinRT COM server.
+- Browser extension integration for login and TOTP autofill through browser Native Messaging.
 
 ## Tech Stack
 
@@ -27,6 +28,8 @@ This repository is an active work in progress. Core sign-in, sync, unlock, and v
 - MemoryPack over current-user named pipes for internal IPC.
 - `BitwardenApi` for identity, vault, attachment, and notification backend calls.
 - C++/WinRT COM server.
+- Manifest V3 browser extension built with TypeScript and Vite.
+- Browser Native Messaging through the `FluentBitwarden.BrowseProxy` bridge process.
 
 ## App and IPC Architecture
 
@@ -35,6 +38,7 @@ FluentBitwarden is packaged as a multi-process desktop app. The MSIX package dec
 - `FluentBitwarden.AppHost.exe` is the long-running host process. It enforces the AppHost single instance, owns the tray/message loop, initializes local data, and hosts account, unlock, vault, passkey, Windows Hello, and SSH-agent services.
 - `FluentBitwarden.Ui.exe` is the WinUI presentation process. It enforces its own single instance, owns windows and dialogs, and is launched or foregrounded by the AppHost for the main window or overlay prompts.
 - `FluentBitwarden.ComServer.exe` is the native C++/WinRT WebAuthn plugin COM server. It handles Windows passkey plugin calls, decodes WebAuthn requests, and forwards assertion work to the AppHost.
+- `FluentBitwarden.BrowseProxy.exe` is the browser Native Messaging bridge. Browser extensions launch it as a stdio helper, and it forwards browser credential requests to the AppHost through the shared IPC contracts.
 - `FluentBitwarden.Contracts` contains the shared .NET IPC contracts: message ids, request/response models, named-pipe client/server services, and MemoryPack serialization setup. The COM server mirrors the small binary protocol subset it needs for passkey messages.
 
 ### Pipe Endpoints
