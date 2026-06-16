@@ -138,7 +138,7 @@
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Spacing="24">
-                    <vaultControls:SiteIcon
+                    <sharedControls:SiteIcon
                         FallbackGlyph="{x:Bind models:CipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
                         Size="36"
                         Uri="{x:Bind models:CipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />

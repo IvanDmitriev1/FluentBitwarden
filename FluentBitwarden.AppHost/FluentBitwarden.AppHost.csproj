@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\FluentBitwarden.WindowsApp.props" />
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-	<Configurations>Debug;Release</Configurations>
-	<Platforms>x64;ARM64</Platforms>
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
   </PropertyGroup>
@@ -28,6 +28,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" />
     <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />

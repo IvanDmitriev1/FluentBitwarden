@@ -6,7 +6,9 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  IgnorableNamespaces="uap rescap com desktop">
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:virtualization="http://schemas.microsoft.com/appx/manifest/virtualization/windows10"
+  IgnorableNamespaces="uap rescap com desktop desktop6 virtualization">
 
 	<Identity
 	  Name="9364d1bf-9e77-4283-8e47-507c26e4b31c"
@@ -21,6 +23,17 @@
 		<DisplayName>FluentBitwarden</DisplayName>
 		<PublisherDisplayName>PC</PublisherDisplayName>
 		<Logo>Assets\StoreLogo.png</Logo>
+		<desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+		<virtualization:RegistryWriteVirtualization>
+			<virtualization:ExcludedKeys>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.fluentbitwarden.browseproxy</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Microsoft\Edge\NativeMessagingHosts\com.fluentbitwarden.browseproxy</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\com.fluentbitwarden.browseproxy</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.fluentbitwarden.browser&#104;ost</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Microsoft\Edge\NativeMessagingHosts\com.fluentbitwarden.browser&#104;ost</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\com.fluentbitwarden.browser&#104;ost</virtualization:ExcludedKey>
+			</virtualization:ExcludedKeys>
+		</virtualization:RegistryWriteVirtualization>
 	</Properties>
 
 	<Dependencies>
@@ -70,6 +83,21 @@
 			</uap:VisualElements>
 		</Application>
 
+		<!-- Browser native messaging host. Browser extensions launch it as a stdio helper. -->
+		<Application Id="BrowseProxyApp"
+					 Executable="FluentBitwarden.BrowseProxy\FluentBitwarden.BrowseProxy.exe"
+					 EntryPoint="windows.fullTrustApplication">
+			<uap:VisualElements
+			  DisplayName="FluentBitwarden Browse Proxy"
+			  Description="FluentBitwarden Browse Proxy"
+			  BackgroundColor="transparent"
+			  Square150x150Logo="Images\Square150x150Logo.png"
+			  Square44x44Logo="Images\Square44x44Logo.png"
+			  AppListEntry="none" >
+				<uap:DefaultTile/>
+			</uap:VisualElements>
+		</Application>
+
 		<!-- Native helper / COM server -->
 		<Application Id="ComServerApp"
 					 Executable="FluentBitwarden.ComServer\FluentBitwarden.ComServer.exe"
@@ -105,5 +133,6 @@
 
 	<Capabilities>
 		<rescap:Capability Name="runFullTrust" />
+		<rescap:Capability Name="unvirtualizedResources" />
 	</Capabilities>
 </Package>

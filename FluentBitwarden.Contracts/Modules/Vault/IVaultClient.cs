@@ -1,5 +1,5 @@
-﻿using FluentBitwarden.Contracts.Modules.Vault.Models;
-using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+﻿using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.Contracts.Modules.Vault;
 

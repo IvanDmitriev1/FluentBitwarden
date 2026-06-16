@@ -2,6 +2,7 @@ using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Platform.Hosting;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault.Browse;

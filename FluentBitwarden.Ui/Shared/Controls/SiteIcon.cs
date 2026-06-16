@@ -1,11 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Platform.SiteIcons;
 
-namespace FluentBitwarden.Views.Vault.Browse.Controls;
+namespace FluentBitwarden.Shared.Controls;
 
 [DependencyProperty<Uri>("Uri")]
 [DependencyProperty<string>("FallbackGlyph", DefaultValue = "\uE774")]
@@ -112,7 +112,7 @@ public sealed partial class SiteIcon : ContentControl
             return;
         }
 
-        int decodeSize = Math.Max(1, (int)Math.Ceiling(Size));
+        int decodeSize = Math.Max(1, (int)Math.Ceiling((double)Size));
 
         if (_contentKind == SiteIconContentKind.Image
             && Uri == _displayedSiteUri

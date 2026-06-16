@@ -1,0 +1,80 @@
+name: BrowserExtension
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-extension-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Chrome and Firefox
+    runs-on: ubuntu-24.04
+
+    defaults:
+      run:
+        working-directory: BrowserExtension
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: BrowserExtension/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Build Chrome extension
+        run: pnpm run build:chrome
+
+      - name: Build Firefox extension
+        run: pnpm run build:firefox
+
+      - name: Lint Firefox extension
+        run: pnpm exec web-ext lint --source-dir dist/firefox
+
+      - name: Verify extension outputs
+        run: |
+          test -f dist/chrome/manifest.json
+          test -f dist/chrome/background.js
+          test -f dist/chrome/content.js
+          test -f dist/firefox/manifest.json
+          test -f dist/firefox/background.js
+          test -f dist/firefox/content.js
+
+      - name: Upload Chrome extension
+        uses: actions/upload-artifact@v6
+        with:
+          name: fluent-bitwarden-browser-extension-chrome
+          path: BrowserExtension/dist/chrome
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Firefox extension
+        uses: actions/upload-artifact@v6
+        with:
+          name: fluent-bitwarden-browser-extension-firefox
+          path: BrowserExtension/dist/firefox
+          if-no-files-found: error
+          retention-days: 14

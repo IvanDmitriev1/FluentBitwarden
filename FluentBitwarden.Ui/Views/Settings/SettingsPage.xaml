@@ -81,6 +81,31 @@
                 <ToggleSwitch IsOn="{x:Bind ViewModel.CloseToTray.Value, Mode=TwoWay}" />
             </controls:SettingsCard>
 
+            <controls:SettingsCard
+                Description="Register Chrome, Edge, and Firefox Native Messaging for the FluentBitwarden browser extension."
+                Header="Browser extension">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE774;" />
+                </controls:SettingsCard.HeaderIcon>
+                <StackPanel HorizontalAlignment="Right" Spacing="6">
+                    <ToggleSwitch IsEnabled="{x:Bind ViewModel.BrowserExtension.CanToggle, Mode=OneWay}" IsOn="{x:Bind ViewModel.BrowserExtension.Enabled.Value, Mode=TwoWay}" />
+                    <ProgressRing
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Right"
+                        IsActive="{x:Bind ViewModel.BrowserExtension.IsApplying, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.BrowserExtension.IsApplying, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock
+                        MaxWidth="260"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.BrowserExtension.StatusMessage, Mode=OneWay}"
+                        TextAlignment="Right"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind ViewModel.BrowserExtension.HasStatusMessage, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+            </controls:SettingsCard>
+
             <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Security" />
 
             <controls:SettingsCard Description="Minutes before the unlocked vault should lock automatically." Header="Vault timeout">

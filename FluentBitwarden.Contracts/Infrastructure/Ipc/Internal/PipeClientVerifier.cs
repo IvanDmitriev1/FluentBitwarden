@@ -13,7 +13,8 @@ internal static class PipeClientVerifier
     [
         "FluentBitwarden.ComServer.exe",
         "FluentBitwarden.Ui.exe",
-        "FluentBitwarden.AppHost.exe"
+        "FluentBitwarden.AppHost.exe",
+        "FluentBitwarden.BrowseProxy.exe"
     ];
 
     public static bool IsExpectedClient(NamedPipeServerStream pipe)

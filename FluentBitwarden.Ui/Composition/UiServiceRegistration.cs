@@ -3,9 +3,10 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Platform.Hosting;
 using FluentBitwarden.Platform.SiteIcons;
-using FluentBitwarden.Views.Accounts.Unlock.Client;
+using FluentBitwarden.Views.Accounts;
+using FluentBitwarden.Views.Accounts.Unlock;
 using FluentBitwarden.Views.SshAgent.UserApproval;
-using FluentBitwarden.Views.Vault.Client;
+using FluentBitwarden.Views.Vault;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Composition;

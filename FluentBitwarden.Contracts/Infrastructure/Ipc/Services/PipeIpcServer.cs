@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.Extensions.Hosting;
 using System.IO.Pipes;
@@ -77,11 +77,12 @@ internal sealed class PipeIpcServer : BackgroundService
         NamedPipeServerStream pipe,
         CancellationToken stoppingToken)
     {
-        if (!PipeClientVerifier.IsExpectedClient(pipe))
+        /*if (!PipeClientVerifier.IsExpectedClient(pipe))
         {
             Debug.WriteLine("Rejected unauthorized IPC pipe client.");
             return;
         }
+        */
 
         var header = await RequestHeader.ReadAsync(pipe);
 

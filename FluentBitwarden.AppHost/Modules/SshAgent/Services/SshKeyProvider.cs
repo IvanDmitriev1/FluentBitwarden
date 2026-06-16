@@ -8,7 +8,7 @@ using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.Ssh;
-using FluentBitwarden.Contracts.Modules.Vault.Models;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
@@ -16,8 +16,7 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
     IVaultWorkspace vaultWorkspace,
-    IUserDialogClient userDialogClient,
-    IUiProcessLauncher uiProcessLauncher) : ISshKeyProvider
+    IUserDialogClient userDialogClient) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 

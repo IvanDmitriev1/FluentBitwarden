@@ -1,8 +1,7 @@
 using System.Buffers.Binary;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
 
-namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 
 internal readonly record struct ResponseHeader(int PayloadLength)
 {

@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.AppHost.Modules.Vault.Workspace;
+﻿using FluentBitwarden.AppHost.Modules.BrowserExtension;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.Contracts.Infrastructure.Ipc;
@@ -27,6 +28,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IUnlockedVaultReader>(static sp => sp.GetRequiredService<VaultWorkspace>());
 
         services.AddIpcRequestHandler<VaultClientHandlers>();
+        services.AddIpcRequestHandler<BrowserExtensionClientHandlers>();
         return services;
     }
 }

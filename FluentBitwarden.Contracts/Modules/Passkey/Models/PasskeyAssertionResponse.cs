@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Passkey;
+namespace FluentBitwarden.Contracts.Modules.Passkey.Models;
 
 [MemoryPackable]
 public sealed partial class PasskeyAssertionResponse

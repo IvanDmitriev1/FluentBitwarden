@@ -3,7 +3,7 @@ using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 
-namespace FluentBitwarden.Views.Accounts.Unlock.Client;
+namespace FluentBitwarden.Views.Accounts.Unlock;
 
 [Fody.ConfigureAwait(false)]
 internal class RemoteWindowsHelloUnlockClient(IIpcClient ipcClient) : IWindowsHelloUnlockClient

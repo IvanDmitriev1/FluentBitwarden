@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.Views.Vault.Browse.Controls"
+    xmlns:controls1="using:FluentBitwarden.Shared.Controls"
     xmlns:extensions1="using:FluentBitwarden.Views.Vault.Browse.Models"
     xmlns:models="using:BitwardenApi.Models">
 
@@ -16,7 +17,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <controls:SiteIcon
+            <controls1:SiteIcon
                 Grid.Column="0"
                 FallbackGlyph="{x:Bind extensions1:CipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
                 Size="{StaticResource CipherListItemDataTemplateIconSize}"

@@ -3,13 +3,13 @@
     x:Class="FluentBitwarden.Views.Accounts.SignIn.LogInStateTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:accountControls="using:FluentBitwarden.Views.Accounts.Shared.Controls"
-    xmlns:sharedControls="using:FluentBitwarden.Shared.Controls"
-    xmlns:validation="using:FluentBitwarden.Shared.Validation"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:local="using:FluentBitwarden.Views.Accounts.SignIn"
     xmlns:models="using:FluentBitwarden.Views.Accounts.SignIn.Models"
-    xmlns:states="using:FluentBitwarden.Views.Accounts.SignIn.Steps">
+    xmlns:sharedControls="using:FluentBitwarden.Shared.Controls"
+    xmlns:states="using:FluentBitwarden.Views.Accounts.SignIn.Steps"
+    xmlns:validation="using:FluentBitwarden.Shared.Validation">
 
     <DataTemplate x:Key="LogInEmailStepTemplate" x:DataType="states:LogInEmailStepViewModel">
         <StackPanel Spacing="22">
@@ -145,19 +145,19 @@
             <local:LoginAccountSummary Email="{x:Bind Email}" ServerDisplayName="{x:Bind ServerDisplayName}" />
 
             <validation:ValidationField Property="{x:Bind MasterPasswordValidation}">
-                <accountControls:PasswordBoxEx
+                <sharedControls:PasswordBoxEx
                     x:Name="MasterPasswordBox"
                     ActionButtonCommand="{x:Bind LogInWithPasswordCommand}"
                     ActionButtonCommandParameter="{x:Bind MasterPasswordBox.Password, Mode=OneWay}"
                     Command="{x:Bind LogInWithPasswordCommand}"
                     Header="Master password">
-                    <accountControls:PasswordBoxEx.ActionButtonContent>
+                    <sharedControls:PasswordBoxEx.ActionButtonContent>
                         <FontIcon
                             FontSize="16"
                             Glyph="&#xE8D7;"
                             Style="{StaticResource IconStyle}" />
-                    </accountControls:PasswordBoxEx.ActionButtonContent>
-                </accountControls:PasswordBoxEx>
+                    </sharedControls:PasswordBoxEx.ActionButtonContent>
+                </sharedControls:PasswordBoxEx>
             </validation:ValidationField>
 
             <Button

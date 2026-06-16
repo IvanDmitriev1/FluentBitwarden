@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+using FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 using System.IO.Pipes;
 
 namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Services;

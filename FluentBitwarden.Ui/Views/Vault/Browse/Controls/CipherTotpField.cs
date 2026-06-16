@@ -87,8 +87,9 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
 
         DisplayCode = FormatCode(Totp.ComputeTotp());
 
-        var utcNow = DateTime.UtcNow;
-        int remainingSeconds = GetRemainingSeconds(utcNow, Totp.Step);
+        var remaining = Totp.ExpiresAt - DateTimeOffset.UtcNow;
+        var remainingSeconds = Math.Clamp((int)Math.Ceiling(remaining.TotalSeconds), 0, Totp.Step);
+
         _countdownRing.Maximum = Totp.Step;
         _countdownRing.Value = remainingSeconds;
     }
@@ -104,20 +105,6 @@ public sealed partial class CipherTotpField : CipherFieldControlBase
             _timer?.Start();
             UpdateTotpDisplay();
         }
-    }
-
-    private static int GetRemainingSeconds(DateTime utcNow, int periodSeconds)
-    {
-        var unixSeconds = new DateTimeOffset(utcNow).ToUnixTimeSeconds();
-        var elapsedInWindow = unixSeconds % periodSeconds;
-
-        int remaining = periodSeconds - (int)elapsedInWindow;
-        if (remaining <= 0)
-        {
-            remaining = periodSeconds;
-        }
-
-        return remaining;
     }
 
     private static string FormatCode(string code) => code.Length switch

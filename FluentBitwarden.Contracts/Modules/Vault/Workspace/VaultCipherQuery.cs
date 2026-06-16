@@ -1,7 +1,6 @@
 ﻿using BitwardenApi.Common.MemoryPackFormatters;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
-namespace FluentBitwarden.Contracts.Modules.Vault.Models;
+namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 [MemoryPackable]
 public sealed partial class VaultCipherQuery : IIpcRequestMessage

@@ -1,9 +1,9 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
 using System.Windows.Input;
 using Windows.System;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 
-namespace FluentBitwarden.Views.Accounts.Shared.Controls;
+namespace FluentBitwarden.Shared.Controls;
 
 [TemplatePart(Name = PartPasswordTextBox, Type = typeof(TextBox))]
 [TemplatePart(Name = PartRevealButton, Type = typeof(Button))]

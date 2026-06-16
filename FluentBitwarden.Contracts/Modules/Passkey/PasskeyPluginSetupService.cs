@@ -1,8 +1,7 @@
 using Windows.ApplicationModel;
 
-namespace FluentBitwarden.Contracts.Infrastructure.Shared;
+namespace FluentBitwarden.Contracts.Modules.Passkey;
 
-[Fody.ConfigureAwait(false)]
 public static class PasskeyPluginSetupService
 {
     private const int Windows11_24H2Build = 26100;

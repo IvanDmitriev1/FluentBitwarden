@@ -1,8 +1,8 @@
 ﻿using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
-using FluentBitwarden.Contracts.Modules.Vault.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 

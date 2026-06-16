@@ -35,11 +35,13 @@ public sealed partial class SettingsPageViewModel(
 
     public WindowsHelloSettingValue WindowsHello { get; } = new(windowsHelloUnlockClient, windowManager);
     public PasskeyPluginSettingValue PasskeyPlugin { get; } = new();
+    public BrowserExtensionSettingValue BrowserExtension { get; } = new();
 
     public string AppVersion { get; } = ResolveAppVersion();
 
     public async Task OnLoadingAsync(CancellationToken cancellationToken)
     {
+        BrowserExtension.Load();
         PasskeyPlugin.Load();
         await WindowsHello.LoadAsync();
     }
@@ -77,6 +79,7 @@ public sealed partial class SettingsPageViewModel(
         LockWhenAppHiddenToTray.Reset();
         ClipboardClearDelay.Reset();
         ClipboardClearOnLock.Reset();
+        BrowserExtension.Enabled.Reset();
         PasskeyPlugin.Enabled.Reset();
         PasskeyUserVerificationPolicy.Reset();
         SshUserVerificationPolicy.Reset();
