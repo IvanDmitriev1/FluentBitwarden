@@ -18,4 +18,18 @@ internal sealed class BrowserExtensionClientHandlers(
         var isUnlocked = unlockedAccountAccessor.HasUnlockedAccount && vaultWorkspace.IsOpen;
         return ValueTask.FromResult(new BrowserVaultStatusResponse(IsAvailable: true, isUnlocked));
     }
+
+    public ValueTask<BrowserCredentialAvailabilityResponse> CheckCredentialAvailabilityAsync(
+        BrowserCredentialAvailabilityRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ValueTask<BrowserCredentialFillResponse> FillCredentialAsync(
+        BrowserCredentialFillRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

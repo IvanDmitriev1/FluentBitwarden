@@ -3,9 +3,8 @@ using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
-namespace FluentBitwarden.Views.Vault.Client;
+namespace FluentBitwarden.Views.Vault;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class RemoteVaultClient(IIpcClient client) : IVaultClient

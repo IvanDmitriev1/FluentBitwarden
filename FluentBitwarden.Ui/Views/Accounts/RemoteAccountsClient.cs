@@ -5,7 +5,7 @@ using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 
-namespace FluentBitwarden.Views.Accounts.Client;
+namespace FluentBitwarden.Views.Accounts;
 
 internal sealed class RemoteAccountsClient(IIpcClient ipcClient) : IAccountsClient
 {

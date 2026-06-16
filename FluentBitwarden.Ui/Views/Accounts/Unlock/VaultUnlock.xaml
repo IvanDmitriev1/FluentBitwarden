@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:controls="using:FluentBitwarden.Views.Accounts.Shared.Controls"
+    xmlns:controls1="using:FluentBitwarden.Shared.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -27,7 +28,7 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <controls:PasswordBoxEx
+        <controls1:PasswordBoxEx
             x:Name="PasswordBox"
             Grid.Row="0"
             Grid.Column="0"
@@ -36,10 +37,10 @@
             ActionButtonToolTip="Unlock"
             Command="{x:Bind UnlockCommand}"
             IsEnabled="True">
-            <controls:PasswordBoxEx.ActionButtonContent>
+            <controls1:PasswordBoxEx.ActionButtonContent>
                 <FontIcon x:Name="PasswordBoxActionButtonIcon" Style="{StaticResource IconStyle}" />
-            </controls:PasswordBoxEx.ActionButtonContent>
-        </controls:PasswordBoxEx>
+            </controls1:PasswordBoxEx.ActionButtonContent>
+        </controls1:PasswordBoxEx>
 
         <Button
             x:Name="WindowsHelloButton"

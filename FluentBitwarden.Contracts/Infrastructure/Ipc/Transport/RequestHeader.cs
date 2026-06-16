@@ -1,8 +1,7 @@
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using System.Buffers.Binary;
 
-namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 
 internal readonly record struct RequestHeader(
     ushort MessageType,

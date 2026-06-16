@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Win32;

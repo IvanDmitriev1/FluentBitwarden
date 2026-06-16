@@ -1,7 +1,9 @@
+using BitwardenApi.Common.MemoryPackFormatters;
+
 namespace FluentBitwarden.Contracts.Modules.BrowserExtension.Models;
 
 [MemoryPackable]
 public sealed partial record BrowserCredentialListItem(
-    string Id,
-    string? Username,
-    string? DisplayName);
+    [property: StronglyTypedIdFormatter<CipherId>]
+    CipherId Id,
+    string Username);

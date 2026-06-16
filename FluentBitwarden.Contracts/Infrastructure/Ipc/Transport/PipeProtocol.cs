@@ -1,6 +1,6 @@
 using CommunityToolkit.HighPerformance.Buffers;
 
-namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 
 internal static class PipeProtocol
 {

@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.Extensions.Hosting;
 using System.IO.Pipes;

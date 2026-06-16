@@ -1,4 +1,5 @@
 ﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Internal;
+using FluentBitwarden.Contracts.Infrastructure.Ipc.Transport;
 
 namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Services;
 

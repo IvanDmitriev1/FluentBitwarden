@@ -18,6 +18,4 @@ global using FluentBitwarden.Shared.Navigation;
 global using FluentBitwarden.Shared.Navigation.Lifecycle;
 global using FluentBitwarden.Shared.Notifications;
 global using FluentBitwarden.Shared.Validation;
-global using FluentBitwarden.Views.Accounts.Client;
-global using FluentBitwarden.Views.Accounts.Shared.Controls;
 global using Microsoft.UI.Xaml.Controls;
