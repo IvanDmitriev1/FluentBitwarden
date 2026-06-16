@@ -25,7 +25,19 @@ public sealed partial class TotpValue(TotpValue.State state)
         mode: state.HashMode,
         totpSize: state.Digits);
 
-    public int Step { get; } = state.PeriodSeconds;
+    public int Step { get; } = Math.Max(1, state.PeriodSeconds);
+
+    public DateTimeOffset ExpiresAt
+    {
+        get
+        {
+            var now = DateTimeOffset.UtcNow;
+            var currentUnixSeconds = now.ToUnixTimeSeconds();
+            var nextStepUnixSeconds = (currentUnixSeconds / Step + 1) * Step;
+
+            return DateTimeOffset.FromUnixTimeSeconds(nextStepUnixSeconds);
+        }
+    }
 
     public string ComputeTotp() => _totp.ComputeTotp();
 
@@ -86,13 +98,14 @@ public sealed partial class TotpValue(TotpValue.State state)
             int eq = pair.IndexOf((byte)'=');
             if (eq < 0)
                 continue;
+
             var key = pair[..eq];
             var value = pair[(eq + 1)..];
 
             if (Ascii.EqualsIgnoreCase(key, "secret"u8))
-                secret = System.Text.Encoding.ASCII.GetString(value);
+                secret = Encoding.ASCII.GetString(value);
             else if (Ascii.EqualsIgnoreCase(key, "algorithm"u8))
-                Enum.TryParse(System.Text.Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
+                Enum.TryParse(Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
             else if (Ascii.EqualsIgnoreCase(key, "digits"u8))
                 Utf8Parser.TryParse(value, out digits, out _);
             else if (Ascii.EqualsIgnoreCase(key, "period"u8))

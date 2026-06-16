@@ -6,8 +6,6 @@ using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.BrowserExtension;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 
 using var cts = new CancellationTokenSource();
 
@@ -32,11 +30,20 @@ try
 
     while (!cts.IsCancellationRequested)
     {
-        var request = await native.ReadRequestAsync(cts.Token);
-        if (request is null)
-            return 0;
+        var cancellationToken = cts.Token;
 
-        await DispatchRequestAsync(native, browserExtensionClient, request, cts.Token);
+        try
+        {
+            var request = await native.ReadRequestAsync(cancellationToken);
+            if (request is null)
+                return 0;
+
+            await DispatchRequestAsync(native, browserExtensionClient, request, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            //
+        }
     }
 
     return 0;
@@ -50,73 +57,53 @@ catch (Exception e)
     Console.Error.WriteLine(e);
     return -1;
 }
-static async Task DispatchRequestAsync(
+static Task DispatchRequestAsync(
     INativeMessagingTransport messagingTransport,
     IBrowserExtensionClient client,
     BrowserNativeRequestEnvelope request,
     CancellationToken cancellationToken)
 {
-    try
+    Task task = request.Type switch
     {
-        switch (request.Type)
-        {
-            case IpcMessageTypes.Browser.GetVaultStatus:
-                await HandleAsync(
-                    messagingTransport,
-                    client,
-                    request,
-                    BrowserHostJsonContext.Default.BrowserVaultStatusRequest,
-                    BrowserHostJsonContext.Default.BrowserVaultStatusResponse,
-                    static (client, payload, ct) => client.GetStatusAsync(payload, ct),
-                    cancellationToken);
-                return;
 
-            case IpcMessageTypes.Browser.GetCredentialAvailability:
-                await HandleAsync(
-                    messagingTransport,
-                    client,
-                    request,
-                    BrowserHostJsonContext.Default.BrowserCredentialAvailabilityRequest,
-                    BrowserHostJsonContext.Default.BrowserCredentialAvailabilityResponse,
-                    static (client, payload, ct) => client.CheckCredentialAvailabilityAsync(payload, ct),
-                    cancellationToken);
-                return;
+        IpcMessageTypes.Browser.GetVaultStatus =>
+            HandleAsync<BrowserVaultStatusRequest, BrowserVaultStatusResponse>(
+                messagingTransport,
+                client,
+                request,
+                static (client, payload, ct) => client.GetStatusAsync(payload, ct),
+                cancellationToken),
 
-            case IpcMessageTypes.Browser.GetCredentialFill:
-                await HandleAsync(
-                    messagingTransport,
-                    client,
-                    request,
-                    BrowserHostJsonContext.Default.BrowserCredentialFillRequest,
-                    BrowserHostJsonContext.Default.BrowserCredentialFillResponse,
-                    static (client, payload, ct) => client.FillCredentialAsync(payload, ct),
-                    cancellationToken);
-                return;
+        IpcMessageTypes.Browser.GetCredentialAvailability =>
+            HandleAsync<BrowserCredentialAvailabilityRequest, BrowserCredentialAvailabilityResponse>(
+                messagingTransport,
+                client,
+                request,
+                static (client, payload, ct) => client.CheckCredentialAvailabilityAsync(payload, ct),
+                cancellationToken),
 
-            default:
-                return;
-        }
-    }
-    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-    {
-        throw;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine(ex);
-        UnhandledExceptionLogger.WriteException(ex);
-    }
+
+        IpcMessageTypes.Browser.GetCredentialFill =>
+            HandleAsync<BrowserCredentialFillRequest, BrowserCredentialFillResponse>(
+                messagingTransport,
+                client,
+                request,
+                static (client, payload, ct) => client.FillCredentialAsync(payload, ct),
+                cancellationToken),
+        _ => throw new InvalidOperationException($"Unsupported request type: {request.Type}")
+    };
+
+    return task;
 }
 
 static async Task HandleAsync<TRequest, TResponse>(
     INativeMessagingTransport messagingTransport,
     IBrowserExtensionClient client,
     BrowserNativeRequestEnvelope request,
-    JsonTypeInfo<TRequest> requestJsonTypeInfo,
-    JsonTypeInfo<TResponse> responseJsonTypeInfo,
     Func<IBrowserExtensionClient, TRequest, CancellationToken, ValueTask<TResponse>> handler,
     CancellationToken cancellationToken)
 {
+    var requestJsonTypeInfo = BrowserHostJsonContext.ConfiguredDefault.GetRequiredTypeInfo<TRequest>();
     TRequest payload = request.Payload.Deserialize(requestJsonTypeInfo) ??
                        throw new JsonException($"Payload for browser request type {request.Type} was null or invalid.");
 
@@ -125,6 +112,5 @@ static async Task HandleAsync<TRequest, TResponse>(
     await messagingTransport.WriteResponseAsync(
         request.RequestId,
         response,
-        responseJsonTypeInfo,
         cancellationToken);
 }

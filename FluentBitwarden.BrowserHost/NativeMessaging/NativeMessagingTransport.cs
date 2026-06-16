@@ -3,7 +3,6 @@ using FluentBitwarden.BrowserHost.Infrastructure;
 using FluentBitwarden.BrowserHost.Models;
 using System.Buffers.Binary;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using Windows.Storage.Streams;
 
 namespace FluentBitwarden.BrowserHost.NativeMessaging;
@@ -27,15 +26,15 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
         await input.ReadExactlyAsync(messageBuffer.Memory, cancellationToken);
 
         return JsonSerializer.Deserialize<BrowserNativeRequestEnvelope>(messageBuffer.Span,
-            BrowserHostJsonContext.Default.BrowserNativeRequestEnvelope);
+            BrowserHostJsonContext.ConfiguredDefault.BrowserNativeRequestEnvelope);
     }
 
     public async Task WriteResponseAsync<T>(
         string requestId,
         T payload,
-        JsonTypeInfo<T> jsonTypeInfo,
         CancellationToken cancellationToken)
     {
+        var jsonTypeInfo = BrowserHostJsonContext.ConfiguredDefault.GetRequiredTypeInfo<T>();
         using var bufferWriter = new ArrayPoolBufferWriter<byte>();
 
         await using (var writer = new Utf8JsonWriter(bufferWriter))

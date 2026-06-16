@@ -1,4 +1,3 @@
-﻿using System.Text.Json.Serialization.Metadata;
 using FluentBitwarden.BrowserHost.Models;
 
 namespace FluentBitwarden.BrowserHost.NativeMessaging;
@@ -10,6 +9,5 @@ internal interface INativeMessagingTransport
     Task WriteResponseAsync<T>(
         string requestId,
         T payload,
-        JsonTypeInfo<T> jsonTypeInfo,
         CancellationToken cancellationToken);
 }

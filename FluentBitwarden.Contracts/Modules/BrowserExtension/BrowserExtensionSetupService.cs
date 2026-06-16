@@ -13,7 +13,7 @@ public static class BrowserExtensionSetupService
         string ManifestPath);
 
     public const string NativeHostName = "com.fluentbitwarden.browserhost";
-    public const string ChromiumExtensionId = "gfhbajeljalknneenddbfijidlaggipo";
+    public const string ChromiumExtensionId = "aopmhembdchhafellalkhdjkcepaeake";
     public const string FirefoxExtensionId = "browser-extension@fluentbitwarden.local";
 
     private const string ChromeRegistrySubKey =
