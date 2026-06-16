@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.BrowserHost.Infrastructure;
-using FluentBitwarden.BrowserHost.Models;
+using FluentBitwarden.BrowseProxy.Infrastructure;
+using FluentBitwarden.BrowseProxy.Models;
 using System.Buffers.Binary;
 using System.Text.Json;
 using Windows.Storage.Streams;
 
-namespace FluentBitwarden.BrowserHost.NativeMessaging;
+namespace FluentBitwarden.BrowseProxy.NativeMessaging;
 
 internal sealed class NativeMessagingTransport(Stream input, Stream output) : INativeMessagingTransport
 {
@@ -26,7 +26,7 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
         await input.ReadExactlyAsync(messageBuffer.Memory, cancellationToken);
 
         return JsonSerializer.Deserialize<BrowserNativeRequestEnvelope>(messageBuffer.Span,
-            BrowserHostJsonContext.ConfiguredDefault.BrowserNativeRequestEnvelope);
+            BrowseProxyJsonContext.ConfiguredDefault.BrowserNativeRequestEnvelope);
     }
 
     public async Task WriteResponseAsync<T>(
@@ -34,7 +34,7 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
         T payload,
         CancellationToken cancellationToken)
     {
-        var jsonTypeInfo = BrowserHostJsonContext.ConfiguredDefault.GetRequiredTypeInfo<T>();
+        var jsonTypeInfo = BrowseProxyJsonContext.ConfiguredDefault.GetRequiredTypeInfo<T>();
         using var bufferWriter = new ArrayPoolBufferWriter<byte>();
 
         await using (var writer = new Utf8JsonWriter(bufferWriter))

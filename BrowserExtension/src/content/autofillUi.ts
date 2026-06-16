@@ -12,10 +12,11 @@ export class AutofillUi {
   private readonly buttons: ButtonEntry[] = [];
   private fillHandler: ((item: BrowserCredentialListItem) => Promise<void>) | null = null;
   private credentialItem: BrowserCredentialListItem | null = null;
+  private repositionFrameId: number | null = null;
 
   public constructor() {
-    window.addEventListener("scroll", this.repositionButtons, true);
-    window.addEventListener("resize", this.repositionButtons);
+    window.addEventListener("scroll", this.scheduleRepositionButtons, true);
+    window.addEventListener("resize", this.scheduleRepositionButtons);
   }
 
   public show(
@@ -55,7 +56,7 @@ export class AutofillUi {
       this.buttons.push({ button, targetField });
     }
 
-    this.repositionButtons();
+    this.scheduleRepositionButtons();
   }
 
   public hide(): void {
@@ -66,6 +67,17 @@ export class AutofillUi {
     this.buttons.length = 0;
     this.fillHandler = null;
     this.credentialItem = null;
+  }
+
+  public dispose(): void {
+    window.removeEventListener("scroll", this.scheduleRepositionButtons, true);
+    window.removeEventListener("resize", this.scheduleRepositionButtons);
+    this.hide();
+
+    if (this.repositionFrameId !== null) {
+      window.cancelAnimationFrame(this.repositionFrameId);
+      this.repositionFrameId = null;
+    }
   }
 
   private readonly handleButtonClick = async (button: HTMLButtonElement): Promise<void> => {
@@ -84,11 +96,22 @@ export class AutofillUi {
     }
   };
 
-  private readonly repositionButtons = (): void => {
+  private readonly scheduleRepositionButtons = (): void => {
+    if (this.repositionFrameId !== null) {
+      return;
+    }
+
+    this.repositionFrameId = window.requestAnimationFrame(() => {
+      this.repositionFrameId = null;
+      this.repositionButtons();
+    });
+  };
+
+  private repositionButtons(): void {
     for (const entry of this.buttons) {
       positionButton(entry.button, entry.targetField);
     }
-  };
+  }
 }
 
 function applyButtonStyles(button: HTMLButtonElement): void {

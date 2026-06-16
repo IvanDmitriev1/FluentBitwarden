@@ -26,9 +26,12 @@
 		<desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
 		<virtualization:RegistryWriteVirtualization>
 			<virtualization:ExcludedKeys>
-				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.fluentbitwarden.browserhost</virtualization:ExcludedKey>
-				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Microsoft\Edge\NativeMessagingHosts\com.fluentbitwarden.browserhost</virtualization:ExcludedKey>
-				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\com.fluentbitwarden.browserhost</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.fluentbitwarden.browseproxy</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Microsoft\Edge\NativeMessagingHosts\com.fluentbitwarden.browseproxy</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\com.fluentbitwarden.browseproxy</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.fluentbitwarden.browser&#104;ost</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Microsoft\Edge\NativeMessagingHosts\com.fluentbitwarden.browser&#104;ost</virtualization:ExcludedKey>
+				<virtualization:ExcludedKey>HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\com.fluentbitwarden.browser&#104;ost</virtualization:ExcludedKey>
 			</virtualization:ExcludedKeys>
 		</virtualization:RegistryWriteVirtualization>
 	</Properties>
@@ -81,12 +84,12 @@
 		</Application>
 
 		<!-- Browser native messaging host. Browser extensions launch it as a stdio helper. -->
-		<Application Id="BrowserHostApp"
-					 Executable="FluentBitwarden.BrowserHost\FluentBitwarden.BrowserHost.exe"
+		<Application Id="BrowseProxyApp"
+					 Executable="FluentBitwarden.BrowseProxy\FluentBitwarden.BrowseProxy.exe"
 					 EntryPoint="windows.fullTrustApplication">
 			<uap:VisualElements
-			  DisplayName="FluentBitwarden Browser Host"
-			  Description="FluentBitwarden Browser Host"
+			  DisplayName="FluentBitwarden Browse Proxy"
+			  Description="FluentBitwarden Browse Proxy"
 			  BackgroundColor="transparent"
 			  Square150x150Logo="Images\Square150x150Logo.png"
 			  Square44x44Logo="Images\Square44x44Logo.png"

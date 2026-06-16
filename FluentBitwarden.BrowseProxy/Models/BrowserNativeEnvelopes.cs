@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace FluentBitwarden.BrowserHost.Models;
+namespace FluentBitwarden.BrowseProxy.Models;
 
 internal sealed record BrowserNativeRequestEnvelope(
     int Version,

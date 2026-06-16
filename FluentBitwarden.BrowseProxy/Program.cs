@@ -1,6 +1,6 @@
-using FluentBitwarden.BrowserHost.Infrastructure;
-using FluentBitwarden.BrowserHost.Models;
-using FluentBitwarden.BrowserHost.NativeMessaging;
+using FluentBitwarden.BrowseProxy.Infrastructure;
+using FluentBitwarden.BrowseProxy.Models;
+using FluentBitwarden.BrowseProxy.NativeMessaging;
 using FluentBitwarden.Contracts.Infrastructure.Ipc;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.BrowserExtension;
@@ -103,7 +103,7 @@ static async Task HandleAsync<TRequest, TResponse>(
     Func<IBrowserExtensionClient, TRequest, CancellationToken, ValueTask<TResponse>> handler,
     CancellationToken cancellationToken)
 {
-    var requestJsonTypeInfo = BrowserHostJsonContext.ConfiguredDefault.GetRequiredTypeInfo<TRequest>();
+    var requestJsonTypeInfo = BrowseProxyJsonContext.ConfiguredDefault.GetRequiredTypeInfo<TRequest>();
     TRequest payload = request.Payload.Deserialize(requestJsonTypeInfo) ??
                        throw new JsonException($"Payload for browser request type {request.Type} was null or invalid.");
 

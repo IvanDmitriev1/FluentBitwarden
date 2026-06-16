@@ -15,7 +15,7 @@
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
   </Project>
-  <Project Path="FluentBitwarden.BrowserHost/FluentBitwarden.BrowserHost.csproj" />
+  <Project Path="FluentBitwarden.BrowseProxy/FluentBitwarden.BrowseProxy.csproj" />
   <Project Path="FluentBitwarden.Ui/FluentBitwarden.Ui.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />

@@ -5,7 +5,12 @@ import type {
   BrowserCredentialFillRequest,
   BrowserCredentialFillResponse
 } from "./nativeProtocol";
-import { BrowserCredentialParts } from "./nativeProtocol";
+import {
+  isBrowserCredentialPart,
+  isRecord,
+  isString,
+  type Validator
+} from "./nativeProtocol";
 
 export interface ExtensionError {
   code: string;
@@ -72,28 +77,47 @@ export function isFillCredentialMessage(value: unknown): value is FillCredential
     isRecord(payload) &&
     isString(payload.itemId) &&
     isString(payload.url) &&
-    isCredentialPart(payload.part)
+    isBrowserCredentialPart(payload.part)
   );
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
+export function parseExtensionResponse<TPayload>(
+  response: unknown,
+  validatePayload: Validator<TPayload>
+): ExtensionResponse<TPayload> {
+  if (
+    isRecord(response) &&
+    response.ok === true &&
+    "payload" in response &&
+    validatePayload(response.payload)
+  ) {
+    return {
+      ok: true,
+      payload: response.payload
+    };
+  }
 
-function isString(value: unknown): value is string {
-  return typeof value === "string";
-}
+  if (
+    isRecord(response) &&
+    response.ok === false &&
+    isRecord(response.error) &&
+    isString(response.error.code) &&
+    isString(response.error.message)
+  ) {
+    return {
+      ok: false,
+      error: {
+        code: response.error.code,
+        message: response.error.message
+      }
+    };
+  }
 
-function isCredentialPart(value: unknown): value is number {
-  const validPartMask =
-    BrowserCredentialParts.Username |
-    BrowserCredentialParts.Password |
-    BrowserCredentialParts.Totp;
-
-  return (
-    typeof value === "number" &&
-    Number.isInteger(value) &&
-    value >= BrowserCredentialParts.None &&
-    (value & ~validPartMask) === 0
-  );
+  return {
+    ok: false,
+    error: {
+      code: "invalid_response",
+      message: "Background returned an invalid response."
+    }
+  };
 }

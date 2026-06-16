@@ -1,11 +1,10 @@
 import { AutofillUi } from "./autofillUi";
 import { detectCredentialFields, type DetectedCredentialFields } from "./fieldDetector";
 import { fillCredentialFields } from "./fillFields";
+import { CredentialScanCoordinator } from "./scanCoordinator";
 import type {
   BrowserCredentialAvailabilityRequest,
-  BrowserCredentialAvailabilityResponse,
   BrowserCredentialPart,
-  BrowserCredentialFillResponse,
   BrowserCredentialListItem
 } from "../shared/nativeProtocol";
 import type {
@@ -14,81 +13,47 @@ import type {
   ExtensionResponse,
   FillCredentialMessage
 } from "../shared/extensionMessages";
-
-const ScanDebounceMs = 250;
-const ObservedAttributes = [
-  "type",
-  "name",
-  "id",
-  "autocomplete",
-  "placeholder",
-  "class",
-  "style"
-];
-
-const PasswordFillPart = 3 satisfies BrowserCredentialPart;
-const TotpFillPart = 4 satisfies BrowserCredentialPart;
+import { PasswordFillParts, TotpFillParts } from "./credentialParts";
+import {
+  isBrowserCredentialAvailabilityResponse,
+  isBrowserCredentialFillResponse,
+  parseExtensionResponse
+} from "./responseValidation";
 
 const autofillUi = new AutofillUi();
+const scanCoordinator = new CredentialScanCoordinator(handleCredentialFieldsChanged);
 
-let lastDetectionSignature: string | null = null;
-let requestVersion = 0;
-let scanTimer: ReturnType<typeof setTimeout> | null = null;
 let fillInProgress = false;
 
 type FillMode = BrowserCredentialPart;
 
-scanAndReport();
+scanCoordinator.start();
+window.addEventListener("pagehide", dispose, { once: true });
 
-const observer = new MutationObserver(() => {
-  scheduleScan();
-});
-
-observer.observe(document.documentElement, {
-  childList: true,
-  subtree: true,
-  attributes: true,
-  attributeFilter: ObservedAttributes
-});
-
-function scheduleScan(delayMs = ScanDebounceMs): void {
-  if (scanTimer) {
-    clearTimeout(scanTimer);
-  }
-
-  scanTimer = setTimeout(() => {
-    scanTimer = null;
-    scanAndReport();
-  }, delayMs);
+function dispose(): void {
+  scanCoordinator.dispose();
+  autofillUi.dispose();
 }
 
-function scanAndReport(): void {
-  const fields = detectCredentialFields();
+function handleCredentialFieldsChanged(
+  fields: DetectedCredentialFields,
+  currentVersion: number
+): void {
   const fillMode = getFillMode(fields);
 
   if (fillMode === null) {
-    lastDetectionSignature = fields.signature;
-    requestVersion += 1;
     autofillUi.hide();
     return;
   }
-
-  if (fields.signature === lastDetectionSignature) {
-    return;
-  }
-
-  lastDetectionSignature = fields.signature;
-  const currentRequestVersion = requestVersion + 1;
-  requestVersion = currentRequestVersion;
 
   const message: CredentialFieldsDetectedMessage = {
     type: "credentialFieldsDetected",
     payload: createAvailabilityRequest()
   };
 
-  void sendRuntimeMessage<BrowserCredentialAvailabilityResponse>(message)
+  void sendRuntimeMessage(message, isBrowserCredentialAvailabilityResponse)
     .then((response) => {
-      if (currentRequestVersion !== requestVersion) {
+      if (currentVersion !== scanCoordinator.currentVersion) {
         return;
       }
 
@@ -98,15 +63,18 @@ function scanAndReport(): void {
       }
 
       const latestFields = detectCredentialFields();
-      if (getFillMode(latestFields) !== fillMode || latestFields.signature !== lastDetectionSignature) {
+      if (
+        getFillMode(latestFields) !== fillMode ||
+        latestFields.signature !== scanCoordinator.currentSignature
+      ) {
         autofillUi.hide();
-        scheduleScan(0);
+        scanCoordinator.scheduleScan(0);
         return;
       }
 
       const credentialItem = response.payload.items[0];
       if (credentialItem) {
-        const targetFields = fillMode === TotpFillPart
+        const targetFields = fillMode === TotpFillParts
           ? latestFields.otpFields
           : latestFields.passwordFields;
 
@@ -143,7 +111,7 @@ async function requestCredentialFill(
   };
 
   try {
-    const response = await sendRuntimeMessage<BrowserCredentialFillResponse>(message);
+    const response = await sendRuntimeMessage(message, isBrowserCredentialFillResponse);
     if (response.ok) {
       fillCredentialFields(response.payload);
     }
@@ -162,11 +130,11 @@ function createAvailabilityRequest(): BrowserCredentialAvailabilityRequest {
 
 function getFillMode(fields: DetectedCredentialFields): FillMode | null {
   if (fields.hasPasswordField) {
-    return PasswordFillPart;
+    return PasswordFillParts;
   }
 
   if (fields.hasOtpField) {
-    return TotpFillPart;
+    return TotpFillParts;
   }
 
   return null;
@@ -183,7 +151,8 @@ function getPageContext(): PageContext {
 }
 
 function sendRuntimeMessage<TPayload>(
-  message: ExtensionMessage
+  message: ExtensionMessage,
+  validatePayload: (value: unknown) => value is TPayload
 ): Promise<ExtensionResponse<TPayload>> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage(message, (response: unknown) => {
@@ -199,44 +168,7 @@ function sendRuntimeMessage<TPayload>(
         return;
       }
 
-      resolve(parseExtensionResponse<TPayload>(response));
+      resolve(parseExtensionResponse(response, validatePayload));
     });
   });
-}
-
-function parseExtensionResponse<TPayload>(response: unknown): ExtensionResponse<TPayload> {
-  if (isRecord(response) && response.ok === true && "payload" in response) {
-    return {
-      ok: true,
-      payload: response.payload as TPayload
-    };
-  }
-
-  if (
-    isRecord(response) &&
-    response.ok === false &&
-    isRecord(response.error) &&
-    typeof response.error.code === "string" &&
-    typeof response.error.message === "string"
-  ) {
-    return {
-      ok: false,
-      error: {
-        code: response.error.code,
-        message: response.error.message
-      }
-    };
-  }
-
-  return {
-    ok: false,
-    error: {
-      code: "invalid_response",
-      message: "Background returned an invalid response."
-    }
-  };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }

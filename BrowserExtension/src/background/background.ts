@@ -1,9 +1,7 @@
 import { AvailabilityCache } from "./availabilityCache";
 import { NativeClient, NativeClientError } from "./nativeClient";
 import {
-  BrowserNativeMessageTypes
-} from "../shared/browserMessageTypes";
-import {
+  NativeRequests,
   type BrowserCredentialAvailabilityRequest,
   type BrowserCredentialAvailabilityResponse,
   type BrowserCredentialFillRequest,
@@ -22,6 +20,7 @@ const AvailabilityCacheTtlMs = 60_000;
 
 const nativeClient = new NativeClient();
 const availabilityCache = new AvailabilityCache(AvailabilityCacheTtlMs);
+let lastVaultUnlocked: boolean | null = null;
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   handleMessage(message, sender)
@@ -62,6 +61,16 @@ async function handleCredentialFieldsDetected(
   }
 
   const cacheKey = createAvailabilityCacheKey(senderInfo.payload.origin);
+  const vaultStatus = await getVaultStatus();
+  if (!vaultStatus.ok) {
+    return vaultStatus;
+  }
+
+  if (!vaultStatus.payload.isVaultUnlocked) {
+    availabilityCache.clear();
+    return successResponse({ items: [] });
+  }
+
   const cached = availabilityCache.get(cacheKey);
   if (cached) {
     return successResponse(cached);
@@ -73,15 +82,15 @@ async function handleCredentialFieldsDetected(
   };
 
   try {
-    const response = await nativeClient.send<
-      BrowserCredentialAvailabilityRequest,
-      BrowserCredentialAvailabilityResponse
-    >(
-      BrowserNativeMessageTypes.GetCredentialAvailability,
+    const response = await nativeClient.send(
+      NativeRequests.GetCredentialAvailability,
       payload
     );
 
-    availabilityCache.set(cacheKey, response);
+    if (response.items.length > 0) {
+      availabilityCache.set(cacheKey, response);
+    }
+
     return successResponse(response);
   } catch (error) {
     return nativeErrorResponse(error);
@@ -103,11 +112,8 @@ async function handleFillCredential(
   };
 
   try {
-    const response = await nativeClient.send<
-      BrowserCredentialFillRequest,
-      BrowserCredentialFillResponse
-    >(
-      BrowserNativeMessageTypes.GetCredentialFill,
+    const response = await nativeClient.send(
+      NativeRequests.GetCredentialFill,
       payload
     );
 
@@ -119,6 +125,27 @@ async function handleFillCredential(
 
 function createAvailabilityCacheKey(origin: string): string {
   return origin;
+}
+
+async function getVaultStatus(): Promise<ExtensionResponse<{ isVaultUnlocked: boolean }>> {
+  try {
+    const status = await nativeClient.send(
+      NativeRequests.GetVaultStatus,
+      {}
+    );
+
+    if (lastVaultUnlocked !== null && lastVaultUnlocked !== status.isVaultUnlocked) {
+      availabilityCache.clear();
+    }
+
+    lastVaultUnlocked = status.isVaultUnlocked;
+
+    return successResponse({
+      isVaultUnlocked: status.isVaultUnlocked
+    });
+  } catch (error) {
+    return nativeErrorResponse(error);
+  }
 }
 
 interface ValidatedSender {

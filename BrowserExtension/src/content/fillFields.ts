@@ -1,15 +1,16 @@
 import { detectCredentialFields } from "./fieldDetector";
 import type { BrowserCredentialFillResponse } from "../shared/nativeProtocol";
-
-const UsernamePart = 1;
-const PasswordPart = 2;
-const TotpPart = 4;
+import { CredentialParts, hasCredentialPart } from "./credentialParts";
 
 export function fillCredentialFields(credential: BrowserCredentialFillResponse): void {
   const fields = detectCredentialFields();
   const otpField = fields.otpFields[0] ?? null;
 
-  if (hasPart(credential.returnedParts, TotpPart) && hasValue(credential.totp) && otpField) {
+  if (
+    hasCredentialPart(credential.returnedParts, CredentialParts.Totp) &&
+    hasValue(credential.totp) &&
+    otpField
+  ) {
     setInputValue(otpField, credential.totp);
     return;
   }
@@ -17,17 +18,21 @@ export function fillCredentialFields(credential: BrowserCredentialFillResponse):
   const usernameField = fields.usernameFields[0] ?? null;
   const passwordField = fields.passwordFields[0] ?? null;
 
-  if (hasPart(credential.returnedParts, UsernamePart) && hasValue(credential.username) && usernameField) {
+  if (
+    hasCredentialPart(credential.returnedParts, CredentialParts.Username) &&
+    hasValue(credential.username) &&
+    usernameField
+  ) {
     setInputValue(usernameField, credential.username);
   }
 
-  if (hasPart(credential.returnedParts, PasswordPart) && hasValue(credential.password) && passwordField) {
+  if (
+    hasCredentialPart(credential.returnedParts, CredentialParts.Password) &&
+    hasValue(credential.password) &&
+    passwordField
+  ) {
     setInputValue(passwordField, credential.password);
   }
-}
-
-function hasPart(returnedParts: number, part: number): boolean {
-  return (returnedParts & part) === part;
 }
 
 function hasValue(value: string | null | undefined): value is string {

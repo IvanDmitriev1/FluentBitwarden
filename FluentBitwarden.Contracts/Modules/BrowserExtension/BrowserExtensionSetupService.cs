@@ -7,23 +7,24 @@ namespace FluentBitwarden.Contracts.Modules.BrowserExtension;
 
 public static class BrowserExtensionSetupService
 {
+    private const string LegacyNativeHostName = "com.fluentbitwarden." + "browserhost";
+    private const string BrowseProxyDescription = "FluentBitwarden Browse Proxy";
+
     private sealed record BrowserNativeHostRegistration(
         string BrowserName,
         string RegistrySubKey,
         string ManifestPath);
 
-    public const string NativeHostName = "com.fluentbitwarden.browserhost";
+    public const string NativeHostName = "com.fluentbitwarden.browseproxy";
     public const string ChromiumExtensionId = "aopmhembdchhafellalkhdjkcepaeake";
     public const string FirefoxExtensionId = "browser-extension@fluentbitwarden.local";
 
-    private const string ChromeRegistrySubKey =
-        @"Software\Google\Chrome\NativeMessagingHosts\" + NativeHostName;
-
-    private const string EdgeRegistrySubKey =
-        @"Software\Microsoft\Edge\NativeMessagingHosts\" + NativeHostName;
-
-    private const string FirefoxRegistrySubKey =
-        @"Software\Mozilla\NativeMessagingHosts\" + NativeHostName;
+    private static readonly string ChromeRegistrySubKey = BuildChromiumRegistrySubKey("Google\\Chrome");
+    private static readonly string EdgeRegistrySubKey = BuildChromiumRegistrySubKey("Microsoft\\Edge");
+    private static readonly string FirefoxRegistrySubKey = BuildFirefoxRegistrySubKey(NativeHostName);
+    private static readonly string LegacyChromeRegistrySubKey = BuildLegacyChromiumRegistrySubKey("Google\\Chrome");
+    private static readonly string LegacyEdgeRegistrySubKey = BuildLegacyChromiumRegistrySubKey("Microsoft\\Edge");
+    private static readonly string LegacyFirefoxRegistrySubKey = BuildFirefoxRegistrySubKey(LegacyNativeHostName);
 
     private static readonly string[] GeneratedManifestFileNames =
     [
@@ -32,10 +33,10 @@ public static class BrowserExtensionSetupService
         "firefox.windows.json",
     ];
 
-    private static readonly string BrowserHostPath = Path.Combine(
+    private static readonly string BrowseProxyPath = Path.Combine(
         PackageHelper.AppBasePath,
-        "FluentBitwarden.BrowserHost",
-        "FluentBitwarden.BrowserHost.exe");
+        "FluentBitwarden.BrowseProxy",
+        "FluentBitwarden.BrowseProxy.exe");
 
     private static readonly string ManifestDirectory = Path.Combine(
         ApplicationData.Current.LocalFolder.Path,
@@ -45,14 +46,15 @@ public static class BrowserExtensionSetupService
 
     public static void EnsureRegistered()
     {
-        if (!File.Exists(BrowserHostPath))
+        if (!File.Exists(BrowseProxyPath))
         {
             throw new FileNotFoundException(
-                "FluentBitwarden.BrowserHost.exe was not found in the installed package.",
-                BrowserHostPath);
+                "FluentBitwarden.BrowseProxy.exe was not found in the installed package.",
+                BrowseProxyPath);
         }
 
         Directory.CreateDirectory(ManifestDirectory);
+        DeleteLegacyRegistrations();
 
         string chromeManifestPath = GetManifestPath("chrome.windows.json");
         string edgeManifestPath = GetManifestPath("edge.windows.json");
@@ -64,9 +66,9 @@ public static class BrowserExtensionSetupService
             new("Firefox", FirefoxRegistrySubKey, firefoxManifestPath),
         ];
 
-        WriteChromiumManifest(chromeManifestPath, BrowserHostPath);
-        WriteChromiumManifest(edgeManifestPath, BrowserHostPath);
-        WriteFirefoxManifest(firefoxManifestPath, BrowserHostPath);
+        WriteChromiumManifest(chromeManifestPath, BrowseProxyPath);
+        WriteChromiumManifest(edgeManifestPath, BrowseProxyPath);
+        WriteFirefoxManifest(firefoxManifestPath, BrowseProxyPath);
 
         foreach (BrowserNativeHostRegistration registration in registrations)
         {
@@ -79,6 +81,7 @@ public static class BrowserExtensionSetupService
         Registry.CurrentUser.DeleteSubKeyTree(ChromeRegistrySubKey, throwOnMissingSubKey: false);
         Registry.CurrentUser.DeleteSubKeyTree(EdgeRegistrySubKey, throwOnMissingSubKey: false);
         Registry.CurrentUser.DeleteSubKeyTree(FirefoxRegistrySubKey, throwOnMissingSubKey: false);
+        DeleteLegacyRegistrations();
 
         foreach (var fileName in GeneratedManifestFileNames)
         {
@@ -94,6 +97,22 @@ public static class BrowserExtensionSetupService
         key.SetValue(string.Empty, registration.ManifestPath, RegistryValueKind.String);
     }
 
+    private static void DeleteLegacyRegistrations()
+    {
+        Registry.CurrentUser.DeleteSubKeyTree(LegacyChromeRegistrySubKey, throwOnMissingSubKey: false);
+        Registry.CurrentUser.DeleteSubKeyTree(LegacyEdgeRegistrySubKey, throwOnMissingSubKey: false);
+        Registry.CurrentUser.DeleteSubKeyTree(LegacyFirefoxRegistrySubKey, throwOnMissingSubKey: false);
+    }
+
+    private static string BuildChromiumRegistrySubKey(string browserPath) =>
+        $@"Software\{browserPath}\NativeMessagingHosts\{NativeHostName}";
+
+    private static string BuildLegacyChromiumRegistrySubKey(string browserPath) =>
+        $@"Software\{browserPath}\NativeMessagingHosts\{LegacyNativeHostName}";
+
+    private static string BuildFirefoxRegistrySubKey(string hostName) =>
+        $@"Software\Mozilla\NativeMessagingHosts\{hostName}";
+
     private static void WriteChromiumManifest(string manifestPath, string browserHostPath)
     {
         using FileStream stream = File.Create(manifestPath, 1024);
@@ -101,7 +120,7 @@ public static class BrowserExtensionSetupService
 
         writer.WriteStartObject();
         writer.WriteString("name", NativeHostName);
-        writer.WriteString("description", "FluentBitwarden Browser Host");
+        writer.WriteString("description", BrowseProxyDescription);
         writer.WriteString("path", browserHostPath);
         writer.WriteString("type", "stdio");
         writer.WriteStartArray("allowed_origins");
@@ -119,7 +138,7 @@ public static class BrowserExtensionSetupService
 
         writer.WriteStartObject();
         writer.WriteString("name", NativeHostName);
-        writer.WriteString("description", "FluentBitwarden Browser Host");
+        writer.WriteString("description", BrowseProxyDescription);
         writer.WriteString("path", browserHostPath);
         writer.WriteString("type", "stdio");
         writer.WriteStartArray("allowed_extensions");

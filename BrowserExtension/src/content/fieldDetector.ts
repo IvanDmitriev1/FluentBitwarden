@@ -69,15 +69,8 @@ function isUsernameAttributeCandidate(input: HTMLInputElement): boolean {
     return true;
   }
 
-  const attributes = [
-    input.name,
-    input.id,
-    input.placeholder,
-    input.getAttribute("aria-label") ?? "",
-    input.className
-  ].join(" ");
-
-  return UsernameAttributePattern.test(attributes) && !NonUsernameAttributePattern.test(attributes);
+  const attributeText = getInputAttributeText(input);
+  return UsernameAttributePattern.test(attributeText) && !NonUsernameAttributePattern.test(attributeText);
 }
 
 function isOtpInput(input: HTMLInputElement): boolean {
@@ -90,18 +83,40 @@ function isOtpInput(input: HTMLInputElement): boolean {
     return false;
   }
 
-  const attributes = [
+  const attributes = getInputAttributeText(input, {
+    includeInputMode: true,
+    includeLabels: true
+  });
+
+  return OtpAttributePattern.test(attributes);
+}
+
+interface AttributeTextOptions {
+  includeInputMode?: boolean;
+  includeLabels?: boolean;
+}
+
+function getInputAttributeText(
+  input: HTMLInputElement,
+  options: AttributeTextOptions = {}
+): string {
+  const values = [
     input.name,
     input.id,
     input.placeholder,
     input.getAttribute("aria-label") ?? "",
-    input.getAttribute("inputmode") ?? "",
-    input.className,
-    getAssociatedLabelText(input),
-    getNearbyLabelText(input)
-  ].join(" ");
+    input.className
+  ];
 
-  return OtpAttributePattern.test(attributes);
+  if (options.includeInputMode) {
+    values.push(input.getAttribute("inputmode") ?? "");
+  }
+
+  if (options.includeLabels) {
+    values.push(getAssociatedLabelText(input), getNearbyLabelText(input));
+  }
+
+  return values.join(" ");
 }
 
 function getAssociatedLabelText(input: HTMLInputElement): string {
@@ -203,21 +218,23 @@ function buildDetectionSignature(
   usernameFields: HTMLInputElement[],
   otpFields: HTMLInputElement[]
 ): string {
-  const passwordSignature = passwordFields
-    .map((input) => inputSignature(input, inputs))
-    .join(",");
-  const usernameSignature = usernameFields
-    .map((input) => inputSignature(input, inputs))
-    .join(",");
-  const otpSignature = otpFields
+  return [
+    fieldGroupSignature("p", passwordFields, inputs),
+    fieldGroupSignature("u", usernameFields, inputs),
+    fieldGroupSignature("o", otpFields, inputs)
+  ].join("|");
+}
+
+function fieldGroupSignature(
+  prefix: string,
+  fields: HTMLInputElement[],
+  inputs: HTMLInputElement[]
+): string {
+  const signature = fields
     .map((input) => inputSignature(input, inputs))
     .join(",");
 
-  return [
-    `p:${passwordFields.length}:${passwordSignature}`,
-    `u:${usernameFields.length}:${usernameSignature}`,
-    `o:${otpFields.length}:${otpSignature}`
-  ].join("|");
+  return `${prefix}:${fields.length}:${signature}`;
 }
 
 function inputSignature(input: HTMLInputElement, inputs: HTMLInputElement[]): string {

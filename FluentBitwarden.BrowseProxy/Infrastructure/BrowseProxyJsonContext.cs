@@ -2,9 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Models;
-using FluentBitwarden.BrowserHost.Models;
+using FluentBitwarden.BrowseProxy.Models;
 
-namespace FluentBitwarden.BrowserHost.Infrastructure;
+namespace FluentBitwarden.BrowseProxy.Infrastructure;
 
 [JsonSourceGenerationOptions(
     JsonSerializerDefaults.Web,
@@ -18,9 +18,9 @@ namespace FluentBitwarden.BrowserHost.Infrastructure;
 [JsonSerializable(typeof(BrowserCredentialFillResponse))]
 [JsonSerializable(typeof(BrowserCredentialListItem))]
 [JsonSerializable(typeof(BrowserCredentialListItem[]))]
-internal sealed partial class BrowserHostJsonContext : JsonSerializerContext
+internal sealed partial class BrowseProxyJsonContext : JsonSerializerContext
 {
-    public static BrowserHostJsonContext ConfiguredDefault { get; } = new(CreateOptions());
+    public static BrowseProxyJsonContext ConfiguredDefault { get; } = new(CreateOptions());
 
     private static JsonSerializerOptions CreateOptions()
     {
@@ -36,5 +36,5 @@ internal sealed partial class BrowserHostJsonContext : JsonSerializerContext
 
     public JsonTypeInfo<T> GetRequiredTypeInfo<T>() =>
         GetTypeInfo(typeof(T)) as JsonTypeInfo<T> ??
-        throw new InvalidOperationException($"Type '{typeof(T)}' is not configured for browser host JSON serialization.");
+        throw new InvalidOperationException($"Type '{typeof(T)}' is not configured for browse proxy JSON serialization.");
 }

@@ -3,7 +3,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<RootNamespace>FluentBitwarden.BrowserHost</RootNamespace>
+		<RootNamespace>FluentBitwarden.BrowseProxy</RootNamespace>
   </PropertyGroup>
 
 	<ItemGroup>

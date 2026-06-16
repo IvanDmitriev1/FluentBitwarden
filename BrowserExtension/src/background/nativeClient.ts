@@ -1,16 +1,18 @@
 import {
   NativeMessagingHostName,
   NativeProtocolVersion,
-  type NativeRequestEnvelope,
-  type NativeResponseEnvelope
+  isNativeResponseEnvelope,
+  isRecord,
+  isString,
+  type NativeRequestDescriptor,
+  type NativeRequestEnvelope
 } from "../shared/nativeProtocol";
-import type { BrowserNativeMessageType } from "../shared/browserMessageTypes";
 
 const RequestTimeoutMs = 10_000;
 const IdleDisconnectMs = 60_000;
 
 interface PendingRequest {
-  resolve: (payload: unknown) => void;
+  complete: (payload: unknown) => void;
   reject: (error: NativeClientError) => void;
   timeoutId: ReturnType<typeof setTimeout>;
 }
@@ -31,7 +33,7 @@ export class NativeClient {
   private idleDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   public send<TPayload, TResponse>(
-    type: BrowserNativeMessageType,
+    request: NativeRequestDescriptor<TPayload, TResponse>,
     payload: TPayload
   ): Promise<TResponse> {
     let port: chrome.runtime.Port;
@@ -50,7 +52,7 @@ export class NativeClient {
     const envelope: NativeRequestEnvelope<TPayload> = {
       version: NativeProtocolVersion,
       requestId,
-      type,
+      type: request.type,
       payload
     };
 
@@ -62,7 +64,19 @@ export class NativeClient {
       }, RequestTimeoutMs);
 
       this.pendingRequests.set(requestId, {
-        resolve: (responsePayload: unknown) => resolve(responsePayload as TResponse),
+        complete: (responsePayload: unknown) => {
+          if (!request.validateResponse(responsePayload)) {
+            reject(
+              new NativeClientError(
+                "invalid_native_payload",
+                "Native host returned an invalid response payload."
+              )
+            );
+            return;
+          }
+
+          resolve(responsePayload);
+        },
         reject,
         timeoutId
       });
@@ -91,7 +105,7 @@ export class NativeClient {
   }
 
   private readonly handlePortMessage = (message: unknown): void => {
-    const response = parseNativeResponseEnvelope(message);
+    const response = isNativeResponseEnvelope(message, isUnknown) ? message : null;
     if (!response) {
       const requestId = readRequestId(message);
       if (requestId) {
@@ -112,7 +126,7 @@ export class NativeClient {
     clearTimeout(pending.timeoutId);
     this.pendingRequests.delete(response.requestId);
 
-    pending.resolve(response.payload);
+    pending.complete(response.payload);
 
     this.scheduleIdleDisconnectIfNeeded();
   };
@@ -171,19 +185,6 @@ export class NativeClient {
   }
 }
 
-function parseNativeResponseEnvelope(
-  value: unknown
-): NativeResponseEnvelope<unknown> | null {
-  if (!isRecord(value) || !isString(value.requestId) || !("payload" in value)) {
-    return null;
-  }
-
-  return {
-    requestId: value.requestId,
-    payload: value.payload
-  };
-}
-
 function readRequestId(value: unknown): string | null {
   return isRecord(value) && isString(value.requestId) ? value.requestId : null;
 }
@@ -196,10 +197,6 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Native messaging request failed.";
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isString(value: unknown): value is string {
-  return typeof value === "string";
+function isUnknown(value: unknown): value is unknown {
+  return true;
 }

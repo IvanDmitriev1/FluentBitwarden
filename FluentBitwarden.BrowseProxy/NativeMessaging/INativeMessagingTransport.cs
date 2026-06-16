@@ -1,6 +1,6 @@
-using FluentBitwarden.BrowserHost.Models;
+using FluentBitwarden.BrowseProxy.Models;
 
-namespace FluentBitwarden.BrowserHost.NativeMessaging;
+namespace FluentBitwarden.BrowseProxy.NativeMessaging;
 
 internal interface INativeMessagingTransport
 {

@@ -31,4 +31,8 @@ export class AvailabilityCache {
       response
     });
   }
+
+  public clear(): void {
+    this.entries.clear();
+  }
 }
