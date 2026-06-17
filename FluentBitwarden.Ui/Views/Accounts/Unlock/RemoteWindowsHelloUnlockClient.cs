@@ -15,7 +15,7 @@ internal class RemoteWindowsHelloUnlockClient(IIpcClient ipcClient) : IWindowsHe
 
     public ValueTask<WindowsHelloStatus> GetStatusAsync(GetWindowsHelloStatusRequest request, CancellationToken cancellationToken = default)
     {
-        return ipcClient.SendAsync<GetWindowsHelloStatusRequest, WindowsHelloStatus >(request, cancellationToken);
+        return ipcClient.SendAsync<GetWindowsHelloStatusRequest, WindowsHelloStatus>(request, cancellationToken);
     }
 
     public async ValueTask EnableAsync(EnableWindowsHelloRequest request, CancellationToken cancellationToken = default)

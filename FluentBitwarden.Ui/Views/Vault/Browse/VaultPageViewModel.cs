@@ -1,8 +1,6 @@
-using BitwardenApi.Models;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Platform;
 using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Views.Vault.Browse.Models;
@@ -22,13 +20,13 @@ public sealed partial class VaultPageViewModel(
     [ObservableProperty]
     public partial ObservableCollection<VaultFolder> Folders { get; private set; } = [];
 
-    [ObservableProperty] 
-    public partial CipherType? SelectedCipherType { get; set; }
+    [ObservableProperty]
+    public partial VaultCipherType? SelectedCipherType { get; set; }
 
     [ObservableProperty]
     public partial VaultCipher? SelectedCipher { get; set; }
 
-    [ObservableProperty] 
+    [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -43,7 +41,7 @@ public sealed partial class VaultPageViewModel(
     private bool _hasInitialized;
     private bool _applyingParameter;
 
-    partial void OnSelectedCipherTypeChanged(CipherType? value) => _ = QueryCiphersAsync();
+    partial void OnSelectedCipherTypeChanged(VaultCipherType? value) => _ = QueryCiphersAsync();
     partial void OnSearchTextChanged(string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
@@ -89,7 +87,7 @@ public sealed partial class VaultPageViewModel(
     }
 
 
-    public void OnUnloading() {}
+    public void OnUnloading() { }
 
     private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
     {
@@ -146,7 +144,7 @@ public sealed partial class VaultPageViewModel(
             _ = PreloadSiteIconsAsync();
         }
     }
-    
+
     private Task PreloadSiteIconsAsync()
     {
         var urls = FilteredCiphers

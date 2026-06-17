@@ -1,4 +1,9 @@
-using BitwardenApi.Contracts;
+using BitwardenApi.Identity;
+using BitwardenApi.Infrastructure.Transport;
+using BitwardenApi.Notifications;
+using BitwardenApi.Notifications.Contracts;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Items;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Providers;

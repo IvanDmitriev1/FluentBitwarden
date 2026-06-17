@@ -26,7 +26,7 @@ internal sealed class WindowManager : IWindowManager
     {
         _window?.Close();
         _window = window;
-        
+
         var currentTheme = SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey);
         ApplyTheme(currentTheme);
 

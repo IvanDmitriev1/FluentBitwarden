@@ -1,0 +1,23 @@
+using BitwardenApi.Primitives;
+
+namespace BitwardenApi.Vault.Attachments;
+
+public interface IVaultAttachmentsApi
+{
+    Task<AttachmentUploadInit> StartUploadV2Async(
+        StartUploadV2Request request,
+        CancellationToken cancellationToken = default);
+
+    Task<AttachmentUploadRenewal> RenewUploadAsync(
+        RenewUploadRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task UploadMultipartAsync(
+        UploadMultipartRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task DownloadByTokenAsync(
+        DownloadByTokenRequest request,
+        Func<Stream, Task> streamHandler,
+        CancellationToken cancellationToken = default);
+}

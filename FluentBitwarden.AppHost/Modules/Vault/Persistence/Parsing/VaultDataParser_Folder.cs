@@ -1,4 +1,4 @@
-using BitwardenApi.Cryptography;
+using BitwardenApi.Infrastructure.Cryptography;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 

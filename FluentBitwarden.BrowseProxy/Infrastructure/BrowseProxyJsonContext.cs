@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using BitwardenApi.Models;
+using BitwardenApi.Primitives;
 using FluentBitwarden.BrowseProxy.Models;
 
 namespace FluentBitwarden.BrowseProxy.Infrastructure;

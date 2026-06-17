@@ -15,7 +15,7 @@ internal sealed class BrowserExtensionClientHandlers(
 {
     private static readonly VaultCipherQuery LoginCipherQuery = new()
     {
-        CipherType = CipherType.Login
+        CipherType = VaultCipherType.Login
     };
 
     private bool CanReadVault => unlockedAccountAccessor.HasUnlockedAccount && vaultWorkspace.IsOpen;

@@ -65,7 +65,7 @@ internal sealed record HandlerMethodDescriptor(
         "IPC handler discovery reflects over handler methods and message metadata.")]
     public static HandlerMethodDescriptor[] Discover<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
-        THandler>()
+    THandler>()
         where THandler : class, IIpcRequestsHandler =>
         typeof(THandler)
             .GetMethods(
@@ -109,7 +109,7 @@ internal sealed record HandlerMethodDescriptor(
             return new HandlerMethodDescriptor(
                 HandlerMethodKind.RequestResponse,
                 messageType,
-                method, 
+                method,
                 responseType,
                 requestType);
         }

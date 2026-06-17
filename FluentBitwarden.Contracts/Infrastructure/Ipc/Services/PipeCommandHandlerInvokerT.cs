@@ -6,7 +6,7 @@ namespace FluentBitwarden.Contracts.Infrastructure.Ipc.Services;
 internal sealed class PipeCommandHandlerInvoker<
     THandler,
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    TResponse>(
+TResponse>(
     THandler handler,
     HandlerMethodDescriptor descriptor) : IIpcRequestHandlerInvoker
     where THandler : class, IIpcRequestsHandler

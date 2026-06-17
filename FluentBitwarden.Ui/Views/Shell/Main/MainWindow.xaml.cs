@@ -48,6 +48,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeChangeable
 
     private void RootFrame_OnNavigated(object sender, NavigationEventArgs e)
     {
-        
+
     }
 }

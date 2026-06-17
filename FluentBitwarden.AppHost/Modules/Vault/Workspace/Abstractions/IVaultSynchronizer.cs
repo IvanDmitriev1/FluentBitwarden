@@ -5,5 +5,5 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 
 internal interface IVaultSynchronizer
 {
-    ValueTask<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey,  bool force = false, CancellationToken cancellationToken = default);
+    ValueTask<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false, CancellationToken cancellationToken = default);
 }

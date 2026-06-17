@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Common.MemoryPackFormatters;
+using BitwardenApi.Infrastructure.Serialization;
 
 namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
 

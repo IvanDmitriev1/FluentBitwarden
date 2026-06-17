@@ -6,7 +6,7 @@
     xmlns:controls="using:FluentBitwarden.Views.Vault.Browse.Controls"
     xmlns:controls1="using:FluentBitwarden.Shared.Controls"
     xmlns:extensions1="using:FluentBitwarden.Views.Vault.Browse.Models"
-    xmlns:models="using:BitwardenApi.Models">
+    xmlns:models="using:BitwardenApi.Vault.Items.Contracts">
 
     <x:Double x:Key="CipherListItemDataTemplateIconSize">22</x:Double>
 

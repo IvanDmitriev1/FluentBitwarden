@@ -1,5 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Contracts;
+using System.Diagnostics.CodeAnalysis;
+using BitwardenApi.Identity;
+using BitwardenApi.Infrastructure.Transport;
+using BitwardenApi.Notifications;
+using BitwardenApi.Notifications.Contracts;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Items;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
@@ -16,7 +21,7 @@ internal sealed class AccountUnlockService(
     private TaskCompletionSource _whenUnlocked = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private DecryptedUserKey? _decryptedUserKey;
 
-    [property:AllowNull]
+    [property: AllowNull]
     public AccountProfile CurrentAccount
     {
         get => field ?? throw new InvalidOperationException("No unlocked account is present");

@@ -17,7 +17,6 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Otp.NET" />
     <PackageReference Include="StronglyTypedId" PrivateAssets="all" ExcludeAssets="runtime" />
-    <PackageReference Include="Utf8JsonStreamReader" />
   </ItemGroup>
 
 </Project>

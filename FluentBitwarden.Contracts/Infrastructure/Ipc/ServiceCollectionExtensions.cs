@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
             [DynamicallyAccessedMembers(
                 DynamicallyAccessedMemberTypes.PublicConstructors |
                 DynamicallyAccessedMemberTypes.PublicMethods)]
-            THandler>()
+        THandler>()
             where THandler : class, IIpcRequestsHandler
         {
             services.AddSingleton<THandler>();

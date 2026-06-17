@@ -30,7 +30,8 @@ internal readonly record struct RequestHeader(
             PayloadLength);
 
         return stream.WriteAsync(headerOwner.Memory);
-;    }
+        ;
+    }
 
     public static async ValueTask<RequestHeader> ReadAsync(Stream stream)
     {

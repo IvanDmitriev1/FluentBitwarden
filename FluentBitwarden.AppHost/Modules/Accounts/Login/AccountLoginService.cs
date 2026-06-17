@@ -1,5 +1,10 @@
-using BitwardenApi.Contracts;
-using BitwardenApi.Cryptography;
+using BitwardenApi.Identity;
+using BitwardenApi.Infrastructure.Transport;
+using BitwardenApi.Notifications;
+using BitwardenApi.Notifications.Contracts;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Items;
+using BitwardenApi.Infrastructure.Cryptography;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.Infrastructure.Security.WebAuthn;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,7 +22,7 @@ using AccountLoginOperationResult = OperationResult<AccountLoginOutcome, Account
 [Fody.ConfigureAwait(false)]
 internal sealed class AccountLoginService(
     IUnitOfWorkFactory unitOfWorkFactory,
-    IIdentityApiClient identityApiClient) : IAccountLoginService
+    IIdentityApi identityApiClient) : IAccountLoginService
 {
     public async ValueTask<AccountLoginOutcome> LoginAsync(AccountLoginRequest request, CancellationToken cancellationToken)
     {
@@ -103,15 +108,15 @@ internal sealed class AccountLoginService(
         string serverAuthorizationHash,
         TokenExchangeOutcome outcome,
         BitwardenEnvironment environment) => outcome switch
-    {
-        TokenExchangeOutcome.Authenticated success => AccountLoginOperationResult.WithPayload(new AccountLoginOutcome.Success(), CreateAuthenticationSuccess(success.AuthenticatedModel, environment)),
-        TokenExchangeOutcome.DeviceVerificationRequired dv =>
-            AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.DeviceVerificationRequired(dv.Message)),
-        TokenExchangeOutcome.InvalidCredentials ic => AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.InvalidCredentials(ic.Message)),
-        TokenExchangeOutcome.TwoFactorRequired twoFactorRequired => AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.TwoFactorRequired(
-            twoFactorRequired.Challenge, email, serverAuthorizationHash)),
-        _ => throw new InvalidOperationException("Unsupported password token outcome.")
-    };
+        {
+            TokenExchangeOutcome.Authenticated success => AccountLoginOperationResult.WithPayload(new AccountLoginOutcome.Success(), CreateAuthenticationSuccess(success.AuthenticatedModel, environment)),
+            TokenExchangeOutcome.DeviceVerificationRequired dv =>
+                AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.DeviceVerificationRequired(dv.Message)),
+            TokenExchangeOutcome.InvalidCredentials ic => AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.InvalidCredentials(ic.Message)),
+            TokenExchangeOutcome.TwoFactorRequired twoFactorRequired => AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.TwoFactorRequired(
+                twoFactorRequired.Challenge, email, serverAuthorizationHash)),
+            _ => throw new InvalidOperationException("Unsupported password token outcome.")
+        };
 
     private static AccountLoginSuccess CreateAuthenticationSuccess(TokenAuthenticatedModel model, BitwardenEnvironment environment)
     {

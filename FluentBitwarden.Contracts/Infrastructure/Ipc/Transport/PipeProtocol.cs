@@ -58,7 +58,7 @@ internal static class PipeProtocol
 
     public static async ValueTask<TResponse?> ReadResponsePayloadAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-        TResponse>(
+    TResponse>(
         Stream stream,
         int payloadLength,
         CancellationToken cancellationToken)

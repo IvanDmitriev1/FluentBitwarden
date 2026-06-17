@@ -55,7 +55,7 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
-    [CustomServerUrl<LogInEmailStepViewModel>(shouldValidateMemberName:nameof(IsCustomEnvironmentSelected))]
+    [CustomServerUrl<LogInEmailStepViewModel>(shouldValidateMemberName: nameof(IsCustomEnvironmentSelected))]
     [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",

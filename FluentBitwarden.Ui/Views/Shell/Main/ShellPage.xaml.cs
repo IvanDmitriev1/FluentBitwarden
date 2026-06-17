@@ -1,4 +1,4 @@
-using BitwardenApi.Models;
+using BitwardenApi.Primitives;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Contracts.Modules.Vault;

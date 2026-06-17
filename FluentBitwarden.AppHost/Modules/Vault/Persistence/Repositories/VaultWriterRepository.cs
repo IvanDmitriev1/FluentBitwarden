@@ -181,7 +181,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     OrganizationId = dto.OrganizationId.IsEmpty
                         ? null
                         : dto.OrganizationId.ToString(),
-                    CipherType = (int)dto.CipherType,
+                    CipherType = (int)dto.VaultCipherType,
                     RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
                     CreationDateUnixMs = dto.CreationDate.ToUnixTimeMilliseconds(),
                     DeletedDateUnixMs = dto.DeletedDate?.ToUnixTimeMilliseconds(),

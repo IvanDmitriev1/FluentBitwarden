@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.Shared.Controls"
-    xmlns:models="using:BitwardenApi.Models"
+    xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
     xmlns:templateSelectors="using:FluentBitwarden.Views.Vault.Browse.Templates"
     xmlns:vaultControls="using:FluentBitwarden.Views.Vault.Browse.Controls">
 

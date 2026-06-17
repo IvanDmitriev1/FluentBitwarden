@@ -18,7 +18,7 @@ internal sealed class SshKeyProvider(
     IVaultWorkspace vaultWorkspace,
     IUserDialogClient userDialogClient) : ISshKeyProvider
 {
-    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
+    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = VaultCipherType.SshKey };
 
     public Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {

@@ -1,4 +1,3 @@
-using BitwardenApi.Models;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
@@ -10,7 +9,6 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.Views.SshAgent.UserApproval;
 
@@ -40,7 +38,7 @@ internal sealed class UserDialogRequestHandler(IWindowManager windowManager, IVa
 
         async Task<Fido2Credential[]> GetCredentialsAsync()
         {
-            VaultCipherQuery sshCipherQuery = new() { CipherType = CipherType.Login };
+            VaultCipherQuery sshCipherQuery = new() { CipherType = VaultCipherType.Login };
 
             var ciphers = await vaultClient.SearchCiphersAsync(sshCipherQuery, cancellationToken);
             return ciphers

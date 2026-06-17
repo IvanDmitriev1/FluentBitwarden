@@ -33,7 +33,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
 
     public async ValueTask<TResponse> SendAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-        TResponse>(
+    TResponse>(
         ushort messageType,
         CancellationToken cancellationToken = default)
     {

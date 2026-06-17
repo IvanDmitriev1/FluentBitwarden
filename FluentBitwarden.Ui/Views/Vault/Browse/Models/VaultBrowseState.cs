@@ -1,5 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Models;
+using System.Diagnostics.CodeAnalysis;
+using BitwardenApi.Primitives;
 using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
 using Windows.Storage;
 

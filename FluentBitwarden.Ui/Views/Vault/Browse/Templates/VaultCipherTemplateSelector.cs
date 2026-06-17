@@ -1,4 +1,4 @@
-using BitwardenApi.Models;
+using BitwardenApi.Primitives;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Views.Vault.Browse.Templates;

@@ -91,7 +91,7 @@ internal partial class VaultReaderRepository
             : FolderId.Parse(row.FolderId),
         CollectionIds = collectionIds,
         EncryptedKey = row.EncryptedCipherKey is null ? EncString.Empty : EncString.FromBytes(row.EncryptedCipherKey),
-        CipherType = (CipherType)row.CipherType,
+        VaultCipherType = (VaultCipherType)row.CipherType,
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
         CreationDate = DateTimeOffset.FromUnixTimeMilliseconds(row.CreationDateUnixMs),
         DeletedDate = row.DeletedDateUnixMs is { } deletedDateUnixMs

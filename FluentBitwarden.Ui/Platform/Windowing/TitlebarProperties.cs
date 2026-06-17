@@ -11,7 +11,7 @@ namespace FluentBitwarden.Platform.Windowing;
 [AttachedDependencyProperty<ICommand>("PaneToggleCommand")]
 public static partial class TitlebarProperties
 {
-    [field:MaybeNull]
+    [field: MaybeNull]
     private static TitleBar TargetTitleBar
     {
         get => field ?? throw new InvalidOperationException("TargetTitleBar is not set");

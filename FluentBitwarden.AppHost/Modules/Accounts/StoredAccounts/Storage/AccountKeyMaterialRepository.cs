@@ -1,4 +1,4 @@
-using BitwardenApi.Cryptography;
+using BitwardenApi.Infrastructure.Cryptography;
 using Dapper;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
@@ -108,7 +108,7 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             UserId = userId.ToString(),
         }, Transaction);
     }
-            
+
     private static AccountKeyMaterial MapToDomain(in AccountKeyMaterialRow row) => new(
         UserId: UserId.Parse(row.UserId),
         Salt: row.Salt,

@@ -1,4 +1,4 @@
-using BitwardenApi.Models;
+using BitwardenApi.Primitives;
 
 namespace FluentBitwarden.Views.Accounts.SignIn.Models;
 

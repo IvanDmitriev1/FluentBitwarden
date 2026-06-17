@@ -1,4 +1,4 @@
-using BitwardenApi.Models;
+using BitwardenApi.Primitives;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Views.Accounts.SignIn.Models;
 using System.ComponentModel.DataAnnotations;
@@ -66,7 +66,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 
         var context = _flow.Context;
 
-        var outcome  = await _flow.AccountsClient.LoginAsync(new AccountLoginRequest.TwoFactorRequest(
+        var outcome = await _flow.AccountsClient.LoginAsync(new AccountLoginRequest.TwoFactorRequest(
             context.BitwardenContext,
             _twoFactorRequired.Email,
             _twoFactorRequired.ServerAuthorizationHash,

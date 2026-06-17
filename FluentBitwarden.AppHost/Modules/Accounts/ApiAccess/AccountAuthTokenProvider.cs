@@ -1,4 +1,9 @@
-﻿using BitwardenApi.Contracts;
+using BitwardenApi.Identity;
+using BitwardenApi.Infrastructure.Transport;
+using BitwardenApi.Notifications;
+using BitwardenApi.Notifications.Contracts;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Items;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models.Exceptions;
@@ -8,7 +13,7 @@ namespace FluentBitwarden.AppHost.Modules.Accounts.ApiAccess;
 
 internal sealed class AccountAuthTokenProvider(
     IUnitOfWorkFactory unitOfWorkFactory,
-    IIdentityApiClient identityApiClient) : IAccountAuthTokenProvider
+    IIdentityApi identityApiClient) : IAccountAuthTokenProvider
 {
     private AccountAuthenticationTokens? _currentTokens;
 

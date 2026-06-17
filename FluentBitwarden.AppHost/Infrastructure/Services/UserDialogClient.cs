@@ -26,7 +26,7 @@ internal sealed class UserDialogClient(
             cancellationToken);
     }
 
-    private async ValueTask<UserActionDialogOutcome> SendRequest<TRequest>(TRequest request, CancellationToken cancellationToken) 
+    private async ValueTask<UserActionDialogOutcome> SendRequest<TRequest>(TRequest request, CancellationToken cancellationToken)
         where TRequest : IIpcRequestMessage
     {
         uiProcessLauncher.Activate();

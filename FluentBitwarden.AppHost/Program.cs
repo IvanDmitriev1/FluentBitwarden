@@ -45,7 +45,7 @@ internal static class Program
         builder.Services.AddTransient<IAppSetupService, AppSetupService>();
         builder.Services.AddDatabaseServices();
         builder.Services.AddApplicationInfrastructureServices();
-        
+
         builder.Services.AddBitwardenApi<BearerAuthTokenProvider>();
         builder.Services.AddAccountModule();
         builder.Services.AddVaultServices();

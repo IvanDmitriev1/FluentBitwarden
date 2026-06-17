@@ -1,4 +1,4 @@
-using BitwardenApi.Extensions;
+using BitwardenApi.Infrastructure.Encoding;
 using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;

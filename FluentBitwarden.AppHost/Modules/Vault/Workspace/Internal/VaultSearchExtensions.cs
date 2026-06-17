@@ -8,28 +8,28 @@ internal static class VaultSearchExtensions
         this IEnumerable<VaultCipher> source,
         VaultCipherSortField sortField,
         VaultCipherSortDirection sortDirection) => (sortField, sortDirection) switch
-    {
-        (VaultCipherSortField.Name, VaultCipherSortDirection.Ascending) =>
-            source.OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
+        {
+            (VaultCipherSortField.Name, VaultCipherSortDirection.Ascending) =>
+                source.OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
 
-        (VaultCipherSortField.Name, VaultCipherSortDirection.Descending) =>
-            source.OrderByDescending(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
+            (VaultCipherSortField.Name, VaultCipherSortDirection.Descending) =>
+                source.OrderByDescending(static x => x.Name, StringComparer.CurrentCultureIgnoreCase),
 
-        (VaultCipherSortField.CreationDate, VaultCipherSortDirection.Ascending) =>
-            source.OrderBy(static x => x.CreationDate),
+            (VaultCipherSortField.CreationDate, VaultCipherSortDirection.Ascending) =>
+                source.OrderBy(static x => x.CreationDate),
 
-        (VaultCipherSortField.CreationDate, VaultCipherSortDirection.Descending) =>
-            source.OrderByDescending(static x => x.CreationDate),
+            (VaultCipherSortField.CreationDate, VaultCipherSortDirection.Descending) =>
+                source.OrderByDescending(static x => x.CreationDate),
 
-        (VaultCipherSortField.RevisionDate, VaultCipherSortDirection.Ascending) =>
-            source.OrderBy(static x => x.RevisionDate),
+            (VaultCipherSortField.RevisionDate, VaultCipherSortDirection.Ascending) =>
+                source.OrderBy(static x => x.RevisionDate),
 
-        (VaultCipherSortField.RevisionDate, VaultCipherSortDirection.Descending) =>
-            source.OrderByDescending(static x => x.RevisionDate),
+            (VaultCipherSortField.RevisionDate, VaultCipherSortDirection.Descending) =>
+                source.OrderByDescending(static x => x.RevisionDate),
 
-        _ =>
-            source.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-    };
+            _ =>
+                source.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
+        };
 
     public static bool MatchesSearchText(this VaultCipher cipher, string? searchText)
     {

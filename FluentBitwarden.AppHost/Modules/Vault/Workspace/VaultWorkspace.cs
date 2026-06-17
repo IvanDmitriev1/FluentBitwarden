@@ -8,7 +8,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultWorkspace(
-    IVaultSynchronizer vaultSynchronizer, 
+    IVaultSynchronizer vaultSynchronizer,
     VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
 {
     private LoadedVaultData _vaultData = new([], [], [], []);

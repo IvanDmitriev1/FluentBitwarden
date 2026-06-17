@@ -1,9 +1,9 @@
-using BitwardenApi.OpenSsh;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
-using CommunityToolkit.HighPerformance.Buffers;
 using System.Security.Cryptography;
 using System.Text.Json;
+using BitwardenApi.Primitives;
+using CommunityToolkit.HighPerformance.Buffers;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
@@ -50,14 +50,14 @@ public static partial class VaultDataParser
         ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> decryptionKey)
     {
-        return dto.CipherType switch
+        return dto.VaultCipherType switch
         {
-            CipherType.Login => ParseLoginCipher((LoginVaultCipher)cipher, ref reader, decryptionKey),
-            CipherType.SecureNote => ParseSecureNoteCipher((SecureNoteVaultCipher)cipher, ref reader, decryptionKey),
-            CipherType.Card => ParseCardCipher((CardVaultCipher)cipher, ref reader, decryptionKey),
-            CipherType.Identity => ParseIdentityCipher((IdentityVaultCipher)cipher, ref reader, decryptionKey),
-            CipherType.SshKey => ParseSshKeyCipher((SshKeyVaultCipher)cipher, ref reader, decryptionKey),
-            _ => throw new NotSupportedException($"Unsupported vaultCipher type: {dto.CipherType}")
+            VaultCipherType.Login => ParseLoginCipher((LoginVaultCipher)cipher, ref reader, decryptionKey),
+            VaultCipherType.SecureNote => ParseSecureNoteCipher((SecureNoteVaultCipher)cipher, ref reader, decryptionKey),
+            VaultCipherType.Card => ParseCardCipher((CardVaultCipher)cipher, ref reader, decryptionKey),
+            VaultCipherType.Identity => ParseIdentityCipher((IdentityVaultCipher)cipher, ref reader, decryptionKey),
+            VaultCipherType.SshKey => ParseSshKeyCipher((SshKeyVaultCipher)cipher, ref reader, decryptionKey),
+            _ => throw new NotSupportedException($"Unsupported vaultCipher type: {dto.VaultCipherType}")
         };
     }
 
@@ -201,9 +201,9 @@ public static partial class VaultDataParser
         return false;
     }
 
-    private static VaultCipher CreateCipher(ref readonly VaultCipherDto dto) => dto.CipherType switch
+    private static VaultCipher CreateCipher(ref readonly VaultCipherDto dto) => dto.VaultCipherType switch
     {
-        CipherType.Login => new LoginVaultCipher
+        VaultCipherType.Login => new LoginVaultCipher
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -214,7 +214,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate,
         },
-        CipherType.SecureNote => new SecureNoteVaultCipher()
+        VaultCipherType.SecureNote => new SecureNoteVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -225,7 +225,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        CipherType.Card => new CardVaultCipher()
+        VaultCipherType.Card => new CardVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -236,7 +236,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        CipherType.Identity => new IdentityVaultCipher()
+        VaultCipherType.Identity => new IdentityVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,
@@ -247,7 +247,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        CipherType.SshKey => new SshKeyVaultCipher()
+        VaultCipherType.SshKey => new SshKeyVaultCipher()
         {
             Id = dto.Id,
             FolderId = dto.FolderId,

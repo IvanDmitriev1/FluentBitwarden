@@ -1,4 +1,4 @@
-namespace BitwardenApi.Contracts;
+namespace BitwardenApi.Notifications.Contracts;
 
 public interface ISignalRAccessTokenProvider
 {

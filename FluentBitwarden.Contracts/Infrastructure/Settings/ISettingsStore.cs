@@ -5,7 +5,7 @@ namespace FluentBitwarden.Contracts.Infrastructure.Settings;
 public interface ISettingsStore
 {
     event EventHandler<SettingChangedEventArgs> Changed;
-    
+
     void Clear();
 
     T Get<T>(SettingKey<T> key) where T : notnull;

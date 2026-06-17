@@ -1,5 +1,10 @@
-﻿using Windows.Networking.Connectivity;
-using BitwardenApi.Contracts;
+using Windows.Networking.Connectivity;
+using BitwardenApi.Identity;
+using BitwardenApi.Infrastructure.Transport;
+using BitwardenApi.Notifications;
+using BitwardenApi.Notifications.Contracts;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Items;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using FluentBitwarden.Contracts.Infrastructure.Shared;
@@ -11,7 +16,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultSynchronizer(
     IUnitOfWorkFactory unitOfWorkFactory,
-    IVaultApiClient vaultApiClient) : IVaultSynchronizer
+    IVaultItemsApi vaultApiClient) : IVaultSynchronizer
 {
     public async ValueTask<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false, CancellationToken cancellationToken = default)
     {
