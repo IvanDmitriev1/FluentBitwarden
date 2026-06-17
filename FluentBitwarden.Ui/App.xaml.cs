@@ -1,15 +1,16 @@
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Application.Activation;
-using FluentBitwarden.Views.Shell.Main;
+using FluentBitwarden.Infrastructure.Activation;
+using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Views.Shell.Overlay;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using MainWindow = FluentBitwarden.Views.Shell.MainWindow;
+using OverlayWindow = FluentBitwarden.Views.Shell.OverlayWindow;
 
 namespace FluentBitwarden;
 
@@ -24,7 +25,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     private readonly IServiceProvider _services = new ServiceCollection()
         .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
-        .AddFeatureViews()
+        .AddViews()
         .AddUiServices()
         .BuildServiceProvider();
 

@@ -6,7 +6,7 @@ using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using WinUIEx;
-using PasswordBoxEx = FluentBitwarden.Shared.Controls.PasswordBoxEx;
+using PasswordBoxEx = FluentBitwarden.Controls.PasswordBoxEx;
 
 namespace FluentBitwarden.Views.Accounts.Unlock;
 

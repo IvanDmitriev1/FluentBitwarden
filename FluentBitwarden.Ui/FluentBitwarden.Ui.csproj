@@ -80,5 +80,4 @@
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
 
-
 </Project>

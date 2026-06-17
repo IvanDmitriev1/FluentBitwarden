@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentBitwarden.Controls">
+
+    <!--
+        XAML constants.
+        
+        Search:      E721
+        Close:       E711
+        Sort/Filter: E8CB
+    -->
+    <x:String x:Key="SearchFilterBarSearchIconGlyph">&#xE721;</x:String>
+    <x:String x:Key="SearchFilterBarCloseIconGlyph">&#xE711;</x:String>
+    <x:String x:Key="SearchFilterBarSortIconGlyph">&#xE8CB;</x:String>
+
+    <Style x:Key="SearchFilterBarIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
+    <Style TargetType="controls:SearchFilterBar">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="MinHeight" Value="56" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="12,8" />
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:SearchFilterBar">
+                    <Grid
+                        x:Name="Root"
+                        MinHeight="{TemplateBinding MinHeight}"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ContentPresenter
+                                x:Name="FilterHost"
+                                Grid.Column="0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                Content="{TemplateBinding FilterContent}"
+                                ContentTemplate="{TemplateBinding FilterContentTemplate}" />
+
+                            <controls:TextBoxEx
+                                x:Name="PART_SearchBox"
+                                Grid.Column="0"
+                                PlaceholderText="{TemplateBinding SearchPlaceholderText}"
+                                Text="{Binding Path=SearchText, RelativeSource={RelativeSource Mode=TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <controls:TextBoxEx.Icon>
+                                    <FontIcon Glyph="{StaticResource SearchFilterBarSearchIconGlyph}" Style="{StaticResource IconStyle}" />
+                                </controls:TextBoxEx.Icon>
+                            </controls:TextBoxEx>
+
+                            <Button
+                                x:Name="PART_SearchToggleButton"
+                                Grid.Column="1"
+                                Style="{StaticResource SearchFilterBarIconButtonStyle}">
+                                <FontIcon
+                                    x:Name="PART_SearchToggleButtonIcon"
+                                    Glyph="{StaticResource SearchFilterBarSearchIconGlyph}"
+                                    Style="{StaticResource IconStyle}" />
+                            </Button>
+
+                            <Button
+                                x:Name="PART_SortButton"
+                                Grid.Column="2"
+                                Flyout="{TemplateBinding SortFlyout}"
+                                Style="{StaticResource SearchFilterBarIconButtonStyle}"
+                                ToolTipService.ToolTip="{TemplateBinding SortButtonToolTip}">
+                                <FontIcon Glyph="{StaticResource SearchFilterBarSortIconGlyph}" Style="{StaticResource IconStyle}" />
+                            </Button>
+                        </Grid>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="SearchStates">
+
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="FilterHost" Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
+                                        </ObjectAnimationUsingKeyFrames>
+
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_SearchBox" Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed" />
+                                        </ObjectAnimationUsingKeyFrames>
+
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_SearchToggleButtonIcon" Storyboard.TargetProperty="Glyph">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource SearchFilterBarSearchIconGlyph}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="SearchOpen">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="FilterHost" Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed" />
+                                        </ObjectAnimationUsingKeyFrames>
+
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_SearchBox" Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
+                                        </ObjectAnimationUsingKeyFrames>
+
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_SearchToggleButtonIcon" Storyboard.TargetProperty="Glyph">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource SearchFilterBarCloseIconGlyph}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
