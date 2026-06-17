@@ -1,9 +1,6 @@
-using BitwardenApi.Infrastructure.Cryptography;
 using System.Globalization;
 
-using BitwardenApi.Identity.Contracts;
-
-namespace BitwardenApi.Identity;
+namespace BitwardenApi.Identity.Internal;
 
 internal static class IdentityJsonMapper
 {

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
-using BitwardenApi.Identity;
 using BitwardenApi.Infrastructure.Transport;
 using BitwardenApi.Notifications;
 using BitwardenApi.Notifications.Contracts;
@@ -10,6 +9,7 @@ using BitwardenApi.Vault.Items;
 using BitwardenApi.Infrastructure.Transport;
 using BitwardenApi.Identity.Contracts;
 using BitwardenApi.Infrastructure.Encoding;
+using BitwardenApi.Identity.Internal;
 
 namespace BitwardenApi.Identity;
 

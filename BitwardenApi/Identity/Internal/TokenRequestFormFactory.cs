@@ -1,7 +1,6 @@
 using System.Globalization;
-using BitwardenApi.Infrastructure.Encoding;
 
-namespace BitwardenApi.Identity;
+namespace BitwardenApi.Identity.Internal;
 
 internal static class TokenRequestFormFactory
 {
