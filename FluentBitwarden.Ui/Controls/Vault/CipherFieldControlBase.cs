@@ -1,5 +1,4 @@
 using System.Windows.Input;
-using FluentBitwarden.Infrastructure.Clipboard;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
 

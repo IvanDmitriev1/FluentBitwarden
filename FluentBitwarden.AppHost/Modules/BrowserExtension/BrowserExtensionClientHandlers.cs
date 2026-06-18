@@ -1,7 +1,7 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.BrowserExtension.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.BrowserExtension;
 using FluentBitwarden.Contracts.Modules.BrowserExtension.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;

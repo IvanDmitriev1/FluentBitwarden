@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
 using Windows.Networking.Connectivity;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Startup;
 

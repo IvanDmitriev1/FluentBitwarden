@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
+using FluentBitwarden.Contracts.Settings.Models;
 using FluentBitwarden.Converters;
 using Microsoft.UI.Xaml;
 

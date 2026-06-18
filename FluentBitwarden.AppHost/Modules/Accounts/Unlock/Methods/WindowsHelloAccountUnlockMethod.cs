@@ -3,8 +3,8 @@ using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
 using FluentBitwarden.Infrastructure.Security.WindowsHello;
 using System.Security.Cryptography;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
 

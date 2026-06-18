@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Infrastructure.Activation;
+using FluentBitwarden.Contracts.Infrastructure;
+using FluentBitwarden.Services.Window;
 using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;

@@ -1,5 +1,3 @@
-using FluentBitwarden.BrowseProxy.Models;
-
 namespace FluentBitwarden.BrowseProxy.NativeMessaging;
 
 internal interface INativeMessagingTransport

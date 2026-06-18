@@ -6,7 +6,7 @@
     xmlns:converters="using:FluentBitwarden.Converters"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:lifecycle="using:FluentBitwarden.Infrastructure.Navigation.Lifecycle"
+    xmlns:lifecycle="using:FluentBitwarden.Services.Navigation"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.ViewModels.Settings.Models"
     NavigationCacheMode="Required"

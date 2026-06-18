@@ -1,14 +1,11 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure.Settings;
-using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
-using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
+using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
@@ -16,7 +13,7 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
     IVaultWorkspace vaultWorkspace,
-    IUserDialogClient userDialogClient) : ISshKeyProvider
+    ISshUserActionDialogClient sshUserActionDialogClient) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = VaultCipherType.SshKey };
 
@@ -46,7 +43,7 @@ internal sealed class SshKeyProvider(
                 KeyFingerprint: cipher.KeyFingerprint,
                 IsForwarded: false);
 
-            var userAction = await userDialogClient.ShowSshDialogAsync(requestDialog, token);
+            var userAction = await sshUserActionDialogClient.ShowSshDialogAsync(requestDialog, token);
             if (userAction == UserActionDialogOutcome.Denied)
                 return SshSignatureResult.Failed;
         }

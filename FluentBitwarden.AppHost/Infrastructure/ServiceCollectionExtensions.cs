@@ -1,8 +1,9 @@
 using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Services;
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
-using FluentBitwarden.Contracts.Infrastructure.UserDialog;
+using FluentBitwarden.Contracts.Ipc;
+using FluentBitwarden.Contracts.Modules.Passkey;
+using FluentBitwarden.Contracts.Modules.Ssh;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Infrastructure;
@@ -23,7 +24,8 @@ internal static class ServiceCollectionExtensions
         services.AddIpcServer(IpcConstants.AppHostPipeName, 2);
         services.AddIpcClient(IpcConstants.UiPipeName);
         services.AddSingleton<IUiProcessLauncher, UiProcessLauncher>();
-        services.AddSingleton<IUserDialogClient, UserDialogClient>();
+        services.AddSingleton<ISshUserActionDialogClient, SshUserActionDialogClient>();
+        services.AddSingleton<IPasskeyCredentialSelectionClient, PasskeyCredentialSelectionClient>();
 
         return services;
     }

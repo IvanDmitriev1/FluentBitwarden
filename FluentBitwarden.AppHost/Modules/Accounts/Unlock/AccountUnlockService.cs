@@ -1,15 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Identity;
-using BitwardenApi.Infrastructure.Transport;
-using BitwardenApi.Notifications;
-using BitwardenApi.Notifications.Contracts;
-using BitwardenApi.Vault.Attachments;
-using BitwardenApi.Vault.Items;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Methods;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 

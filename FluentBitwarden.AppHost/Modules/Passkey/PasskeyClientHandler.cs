@@ -1,15 +1,15 @@
-using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure.UserDialog;
+using FluentBitwarden.Contracts.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Passkey;
 
-internal sealed class PasskeyClientHandler(IUserDialogClient userDialogClient) : IPasskeyClient, IIpcRequestsHandler
+internal sealed class PasskeyClientHandler(IPasskeyCredentialSelectionClient passkeyCredentialSelectionClient)
+    : IPasskeyClient, IIpcRequestsHandler
 {
     public async ValueTask<PasskeyAssertionResponse> SelectCredentialAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
-        var credential = await userDialogClient.SelectPasskeyCredential(request, cancellationToken);
+        var credential = await passkeyCredentialSelectionClient.SelectPasskeyCredentialAsync(request, cancellationToken);
 
         var authenticatorData = WebAuthnAssertion.BuildAuthenticatorData(request.RpIdHash, credential.Counter, true, true);
         var signedPayload = WebAuthnAssertion.BuildSignedPayload(authenticatorData, request.ClientDataHash);

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
+using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
 

@@ -1,4 +1,4 @@
-using FluentBitwarden.Infrastructure.Navigation.Lifecycle;
+using FluentBitwarden.Services.Navigation;
 
 namespace FluentBitwarden.Views.Accounts.Unlock;
 

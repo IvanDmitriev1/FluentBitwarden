@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Infrastructure.SiteIcons;
+using FluentBitwarden.Services.SiteIcons;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;

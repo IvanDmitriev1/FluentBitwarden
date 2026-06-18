@@ -1,9 +1,6 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.BrowseProxy.Infrastructure;
-using FluentBitwarden.BrowseProxy.Models;
 using System.Buffers.Binary;
 using System.Text.Json;
-using Windows.Storage.Streams;
 
 namespace FluentBitwarden.BrowseProxy.NativeMessaging;
 

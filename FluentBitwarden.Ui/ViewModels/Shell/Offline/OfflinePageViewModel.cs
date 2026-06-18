@@ -1,6 +1,7 @@
 using Windows.Networking.Connectivity;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Views.Startup;
+using FluentBitwarden.Services.Navigation;
 
 namespace FluentBitwarden.ViewModels.Shell.Offline;
 

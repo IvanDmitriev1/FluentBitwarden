@@ -2,7 +2,7 @@
 using FluentBitwarden.AppHost.Modules.Vault.Workspace;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
+using FluentBitwarden.Contracts.Ipc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 

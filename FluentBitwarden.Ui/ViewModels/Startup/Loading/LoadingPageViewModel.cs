@@ -3,6 +3,7 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Views.Accounts.Login;
 using FluentBitwarden.Views.Accounts.Unlock;
 using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Services.Navigation;
 
 namespace FluentBitwarden.ViewModels.Startup.Loading;
 

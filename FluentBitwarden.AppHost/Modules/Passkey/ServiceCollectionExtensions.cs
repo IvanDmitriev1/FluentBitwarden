@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
+using FluentBitwarden.Contracts.Ipc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 

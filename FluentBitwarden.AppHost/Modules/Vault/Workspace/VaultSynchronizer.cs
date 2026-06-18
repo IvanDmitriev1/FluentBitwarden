@@ -7,9 +7,9 @@ using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Items;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 

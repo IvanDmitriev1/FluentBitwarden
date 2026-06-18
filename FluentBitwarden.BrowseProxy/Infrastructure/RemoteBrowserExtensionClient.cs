@@ -1,7 +1,4 @@
-﻿using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Modules.BrowserExtension;
-
-namespace FluentBitwarden.BrowseProxy.Infrastructure;
+﻿namespace FluentBitwarden.BrowseProxy.Infrastructure;
 
 internal sealed class RemoteBrowserExtensionClient(IIpcClient ipcClient) : IBrowserExtensionClient
 {

@@ -1,3 +1,5 @@
+using FluentBitwarden.Contracts.Infrastructure;
+
 namespace FluentBitwarden.ViewModels.Accounts.Login.Models;
 
 internal sealed class LogInFlowContext

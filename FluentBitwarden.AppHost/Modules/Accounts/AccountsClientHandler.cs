@@ -2,12 +2,12 @@
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
+using FluentBitwarden.Contracts.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts;
 

@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Infrastructure.Shared;
+using FluentBitwarden.Contracts.Infrastructure;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;

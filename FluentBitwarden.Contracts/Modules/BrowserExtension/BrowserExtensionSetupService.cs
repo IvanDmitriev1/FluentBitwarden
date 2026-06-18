@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Windows.Storage;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.Win32;
+using FluentBitwarden.Contracts.Extensions;
 
 namespace FluentBitwarden.Contracts.Modules.BrowserExtension;
 

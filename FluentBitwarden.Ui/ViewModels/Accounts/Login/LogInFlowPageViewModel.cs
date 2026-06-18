@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
+using FluentBitwarden.Services.Navigation;
+using FluentBitwarden.Services.Window;
 using FluentBitwarden.Views.Startup;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login;

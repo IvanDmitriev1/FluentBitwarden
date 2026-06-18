@@ -3,8 +3,9 @@ using Microsoft.UI.Xaml;
 using System.Windows.Input;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
+using FluentBitwarden.Services.Window;
 using WinUIEx;
 using PasswordBoxEx = FluentBitwarden.Controls.PasswordBoxEx;
 

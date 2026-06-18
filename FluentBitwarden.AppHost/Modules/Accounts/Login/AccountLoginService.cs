@@ -10,10 +10,10 @@ using FluentBitwarden.Infrastructure.Security.WebAuthn;
 using System.IdentityModel.Tokens.Jwt;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Models;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Login;
 

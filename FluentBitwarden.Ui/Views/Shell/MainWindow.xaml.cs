@@ -1,4 +1,6 @@
 using FluentBitwarden.AttachedProperties;
+using FluentBitwarden.Services.Navigation;
+using FluentBitwarden.Services.Window;
 using FluentBitwarden.Views.Startup;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;

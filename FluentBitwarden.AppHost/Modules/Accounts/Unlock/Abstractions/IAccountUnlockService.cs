@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+﻿using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock.Abstractions;
 
