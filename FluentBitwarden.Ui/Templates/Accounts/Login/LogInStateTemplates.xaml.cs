@@ -1,7 +1,6 @@
-using FluentBitwarden.ViewModels.Accounts.Login.Steps;
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Views.Accounts.Login;
+namespace FluentBitwarden.Templates.Accounts.Login;
 
 public partial class LogInStateTemplates : ResourceDictionary
 {

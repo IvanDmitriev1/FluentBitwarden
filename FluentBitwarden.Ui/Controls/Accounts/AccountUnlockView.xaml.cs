@@ -1,24 +1,23 @@
-using CommunityToolkit.Mvvm.Input;
-using Microsoft.UI.Xaml;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Services.Window;
+using Microsoft.UI.Xaml;
 using WinUIEx;
-using PasswordBoxEx = FluentBitwarden.Controls.PasswordBoxEx;
 
-namespace FluentBitwarden.Views.Accounts.Unlock;
+namespace FluentBitwarden.Controls.Accounts;
 
 [DependencyProperty<AccountProfile>("Account")]
 [DependencyProperty<ICommand>("ResultCommand")]
-public sealed partial class VaultUnlock : UserControl
+public sealed partial class AccountUnlockView : UserControl
 {
     private const string PermissionGlyph = "\uE8D7";
     private const string ForwardGlyph = "\uE72A";
 
-    public VaultUnlock()
+    public AccountUnlockView()
     {
         InitializeComponent();
 

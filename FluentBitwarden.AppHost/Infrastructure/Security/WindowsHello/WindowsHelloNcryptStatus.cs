@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 
 internal static class WindowsHelloNcryptStatus
 {

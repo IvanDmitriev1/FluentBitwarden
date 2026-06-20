@@ -2,7 +2,7 @@ using System.Buffers.Text;
 using System.Text.Json;
 using Windows.Win32.Security.Authentication.WebAuthn;
 
-namespace FluentBitwarden.Infrastructure.Security.WebAuthn;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WebAuthn;
 
 internal static unsafe class WebAuthnLoginAssertionHelper
 {

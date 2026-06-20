@@ -1,6 +1,6 @@
 ﻿using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
-using FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 

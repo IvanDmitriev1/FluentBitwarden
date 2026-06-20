@@ -1,11 +1,9 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using BitwardenApi.Primitives;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
-namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {

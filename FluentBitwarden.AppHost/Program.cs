@@ -4,7 +4,6 @@ using FluentBitwarden.AppHost.Application.Activation;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Data;
-using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.AppHost.Modules.Accounts;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Providers;
 using FluentBitwarden.AppHost.Modules.Passkey;
@@ -41,8 +40,6 @@ internal static class Program
         builder.Services.AddSingleton<AppHostActivationHandler>();
         builder.Services.AddHostedService<AppHostHostedService>();
 
-        builder.Services.AddDatabaseServices();
-        builder.Services.AddTransient<IAppSetupService, AppSetupService>();
         builder.Services.AddDatabaseServices();
         builder.Services.AddApplicationInfrastructureServices();
 

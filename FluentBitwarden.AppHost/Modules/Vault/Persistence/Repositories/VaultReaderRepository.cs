@@ -3,7 +3,7 @@ using Dapper;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 using Microsoft.Data.Sqlite;
 
-namespace FluentBitwarden.Modules.Vault.Repositories;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
 internal sealed partial class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {

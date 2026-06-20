@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Views.Accounts.Login;
+namespace FluentBitwarden.Controls.Accounts;
 
 [DependencyProperty<string>("Email")]
 [DependencyProperty<string>("ServerDisplayName")]

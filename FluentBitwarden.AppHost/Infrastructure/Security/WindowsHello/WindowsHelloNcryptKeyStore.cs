@@ -1,8 +1,7 @@
 using System.Security.Cryptography;
-using Windows.Win32;
 using Windows.Win32.Security.Cryptography;
 
-namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 
 internal static class WindowsHelloNcryptKeyStore
 {

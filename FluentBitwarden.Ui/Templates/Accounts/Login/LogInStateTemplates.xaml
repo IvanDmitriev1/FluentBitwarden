@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
-    x:Class="FluentBitwarden.Views.Accounts.Login.LogInStateTemplates"
+    x:Class="FluentBitwarden.Templates.Accounts.Login.LogInStateTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:accountControls="using:FluentBitwarden.Controls"
+    xmlns:accounts="using:FluentBitwarden.Controls.Accounts"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:local="using:FluentBitwarden.Views.Accounts.Login"
+    xmlns:login="using:FluentBitwarden.Templates.Accounts.Login"
     xmlns:models="using:FluentBitwarden.ViewModels.Accounts.Login.Models"
     xmlns:sharedControls="using:FluentBitwarden.Controls"
     xmlns:states="using:FluentBitwarden.ViewModels.Accounts.Login.Steps"
-    xmlns:validation="using:FluentBitwarden.Controls"
-    xmlns:views="using:FluentBitwarden.Views.Accounts.Login">
+    xmlns:validation="using:FluentBitwarden.Controls">
 
     <DataTemplate x:Key="LogInEmailStepTemplate" x:DataType="states:LogInEmailStepViewModel">
         <StackPanel Spacing="22">
@@ -143,7 +142,7 @@
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Welcome back!" />
 
-            <views:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
+            <accounts:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
 
             <validation:ValidationField Property="{Binding MasterPasswordValidation}">
                 <sharedControls:PasswordBoxEx
@@ -185,7 +184,7 @@
                     TextAlignment="Center" />
             </StackPanel>
 
-            <views:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
+            <accounts:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
 
 
             <StackPanel Spacing="12">
@@ -225,7 +224,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <local:LogInStateTemplatesSelector
+    <login:LogInStateTemplatesSelector
         x:Key="LogInStateTemplatesSelector"
         EmailLogInTemplate="{StaticResource LogInEmailStepTemplate}"
         PasswordLogInTemplate="{StaticResource LogInPasswordStepTemplate}"

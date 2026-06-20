@@ -1,8 +1,7 @@
 using FluentBitwarden.Views.Settings;
-using FluentBitwarden.Views.Accounts.Unlock;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Views.Accounts.Login;
+using FluentBitwarden.Views.Accounts;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Startup;
 using FluentBitwarden.Views.Vault;

@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Modules.Vault.Repositories;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
 internal partial class VaultReaderRepository
 {

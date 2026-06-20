@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Security.Principal;
 
-namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 
 internal static class WindowsHelloKeyName
 {

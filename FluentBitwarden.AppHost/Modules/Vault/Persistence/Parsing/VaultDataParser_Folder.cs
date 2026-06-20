@@ -1,6 +1,4 @@
-using BitwardenApi.Infrastructure.Cryptography;
-
-namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {

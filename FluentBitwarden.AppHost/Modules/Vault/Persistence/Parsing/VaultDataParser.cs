@@ -1,8 +1,8 @@
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using System.Text;
 using System.Text.Json;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
-namespace FluentBitwarden.Modules.Vault.Internal.VaultDataParser;
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {

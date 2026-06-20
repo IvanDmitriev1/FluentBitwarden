@@ -1,7 +1,7 @@
 ﻿using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.ApiAccess.Storage;
 using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Storage;
-using FluentBitwarden.Modules.Vault.Repositories;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using Microsoft.Data.Sqlite;
 using IsolationLevel = System.Data.IsolationLevel;
 

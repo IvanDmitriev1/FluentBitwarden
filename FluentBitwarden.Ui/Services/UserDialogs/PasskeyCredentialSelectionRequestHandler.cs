@@ -2,8 +2,8 @@ using FluentBitwarden.Contracts.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Controls.Passkeys;
 using FluentBitwarden.Services.Window;
-using FluentBitwarden.Views.Passkeys;
 
 namespace FluentBitwarden.Services.UserDialogs;
 
@@ -39,23 +39,20 @@ internal sealed class PasskeyCredentialSelectionRequestHandler(
         IReadOnlyList<Fido2Credential> credentials,
         CancellationToken cancellationToken)
     {
-        var viewModel = new PasskeySelectPageViewModel
-        {
-            Items = credentials
-        };
+        var selectionView = new PasskeyCredentialSelectionView(credentials);
 
         var dialog = new ContentDialog
         {
-            Content = new PasskeySelectPage(viewModel),
+            Content = selectionView,
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
             XamlRoot = windowManager.ActiveXamlRoot
         };
 
-        var selectedCredentialTask = viewModel.WaitUntilSelectedAsync(cancellationToken);
+        var selectedCredentialTask = selectionView.WaitUntilSelectedAsync(cancellationToken);
         var dialogTask = dialog.ShowAsync().AsTask(cancellationToken);
 
-        using var cancellationRegistration = cancellationToken.Register(
+        await using var cancellationRegistration = cancellationToken.Register(
             static state => _ = App.Current.DispatcherQueue.TryEnqueue(((ContentDialog)state!).Hide),
             dialog);
 

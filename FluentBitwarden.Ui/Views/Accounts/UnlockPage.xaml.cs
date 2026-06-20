@@ -1,6 +1,4 @@
-using FluentBitwarden.Services.Navigation;
-
-namespace FluentBitwarden.Views.Accounts.Unlock;
+namespace FluentBitwarden.Views.Accounts;
 
 public sealed partial class UnlockPage : LifecyclePage
 {

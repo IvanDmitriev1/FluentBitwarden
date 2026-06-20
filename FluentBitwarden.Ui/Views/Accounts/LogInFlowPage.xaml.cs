@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Views.Accounts.Login;
+namespace FluentBitwarden.Views.Accounts;
 
 public sealed partial class LogInFlowPage : Page
 {

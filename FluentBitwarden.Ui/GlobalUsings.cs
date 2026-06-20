@@ -24,7 +24,6 @@ global using FluentBitwarden.ViewModels.Accounts.Login;
 global using FluentBitwarden.ViewModels.Accounts.Login.Models;
 global using FluentBitwarden.ViewModels.Accounts.Login.Steps;
 global using FluentBitwarden.ViewModels.Accounts.Unlock;
-global using FluentBitwarden.ViewModels.Passkeys;
 global using FluentBitwarden.ViewModels.Settings;
 global using FluentBitwarden.ViewModels.Settings.Models;
 global using FluentBitwarden.ViewModels.Shell.Offline;
