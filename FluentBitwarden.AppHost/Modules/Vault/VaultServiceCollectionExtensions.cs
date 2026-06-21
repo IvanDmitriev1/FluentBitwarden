@@ -13,10 +13,7 @@ internal static class VaultServiceCollectionExtensions
         services.AddSingleton<VaultLoader>();
 
         // Register VaultSynchronizer with Lazy<T> to break circular dependency
-        services.AddSingleton(sp => new Lazy<VaultSynchronizer>(
-            () => new VaultSynchronizer(
-                sp.GetRequiredService<IUnitOfWorkFactory>(),
-                sp.GetRequiredService<IVaultItemsApi>())));
+        services.AddSingleton<VaultSynchronizer>();
 
         services.AddSingleton<VaultWorkspace>();
         services.AddSingleton<IVaultWorkspace>(

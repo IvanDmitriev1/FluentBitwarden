@@ -10,19 +10,23 @@ internal sealed class VaultSynchronizer(
     IUnitOfWorkFactory unitOfWorkFactory,
     IVaultItemsApi vaultApiClient)
 {
-    public async Task<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false, CancellationToken cancellationToken = default)
+    public async Task<VaultSyncResult> SyncAsync(
+        BitwardenAccountContext accountContext,
+        DecryptedUserKey decryptedUserKey,
+        bool force = false,
+        CancellationToken cancellationToken = default)
     {
         if (!NetworkInformation.HasInternetAccess)
             return VaultSyncResult.SkippedOffline;
 
         try
         {
-            if (!force && !await HasRemoteChangesAsync(decryptedUserKey.UserId, cancellationToken))
+            if (!force && !await HasRemoteChangesAsync(accountContext, cancellationToken))
             {
                 return VaultSyncResult.NoChanges;
             }
 
-            var response = await vaultApiClient.GetSyncAsync(cancellationToken);
+            var response = await vaultApiClient.GetSyncAsync(accountContext, cancellationToken);
 
             using var unitOfWork = unitOfWorkFactory.Create();
             var repository = new VaultWriterRepository(unitOfWork.Transaction, decryptedUserKey.UserId);
@@ -50,12 +54,14 @@ internal sealed class VaultSynchronizer(
             return VaultSyncResult.Failed;
         }
     }
-    private async Task<bool> HasRemoteChangesAsync(UserId currentUser, CancellationToken token)
+    private async Task<bool> HasRemoteChangesAsync(
+        BitwardenAccountContext accountContext,
+        CancellationToken cancellationToken)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var lastSync = unitOfWork.AccountProfileRepository.GetLastSyncTime(currentUser);
+        var lastSync = unitOfWork.AccountProfileRepository.GetLastSyncTime(accountContext.UserId);
 
-        var revisionDate = await vaultApiClient.GetRevisionDateAsync(token);
+        var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
         return lastSync < revisionDate;
     }
 }

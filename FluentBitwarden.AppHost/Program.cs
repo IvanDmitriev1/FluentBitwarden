@@ -6,7 +6,6 @@ using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Infrastructure.Ipc;
 using FluentBitwarden.AppHost.Modules.Accounts;
-using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 using FluentBitwarden.AppHost.Modules.BrowserExtension;
 using FluentBitwarden.AppHost.Modules.Passkey;
 using FluentBitwarden.AppHost.Modules.SshAgent;
@@ -53,7 +52,7 @@ internal static class Program
         builder.Services.AddDatabaseServices();
         builder.Services.AddApplicationInfrastructureServices();
 
-        builder.Services.AddBitwardenApi<BearerTokenHandler>();
+        builder.Services.AddBitwardenApi();
         builder.Services.AddAccountServices();
         builder.Services.AddVaultServices();
         builder.Services.AddBrowserExtensionServices();

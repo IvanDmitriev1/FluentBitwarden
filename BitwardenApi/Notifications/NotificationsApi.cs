@@ -5,14 +5,14 @@ using System.Text.Json.Serialization.Metadata;
 namespace BitwardenApi.Notifications;
 
 internal sealed class NotificationsApi(
-    ISignalRAccessTokenProvider accessTokenProvider,
-    IBitwardenEnvironmentAccessor environmentAccessor,
+    IBitwardenAccessTokenProvider accessTokenProvider,
     IServiceProvider serviceProvider)
     : INotificationsApi
 {
     private HubConnection? _connection;
 
     public async Task ConnectAsync(
+        BitwardenAccountContext accountContext,
         CancellationToken cancellationToken = default)
     {
         if (_connection?.State is HubConnectionState.Connected
@@ -22,9 +22,8 @@ internal sealed class NotificationsApi(
             return;
         }
 
-        BitwardenEnvironment environment = environmentAccessor.CurrentEnvironment;
-        Uri requestedHubEndpoint = new(environment.NotificationsBase, "/hub");
-        _connection = CreateConnection(requestedHubEndpoint);
+        Uri requestedHubEndpoint = new(accountContext.Environment.NotificationsBase, "/hub");
+        _connection = CreateConnection(requestedHubEndpoint, accountContext);
 
         await _connection.StartWithRetryAsync(cancellationToken);
     }
@@ -53,12 +52,21 @@ internal sealed class NotificationsApi(
         await DisconnectAsync();
     }
 
-    private HubConnection CreateConnection(Uri hubEndpoint)
+    private HubConnection CreateConnection(
+        Uri hubEndpoint,
+        BitwardenAccountContext accountContext)
     {
         HubConnection connection = new HubConnectionBuilder()
             .WithUrl(hubEndpoint, options =>
             {
-                options.AccessTokenProvider = accessTokenProvider.GetAccessToken;
+                options.AccessTokenProvider = async () =>
+                {
+                    AccessToken accessToken = await accessTokenProvider.GetAccessTokenAsync(
+                        accountContext,
+                        CancellationToken.None);
+
+                    return accessToken.ToString();
+                };
             })
             .AddJsonProtocol(options =>
             {

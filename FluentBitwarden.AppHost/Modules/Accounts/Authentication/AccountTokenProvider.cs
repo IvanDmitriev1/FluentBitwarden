@@ -1,41 +1,40 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 
 internal sealed class AccountTokenProvider(
     IAccountStore accountStore,
-    IIdentityApi identityApiClient) : IAccountTokenProvider
+    IIdentityApi identityApiClient) : IBitwardenAccessTokenProvider
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private AccountTokens? _currentTokens;
 
-    public async ValueTask<AccountTokens> GetValidTokensAsync(
-        AccountProfile account,
+    public async ValueTask<AccessToken> GetAccessTokenAsync(
+        BitwardenAccountContext accountContext,
         CancellationToken cancellationToken = default)
     {
         var currentTokens = Volatile.Read(ref _currentTokens);
-        if (currentTokens is not null && currentTokens.UserId == account.UserId && currentTokens.IsValid())
-            return currentTokens;
+        if (currentTokens is not null && currentTokens.IsFor(accountContext) && currentTokens.IsValid())
+            return currentTokens.AccessToken;
 
         await _gate.WaitAsync(cancellationToken);
         try
         {
             currentTokens = Volatile.Read(ref _currentTokens);
-            if (currentTokens is null || currentTokens.UserId != account.UserId)
+            if (currentTokens is null || !currentTokens.IsFor(accountContext))
             {
                 currentTokens = AccountTokens.Create(
-                    account,
-                    accountStore.GetRefreshToken(account.UserId));
+                    accountContext,
+                    accountStore.GetRefreshToken(accountContext.UserId));
                 Volatile.Write(ref _currentTokens, currentTokens);
             }
 
             if (currentTokens.IsValid())
-                return currentTokens;
+                return currentTokens.AccessToken;
 
             currentTokens = await RefreshSession(currentTokens, cancellationToken);
             Volatile.Write(ref _currentTokens, currentTokens);
-            return currentTokens;
+            return currentTokens.AccessToken;
         }
         finally
         {

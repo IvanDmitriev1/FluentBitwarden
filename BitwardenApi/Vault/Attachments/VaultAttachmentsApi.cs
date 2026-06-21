@@ -4,17 +4,19 @@ using System.Net.Http.Json;
 namespace BitwardenApi.Vault.Attachments;
 
 internal sealed class VaultAttachmentsApi(
-    IHttpClientFactory httpClientFactory,
-    IBitwardenEnvironmentAccessor environmentAccessor) : IVaultAttachmentsApi
+    IHttpClientFactory httpClientFactory) : IVaultAttachmentsApi
 {
     public async Task<AttachmentUploadInit> StartUploadV2Async(
+        BitwardenAccountContext accountContext,
         StartUploadV2Request request,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
-        Uri requestUri = new(environmentAccessor.CurrentEnvironment.ApiBase, $"/ciphers/{request.CipherId.Value:D}/attachment/v2");
+        Uri requestUri = new(accountContext.Environment.ApiBase, $"/ciphers/{request.CipherId.Value:D}/attachment/v2");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
+        requestMessage.SetBitwardenAccountContext(accountContext);
+
         using var requestContent = new StreamContent(request.AttachmentRequestJson);
         requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         requestMessage.Content = requestContent;
@@ -44,16 +46,19 @@ internal sealed class VaultAttachmentsApi(
     }
 
     public async Task<AttachmentUploadRenewal> RenewUploadAsync(
+        BitwardenAccountContext accountContext,
         RenewUploadRequest request,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
         Uri requestUri = new(
-            environmentAccessor.CurrentEnvironment.ApiBase,
+            accountContext.Environment.ApiBase,
             $"/ciphers/{request.CipherId.Value:D}/attachment/{Uri.EscapeDataString(request.AttachmentId.Value)}/renew");
 
         using HttpRequestMessage requestMessage = new(HttpMethod.Get, requestUri);
+        requestMessage.SetBitwardenAccountContext(accountContext);
+
         using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,
@@ -79,12 +84,13 @@ internal sealed class VaultAttachmentsApi(
     }
 
     public async Task UploadMultipartAsync(
+        BitwardenAccountContext accountContext,
         UploadMultipartRequest request,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
-        Uri requestUri = new Uri(environmentAccessor.CurrentEnvironment.ApiBase, request.RequestUri);
+        Uri requestUri = new Uri(accountContext.Environment.ApiBase, request.RequestUri);
         using MultipartFormDataContent multipart = new();
 
         foreach (var field in request.FormFields)
@@ -97,6 +103,7 @@ internal sealed class VaultAttachmentsApi(
         multipart.Add(fileContent, "data", request.FileName);
 
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
+        requestMessage.SetBitwardenAccountContext(accountContext);
         requestMessage.Content = multipart;
 
         using var response = await httpClient.SendAsync(
@@ -108,14 +115,16 @@ internal sealed class VaultAttachmentsApi(
     }
 
     public async Task DownloadByTokenAsync(
+        BitwardenAccountContext accountContext,
         DownloadByTokenRequest request,
         Func<Stream, Task> streamHandler,
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
-        Uri requestUri = new Uri(environmentAccessor.CurrentEnvironment.ApiBase, request.RequestUri);
+        Uri requestUri = new Uri(accountContext.Environment.ApiBase, request.RequestUri);
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        requestMessage.SetBitwardenAccountContext(accountContext);
 
         using var response = await httpClient.SendAsync(
             requestMessage,

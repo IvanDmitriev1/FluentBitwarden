@@ -8,12 +8,15 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultWorkspace(
-    Lazy<VaultSynchronizer> vaultSynchronizer,
+    VaultSynchronizer vaultSynchronizer,
     VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
 {
     private WorkspaceState _state = WorkspaceState.Empty;
 
-    public async ValueTask OpenAsync(DecryptedUserKey userKey, CancellationToken cancellationToken)
+    public async ValueTask OpenAsync(
+        BitwardenAccountContext accountContext,
+        DecryptedUserKey userKey,
+        CancellationToken cancellationToken)
     {
         Reload(userKey);
 
@@ -21,17 +24,28 @@ internal sealed class VaultWorkspace(
         if (data.CiphersById.Count > 0)
             return;
 
-        var result = await vaultSynchronizer.Value.SyncAsync(userKey, force: true, cancellationToken);
+        var result = await vaultSynchronizer.SyncAsync(
+            accountContext,
+            userKey,
+            force: true,
+            cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
             Reload(userKey);
         }
     }
 
-    public async Task<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false,
+    public async Task<VaultSyncResult> SyncAsync(
+        BitwardenAccountContext accountContext,
+        DecryptedUserKey decryptedUserKey,
+        bool force = false,
         CancellationToken cancellationToken = default)
     {
-        var result = await vaultSynchronizer.Value.SyncAsync(decryptedUserKey, force, cancellationToken);
+        var result = await vaultSynchronizer.SyncAsync(
+            accountContext,
+            decryptedUserKey,
+            force,
+            cancellationToken);
         if (result == VaultSyncResult.Synced)
             Reload(decryptedUserKey);
 

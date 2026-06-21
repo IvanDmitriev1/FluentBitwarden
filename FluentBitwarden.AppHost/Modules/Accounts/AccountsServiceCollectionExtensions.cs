@@ -17,10 +17,8 @@ internal static class AccountsServiceCollectionExtensions
         services.AddSingleton<WindowsHelloUnlocker>();
         services.AddSingleton<MasterPasswordUnlocker>();
 
-        services.AddSingleton<IAccountTokenProvider, AccountTokenProvider>();
+        services.AddSingleton<IBitwardenAccessTokenProvider, AccountTokenProvider>();
         services.AddSingleton<IAccountUnlockService, AccountUnlockService>();
-
-        services.AddSingleton<ISignalRAccessTokenProvider, SignalRAccessTokenProvider>();
 
         return services;
     }

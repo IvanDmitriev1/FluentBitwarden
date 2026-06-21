@@ -4,8 +4,17 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 
 internal interface IVaultWorkspace
 {
-    ValueTask OpenAsync(DecryptedUserKey userKey, CancellationToken cancellationToken);
-    Task<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false, CancellationToken cancellationToken = default);
+    ValueTask OpenAsync(
+        BitwardenAccountContext accountContext,
+        DecryptedUserKey userKey,
+        CancellationToken cancellationToken);
+
+    Task<VaultSyncResult> SyncAsync(
+        BitwardenAccountContext accountContext,
+        DecryptedUserKey decryptedUserKey,
+        bool force = false,
+        CancellationToken cancellationToken = default);
+
     void Reload(DecryptedUserKey userKey);
     void Close();
 }

@@ -1,5 +1,4 @@
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
-using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
@@ -13,14 +12,10 @@ internal sealed class VaultSessionCoordinator(
     IAccountUnlockService accountUnlockService,
     IVaultWorkspace vaultWorkspace,
     IUiProcessLauncher uiProcessLauncher)
-    : IVaultSessionCoordinator, IBitwardenEnvironmentAccessor
+    : IVaultSessionCoordinator
 {
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
     private UnlockedSession? _unlockedSession;
-
-    public BitwardenEnvironment CurrentEnvironment =>
-        Volatile.Read(ref _unlockedSession)?.Account.Environment ??
-        throw new InvalidOperationException("No unlocked account is present");
 
     public bool TryGetUnlockedSession([NotNullWhen(true)] out UnlockedSession? session)
     {
@@ -49,7 +44,10 @@ internal sealed class VaultSessionCoordinator(
 
             try
             {
-                await vaultWorkspace.OpenAsync(nextSession.UserKey, cancellationToken);
+                await vaultWorkspace.OpenAsync(
+                    nextSession.AccountContext,
+                    nextSession.UserKey,
+                    cancellationToken);
                 PublishUnlockedSession(nextSession);
                 return result.Outcome;
             }
@@ -80,7 +78,10 @@ internal sealed class VaultSessionCoordinator(
             if (!TryGetUnlockedSession(out var session))
                 return VaultSyncResult.Failed;
 
-            return await vaultWorkspace.SyncAsync(session.UserKey, cancellationToken: cancellationToken);
+            return await vaultWorkspace.SyncAsync(
+                session.AccountContext,
+                session.UserKey,
+                cancellationToken: cancellationToken);
         }
         finally
         {

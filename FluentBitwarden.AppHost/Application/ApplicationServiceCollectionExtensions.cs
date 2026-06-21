@@ -1,4 +1,3 @@
-using BitwardenApi.Infrastructure.Transport;
 using FluentBitwarden.AppHost.Application.Activation;
 using FluentBitwarden.AppHost.Application.Sessions;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,8 +11,6 @@ internal static class ApplicationServiceCollectionExtensions
         services.AddSingleton<AppHostActivationHandler>();
         services.AddSingleton<VaultSessionCoordinator>();
         services.AddSingleton<IVaultSessionCoordinator>(
-            static serviceProvider => serviceProvider.GetRequiredService<VaultSessionCoordinator>());
-        services.AddSingleton<IBitwardenEnvironmentAccessor>(
             static serviceProvider => serviceProvider.GetRequiredService<VaultSessionCoordinator>());
         services.AddHostedService<AppHostHostedService>();
 

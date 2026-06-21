@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Contracts.Infrastructure;
 using FluentBitwarden.Services.Window;
 using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,11 +6,10 @@ using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Views.Shell;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using MainWindow = FluentBitwarden.Views.Shell.MainWindow;
-using OverlayWindow = FluentBitwarden.Views.Shell.OverlayWindow;
 
 namespace FluentBitwarden;
 

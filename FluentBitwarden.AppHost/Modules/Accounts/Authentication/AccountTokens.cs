@@ -1,5 +1,4 @@
 using FluentBitwarden.Contracts.Infrastructure;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 
@@ -10,13 +9,19 @@ internal sealed record AccountTokens(
     AccessToken AccessToken,
     DateTimeOffset ExpiresAt)
 {
-    public static AccountTokens Create(AccountProfile accountProfile, RefreshToken token) =>
+    public static AccountTokens Create(
+        BitwardenAccountContext accountContext,
+        RefreshToken token) =>
         new(
-            accountProfile.UserId,
-            new BitwardenClientContext(accountProfile.Environment, DeviceIdentity.DeviceInfo),
+            accountContext.UserId,
+            new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo),
             token,
             AccessToken.Empty,
             DateTimeOffset.MinValue);
+
+    public bool IsFor(BitwardenAccountContext accountContext) =>
+        UserId == accountContext.UserId &&
+        BitwardenClientContext.Environment == accountContext.Environment;
 
     public bool IsValid() =>
         RefreshToken != RefreshToken.Empty &&
