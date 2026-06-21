@@ -1,3 +1,5 @@
+using FluentBitwarden.Contracts.Ipc.Abstractions;
+
 namespace FluentBitwarden.Contracts.Modules.Ssh;
 
 [MemoryPackable]

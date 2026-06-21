@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
+		<ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,9 +1,6 @@
-using FluentBitwarden.BrowseProxy.Infrastructure;
-using FluentBitwarden.BrowseProxy.Models;
 using FluentBitwarden.BrowseProxy.NativeMessaging;
-using FluentBitwarden.Contracts.Infrastructure.Ipc;
+using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Contracts.Modules;
-using FluentBitwarden.Contracts.Modules.BrowserExtension;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 

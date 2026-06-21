@@ -13,8 +13,8 @@ internal sealed class SshAgentProtocolWriter : IDisposable
         int packetLength = 4 + payloadLength;
         _owner = MemoryOwner<byte>.Allocate(packetLength);
 
-       WriteUInt32(payloadLength);
-       WriteByte((byte)message);
+        WriteUInt32(payloadLength);
+        WriteByte((byte)message);
     }
 
     private readonly MemoryOwner<byte> _owner;

@@ -1,7 +1,6 @@
-﻿using Windows.Win32;
-using Windows.Win32.Security.Authentication.WebAuthn;
+﻿using Windows.Win32.Security.Authentication.WebAuthn;
 
-namespace FluentBitwarden.Infrastructure.Security.WebAuthn;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WebAuthn;
 
 internal sealed unsafe class NativeAssertionHandle : IDisposable
 {

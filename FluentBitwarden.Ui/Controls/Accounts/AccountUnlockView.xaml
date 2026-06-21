@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="FluentBitwarden.Controls.Accounts.AccountUnlockView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
+    xmlns:controls1="using:FluentBitwarden.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyboardAcceleratorPlacementMode="Hidden"
+    mc:Ignorable="d">
+
+    <interactivity:Interaction.Behaviors>
+        <behaviors:FocusBehavior>
+            <behaviors:FocusTarget Control="{x:Bind PasswordBox}" />
+        </behaviors:FocusBehavior>
+    </interactivity:Interaction.Behaviors>
+
+    <Grid ColumnSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <controls1:PasswordBoxEx
+            x:Name="PasswordBox"
+            Grid.Row="0"
+            Grid.Column="0"
+            VerticalAlignment="Center"
+            ActionButtonCommand="{x:Bind UnlockCommand}"
+            ActionButtonToolTip="Unlock"
+            Command="{x:Bind UnlockCommand}"
+            IsEnabled="True">
+            <controls1:PasswordBoxEx.ActionButtonContent>
+                <FontIcon x:Name="PasswordBoxActionButtonIcon" Style="{StaticResource IconStyle}" />
+            </controls1:PasswordBoxEx.ActionButtonContent>
+        </controls1:PasswordBoxEx>
+
+        <Button
+            x:Name="WindowsHelloButton"
+            Grid.Row="0"
+            Grid.Column="1"
+            Width="40"
+            Height="40"
+            Padding="0"
+            Command="{x:Bind UnlockWithWindowsHelloCommand}"
+            Style="{StaticResource AccentButtonStyle}"
+            ToolTipService.ToolTip="Unlock with Windows Hello">
+            <FontIcon
+                FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                FontSize="16"
+                Glyph="&#xEB68;" />
+        </Button>
+
+
+        <InfoBar
+            x:Name="InfoBar"
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Margin="0,6,0,0"
+            Severity="Error" />
+    </Grid>
+
+</UserControl>

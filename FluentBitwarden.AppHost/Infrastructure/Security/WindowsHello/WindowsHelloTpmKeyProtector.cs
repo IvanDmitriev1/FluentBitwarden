@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Windows.Security.Credentials;
 
-namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 
 public static class WindowsHelloTpmKeyProtector
 {

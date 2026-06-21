@@ -1,8 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Windows.Win32.Foundation;
-
-namespace FluentBitwarden.Infrastructure.Security.WebAuthn;
+﻿namespace FluentBitwarden.AppHost.Infrastructure.Security.WebAuthn;
 
 internal static unsafe class WebAuthnExtensions
 {

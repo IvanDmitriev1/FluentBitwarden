@@ -1,7 +1,7 @@
 namespace FluentBitwarden.AppHost.Application.Tray;
 
 internal static class TrayMenu
-{ 
+{
     public static TrayMenuCommand Show(HWND windowHandle)
     {
         if (!PInvoke.GetCursorPos(out var cursor))

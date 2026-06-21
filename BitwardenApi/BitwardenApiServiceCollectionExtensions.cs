@@ -1,27 +1,24 @@
-using BitwardenApi.Common.Http;
-using BitwardenApi.Contracts;
-using BitwardenApi.Identity.Infrastructure;
-using BitwardenApi.Notifications.Infrastructure;
-using BitwardenApi.Vault.Infrastructure;
+using BitwardenApi.Identity;
+using BitwardenApi.Notifications;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Items;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace BitwardenApi;
 
 public static class BitwardenApiServiceCollectionExtensions
 {
-    public static IServiceCollection AddBitwardenApi<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TAuthHandler>(this IServiceCollection services)
-        where TAuthHandler : DelegatingHandler
+    public static IServiceCollection AddBitwardenApi(this IServiceCollection services)
     {
         services.AddTransient<BitwardenRequiredHeadersHandler>();
-        services.AddTransient<TAuthHandler>();
+        services.AddTransient<BitwardenAuthorizationHandler>();
 
         services.AddHttpClient("BitwardenApiIdentityHttpClient", static client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(5);
+                client.Timeout = TimeSpan.FromSeconds(2);
                 client.DefaultRequestVersion = HttpVersion.Version20;
                 client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             })
@@ -30,19 +27,19 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddHttpClient("BitwardenApiVaultHttpClient", static client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(5);
+                client.Timeout = TimeSpan.FromSeconds(2);
                 client.DefaultRequestVersion = HttpVersion.Version20;
                 client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
-            .AddHttpMessageHandler<TAuthHandler>()
+            .AddHttpMessageHandler<BitwardenAuthorizationHandler>()
             .AddBitwardenReadRetry();
 
-        services.AddSingleton<IIdentityApiClient, IdentityApiClient>();
-        services.AddSingleton<IVaultApiClient, VaultApiClient>();
-        services.AddSingleton<IAttachmentsApiClient, AttachmentsApiClient>();
+        services.AddSingleton<IIdentityApi, IdentityApi>();
+        services.AddSingleton<IVaultItemsApi, VaultItemsApi>();
+        services.AddSingleton<IVaultAttachmentsApi, VaultAttachmentsApi>();
 
-        services.AddSingleton<INotificationsClient, NotificationsClient>();
+        services.AddSingleton<INotificationsApi, NotificationsApi>();
 
         return services;
     }

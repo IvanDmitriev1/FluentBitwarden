@@ -1,4 +1,4 @@
-﻿using BitwardenApi.Common.MemoryPackFormatters;
+using FluentBitwarden.Contracts.Ipc.Abstractions;
 
 namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
@@ -16,7 +16,7 @@ public sealed partial class VaultCipherQuery : IIpcRequestMessage
 
     public string SearchText { get; init; } = string.Empty;
 
-    public CipherType? CipherType { get; init; }
+    public VaultCipherType? CipherType { get; init; }
 
     [StronglyTypedIdFormatter<FolderId>]
     public FolderId FolderId { get; init; } = FolderId.Empty;

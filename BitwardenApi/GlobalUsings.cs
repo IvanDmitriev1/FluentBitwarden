@@ -1,5 +1,14 @@
 global using System;
 global using System.Text.Json;
-global using BitwardenApi.Cryptography.Enc;
-global using BitwardenApi.Models;
+global using BitwardenApi.Identity.Contracts;
+global using BitwardenApi.Infrastructure.Cryptography;
+global using BitwardenApi.Infrastructure.Cryptography.Enc;
+global using BitwardenApi.Infrastructure.Serialization;
+global using BitwardenApi.Infrastructure.Transport;
+global using BitwardenApi.Notifications.Contracts;
+global using BitwardenApi.Primitives;
+global using BitwardenApi.Primitives.Ids;
+global using BitwardenApi.Vault;
+global using BitwardenApi.Vault.Attachments.Contracts;
+global using BitwardenApi.Vault.Items.Contracts;
 global using StronglyTypedIds;

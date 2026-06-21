@@ -1,9 +1,8 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
-using Windows.Win32;
 
-namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 
 internal static class WindowsHelloNcryptProperties
 {

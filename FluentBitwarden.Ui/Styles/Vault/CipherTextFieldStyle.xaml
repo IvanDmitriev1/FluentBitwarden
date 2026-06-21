@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vault="using:FluentBitwarden.Controls.Vault">
+
+    <Style TargetType="vault:CipherTextField">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="vault:CipherTextField">
+                    <vault:CipherFieldChrome
+                        x:Name="PART_Chrome"
+                        ActionText="Copy"
+                        Label="{TemplateBinding Label}">
+
+                        <TextBlock
+                            Style="{StaticResource BodyLargeTextBlockStyle}"
+                            Text="{TemplateBinding Text}"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap" />
+                    </vault:CipherFieldChrome>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

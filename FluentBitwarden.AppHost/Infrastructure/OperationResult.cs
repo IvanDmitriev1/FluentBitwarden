@@ -24,7 +24,7 @@ internal readonly struct OperationResult<TOutcome, TPayload>
         return payload is not null;
     }
 
-    public static OperationResult<TOutcome, TPayload> WithoutPayload(TOutcome outcome) => 
+    public static OperationResult<TOutcome, TPayload> WithoutPayload(TOutcome outcome) =>
         new(outcome, default);
     public static OperationResult<TOutcome, TPayload> WithPayload(TOutcome outcome, TPayload payload) =>
         new(outcome, payload);

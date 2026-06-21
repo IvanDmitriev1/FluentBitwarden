@@ -1,15 +1,16 @@
 using CommunityToolkit.Mvvm.Messaging;
-using FluentBitwarden.Application.Activation;
-using FluentBitwarden.Views.Shell.Main;
+using FluentBitwarden.Services.Window;
+using FluentBitwarden.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Views.Shell.Overlay;
+using FluentBitwarden.Views.Shell;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden;
 
@@ -22,11 +23,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     public DispatcherQueue DispatcherQueue { get; }
 
-    private readonly IServiceProvider _services = new ServiceCollection()
-        .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
-        .AddFeatureViews()
-        .AddUiServices()
-        .BuildServiceProvider();
+    private readonly IServiceProvider _services;
 
     public object GetRequiredService(Type type)
         => _services.GetRequiredService(type);
@@ -48,6 +45,16 @@ public partial class App : IXamlMetadataServiceProvider
 
         DispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _initialActivation = initialActivation;
+
+        var services = new ServiceCollection()
+            .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
+            .AddViews()
+            .AddUiServices();
+#if DEBUG
+        _services = services.BuildServiceProvider(true);
+#else
+        _services = services.BuildServiceProvider();
+#endif
     }
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

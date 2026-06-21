@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace FluentBitwarden.Infrastructure.Security.WindowsHello;
+namespace FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 
 public sealed class WindowsHelloAuthenticationCanceledException()
     : CryptographicException("Windows Hello authentication was cancelled.");

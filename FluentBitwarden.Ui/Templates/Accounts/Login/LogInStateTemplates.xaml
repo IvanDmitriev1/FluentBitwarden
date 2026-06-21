@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Templates.Accounts.Login.LogInStateTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:accounts="using:FluentBitwarden.Controls.Accounts"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:login="using:FluentBitwarden.Templates.Accounts.Login"
+    xmlns:models="using:FluentBitwarden.ViewModels.Accounts.Login.Models"
+    xmlns:sharedControls="using:FluentBitwarden.Controls"
+    xmlns:states="using:FluentBitwarden.ViewModels.Accounts.Login.Steps"
+    xmlns:validation="using:FluentBitwarden.Controls">
+
+    <DataTemplate x:Key="LogInEmailStepTemplate" x:DataType="states:LogInEmailStepViewModel">
+        <StackPanel Spacing="22">
+            <!--  Header  -->
+            <StackPanel HorizontalAlignment="Center" Spacing="4">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{StaticResource TitleTextBlockStyle}"
+                    Text="Login to Bitwarden" />
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Text="Enter your email and choose the server to continue." />
+            </StackPanel>
+
+            <validation:ValidationField Property="{Binding EmailValidation}">
+                <sharedControls:TextBoxEx
+                    Command="{Binding ContinueCommand}"
+                    InputScope="EmailSmtpAddress"
+                    PlaceholderText="name@example.com"
+                    Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <sharedControls:TextBoxEx.Header>
+                        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Email" />
+                    </sharedControls:TextBoxEx.Header>
+                    <sharedControls:TextBoxEx.Icon>
+                        <FontIcon Glyph="&#xE715;" Style="{StaticResource IconStyle}" />
+                    </sharedControls:TextBoxEx.Icon>
+                </sharedControls:TextBoxEx>
+            </validation:ValidationField>
+
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Server" />
+                <controls:Segmented
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding Environments}"
+                    SelectedItem="{Binding SelectedEnvironment, Mode=TwoWay}">
+                    <controls:Segmented.ItemTemplate>
+                        <DataTemplate x:DataType="models:LogInEnvironmentOption">
+                            <StackPanel Padding="10,6" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Opacity="0.65"
+                                    Text="{x:Bind Url}"
+                                    Visibility="{x:Bind Url, Converter={StaticResource StringVisibilityConverter}}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </controls:Segmented.ItemTemplate>
+                </controls:Segmented>
+            </StackPanel>
+
+            <StackPanel Spacing="4" Visibility="{Binding IsCustomEnvironmentSelected, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                <validation:ValidationField Property="{Binding CustomServerUrlValidation}">
+                    <sharedControls:TextBoxEx
+                        Command="{Binding ContinueCommand}"
+                        PlaceholderText="https://vault.example.com"
+                        Text="{Binding CustomServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <sharedControls:TextBoxEx.Header>
+                            <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Server URL" />
+                        </sharedControls:TextBoxEx.Header>
+                        <sharedControls:TextBoxEx.Icon>
+                            <FontIcon Glyph="&#xE909;" Style="{StaticResource IconStyle}" />
+                        </sharedControls:TextBoxEx.Icon>
+                    </sharedControls:TextBoxEx>
+                </validation:ValidationField>
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Use your self-hosted server URL if you are not using the official cloud."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <Button
+                    Height="36"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding ContinueCommand}"
+                    Content="Continue"
+                    Style="{StaticResource AccentButtonStyle}" />
+
+                <Grid ColumnSpacing="28">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Height="1"
+                        HorizontalAlignment="Stretch"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <TextBlock Grid.Column="1" Text="or" />
+
+                    <Border
+                        Grid.Column="2"
+                        Height="1"
+                        HorizontalAlignment="Stretch"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                </Grid>
+
+                <Button HorizontalAlignment="Stretch" Command="{Binding LogInWithPasskeyCommand}">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <!--  Fingerprint: E928  -->
+                        <FontIcon Glyph="&#xE928;" Style="{StaticResource IconStyle}" />
+                        <TextBlock Text="Sign in with passkey" />
+                    </StackPanel>
+                </Button>
+
+                <InfoBar
+                    IsClosable="False"
+                    IsOpen="True"
+                    Message="{Binding PasskeyErrorMessage, Mode=OneWay}"
+                    Severity="Error"
+                    Visibility="{Binding PasskeyErrorMessage, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="LogInPasswordStepTemplate" x:DataType="states:LogInPasswordStepViewModel">
+        <StackPanel Spacing="22">
+            <TextBlock
+                HorizontalAlignment="Center"
+                Style="{StaticResource TitleTextBlockStyle}"
+                Text="Welcome back!" />
+
+            <accounts:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
+
+            <validation:ValidationField Property="{Binding MasterPasswordValidation}">
+                <sharedControls:PasswordBoxEx
+                    x:Name="MasterPasswordBox"
+                    ActionButtonCommand="{Binding LogInWithPasswordCommand}"
+                    ActionButtonCommandParameter="{Binding Password, ElementName=MasterPasswordBox}"
+                    Command="{Binding LogInWithPasswordCommand}"
+                    Header="Master password">
+                    <sharedControls:PasswordBoxEx.ActionButtonContent>
+                        <FontIcon
+                            FontSize="16"
+                            Glyph="&#xE8D7;"
+                            Style="{StaticResource IconStyle}" />
+                    </sharedControls:PasswordBoxEx.ActionButtonContent>
+                </sharedControls:PasswordBoxEx>
+            </validation:ValidationField>
+
+            <Button
+                Height="36"
+                HorizontalAlignment="Stretch"
+                Command="{Binding LogInWithPasswordCommand}"
+                CommandParameter="{Binding Password, ElementName=MasterPasswordBox}"
+                Content="Continue"
+                Style="{StaticResource AccentButtonStyle}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="LogIn2FStepTemplate" x:DataType="states:LogIn2FStepViewModel">
+        <StackPanel Spacing="22">
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Style="{StaticResource TitleTextBlockStyle}"
+                    Text="Two-step verification"
+                    TextAlignment="Center" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Text="Enter the verification code to finish login."
+                    TextAlignment="Center" />
+            </StackPanel>
+
+            <accounts:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
+
+
+            <StackPanel Spacing="12">
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Method"
+                    ItemsSource="{Binding Providers, Mode=OneWay}"
+                    SelectedItem="{Binding SelectedProvider, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:LogIn2FProviderOptionModel">
+                            <StackPanel Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Opacity="0.65"
+                                    Text="{x:Bind Subtitle}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <validation:ValidationField Property="{Binding CodeValidation}">
+                    <sharedControls:TextBoxEx
+                        Command="{Binding LogIn2FCommand}"
+                        Header="Verification code"
+                        PlaceholderText="123456"
+                        Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </validation:ValidationField>
+            </StackPanel>
+
+            <Button
+                Height="36"
+                HorizontalAlignment="Stretch"
+                Command="{Binding LogIn2FCommand}"
+                Content="Continue"
+                Style="{StaticResource AccentButtonStyle}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <login:LogInStateTemplatesSelector
+        x:Key="LogInStateTemplatesSelector"
+        EmailLogInTemplate="{StaticResource LogInEmailStepTemplate}"
+        PasswordLogInTemplate="{StaticResource LogInPasswordStepTemplate}"
+        TwoFactorTemplate="{StaticResource LogIn2FStepTemplate}" />
+
+</ResourceDictionary>

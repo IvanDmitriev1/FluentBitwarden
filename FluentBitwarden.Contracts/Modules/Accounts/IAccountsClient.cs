@@ -1,6 +1,6 @@
 ﻿using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.General;
+using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.Contracts.Modules.Accounts;
 

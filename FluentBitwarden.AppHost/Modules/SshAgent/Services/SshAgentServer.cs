@@ -1,11 +1,12 @@
-﻿using System.IO.Pipes;
+﻿using FluentBitwarden.Platform.Ipc;
+using System.IO.Pipes;
 using System.Text;
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
-using FluentBitwarden.Contracts.Infrastructure.Shared;
 using Microsoft.Extensions.Hosting;
+using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 

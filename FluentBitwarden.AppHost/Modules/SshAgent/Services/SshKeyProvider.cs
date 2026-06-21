@@ -1,29 +1,30 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
+using FluentBitwarden.AppHost.Application.Sessions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure.Settings;
-using FluentBitwarden.Contracts.Infrastructure.Settings.Models;
-using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
+using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
-    IVaultWorkspace vaultWorkspace,
-    IUserDialogClient userDialogClient) : ISshKeyProvider
+    IVaultSessionCoordinator vaultSessionCoordinator,
+    ISshUserActionDialogClient sshUserActionDialogClient) : ISshKeyProvider
 {
-    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
+    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = VaultCipherType.SshKey };
+
+    //TODO REMOVE
+    private bool HasUnlockedSession => vaultSessionCoordinator.TryGetUnlockedSession(out _);
 
     public Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {
         //TODO implement userDialogClient.Unlock to ask user to unlock vault if it's locked instead of just denying the request
-        if (!vaultWorkspace.IsOpen)
+        if (!HasUnlockedSession)
             return Task.FromResult(SshIdentityQueryResult.Denied);
 
         var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
@@ -35,7 +36,7 @@ internal sealed class SshKeyProvider(
 
     public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!vaultWorkspace.IsOpen || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
+        if (!HasUnlockedSession || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
@@ -46,7 +47,7 @@ internal sealed class SshKeyProvider(
                 KeyFingerprint: cipher.KeyFingerprint,
                 IsForwarded: false);
 
-            var userAction = await userDialogClient.ShowSshDialogAsync(requestDialog, token);
+            var userAction = await sshUserActionDialogClient.ShowSshDialogAsync(requestDialog, token);
             if (userAction == UserActionDialogOutcome.Denied)
                 return SshSignatureResult.Failed;
         }
