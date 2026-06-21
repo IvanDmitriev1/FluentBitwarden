@@ -2,9 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using Windows.Foundation;
 using Windows.Storage;
-using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
-using FluentBitwarden.Platform.Settings.Models;
+using FluentBitwarden.Platform.Settings.Composition;
 
 namespace FluentBitwarden.Platform.Settings;
 
@@ -96,7 +95,7 @@ internal sealed class ApplicationDataSettingsStore : ICompositeSettingsStore
 
     public void Clear()
     {
-        using var _ = _lock.EnterScope();
+        
     }
 
     private void OnChanged(string name)

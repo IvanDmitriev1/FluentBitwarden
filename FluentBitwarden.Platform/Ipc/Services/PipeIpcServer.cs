@@ -1,10 +1,8 @@
-using FluentBitwarden.Platform.Ipc;
-using FluentBitwarden.Platform.Ipc.Internal;
-using FluentBitwarden.Platform.Ipc.Abstractions;
+using FluentBitwarden.Platform.Infrastructure;
+using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
 using System.IO.Pipes;
-using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden.Platform.Ipc.Services;
 
@@ -12,33 +10,35 @@ internal sealed class PipeIpcServer : BackgroundService
 {
     private readonly int _maxConCurrentConnections;
     private readonly string _pipeName;
-    private readonly IReadOnlyDictionary<ushort, IIpcRequestHandlerInvoker> _invokers;
+    private readonly IReadOnlyDictionary<ushort, IpcEndpoint> _invokers;
+    private readonly IIpcClientsVerifier _ipcClientsVerifier;
 
-    public PipeIpcServer(int maxConCurrentConnections, string pipeName, IEnumerable<IIpcRequestHandlerInvoker> invokers)
+    public PipeIpcServer(int maxConCurrentConnections, string pipeName, IEnumerable<IpcEndpoint> invokers, IIpcClientsVerifier ipcClientsVerifier)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(maxConCurrentConnections, 1);
 
         _maxConCurrentConnections = maxConCurrentConnections;
         _pipeName = pipeName;
+        _ipcClientsVerifier = ipcClientsVerifier;
         _invokers = invokers.ToDictionary(static i => i.MessageType);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (_maxConCurrentConnections == 1)
-            return ConnectionWorkerAsync(stoppingToken);
+            return WorkerAsync(stoppingToken);
 
         var workers = new Task[_maxConCurrentConnections];
 
         for (int i = 0; i < workers.Length; i++)
         {
-            workers[i] = ConnectionWorkerAsync(stoppingToken);
+            workers[i] = WorkerAsync(stoppingToken);
         }
 
         return Task.WhenAll(workers);
     }
 
-    private async Task ConnectionWorkerAsync(CancellationToken stoppingToken)
+    private async Task WorkerAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -80,22 +80,26 @@ internal sealed class PipeIpcServer : BackgroundService
         NamedPipeServerStream pipe,
         CancellationToken stoppingToken)
     {
-        /*if (!PipeClientVerifier.IsExpectedClient(pipe))
+        if (!_ipcClientsVerifier.IsExpectedClient(pipe, out var authenticationLevel))
         {
             Debug.WriteLine("Rejected unauthorized IPC pipe client.");
             return;
         }
-        */
 
         var header = await RequestHeader.ReadAsync(pipe);
-
-        if (!_invokers.TryGetValue(header.MessageType, out var invoker))
+        if (!_invokers.TryGetValue(header.MessageType, out var endpoint))
         {
             Debug.WriteLine($"Rejected unknown IPC message type: {header.MessageType}.");
             return;
         }
 
-        await invoker.InvokeAsync(pipe, header.PayloadLength, stoppingToken);
+        if (authenticationLevel != endpoint.AuthenticationLevel)
+        {
+            Debug.WriteLine("Rejected IPC message with incorrect authentication level.");
+            return;
+        }
+
+        await endpoint.Delegate.Invoke(pipe, header.PayloadLength, stoppingToken);
         await pipe.FlushAsync(stoppingToken);
     }
 }

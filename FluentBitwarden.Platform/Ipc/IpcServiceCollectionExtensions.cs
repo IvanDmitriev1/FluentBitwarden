@@ -1,4 +1,4 @@
-using FluentBitwarden.Platform.Ipc.Internal;
+using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,7 +14,10 @@ public static class IpcServiceCollectionExtensions
                 new PipeIpcServer(
                     maxConcurrentConnections,
                     pipeName,
-                    sp.GetServices<IIpcRequestHandlerInvoker>()));
+                    sp.GetServices<IpcEndpoint>(),
+                    sp.GetRequiredService<IIpcClientsVerifier>()));
+
+            services.AddSingleton<IIpcClientsVerifier, PipeClientsVerifier>();
 
             return services;
         }
@@ -25,28 +28,26 @@ public static class IpcServiceCollectionExtensions
             return services;
         }
 
-        [RequiresDynamicCode(
-            "IPC handler registration closes generic invoker types at runtime.")]
-        [RequiresUnreferencedCode(
-            "IPC handler registration reflects over handler methods and message metadata.")]
+        [RequiresDynamicCode("IPC handler registration closes generic invoker types at runtime.")]
+        [RequiresUnreferencedCode("IPC handler registration reflects over handler methods and message metadata.")]
         public IServiceCollection AddIpcRequestHandler<
             [DynamicallyAccessedMembers(
-                DynamicallyAccessedMemberTypes.PublicConstructors |
-                DynamicallyAccessedMemberTypes.PublicMethods)]
-        THandler>()
+                DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)]
+            THandler>()
             where THandler : class, IIpcRequestsHandler
         {
             services.AddSingleton<THandler>();
 
-            foreach (var descriptor in HandlerMethodDescriptor.Discover<THandler>())
+            foreach (var descriptor in IpcEndpointHandlerMethodDescriptorFactory.Discover<THandler>())
             {
-                services.AddSingleton<IIpcRequestHandlerInvoker>(sp =>
-                    descriptor.CreateInvoker(sp.GetRequiredService<THandler>()));
+                services.AddSingleton<IpcEndpoint>(sp =>
+                {
+                    var handler = sp.GetRequiredService<THandler>();
+                    return IpcEndpointFactory.Create(handler, descriptor);
+                });
             }
 
             return services;
         }
-
-
     }
 }

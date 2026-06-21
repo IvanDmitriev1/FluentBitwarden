@@ -1,6 +1,6 @@
 using Windows.Storage;
 
-namespace FluentBitwarden.Platform.Settings.Models;
+namespace FluentBitwarden.Platform.Settings.Composition;
 
 public interface ICompositeSettingValue<TThis> where TThis : ICompositeSettingValue<TThis>
 {

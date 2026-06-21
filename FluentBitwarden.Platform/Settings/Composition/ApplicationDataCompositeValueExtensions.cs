@@ -1,6 +1,6 @@
 using Windows.Storage;
 
-namespace FluentBitwarden.Platform.Settings;
+namespace FluentBitwarden.Platform.Settings.Composition;
 
 public static class ApplicationDataCompositeValueExtensions
 {

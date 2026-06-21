@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi.Primitives;
-using FluentBitwarden.Platform.Settings;
-using FluentBitwarden.Platform.Settings.Models;
+using FluentBitwarden.Platform.Settings.Composition;
 using Windows.Storage;
 
 namespace FluentBitwarden.ViewModels.Vault.Browse.Models;

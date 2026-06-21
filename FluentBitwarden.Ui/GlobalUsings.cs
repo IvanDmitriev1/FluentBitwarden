@@ -16,7 +16,6 @@ global using FluentBitwarden.Platform.Infrastructure;
 global using FluentBitwarden.Platform.Infrastructure.Extensions;
 global using FluentBitwarden.Contracts.Settings.Models;
 global using FluentBitwarden.Platform.Settings;
-global using FluentBitwarden.Platform.Settings.Models;
 global using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 global using FluentBitwarden.Services.Navigation;
 global using FluentBitwarden.Converters;

@@ -10,12 +10,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
         CancellationToken cancellationToken = default)
         where TRequest : IIpcRequestMessage
     {
-        await using var pipe = new NamedPipeClientStream(
-            ".",
-            pipeName,
-            PipeDirection.InOut,
-            PipeOptions.Asynchronous);
-
+        await using var pipe = CreatePipeClient();
         await pipe.ConnectAsync(cancellationToken);
 
         await PipeProtocol.WriteRequestMessageAsync(
@@ -37,12 +32,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
         ushort messageType,
         CancellationToken cancellationToken = default)
     {
-        await using var pipe = new NamedPipeClientStream(
-            ".",
-            pipeName,
-            PipeDirection.InOut,
-            PipeOptions.Asynchronous);
-
+        await using var pipe = CreatePipeClient();
         await pipe.ConnectAsync(cancellationToken);
 
         await PipeProtocol.WriteRequestMessageAsync(
@@ -56,4 +46,10 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             responseHeader.PayloadLength,
             cancellationToken))!;
     }
+
+    private NamedPipeClientStream CreatePipeClient() => new(
+        ".",
+        pipeName,
+        PipeDirection.InOut,
+        PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 }

@@ -1,7 +1,6 @@
 using FluentBitwarden.Contracts.Settings;
-using FluentBitwarden.Platform.Settings.Models;
 
-namespace FluentBitwarden.Platform.Settings;
+namespace FluentBitwarden.Platform.Settings.Composition;
 
 public interface ICompositeSettingsStore : ISettingsStore
 {
