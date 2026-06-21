@@ -2,6 +2,7 @@
 
 public enum IpcAuthenticationLevel : byte
 {
-    Anonymous = 0,
-    Authenticated = 1,
+    Rejected,
+    PackagedExternalProxy,
+    SamePackage,
 }

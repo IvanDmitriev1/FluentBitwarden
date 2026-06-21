@@ -4,5 +4,5 @@ namespace FluentBitwarden.Platform.Ipc.Abstractions;
 
 internal interface IIpcClientsVerifier
 {
-    bool IsExpectedClient(NamedPipeServerStream pipe, out IpcAuthenticationLevel authenticationLevel);
+    IpcAuthenticationLevel IsExpectedClient(NamedPipeServerStream pipe);
 }

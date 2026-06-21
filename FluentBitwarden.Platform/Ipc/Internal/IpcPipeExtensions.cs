@@ -37,7 +37,6 @@ internal static class IpcPipeExtensions
             ref length,
             Span<char>.Empty);
 
-
         if (result != WIN32_ERROR.ERROR_INSUFFICIENT_BUFFER)
             return null;
 
@@ -66,8 +65,7 @@ internal static class IpcPipeExtensions
 
         if (!result)
         {
-            int error = Marshal.GetLastPInvokeError();
-            throw new ApplicationException($"QueryFullProcessImageName failed: {error}");
+            throw new Win32Exception(Marshal.GetLastPInvokeError());
         }
 
         var processImagePath = buffer[..(int)bufferLength].ToString();

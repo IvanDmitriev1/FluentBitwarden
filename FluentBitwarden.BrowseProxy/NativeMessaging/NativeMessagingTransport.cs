@@ -7,11 +7,16 @@ namespace FluentBitwarden.BrowseProxy.NativeMessaging;
 internal sealed class NativeMessagingTransport(Stream input, Stream output) : INativeMessagingTransport
 {
     private const int MaxInputBytes = 16 * 1024 * 1024;
+    private const int MaxOutputBytes = 1024 * 1024;
 
     public async Task<BrowserNativeRequestEnvelope?> ReadRequestAsync(CancellationToken cancellationToken)
     {
         var lengthBuffer = new byte[4];
-        await input.ReadExactlyAsync(lengthBuffer, cancellationToken);
+        int bytesRead = await input.ReadAsync(lengthBuffer.AsMemory(0, 1), cancellationToken);
+        if (bytesRead == 0)
+            return null;
+
+        await input.ReadExactlyAsync(lengthBuffer.AsMemory(1), cancellationToken);
 
         uint length = BinaryPrimitives.ReadUInt32LittleEndian(lengthBuffer);
         if (length is 0 or > MaxInputBytes)
@@ -22,8 +27,10 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
         using var messageBuffer = MemoryOwner<byte>.Allocate((int)length);
         await input.ReadExactlyAsync(messageBuffer.Memory, cancellationToken);
 
-        return JsonSerializer.Deserialize<BrowserNativeRequestEnvelope>(messageBuffer.Span,
-            BrowseProxyJsonContext.ConfiguredDefault.BrowserNativeRequestEnvelope);
+        return JsonSerializer.Deserialize<BrowserNativeRequestEnvelope>(
+                   messageBuffer.Span,
+                   BrowseProxyJsonContext.ConfiguredDefault.BrowserNativeRequestEnvelope) ??
+               throw new JsonException("The native message envelope cannot be null.");
     }
 
     public async Task WriteResponseAsync<T>(
@@ -43,6 +50,12 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
             JsonSerializer.Serialize(writer, payload, jsonTypeInfo);
 
             writer.WriteEndObject();
+        }
+
+        if (bufferWriter.WrittenCount > MaxOutputBytes)
+        {
+            throw new InvalidDataException(
+                $"Native response size {bufferWriter.WrittenCount} exceeds the {MaxOutputBytes}-byte browser limit.");
         }
 
         var lengthBuffer = new byte[4];

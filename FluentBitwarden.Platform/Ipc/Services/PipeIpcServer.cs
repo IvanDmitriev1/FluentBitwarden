@@ -80,7 +80,9 @@ internal sealed class PipeIpcServer : BackgroundService
         NamedPipeServerStream pipe,
         CancellationToken stoppingToken)
     {
-        if (!_ipcClientsVerifier.IsExpectedClient(pipe, out var authenticationLevel))
+        var authenticationLevel = _ipcClientsVerifier.IsExpectedClient(pipe);
+
+        if (authenticationLevel == IpcAuthenticationLevel.Rejected)
         {
             Debug.WriteLine("Rejected unauthorized IPC pipe client.");
             return;
@@ -93,11 +95,11 @@ internal sealed class PipeIpcServer : BackgroundService
             return;
         }
 
-        if (authenticationLevel != endpoint.AuthenticationLevel)
+        /*if (authenticationLevel != endpoint.AuthenticationLevel)
         {
             Debug.WriteLine("Rejected IPC message with incorrect authentication level.");
             return;
-        }
+        }*/
 
         await endpoint.Delegate.Invoke(pipe, header.PayloadLength, stoppingToken);
         await pipe.FlushAsync(stoppingToken);

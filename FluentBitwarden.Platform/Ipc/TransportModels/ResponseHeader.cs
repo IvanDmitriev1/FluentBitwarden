@@ -11,10 +11,12 @@ internal readonly record struct ResponseHeader(int PayloadLength)
     private const int VersionOffset = 0;
     private const int PayloadLengthOffset = sizeof(ushort);
 
-    public static async ValueTask<ResponseHeader> ReadAsync(Stream stream)
+    public static async ValueTask<ResponseHeader> ReadAsync(
+        Stream stream,
+        CancellationToken cancellationToken = default)
     {
         using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
-        await stream.ReadExactlyAsync(headerOwner.Memory);
+        await stream.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
             headerOwner.Span.Slice(VersionOffset, sizeof(ushort)));

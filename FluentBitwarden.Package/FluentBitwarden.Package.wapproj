@@ -54,16 +54,16 @@
   <ItemGroup>
     <ProjectReference Include="..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
     <ProjectReference Include="..\FluentBitwarden.BrowseProxy\FluentBitwarden.BrowseProxy.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.Ui\FluentBitwarden.Ui.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />

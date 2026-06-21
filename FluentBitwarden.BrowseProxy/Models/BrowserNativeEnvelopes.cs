@@ -7,8 +7,3 @@ internal sealed record BrowserNativeRequestEnvelope(
     string RequestId,
     ushort Type,
     JsonElement Payload);
-
-
-public sealed record BrowserNativeResponseEnvelope<T>(
-    string RequestId,
-    T Payload);

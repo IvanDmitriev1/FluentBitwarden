@@ -19,7 +19,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             request,
             cancellationToken);
 
-        var responseHeader = await ResponseHeader.ReadAsync(pipe);
+        var responseHeader = await ResponseHeader.ReadAsync(pipe, cancellationToken);
         return (await PipeProtocol.ReadResponsePayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,
@@ -40,7 +40,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             messageType,
             cancellationToken);
 
-        var responseHeader = await ResponseHeader.ReadAsync(pipe);
+        var responseHeader = await ResponseHeader.ReadAsync(pipe, cancellationToken);
         return (await PipeProtocol.ReadResponsePayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,

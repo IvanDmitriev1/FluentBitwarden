@@ -11,5 +11,5 @@ public sealed class IpcMessageHandlerAttribute : Attribute
     }
 
     public ushort MessageType { get; set; }
-    public IpcAuthenticationLevel AuthenticationLevel { get; set; } = IpcAuthenticationLevel.Authenticated;
+    public IpcAuthenticationLevel AuthenticationLevel { get; set; } = IpcAuthenticationLevel.SamePackage;
 }

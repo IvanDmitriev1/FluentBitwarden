@@ -156,7 +156,7 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
 
     private static IpcAuthenticationLevel GetAuthRequirement(MethodInfo method) =>
         method.GetCustomAttribute<IpcMessageHandlerAttribute>()?.AuthenticationLevel ??
-        IpcAuthenticationLevel.Authenticated;
+        IpcAuthenticationLevel.SamePackage;
 
     private static InvalidOperationException InvalidSignature(MethodInfo method, string reason)
     {

@@ -4,6 +4,9 @@ using FluentBitwarden.Contracts.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
+const int NativeProtocolVersion = 1;
+TimeSpan requestTimeout = TimeSpan.FromSeconds(9);
+
 using var cts = new CancellationTokenSource();
 
 Console.CancelKeyPress += (_, e) =>
@@ -25,21 +28,43 @@ try
     var native = new NativeMessagingTransport(stdin, stdout);
     var browserExtensionClient = services.GetRequiredService<IBrowserExtensionClient>();
 
-    while (!cts.IsCancellationRequested)
+    while (true)
     {
         var cancellationToken = cts.Token;
+        BrowserNativeRequestEnvelope? request;
 
         try
         {
-            var request = await native.ReadRequestAsync(cancellationToken);
-            if (request is null)
-                return 0;
+            request = await native.ReadRequestAsync(cancellationToken);
+        }
+        catch (JsonException e)
+        {
+            Console.Error.WriteLine($"Rejected malformed native message: {e}");
+            continue;
+        }
 
-            await DispatchRequestAsync(native, browserExtensionClient, request, cancellationToken);
+        if (request is null)
+            return 0;
+
+        using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        requestCts.CancelAfter(requestTimeout);
+
+        try
+        {
+            ValidateRequest(request);
+            await DispatchRequestAsync(native, browserExtensionClient, request, requestCts.Token);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            //
+            return 0;
+        }
+        catch (OperationCanceledException) when (requestCts.IsCancellationRequested)
+        {
+            Console.Error.WriteLine($"Native request '{request.RequestId}' timed out after {requestTimeout.TotalSeconds} seconds.");
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"Native request '{request.RequestId}' failed: {e}");
         }
     }
 
@@ -54,6 +79,22 @@ catch (Exception e)
     Console.Error.WriteLine(e);
     return -1;
 }
+
+static void ValidateRequest(BrowserNativeRequestEnvelope request)
+{
+    if (request.Version != NativeProtocolVersion)
+    {
+        throw new InvalidDataException(
+            $"Unsupported native protocol version {request.Version}; expected {NativeProtocolVersion}.");
+    }
+
+    if (string.IsNullOrWhiteSpace(request.RequestId))
+        throw new InvalidDataException("Native request ID is required.");
+
+    if (request.Payload.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+        throw new InvalidDataException("Native request payload is required.");
+}
+
 static Task DispatchRequestAsync(
     INativeMessagingTransport messagingTransport,
     IBrowserExtensionClient client,
