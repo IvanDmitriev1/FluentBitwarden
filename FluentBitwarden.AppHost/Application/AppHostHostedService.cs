@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.Application.Tray;
+using FluentBitwarden.AppHost.Application.Sessions;
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using Microsoft.Extensions.Hosting;
 
@@ -6,7 +7,8 @@ namespace FluentBitwarden.AppHost.Application;
 
 internal sealed class AppHostHostedService(
     IHostApplicationLifetime applicationLifetime,
-    IUiProcessLauncher uiProcessLauncher) : IHostedService
+    IUiProcessLauncher uiProcessLauncher,
+    IVaultSessionCoordinator vaultSessionCoordinator) : IHostedService
 {
     private readonly ManualResetEventSlim _messageLoopStarted = new();
     private readonly ManualResetEventSlim _messageLoopStopped = new();
@@ -64,7 +66,7 @@ internal sealed class AppHostHostedService(
     {
         try
         {
-            _trayHost = new TrayHost(applicationLifetime, uiProcessLauncher);
+            _trayHost = new TrayHost(applicationLifetime, uiProcessLauncher, vaultSessionCoordinator);
             _messageLoopStarted.Set();
 
             while (PInvoke.GetMessage(out var message, default, 0, 0).Value > 0)

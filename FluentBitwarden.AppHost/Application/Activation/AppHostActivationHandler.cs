@@ -1,16 +1,28 @@
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
+using FluentBitwarden.AppHost.Application.Sessions;
 using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.AppHost.Application.Activation;
 
-internal sealed class AppHostActivationHandler(IUiProcessLauncher uiProcessLauncher)
+internal sealed class AppHostActivationHandler(
+    IUiProcessLauncher uiProcessLauncher,
+    IVaultSessionCoordinator vaultSessionCoordinator)
 {
     public void Handle(AppActivationArguments args)
     {
         AppHostCliCommand command = AppHostCliCommandExtensions.From(args);
-        if (command == AppHostCliCommand.Start)
+        switch (command)
         {
-            uiProcessLauncher.ActivateMainWindow();
+            case AppHostCliCommand.Start:
+                uiProcessLauncher.ActivateMainWindow();
+                break;
+            case AppHostCliCommand.Lock:
+                vaultSessionCoordinator.RequestLock();
+                break;
+            case AppHostCliCommand.Headless:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(command), command, null);
         }
     }
 }

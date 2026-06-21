@@ -24,11 +24,7 @@ public partial class App : IXamlMetadataServiceProvider
 
     public DispatcherQueue DispatcherQueue { get; }
 
-    private readonly IServiceProvider _services = new ServiceCollection()
-        .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
-        .AddViews()
-        .AddUiServices()
-        .BuildServiceProvider();
+    private readonly IServiceProvider _services;
 
     public object GetRequiredService(Type type)
         => _services.GetRequiredService(type);
@@ -50,6 +46,16 @@ public partial class App : IXamlMetadataServiceProvider
 
         DispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _initialActivation = initialActivation;
+
+        var services = new ServiceCollection()
+            .AddSingleton<IMessenger>(StrongReferenceMessenger.Default)
+            .AddViews()
+            .AddUiServices();
+#if DEBUG
+        _services = services.BuildServiceProvider(true);
+#else
+        _services = services.BuildServiceProvider();
+#endif
     }
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

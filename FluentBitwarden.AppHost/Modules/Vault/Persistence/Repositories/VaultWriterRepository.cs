@@ -10,9 +10,6 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 
     public void WriteOrganizations(ReadOnlySpan<VaultOrganizationDto> organizations)
     {
-        if (organizations.Length == 0)
-            return;
-
         Connection.Execute("DELETE FROM vault_organization WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in organizations)
@@ -60,9 +57,6 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 
     public void WriteFolders(ReadOnlySpan<VaultFolderDto> folders)
     {
-        if (folders.Length == 0)
-            return;
-
         Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in folders)
@@ -85,9 +79,6 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 
     public void WriteCollections(ReadOnlySpan<VaultCollectionDto> collections)
     {
-        if (collections.Length == 0)
-            return;
-
         Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in collections)
@@ -132,9 +123,6 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 
     public void WriteCiphers(ReadOnlySpan<VaultCipherDto> ciphers)
     {
-        if (ciphers.Length == 0)
-            return;
-
         Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in ciphers)

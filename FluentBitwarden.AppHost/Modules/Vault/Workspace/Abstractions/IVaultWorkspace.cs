@@ -1,11 +1,11 @@
-﻿namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
+﻿using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+
+namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 
 internal interface IVaultWorkspace
 {
-    bool IsOpen { get; }
-    UserId OpenedForUserId { get; }
-
     ValueTask OpenAsync(DecryptedUserKey userKey, CancellationToken cancellationToken);
+    Task<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false, CancellationToken cancellationToken = default);
     void Reload(DecryptedUserKey userKey);
     void Close();
 }

@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Modules.Accounts.StoredAccounts.Models;
+using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance.Buffers;
 

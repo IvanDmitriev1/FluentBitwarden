@@ -8,51 +8,53 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultWorkspace(
-    IVaultSynchronizer vaultSynchronizer,
+    Lazy<VaultSynchronizer> vaultSynchronizer,
     VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
 {
-    private LoadedVaultData _vaultData = new([], [], [], []);
-
-    public UserId OpenedForUserId { get; private set; } = UserId.Empty;
-    public bool IsOpen => OpenedForUserId != UserId.Empty;
+    private WorkspaceState _state = WorkspaceState.Empty;
 
     public async ValueTask OpenAsync(DecryptedUserKey userKey, CancellationToken cancellationToken)
     {
         Reload(userKey);
 
-        var data = Volatile.Read(ref _vaultData);
+        var data = Volatile.Read(ref _state).Data;
         if (data.CiphersById.Count > 0)
             return;
 
-        var result = await vaultSynchronizer.SyncAsync(userKey, force: true, cancellationToken);
+        var result = await vaultSynchronizer.Value.SyncAsync(userKey, force: true, cancellationToken);
         if (result == VaultSyncResult.Synced)
         {
             Reload(userKey);
         }
     }
 
+    public async Task<VaultSyncResult> SyncAsync(DecryptedUserKey decryptedUserKey, bool force = false,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await vaultSynchronizer.Value.SyncAsync(decryptedUserKey, force, cancellationToken);
+        if (result == VaultSyncResult.Synced)
+            Reload(decryptedUserKey);
+
+        return result;
+    }
+
     public void Reload(DecryptedUserKey userKey)
     {
         var data = vaultLoader.Load(userKey);
-        Volatile.Write(ref _vaultData, data);
-        OpenedForUserId = userKey.UserId;
+        Volatile.Write(ref _state, new WorkspaceState(userKey.UserId, data));
     }
 
-    public void Close()
-    {
-        Volatile.Write(ref _vaultData, new LoadedVaultData([], [], [], []));
-        OpenedForUserId = UserId.Empty;
-    }
+    public void Close() => Volatile.Write(ref _state, WorkspaceState.Empty);
 
     public VaultCipher? GetCipher(CipherId id)
     {
-        var data = Volatile.Read(ref _vaultData);
+        var data = Volatile.Read(ref _state).Data;
         return data.CiphersById.GetValueOrDefault(id);
     }
 
     public VaultCipher[] GetCiphers(VaultCipherQuery query)
     {
-        var data = Volatile.Read(ref _vaultData);
+        var data = Volatile.Read(ref _state).Data;
 
         IEnumerable<VaultCipher> result = data.CiphersById.Values;
 
@@ -89,7 +91,7 @@ internal sealed class VaultWorkspace(
 
     public VaultFolder[] GetFolders()
     {
-        var data = Volatile.Read(ref _vaultData);
+        var data = Volatile.Read(ref _state).Data;
         return data.Folders
             .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
@@ -97,7 +99,7 @@ internal sealed class VaultWorkspace(
 
     public VaultCollection[] GetCollections()
     {
-        var snapshot = Volatile.Read(ref _vaultData);
+        var snapshot = Volatile.Read(ref _state).Data;
 
         return snapshot.Collections
             .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
