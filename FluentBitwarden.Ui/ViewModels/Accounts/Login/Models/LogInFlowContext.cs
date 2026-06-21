@@ -1,4 +1,6 @@
-using FluentBitwarden.Contracts.Infrastructure;
+
+
+using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login.Models;
 

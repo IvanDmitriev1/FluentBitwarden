@@ -3,6 +3,7 @@ using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Platform.Infrastructure;
 using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.AppHost.Application.Sessions;

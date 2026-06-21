@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.Infrastructure.Ipc.Clients;
 using FluentBitwarden.AppHost.Infrastructure.Ipc.Handlers;
-using FluentBitwarden.Contracts.Ipc;
+using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using Microsoft.Extensions.DependencyInjection;

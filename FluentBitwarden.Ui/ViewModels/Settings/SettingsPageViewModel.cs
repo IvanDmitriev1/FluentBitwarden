@@ -9,7 +9,7 @@ using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Services.Window;
 using FluentBitwarden.Services.Navigation;
 using FluentBitwarden.Contracts.Settings.Models;
-using FluentBitwarden.Contracts.Extensions;
+using FluentBitwarden.Platform.Infrastructure.Extensions;
 
 namespace FluentBitwarden.ViewModels.Settings;
 

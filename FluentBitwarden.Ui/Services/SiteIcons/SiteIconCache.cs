@@ -4,7 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Windows.Storage;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Contracts.Infrastructure;
+using FluentBitwarden.Platform.Infrastructure;
+
 
 namespace FluentBitwarden.Services.SiteIcons;
 

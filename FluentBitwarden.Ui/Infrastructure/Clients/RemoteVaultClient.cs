@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;

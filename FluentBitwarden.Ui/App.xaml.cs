@@ -10,6 +10,7 @@ using FluentBitwarden.Views.Shell;
 using WinUI.DependencyInjection;
 using WinUIEx;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden;
 

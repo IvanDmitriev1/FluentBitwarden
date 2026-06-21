@@ -1,4 +1,5 @@
-using FluentBitwarden.Contracts.Infrastructure;
+
+using FluentBitwarden.Platform.Infrastructure;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.Infrastructure.AppLifecycle;

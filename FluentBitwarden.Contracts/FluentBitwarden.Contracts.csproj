@@ -1,13 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\FluentBitwarden.WindowsApp.props" />
-
   <ItemGroup>
-    <PackageReference Include="ConfigureAwait.Fody" PrivateAssets="All" />
     <PackageReference Include="MemoryPack" />
-    <PackageReference Include="Microsoft.Windows.CsWin32">
-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	    <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

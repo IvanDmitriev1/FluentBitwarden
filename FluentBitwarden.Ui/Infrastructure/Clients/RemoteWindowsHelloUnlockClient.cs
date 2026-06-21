@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;

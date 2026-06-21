@@ -39,7 +39,8 @@ FluentBitwarden is packaged as a multi-process desktop app. The MSIX package dec
 - `FluentBitwarden.Ui.exe` is the WinUI presentation process. It enforces its own single instance, owns windows and dialogs, and is launched or foregrounded by the AppHost for the main window or overlay prompts.
 - `FluentBitwarden.ComServer.exe` is the native C++/WinRT WebAuthn plugin COM server. It handles Windows passkey plugin calls, decodes WebAuthn requests, and forwards assertion work to the AppHost.
 - `FluentBitwarden.BrowseProxy.exe` is the browser Native Messaging bridge. Browser extensions launch it as a stdio helper, and it forwards browser credential requests to the AppHost through the shared IPC contracts.
-- `FluentBitwarden.Contracts` contains the shared .NET IPC contracts: message ids, request/response models, named-pipe client/server services, and MemoryPack serialization setup. The COM server mirrors the small binary protocol subset it needs for passkey messages.
+- `FluentBitwarden.Contracts` contains platform-neutral feature interfaces, IPC message ids, request/response models, and shared value types. The COM server mirrors the small binary protocol subset it needs for passkey messages.
+- `FluentBitwarden.Platform` contains shared Windows runtime infrastructure, including named-pipe transport, ApplicationData settings, package/runtime helpers, diagnostics, and integration setup.
 
 ### Pipe Endpoints
 

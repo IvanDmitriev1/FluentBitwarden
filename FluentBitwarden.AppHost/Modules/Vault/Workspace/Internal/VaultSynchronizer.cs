@@ -2,6 +2,7 @@ using Windows.Networking.Connectivity;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 

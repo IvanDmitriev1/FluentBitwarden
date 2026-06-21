@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Ipc;
+using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.AppLifecycle;

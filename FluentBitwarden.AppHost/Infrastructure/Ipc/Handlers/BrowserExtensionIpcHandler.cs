@@ -1,5 +1,5 @@
 using FluentBitwarden.AppHost.Modules.BrowserExtension;
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.BrowserExtension;
 using FluentBitwarden.Contracts.Modules.BrowserExtension.Models;
 

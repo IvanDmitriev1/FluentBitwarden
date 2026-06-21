@@ -1,5 +1,5 @@
 using FluentBitwarden.BrowseProxy.NativeMessaging;
-using FluentBitwarden.Contracts.Ipc;
+using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Contracts.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;

@@ -4,6 +4,7 @@ using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.BrowserExtension;
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Settings;
+using FluentBitwarden.Platform.Infrastructure.Integrations;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Services;
 

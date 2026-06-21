@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 using FluentBitwarden.Contracts.Modules.Vault;

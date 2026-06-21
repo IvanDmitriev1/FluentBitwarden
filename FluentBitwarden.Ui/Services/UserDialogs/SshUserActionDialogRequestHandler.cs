@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Contracts.Infrastructure;
-using FluentBitwarden.Contracts.Ipc.Abstractions;
+
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Services.Window;
 using Microsoft.UI.Xaml;
