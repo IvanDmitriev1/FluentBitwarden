@@ -1,15 +1,18 @@
+using FluentBitwarden.AppHost.Infrastructure.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Application.Sessions;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultSessionCoordinator(
     IAccountUnlockService accountUnlockService,
-    IVaultWorkspace vaultWorkspace)
+    IVaultWorkspace vaultWorkspace,
+    IUiProcessLauncher uiProcessLauncher)
     : IVaultSessionCoordinator, IBitwardenEnvironmentAccessor
 {
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
@@ -95,6 +98,8 @@ internal sealed class VaultSessionCoordinator(
                 var session = ClearUnlockedSession();
                 vaultWorkspace.Close();
                 session?.Dispose();
+
+                uiProcessLauncher.Exit();
             }
             finally
             {
