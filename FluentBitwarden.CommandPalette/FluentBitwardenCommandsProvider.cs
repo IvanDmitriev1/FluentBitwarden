@@ -1,16 +1,18 @@
+using FluentBitwarden.CommandPalette.Pages;
+
 namespace FluentBitwarden.CommandPalette;
 
 internal sealed partial class FluentBitwardenCommandsProvider : CommandProvider
 {
     private readonly ICommandItem[] _commands;
 
-    public FluentBitwardenCommandsProvider(AppHostClient client)
+    public FluentBitwardenCommandsProvider(VaultSearchPage vaultSearchPage)
     {
         DisplayName = "FluentBitwarden";
         Icon = Icons.Application;
         _commands =
         [
-            new CommandItem(new Pages.VaultSearchPage(client))
+            new CommandItem(vaultSearchPage)
             {
                 Title = "Search FluentBitwarden",
                 Subtitle = "Find a login and copy its password",

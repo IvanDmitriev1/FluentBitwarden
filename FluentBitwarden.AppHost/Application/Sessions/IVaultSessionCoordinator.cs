@@ -1,4 +1,5 @@
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
+using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;

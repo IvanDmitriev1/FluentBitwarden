@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Diagnostics;
 using FluentBitwarden.Platform.Infrastructure.Extensions;
 
@@ -11,55 +10,30 @@ internal static class FluentBitwardenProcessLauncher
     private const string UiProjectDirectory = "FluentBitwarden.Ui";
     private const string UiExecutable = "FluentBitwarden.Ui.exe";
 
-    public static bool EnsureAppHostRunning()
+    public static void EnsureAppHostRunning()
     {
         var processName = Path.GetFileNameWithoutExtension(AppHostExecutable);
         var processes = Process.GetProcessesByName(processName);
-        try
-        {
-            if (processes.Length > 0)
-                return true;
-        }
-        finally
-        {
-            foreach (var process in processes)
-                process.Dispose();
-        }
+        Array.ForEach(processes, static p => p.Dispose());
 
-        return StartPackagedProcess(AppHostProjectDirectory, AppHostExecutable, "--headless");
+        if (processes.Length > 0)
+            return;
+
+        StartPackagedProcess(AppHostProjectDirectory, AppHostExecutable, "--headless");
     }
 
-    public static bool OpenUnlockOverlay() =>
-        StartPackagedProcess(UiProjectDirectory, UiExecutable, "--overlay");
+    public static void OpenUnlockOverlay() => StartPackagedProcess(UiProjectDirectory, UiExecutable, "--overlay");
 
-    private static bool StartPackagedProcess(
-        string projectDirectory,
-        string executableName,
-        string arguments)
+    private static void StartPackagedProcess(string projectDirectory, string executableName, string arguments)
     {
-        var executablePath = Path.Combine(
-            PackageHelper.AppBasePath,
-            projectDirectory,
-            executableName);
+        var executablePath = Path.Combine(PackageHelper.AppBasePath, projectDirectory, executableName);
 
-        try
+        using var process = Process.Start(new ProcessStartInfo
         {
-            using var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = executablePath,
-                Arguments = arguments,
-                WorkingDirectory = Path.GetDirectoryName(executablePath),
-                UseShellExecute = false,
-            });
-
-            return process is not null;
-        }
-        catch (Exception exception) when (
-            exception is InvalidOperationException
-                or Win32Exception
-                or IOException)
-        {
-            return false;
-        }
+            FileName = executablePath,
+            Arguments = arguments,
+            WorkingDirectory = Path.GetDirectoryName(executablePath),
+            UseShellExecute = false,
+        });
     }
 }

@@ -88,7 +88,8 @@ public partial class App : IXamlMetadataServiceProvider
         }
     }
 
-    private void ShowWindow<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TWindow>() where TWindow : WindowEx
+    private void ShowWindow<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TWindow>() 
+        where TWindow : WindowEx
     {
         var windowManager = GetRequiredService<IWindowManager>();
         if (windowManager.HasWindow)

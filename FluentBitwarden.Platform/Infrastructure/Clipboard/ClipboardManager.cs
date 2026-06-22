@@ -3,7 +3,7 @@ using FluentBitwarden.Contracts.Settings.Models;
 using Windows.ApplicationModel.DataTransfer;
 using WindowsClipboard = Windows.ApplicationModel.DataTransfer.Clipboard;
 
-namespace FluentBitwarden.Platform.Clipboard;
+namespace FluentBitwarden.Platform.Infrastructure.Clipboard;
 
 public static class ClipboardManager
 {

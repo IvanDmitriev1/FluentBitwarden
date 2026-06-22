@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Services.SiteIcons;
+namespace FluentBitwarden.Platform.SiteIcons;
 
 public interface ISiteIconCache
 {

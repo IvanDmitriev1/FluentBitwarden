@@ -1,9 +1,10 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
+using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.AppHost.Infrastructure.Services;
 
 namespace FluentBitwarden.AppHost.Application.Sessions;
 
@@ -11,7 +12,8 @@ namespace FluentBitwarden.AppHost.Application.Sessions;
 internal sealed class VaultSessionCoordinator(
     IAccountUnlockService accountUnlockService,
     IVaultWorkspace vaultWorkspace,
-    IUiProcessLauncher uiProcessLauncher)
+    IUiProcessLauncher uiProcessLauncher,
+    IIpcEventPublisher eventPublisher)
     : IVaultSessionCoordinator
 {
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
@@ -115,5 +117,6 @@ internal sealed class VaultSessionCoordinator(
 
         VaultSessionStatus status = session is not null ? VaultSessionStatus.Unlocked : VaultSessionStatus.Locked;
         SessionStatusChanged?.Invoke(status);
+        _ = eventPublisher.PublishAsync(new VaultSessionStatusChangedEvent(status));
     }
 }

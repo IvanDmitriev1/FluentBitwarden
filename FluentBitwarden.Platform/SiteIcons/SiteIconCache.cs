@@ -1,15 +1,12 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
-using Windows.Storage;
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.Platform.Infrastructure;
+using Windows.Storage;
 
+namespace FluentBitwarden.Platform.SiteIcons;
 
-namespace FluentBitwarden.Services.SiteIcons;
-
-[Fody.ConfigureAwait(false)]
 internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISiteIconCache
 {
     private static readonly string CacheDirectoryPath =
@@ -52,7 +49,7 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
         }
         catch (Exception e) when (e is TaskCanceledException or OperationCanceledException)
         {
-            //
+            Debug.WriteLine($"Site icon cache preload was canceled: {e.Message}");
         }
         catch (Exception e)
         {

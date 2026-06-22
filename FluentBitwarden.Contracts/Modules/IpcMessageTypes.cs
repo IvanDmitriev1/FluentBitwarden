@@ -20,6 +20,7 @@ public static class IpcMessageTypes
         public const ushort GetFolders = 103;
         public const ushort GetCollections = 104;
         public const ushort GetStatus = 105;
+        public const ushort SessionStatusChanged = 106;
     }
 
     public static class Account

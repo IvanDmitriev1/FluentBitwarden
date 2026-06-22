@@ -1,10 +1,9 @@
-using System.Collections.Concurrent;
-using System.IO.Pipes;
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.Platform.Infrastructure;
 using FluentBitwarden.Platform.Infrastructure.Extensions;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
+using System.IO.Pipes;
 using PipeOptions = System.IO.Pipes.PipeOptions;
 
 namespace FluentBitwarden.Platform.Ipc.Services;
@@ -13,7 +12,33 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
 {
     private static readonly TimeSpan ReconnectDelay = TimeSpan.FromMilliseconds(250);
 
-    private readonly ConcurrentDictionary<ushort, IpcEventWaiter> _waiters = [];
+    private readonly Lock _waitersLock = new();
+    private readonly List<IIpcEventWaiter> _waiters = [];
+
+    private readonly Lock _subscriptionsLock = new();
+    private readonly List<IIpcEventSubscription> _subscriptions = [];
+
+    public IDisposable Subscribe<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>(
+        AsyncIpcEventCallback<TEvent> callback)
+        where TEvent : IIpcEventMessage
+    {
+        using var _ = _subscriptionsLock.EnterScope();
+
+        var subscription = new IpcEventSubscription<TEvent>(callback, this);
+        _subscriptions.Add(subscription);
+
+        return subscription;
+    }
+
+    public IDisposable Subscribe<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>(
+        IpcEventCallback<TEvent> handler)
+        where TEvent : IIpcEventMessage => Subscribe<TEvent>((@event, _) =>
+    {
+        handler(@event);
+        return Task.CompletedTask;
+    });
 
     public async Task<TEvent> WaitAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>(
@@ -21,10 +46,10 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
         where TEvent : IIpcEventMessage
     {
         using var waiter = new IpcEventWaiter<TEvent>(cancellationToken);
-        if (!_waiters.TryAdd(waiter.MessageType, waiter))
+
+        lock (_waitersLock)
         {
-            throw new InvalidOperationException(
-                $"An IPC event waiter for message type '{waiter.MessageType}' is already registered.");
+            _waiters.Add(waiter);
         }
 
         try
@@ -33,7 +58,10 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
         }
         finally
         {
-            _waiters.Remove(waiter.MessageType, out _);
+            lock (_waitersLock)
+            {
+                _waiters.Remove(waiter);
+            }
         }
     }
 
@@ -62,14 +90,6 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
 
             await Task.Delay(ReconnectDelay, stoppingToken);
         }
-
-        foreach (var pair in _waiters)
-        {
-            if (_waiters.TryRemove(pair))
-            {
-                pair.Value.TrySetCanceled();
-            }
-        }
     }
 
     private async Task ReadEventsAsync(CancellationToken cancellationToken)
@@ -84,32 +104,38 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
         while (!cancellationToken.IsCancellationRequested)
         {
             var header = await IpcMessageHeader.ReadAsync(pipe, cancellationToken);
-            if (!_waiters.TryRemove(header.MessageType, out var waiter))
-            {
-                await IpcWireProtocol.DiscardPayloadAsync(
-                    pipe,
-                    header.PayloadLength,
-                    cancellationToken);
 
-                continue;
+            using var bufferOwner = MemoryOwner<byte>.Allocate(header.PayloadLength);
+            await pipe.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+
+            IIpcEventWaiter[] waiters;
+            IIpcEventSubscription[] subscriptions;
+
+            lock (_waiters)
+            {
+                waiters = _waiters.Where(w => w.MessageType == header.MessageType).ToArray();
             }
 
-            try
+            lock (_subscriptions)
             {
-                using var bufferOwner = MemoryOwner<byte>.Allocate(header.PayloadLength);
-                await pipe.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+                subscriptions = _subscriptions.Where(s => s.MessageType == header.MessageType).ToArray();
+            }
 
+            foreach (var waiter in waiters)
+            {
                 waiter.Complete(bufferOwner.Span);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+
+            foreach (var subscription in subscriptions)
             {
-                waiter.TrySetCanceled();
-                throw;
-            }
-            catch (Exception exception)
-            {
-                waiter.TrySetException(exception);
+                _ = subscription.InvokeAsync(bufferOwner.Memory, cancellationToken);
             }
         }
+    }
+
+    internal void Unsubscribe(IIpcEventSubscription eventSubscription)
+    {
+        using var _ = _subscriptionsLock.EnterScope();
+        _subscriptions.Remove(eventSubscription);
     }
 }

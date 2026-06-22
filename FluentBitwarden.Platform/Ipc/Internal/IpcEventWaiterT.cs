@@ -1,23 +1,13 @@
 namespace FluentBitwarden.Platform.Ipc.Internal;
 
-internal abstract class IpcEventWaiter : IDisposable
-{
-    public abstract ushort MessageType { get; }
-
-    
-    public abstract void Complete(ReadOnlySpan<byte> payload);
-    public abstract void TrySetCanceled();
-    public abstract void TrySetException(Exception exception);
-    public abstract void Dispose();
-}
-
 internal sealed class IpcEventWaiter<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>
-    : IpcEventWaiter
+    : IIpcEventWaiter
     where TEvent : IIpcEventMessage
 {
     private readonly TaskCompletionSource<TEvent> _cts = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly CancellationTokenRegistration _cr;
+    private bool _disposed;
 
     public IpcEventWaiter(CancellationToken cancellationToken)
     {
@@ -25,10 +15,10 @@ internal sealed class IpcEventWaiter<
             () => _cts.TrySetCanceled(cancellationToken));
     }
 
-    public override ushort MessageType => TEvent.MessageType;
+    public ushort MessageType => TEvent.MessageType;
     public Task<TEvent> Task => _cts.Task;
 
-    public override void Complete(ReadOnlySpan<byte> payload)
+    public void Complete(ReadOnlySpan<byte> payload)
     {
         var message = MemoryPackSerializer.Deserialize<TEvent>(payload);
         if (message is not null)
@@ -40,11 +30,11 @@ internal sealed class IpcEventWaiter<
         _cts.TrySetException(new InvalidOperationException("Failed to deserialize IPC message"));
     }
 
-    public override void TrySetCanceled() => _cts.TrySetCanceled();
-
-    public override void TrySetException(Exception exception) => _cts.TrySetException(exception);
-    public override void Dispose()
+    public void Dispose()
     {
+        if (!Interlocked.Exchange(ref _disposed, true))
+            return;
+
         _cts.TrySetCanceled();
         _cr.Dispose();
     }

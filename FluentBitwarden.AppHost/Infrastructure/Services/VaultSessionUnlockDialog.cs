@@ -1,11 +1,11 @@
 ﻿using FluentBitwarden.AppHost.Application.Sessions;
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure;
+using FluentBitwarden.Contracts.Modules.Vault;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class AppHostVaultSessionUnlockDialog(
+internal sealed class VaultSessionUnlockDialog(
     IVaultSessionCoordinator vaultSessionCoordinator,
     IUiProcessLauncher uiProcessLauncher) : IVaultSessionUnlockDialog
 {

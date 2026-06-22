@@ -1,11 +1,11 @@
 using FluentBitwarden.Platform.Ipc;
+using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.AppLifecycle;
 using FluentBitwarden.Infrastructure.Clients;
 using FluentBitwarden.Services.Navigation;
 using FluentBitwarden.Services.Notifications;
-using FluentBitwarden.Services.SiteIcons;
 using FluentBitwarden.Services.UserDialogs;
 using FluentBitwarden.Services.Window;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +24,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(static sp => sp.GetRequiredService<NavigationService>());
 
-        services.AddSiteIconHttpClient();
-        services.AddSingleton<ISiteIconCache, SiteIconCache>();
+        services.AddSiteIconCache();
 
         services.AddIpcClient(IpcConstants.AppHostPipeName);
         services.AddSingleton<IAccountsClient, RemoteAccountsClient>();

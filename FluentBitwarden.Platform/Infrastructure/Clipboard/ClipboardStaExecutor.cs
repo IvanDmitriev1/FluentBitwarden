@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.ExceptionServices;
 
-namespace FluentBitwarden.Platform.Clipboard;
+namespace FluentBitwarden.Platform.Infrastructure.Clipboard;
 
 internal sealed class ClipboardStaExecutor
 {

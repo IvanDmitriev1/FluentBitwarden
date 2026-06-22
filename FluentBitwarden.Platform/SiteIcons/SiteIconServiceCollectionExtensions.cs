@@ -1,18 +1,15 @@
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.Services.SiteIcons;
+namespace FluentBitwarden.Platform.SiteIcons;
 
-internal static class SiteIconHttpClientRegistration
+public static class SiteIconServiceCollectionExtensions
 {
-    private const string Name = "SiteIconHttpClient";
+    private const string HttpClientName = "SiteIconHttpClient";
 
-    public static HttpClient CreateSiteIconClient(this IHttpClientFactory factory) =>
-        factory.CreateClient("SiteIconHttpClient");
-
-    public static void AddSiteIconHttpClient(this IServiceCollection services)
+    public static IServiceCollection AddSiteIconCache(this IServiceCollection services)
     {
-        services.AddHttpClient(Name, static client =>
+        services.AddHttpClient(HttpClientName, static client =>
         {
             client.DefaultRequestVersion = HttpVersion.Version20;
             client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
@@ -23,5 +20,10 @@ internal static class SiteIconHttpClientRegistration
             client.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
         });
+        services.AddSingleton<ISiteIconCache, SiteIconCache>();
+        return services;
     }
+
+    internal static HttpClient CreateSiteIconClient(this IHttpClientFactory factory) =>
+        factory.CreateClient(HttpClientName);
 }

@@ -3,7 +3,7 @@ using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Collections.ObjectModel;
 using Windows.Networking.Connectivity;
-using FluentBitwarden.Services.SiteIcons;
+using FluentBitwarden.Platform.SiteIcons;
 
 namespace FluentBitwarden.ViewModels.Vault.Browse;
 

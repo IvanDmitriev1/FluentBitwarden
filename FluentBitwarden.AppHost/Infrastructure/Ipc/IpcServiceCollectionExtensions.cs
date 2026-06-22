@@ -28,6 +28,7 @@ internal static class IpcServiceCollectionExtensions
                 .Add<VaultIpcHandler>()
                 .Add<BrowserExtensionIpcHandler>()
                 .Add<PasskeyIpcHandler>());
+        services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         services.AddIpcClient(IpcConstants.UiPipeName);
 
         services.AddSingleton<ISshUserActionDialogClient, SshUserActionDialogClient>();

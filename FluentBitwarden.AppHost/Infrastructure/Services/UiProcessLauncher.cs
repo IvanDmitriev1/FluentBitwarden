@@ -1,4 +1,3 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.Contracts.Modules.AppState;
 using Microsoft.Extensions.Hosting;
 
@@ -24,11 +23,8 @@ internal sealed class UiProcessLauncher(IHostApplicationLifetime applicationLife
         }
     }
 
-    public void ActivateMainWindow()
-        => StartProcess(string.Empty);
-
-    public void ActivateOverlay()
-        => StartProcess("--overlay");
+    public void ActivateMainWindow() => StartProcess(string.Empty);
+    public void ActivateOverlay() => StartProcess("--overlay");
 
 
     public void Activate()

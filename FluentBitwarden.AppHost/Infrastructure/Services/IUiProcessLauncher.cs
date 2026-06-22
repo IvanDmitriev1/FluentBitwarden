@@ -1,14 +1,10 @@
-namespace FluentBitwarden.AppHost.Infrastructure.Abstractions;
+namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
 internal interface IUiProcessLauncher
 {
     bool IsRunning { get; }
 
     void ActivateMainWindow();
-
-    void ActivateOverlay();
-
     void Activate();
-
     void Exit();
 }

@@ -1,4 +1,3 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.Contracts.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +22,7 @@ internal static class InfrastructureServiceCollectionExtensions
         services.AddTransient<IAppSetupService, AppSetupService>();
         services.AddSingleton<IUiProcessLauncher, UiProcessLauncher>();
 
-        services.AddSingleton<IVaultSessionUnlockDialog, AppHostVaultSessionUnlockDialog>();
+        services.AddSingleton<IVaultSessionUnlockDialog, VaultSessionUnlockDialog>();
 
         return services;
     }
