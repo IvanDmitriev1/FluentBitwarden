@@ -2,5 +2,5 @@
 
 public interface IVaultSessionUnlockDialog
 {
-    ValueTask WaitUntilUnlockAsync(CancellationToken cancellationToken);
+    Task WaitUntilUnlockAsync(CancellationToken cancellationToken);
 }

@@ -8,7 +8,9 @@ namespace FluentBitwarden.CommandPalette.Pages;
 
 internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 {
-    private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(150);
+    public const string PageId = "vault-search";
+
+    private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(200);
     private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(2);
 
     private readonly IAccountsClient _accountsClient;
@@ -18,7 +20,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 
     private IListItem[] _items = [];
     private CancellationTokenSource? _searchCancellation;
-    private int _searchGeneration;
+    private uint _searchGeneration;
 
     public VaultSearchPage(
         IAccountsClient accountsClient,
@@ -36,6 +38,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         PlaceholderText = "Search logins";
         Icon = Icons.Application;
         IsLoading = true;
+        Id = PageId;
 
         QueueSearch(string.Empty);
     }
@@ -66,7 +69,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 
     private void QueueSearch(string searchText)
     {
-        int generation = Interlocked.Increment(ref _searchGeneration);
+        uint generation = Interlocked.Increment(ref _searchGeneration);
 
         var cancellation = new CancellationTokenSource();
         var previousCancellation = Interlocked.Exchange(ref _searchCancellation, cancellation);
@@ -79,7 +82,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 
     private async Task SearchAsync(
         string searchText,
-        int generation,
+        uint generation,
         CancellationToken cancellationToken)
     {
         try
@@ -124,7 +127,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         }
     }
 
-    private void PublishItems(int generation, IListItem[] items)
+    private void PublishItems(uint generation, IListItem[] items)
     {
         if (generation != Volatile.Read(ref _searchGeneration))
             return;

@@ -1,4 +1,6 @@
+using FluentBitwarden.CommandPalette.Infrastructure.Services;
 using FluentBitwarden.CommandPalette.Pages;
+using FluentBitwarden.Contracts.Infrastructure;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Platform.Ipc;
@@ -25,6 +27,7 @@ public static class Program
         builder.Services.AddIpcEventClient(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddSingleton<IAccountsClient, RemoteAccountsClient>();
         builder.Services.AddSingleton<IVaultClient, RemoteVaultClient>();
+        builder.Services.AddSingleton<IVaultSessionUnlockDialog, VaultSessionUnlockDialog>();
         builder.Services.AddSiteIconCache();
 
         builder.Services.AddSingleton<FluentBitwardenCommandsProvider>();
@@ -32,6 +35,8 @@ public static class Program
             new FluentBitwardenCommandPaletteExtension(
                 services.GetRequiredService<FluentBitwardenCommandsProvider>(),
                 services.GetRequiredService<IHostApplicationLifetime>()));
+
+        builder.Services.AddSingleton<OpenUnlockCommand>();
 
         builder.Services.AddSingleton<VaultCipherListItemFactory>();
         builder.Services.AddSingleton<VaultSearchPage>();

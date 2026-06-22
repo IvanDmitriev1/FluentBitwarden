@@ -1,6 +1,9 @@
+using FluentBitwarden.CommandPalette.Pages;
+using FluentBitwarden.Contracts.Infrastructure;
+
 namespace FluentBitwarden.CommandPalette.Commands;
 
-internal sealed partial class OpenUnlockCommand : InvokableCommand
+internal sealed partial class OpenUnlockCommand(IVaultSessionUnlockDialog sessionUnlockDialog) : InvokableCommand
 {
     public override string Name => "Open FluentBitwarden";
 
@@ -8,7 +11,7 @@ internal sealed partial class OpenUnlockCommand : InvokableCommand
 
     public override ICommandResult Invoke()
     {
-        FluentBitwardenProcessLauncher.OpenUnlockOverlay();
-        return CommandResult.ShowToast("FluentBitwarden opened");
+        _ = sessionUnlockDialog.WaitUntilUnlockAsync(CancellationToken.None);
+        return CommandResult.ShowToast("Application opened");
     }
 }

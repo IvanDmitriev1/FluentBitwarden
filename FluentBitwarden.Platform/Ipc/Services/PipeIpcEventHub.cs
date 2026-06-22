@@ -39,8 +39,7 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
             Task[] tasks;
             lock (_subscribersLock)
             {
-                tasks = _subscribers.Select(subscriber =>
-                        TryWriteAsync(subscriber, data, cancellationToken))
+                tasks = _subscribers.Select(subscriber => TryWriteAsync(subscriber, data, cancellationToken))
                     .ToArray();
             }
 
@@ -68,9 +67,11 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
                     continue;
                 }
 
-                using var _ = _subscribersLock.EnterScope();
-                _subscribers.Add(new Subscriber(pipe));
-                pipe = null;
+                lock (_subscribersLock)
+                {
+                    _subscribers.Add(new Subscriber(pipe));
+                    pipe = null;
+                }
 
                 Debug.WriteLine("IPC event subscriber registered.");
             }
@@ -87,14 +88,6 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
                 pipe?.Dispose();
             }
         }
-
-        using var __ = _subscribersLock.EnterScope();
-        foreach (var subscriber in _subscribers)
-        {
-            subscriber.Dispose();
-        }
-
-        _subscribers.Clear();
     }
 
     private async Task TryWriteAsync<

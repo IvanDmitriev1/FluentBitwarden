@@ -9,7 +9,7 @@ internal sealed class VaultSessionUnlockDialog(
     IVaultSessionCoordinator vaultSessionCoordinator,
     IUiProcessLauncher uiProcessLauncher) : IVaultSessionUnlockDialog
 {
-    public async ValueTask WaitUntilUnlockAsync(CancellationToken cancellationToken)
+    public async Task WaitUntilUnlockAsync(CancellationToken cancellationToken)
     {
         if (vaultSessionCoordinator.TryGetUnlockedSession(out var session))
             return;

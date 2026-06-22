@@ -1,9 +1,11 @@
 using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.Platform.SiteIcons;
 
-namespace FluentBitwarden.CommandPalette.Pages;
+namespace FluentBitwarden.CommandPalette.Infrastructure;
 
-internal sealed class VaultCipherListItemFactory(ISiteIconCache siteIconCache)
+internal sealed class VaultCipherListItemFactory(
+    ISiteIconCache siteIconCache,
+    OpenUnlockCommand openUnlockCommand)
 {
     public IListItem Create(LoginVaultCipher cipher)
     {
@@ -28,7 +30,7 @@ internal sealed class VaultCipherListItemFactory(ISiteIconCache siteIconCache)
         return item;
     }
 
-    public ListItem CreateUnlockItem() => new(new OpenUnlockCommand())
+    public ListItem CreateUnlockItem() => new(openUnlockCommand)
     {
         Title = "Unlock FluentBitwarden",
         Subtitle = "Open the app to unlock your vault, then retry",

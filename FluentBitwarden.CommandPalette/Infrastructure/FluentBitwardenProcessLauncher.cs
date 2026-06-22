@@ -12,28 +12,52 @@ internal static class FluentBitwardenProcessLauncher
 
     public static void EnsureAppHostRunning()
     {
-        var processName = Path.GetFileNameWithoutExtension(AppHostExecutable);
-        var processes = Process.GetProcessesByName(processName);
-        Array.ForEach(processes, static p => p.Dispose());
-
-        if (processes.Length > 0)
+        if (GetActiveProcess(AppHostExecutable) is { } activeProcess)
+        {
+            activeProcess.Dispose();
             return;
+        }
 
-        StartPackagedProcess(AppHostProjectDirectory, AppHostExecutable, "--headless");
+        using var _ = StartPackagedProcess(AppHostProjectDirectory, AppHostExecutable, "--headless");
     }
 
-    public static void OpenUnlockOverlay() => StartPackagedProcess(UiProjectDirectory, UiExecutable, "--overlay");
+    public static Process OpenUnlockOverlay()
+    {
+        if (GetActiveProcess(UiExecutable) is { } activeProcess)
+        {
+            activeProcess.CloseMainWindow();
+            activeProcess.Dispose();
+        }
+        
+        return StartPackagedProcess(UiProjectDirectory, UiExecutable, "--overlay");
+    }
 
-    private static void StartPackagedProcess(string projectDirectory, string executableName, string arguments)
+    private static Process StartPackagedProcess(string projectDirectory, string executableName, string arguments)
     {
         var executablePath = Path.Combine(PackageHelper.AppBasePath, projectDirectory, executableName);
 
-        using var process = Process.Start(new ProcessStartInfo
+        var process = Process.Start(new ProcessStartInfo
         {
             FileName = executablePath,
             Arguments = arguments,
             WorkingDirectory = Path.GetDirectoryName(executablePath),
             UseShellExecute = false,
         });
+
+        ArgumentNullException.ThrowIfNull(process);
+        return process;
+    }
+
+    private static Process? GetActiveProcess(string processName)
+    {
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(processName);
+        var processes = Process.GetProcessesByName(nameWithoutExtension);
+
+        return processes.Length switch
+        {
+            0 => null,
+            1 => processes[0],
+            _ => throw new InvalidOperationException($"Multiple processes found with name '{processName}'")
+        };
     }
 }

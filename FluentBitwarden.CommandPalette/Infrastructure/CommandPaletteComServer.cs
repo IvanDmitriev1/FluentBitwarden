@@ -4,7 +4,7 @@ using Shmuelie.WinRTServer.CsWinRT;
 
 namespace FluentBitwarden.CommandPalette.Infrastructure;
 
-internal sealed class CommandPaletteComServer(FluentBitwardenCommandPaletteExtension extension) : IHostedService, IDisposable
+internal sealed partial class CommandPaletteComServer(FluentBitwardenCommandPaletteExtension extension) : IHostedService, IDisposable
 {
     private ComServer? _server;
 
