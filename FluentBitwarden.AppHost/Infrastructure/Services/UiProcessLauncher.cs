@@ -1,6 +1,5 @@
 using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Contracts.Settings;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Services;

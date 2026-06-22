@@ -4,7 +4,7 @@ using FluentBitwarden.Contracts.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
-const int NativeProtocolVersion = 1;
+const int nativeProtocolVersion = 1;
 TimeSpan requestTimeout = TimeSpan.FromSeconds(9);
 
 using var cts = new CancellationTokenSource();
@@ -82,10 +82,10 @@ catch (Exception e)
 
 static void ValidateRequest(BrowserNativeRequestEnvelope request)
 {
-    if (request.Version != NativeProtocolVersion)
+    if (request.Version != nativeProtocolVersion)
     {
         throw new InvalidDataException(
-            $"Unsupported native protocol version {request.Version}; expected {NativeProtocolVersion}.");
+            $"Unsupported native protocol version {request.Version}; expected {nativeProtocolVersion}.");
     }
 
     if (string.IsNullOrWhiteSpace(request.RequestId))

@@ -3,7 +3,6 @@ using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.Platform.Infrastructure;
 using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.AppHost.Application.Sessions;
@@ -17,6 +16,8 @@ internal sealed class VaultSessionCoordinator(
 {
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
     private UnlockedSession? _unlockedSession;
+
+    public event Action<VaultSessionStatus>? SessionStatusChanged;
 
     public bool TryGetUnlockedSession([NotNullWhen(true)] out UnlockedSession? session)
     {
@@ -39,28 +40,22 @@ internal sealed class VaultSessionCoordinator(
             if (!result.TryGetUserKey(out var userKey))
                 return result.Outcome;
 
-            var nextSession = new UnlockedSession(request.Account, userKey);
-            var previousSession = ClearUnlockedSession();
-            vaultWorkspace.Close();
+            var newSession = new UnlockedSession(request.Account, userKey);
 
             try
             {
                 await vaultWorkspace.OpenAsync(
-                    nextSession.AccountContext,
-                    nextSession.UserKey,
+                    newSession.AccountContext,
+                    newSession.UserKey,
                     cancellationToken);
-                PublishUnlockedSession(nextSession);
+
+                PublishSessionChange(newSession);
                 return result.Outcome;
             }
             catch
             {
-                vaultWorkspace.Close();
-                nextSession.Dispose();
+                newSession.Dispose();
                 throw;
-            }
-            finally
-            {
-                previousSession?.Dispose();
             }
         }
         finally
@@ -97,11 +92,10 @@ internal sealed class VaultSessionCoordinator(
             await _transitionGate.WaitAsync();
             try
             {
-                var session = ClearUnlockedSession();
-                vaultWorkspace.Close();
-                session?.Dispose();
-
                 uiProcessLauncher.Exit();
+                vaultWorkspace.Close();
+
+                PublishSessionChange(null);
             }
             finally
             {
@@ -114,9 +108,12 @@ internal sealed class VaultSessionCoordinator(
         }
     }
 
-    private UnlockedSession? ClearUnlockedSession() =>
-        Interlocked.Exchange(ref _unlockedSession, null);
+    private void PublishSessionChange(UnlockedSession? session)
+    {
+        var previousSession = Interlocked.Exchange(ref _unlockedSession, session);
+        previousSession?.Dispose();
 
-    private void PublishUnlockedSession(UnlockedSession session) =>
-        Interlocked.Exchange(ref _unlockedSession, session)?.Dispose();
+        VaultSessionStatus status = session is not null ? VaultSessionStatus.Unlocked : VaultSessionStatus.Locked;
+        SessionStatusChanged?.Invoke(status);
+    }
 }

@@ -1,5 +1,4 @@
 using BitwardenApi.Infrastructure.Serialization;
-using FluentBitwarden.Contracts.Ipc.Abstractions;
 
 namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
 

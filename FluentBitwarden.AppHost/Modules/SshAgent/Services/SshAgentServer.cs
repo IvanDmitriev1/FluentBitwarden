@@ -5,8 +5,6 @@ using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using Microsoft.Extensions.Hosting;
-using FluentBitwarden.Platform.Infrastructure;
-using FluentBitwarden.Platform.Ipc.Internal;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
@@ -14,8 +12,7 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : BackgroundService
 {
     private const string PipeName = "openssh-ssh-agent";
-
-    public bool IsRunning => ExecuteTask is not null;
+    private static readonly TimeSpan ClientIdleTimeout = TimeSpan.FromMinutes(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -28,20 +25,23 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
                 PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
                 inBufferSize: 1 * 1024,
-                outBufferSize: 16 * 1024);
+                outBufferSize: 8 * 1024);
 
             try
             {
                 await server.WaitForConnectionAsync(stoppingToken);
-                await HandleClientAsync(server, stoppingToken);
-            }
-            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
-            {
-                Debug.WriteLine("IPC client disconnected before the server response was delivered.");
+
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                cts.CancelAfter(ClientIdleTimeout);
+
+                await HandleClientAsync(server, cts.Token);
             }
             catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
             {
-                //
+                await SshAgentProtocolWriter.WriteFailureAsync(server, stoppingToken);
+            }
+            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
+            {
             }
             catch (Exception e)
             {
@@ -75,11 +75,6 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
     private async Task HandleRequestIdentitiesAsync(Stream stream, CancellationToken ct)
     {
         var identityQuery = await sshKeyProvider.ListIdentitiesAsync(ct);
-        if (identityQuery.IsDenied)
-        {
-            await SshAgentProtocolWriter.WriteFailureAsync(stream, ct);
-            return;
-        }
 
         var identities = identityQuery.Identities;
         int identitiesLength = identities.Sum(static i =>
