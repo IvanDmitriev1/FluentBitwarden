@@ -4,14 +4,14 @@ using FluentBitwarden.Platform.Ipc;
 
 namespace FluentBitwarden.Platform.Ipc.Transport;
 
-internal readonly record struct ResponseHeader(int PayloadLength)
+internal readonly record struct IpcRpcResponseHeader(int PayloadLength)
 {
     private const int HeaderSize = sizeof(ushort) + sizeof(int); // ProtocolVersion + PayloadLength
 
     private const int VersionOffset = 0;
     private const int PayloadLengthOffset = sizeof(ushort);
 
-    public static async ValueTask<ResponseHeader> ReadAsync(
+    public static async ValueTask<IpcRpcResponseHeader> ReadAsync(
         Stream stream,
         CancellationToken cancellationToken = default)
     {
@@ -28,10 +28,13 @@ internal readonly record struct ResponseHeader(int PayloadLength)
             throw new InvalidOperationException(
                 $"Incompatible IPC version. Expected {IpcConstants.ProtocolVersion}, got {version}.");
 
-        return new ResponseHeader(payloadLength);
+        if (payloadLength < 0)
+            throw new InvalidDataException($"IPC payload length cannot be negative: {payloadLength}.");
+
+        return new IpcRpcResponseHeader(payloadLength);
     }
 
-    public ValueTask Write(Stream stream)
+    public ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
 
@@ -43,6 +46,6 @@ internal readonly record struct ResponseHeader(int PayloadLength)
             headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)),
             PayloadLength);
 
-        return stream.WriteAsync(headerOwner.Memory);
+        return stream.WriteAsync(headerOwner.Memory, cancellationToken);
     }
 }

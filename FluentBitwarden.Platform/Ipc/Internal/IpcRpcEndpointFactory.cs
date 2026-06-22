@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace FluentBitwarden.Platform.Ipc.Internal;
 
-internal static class IpcEndpointFactory
+internal static class IpcRpcEndpointFactory
 {
     private static readonly MethodInfo CreateRequestResponseMethod = GetFactoryMethod(nameof(CreateRequestResponse));
     private static readonly MethodInfo CreateRequestCommandMethod = GetFactoryMethod(nameof(CreateRequestCommand));
@@ -12,29 +12,29 @@ internal static class IpcEndpointFactory
 
     [RequiresDynamicCode("IPC endpoint creation closes generic endpoint factories at runtime.")]
     [RequiresUnreferencedCode("IPC endpoint creation reflects over handler methods.")]
-    public static IpcEndpoint Create<THandler>(
+    public static IpcRpcEndpoint Create<THandler>(
         THandler handler,
-        IpcEndpointHandlerMethodDescriptor descriptor)
+        IpcRpcHandlerMethodDescriptor descriptor)
         where THandler : class, IIpcRequestsHandler
     {
         return descriptor.Kind switch
         {
-            IpcEndpointHandlerMethodKind.RequestResponse =>
-                (IpcEndpoint)CreateRequestResponseMethod
+            IpcRpcHandlerMethodKind.RequestResponse =>
+                (IpcRpcEndpoint)CreateRequestResponseMethod
                     .MakeGenericMethod(descriptor.RequestType!, descriptor.ResponseType!)
                     .Invoke(null, [handler, descriptor])!,
 
-            IpcEndpointHandlerMethodKind.RequestCommand =>
-                (IpcEndpoint)CreateRequestCommandMethod
+            IpcRpcHandlerMethodKind.RequestCommand =>
+                (IpcRpcEndpoint)CreateRequestCommandMethod
                     .MakeGenericMethod(descriptor.RequestType!)
                     .Invoke(null, [handler, descriptor])!,
 
-            IpcEndpointHandlerMethodKind.CommandResponse =>
-                (IpcEndpoint)CreateCommandResponseMethod
+            IpcRpcHandlerMethodKind.CommandResponse =>
+                (IpcRpcEndpoint)CreateCommandResponseMethod
                     .MakeGenericMethod(descriptor.ResponseType!)
                     .Invoke(null, [handler, descriptor])!,
 
-            IpcEndpointHandlerMethodKind.Command => CreateCommand(handler, descriptor),
+            IpcRpcHandlerMethodKind.Command => CreateCommand(handler, descriptor),
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(descriptor),
@@ -43,11 +43,11 @@ internal static class IpcEndpointFactory
         };
     }
 
-    private static IpcEndpoint CreateRequestResponse<
+    private static IpcRpcEndpoint CreateRequestResponse<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TRequest,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         object handler,
-        IpcEndpointHandlerMethodDescriptor descriptor)
+        IpcRpcHandlerMethodDescriptor descriptor)
         where TRequest : IIpcRequestMessage
         where TResponse : notnull
     {
@@ -57,7 +57,7 @@ internal static class IpcEndpointFactory
             descriptor,
             async (stream, payloadLength, cancellationToken) =>
             {
-                var request = await PipeProtocol.ReadRequestPayloadAsync<TRequest>(
+                var request = await IpcWireProtocol.ReadMessagePayloadAsync<TRequest>(
                     stream,
                     payloadLength,
                     cancellationToken);
@@ -66,10 +66,10 @@ internal static class IpcEndpointFactory
             });
     }
 
-    private static IpcEndpoint CreateRequestCommand<
+    private static IpcRpcEndpoint CreateRequestCommand<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TRequest>(
         object handler,
-        IpcEndpointHandlerMethodDescriptor descriptor)
+        IpcRpcHandlerMethodDescriptor descriptor)
         where TRequest : IIpcRequestMessage
     {
         var method = descriptor.Method.CreateDelegate<Func<TRequest, CancellationToken, ValueTask>>(handler);
@@ -78,7 +78,7 @@ internal static class IpcEndpointFactory
             descriptor,
             async (stream, payloadLength, cancellationToken) =>
             {
-                var request = await PipeProtocol.ReadRequestPayloadAsync<TRequest>(
+                var request = await IpcWireProtocol.ReadMessagePayloadAsync<TRequest>(
                     stream,
                     payloadLength,
                     cancellationToken);
@@ -88,10 +88,10 @@ internal static class IpcEndpointFactory
             });
     }
 
-    private static IpcEndpoint CreateCommandResponse<
+    private static IpcRpcEndpoint CreateCommandResponse<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         object handler,
-        IpcEndpointHandlerMethodDescriptor descriptor)
+        IpcRpcHandlerMethodDescriptor descriptor)
         where TResponse : notnull
     {
         var method = descriptor.Method.CreateDelegate<Func<CancellationToken, ValueTask<TResponse>>>(handler);
@@ -106,9 +106,9 @@ internal static class IpcEndpointFactory
             });
     }
 
-    private static IpcEndpoint CreateCommand(
+    private static IpcRpcEndpoint CreateCommand(
         object handler,
-        IpcEndpointHandlerMethodDescriptor descriptor)
+        IpcRpcHandlerMethodDescriptor descriptor)
     {
         var method = descriptor.Method
             .CreateDelegate<Func<CancellationToken, ValueTask>>(handler);
@@ -124,13 +124,13 @@ internal static class IpcEndpointFactory
             });
     }
 
-    private static IpcEndpoint CreateEndpoint<
+    private static IpcRpcEndpoint CreateEndpoint<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
-        IpcEndpointHandlerMethodDescriptor descriptor,
+        IpcRpcHandlerMethodDescriptor descriptor,
         Func<Stream, int, CancellationToken, ValueTask<TResponse>> body)
         where TResponse : notnull
     {
-        return new IpcEndpoint(
+        return new IpcRpcEndpoint(
             descriptor.MessageType,
             descriptor.AuthenticationLevel,
             Invoke);
@@ -141,7 +141,7 @@ internal static class IpcEndpointFactory
             CancellationToken cancellationToken)
         {
             var response = await body.Invoke(stream, payloadLength, cancellationToken);
-            await PipeProtocol.WriteResponseMessageAsync(
+            await IpcWireProtocol.WriteRpcResponseAsync(
                 stream,
                 response,
                 cancellationToken);
@@ -159,7 +159,7 @@ internal static class IpcEndpointFactory
     }
 
     private static MethodInfo GetFactoryMethod(string name) =>
-        typeof(IpcEndpointFactory).GetMethod(
+        typeof(IpcRpcEndpointFactory).GetMethod(
             name,
             BindingFlags.NonPublic | BindingFlags.Static)
         ?? throw new InvalidOperationException($"Could not find {name}.");

@@ -3,13 +3,13 @@ using System.Reflection;
 
 namespace FluentBitwarden.Platform.Ipc.Internal;
 
-internal static class IpcEndpointHandlerMethodDescriptorFactory
+internal static class IpcRpcHandlerMethodDescriptorFactory
 {
     [RequiresDynamicCode(
         "IPC handler discovery closes generic message helpers at runtime.")]
     [RequiresUnreferencedCode(
         "IPC handler discovery reflects over handler methods and message metadata.")]
-    public static IpcEndpointHandlerMethodDescriptor[] Discover<
+    public static IpcRpcHandlerMethodDescriptor[] Discover<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
         THandler>()
         where THandler : class, IIpcRequestsHandler
@@ -28,7 +28,7 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
         "IPC handler discovery closes generic message helpers at runtime.")]
     [RequiresUnreferencedCode(
         "IPC handler discovery reflects over handler methods and message metadata.")]
-    private static IpcEndpointHandlerMethodDescriptor Create(MethodInfo method)
+    private static IpcRpcHandlerMethodDescriptor Create(MethodInfo method)
     {
         if (method.IsGenericMethodDefinition)
             throw InvalidSignature(method, "Generic IPC methods are not supported.");
@@ -61,7 +61,7 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
         "IPC handler discovery closes generic message helpers at runtime.")]
     [RequiresUnreferencedCode(
         "IPC handler discovery reflects over handler methods and message metadata.")]
-    private static IpcEndpointHandlerMethodDescriptor CreateRequestHandlerDescriptor(
+    private static IpcRpcHandlerMethodDescriptor CreateRequestHandlerDescriptor(
         MethodInfo method,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
         Type requestType)
@@ -71,10 +71,10 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
 
         if (method.ReturnType == typeof(ValueTask))
         {
-            return new IpcEndpointHandlerMethodDescriptor(
+            return new IpcRpcHandlerMethodDescriptor(
                 messageType,
                 authRequirement,
-                IpcEndpointHandlerMethodKind.RequestCommand,
+                IpcRpcHandlerMethodKind.RequestCommand,
                 method,
                 ResponseType: null,
                 RequestType: requestType);
@@ -82,10 +82,10 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
 
         if (TryGetValueTaskResponseType(method.ReturnType, out var responseType))
         {
-            return new IpcEndpointHandlerMethodDescriptor(
+            return new IpcRpcHandlerMethodDescriptor(
                 messageType,
                 authRequirement,
-                IpcEndpointHandlerMethodKind.RequestResponse,
+                IpcRpcHandlerMethodKind.RequestResponse,
                 method,
                 ResponseType: responseType,
                 RequestType: requestType);
@@ -96,7 +96,7 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
             "A request IPC method must return ValueTask or ValueTask<TResponse>.");
     }
 
-    private static IpcEndpointHandlerMethodDescriptor CreateCommandHandlerDescriptor(MethodInfo method)
+    private static IpcRpcHandlerMethodDescriptor CreateCommandHandlerDescriptor(MethodInfo method)
     {
         var attribute = method.GetCustomAttribute<IpcMessageHandlerAttribute>()
                         ?? throw InvalidSignature(method,
@@ -114,10 +114,10 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
 
         if (method.ReturnType == typeof(ValueTask))
         {
-            return new IpcEndpointHandlerMethodDescriptor(
+            return new IpcRpcHandlerMethodDescriptor(
                 messageType,
                 authRequirement,
-                IpcEndpointHandlerMethodKind.Command,
+                IpcRpcHandlerMethodKind.Command,
                 method,
                 ResponseType: null,
                 RequestType: null);
@@ -125,10 +125,10 @@ internal static class IpcEndpointHandlerMethodDescriptorFactory
 
         if (TryGetValueTaskResponseType(method.ReturnType, out var responseType))
         {
-            return new IpcEndpointHandlerMethodDescriptor(
+            return new IpcRpcHandlerMethodDescriptor(
                 messageType,
                 authRequirement,
-                IpcEndpointHandlerMethodKind.CommandResponse,
+                IpcRpcHandlerMethodKind.CommandResponse,
                 method,
                 ResponseType: responseType,
                 RequestType: null);

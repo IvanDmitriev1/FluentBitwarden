@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Platform.Ipc;
+namespace FluentBitwarden.Platform.Infrastructure.Extensions;
 
 public static class NamedPipeExceptionsExtensions
 {

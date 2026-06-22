@@ -13,14 +13,14 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
         await using var pipe = CreatePipeClient();
         await pipe.ConnectAsync(cancellationToken);
 
-        await PipeProtocol.WriteRequestMessageAsync(
+        await IpcWireProtocol.WriteRpcRequestAsync(
             pipe,
             TRequest.MessageType,
             request,
             cancellationToken);
 
-        var responseHeader = await ResponseHeader.ReadAsync(pipe, cancellationToken);
-        return (await PipeProtocol.ReadResponsePayloadAsync<TResponse>(
+        var responseHeader = await IpcRpcResponseHeader.ReadAsync(pipe, cancellationToken);
+        return (await IpcWireProtocol.ReadRpcResponsePayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,
             cancellationToken))!;
@@ -35,13 +35,13 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
         await using var pipe = CreatePipeClient();
         await pipe.ConnectAsync(cancellationToken);
 
-        await PipeProtocol.WriteRequestMessageAsync(
+        await IpcWireProtocol.WriteRpcRequestAsync(
             pipe,
             messageType,
             cancellationToken);
 
-        var responseHeader = await ResponseHeader.ReadAsync(pipe, cancellationToken);
-        return (await PipeProtocol.ReadResponsePayloadAsync<TResponse>(
+        var responseHeader = await IpcRpcResponseHeader.ReadAsync(pipe, cancellationToken);
+        return (await IpcWireProtocol.ReadRpcResponsePayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,
             cancellationToken))!;

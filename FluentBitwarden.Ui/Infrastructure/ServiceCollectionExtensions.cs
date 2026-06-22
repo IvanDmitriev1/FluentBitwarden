@@ -32,10 +32,13 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IWindowsHelloUnlockClient, RemoteWindowsHelloUnlockClient>();
         services.AddSingleton<IVaultClient, RemoteVaultClient>();
 
-        services.AddIpcServer(IpcConstants.UiPipeName);
+        services.AddIpcServer(
+            IpcConstants.UiPipeName,
+            handlers => handlers
+                .Add<SshUserActionDialogRequestHandler>()
+                .Add<PasskeyCredentialSelectionRequestHandler>());
+
         services.AddSingleton<UiDialogDispatcher>();
-        services.AddIpcRequestHandler<SshUserActionDialogRequestHandler>();
-        services.AddIpcRequestHandler<PasskeyCredentialSelectionRequestHandler>();
 
         return services;
     }

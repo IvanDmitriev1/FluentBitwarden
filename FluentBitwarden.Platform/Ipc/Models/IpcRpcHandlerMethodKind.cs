@@ -1,6 +1,6 @@
 namespace FluentBitwarden.Platform.Ipc.Models;
 
-internal enum IpcEndpointHandlerMethodKind
+internal enum IpcRpcHandlerMethodKind
 {
     RequestResponse,
     RequestCommand,

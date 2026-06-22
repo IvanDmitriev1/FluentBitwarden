@@ -1,6 +1,3 @@
 namespace FluentBitwarden.Contracts.Ipc.Abstractions;
 
-public interface IIpcRequestMessage
-{
-    static abstract ushort MessageType { get; }
-}
+public interface IIpcRequestMessage : IIpcMessage;

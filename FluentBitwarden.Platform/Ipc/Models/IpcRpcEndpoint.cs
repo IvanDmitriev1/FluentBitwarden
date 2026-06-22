@@ -1,6 +1,6 @@
 ﻿namespace FluentBitwarden.Platform.Ipc.Models;
 
-internal sealed record IpcEndpoint(
+internal sealed record IpcRpcEndpoint(
     ushort MessageType,
     IpcAuthenticationLevel AuthenticationLevel,
-    IpcEndpointDelegate Delegate);
+    IpcRpcEndpointDelegate Delegate);

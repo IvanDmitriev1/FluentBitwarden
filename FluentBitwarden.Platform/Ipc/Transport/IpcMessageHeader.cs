@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 
 namespace FluentBitwarden.Platform.Ipc.Transport;
 
-internal readonly record struct RequestHeader(
+internal readonly record struct IpcMessageHeader(
     ushort MessageType,
     int PayloadLength)
 {
@@ -14,7 +14,7 @@ internal readonly record struct RequestHeader(
     private const int MessageTypeOffset = sizeof(ushort);
     private const int PayloadLengthOffset = sizeof(ushort) * 2;
 
-    public ValueTask WriteAsync(Stream stream)
+    public ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
 
@@ -30,14 +30,15 @@ internal readonly record struct RequestHeader(
             headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)),
             PayloadLength);
 
-        return stream.WriteAsync(headerOwner.Memory);
-        ;
+        return stream.WriteAsync(headerOwner.Memory, cancellationToken);
     }
 
-    public static async ValueTask<RequestHeader> ReadAsync(Stream stream)
+    public static async ValueTask<IpcMessageHeader> ReadAsync(
+        Stream stream,
+        CancellationToken cancellationToken = default)
     {
         using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
-        await stream.ReadExactlyAsync(headerOwner.Memory);
+        await stream.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
             headerOwner.Span.Slice(VersionOffset, sizeof(ushort)));
@@ -52,6 +53,9 @@ internal readonly record struct RequestHeader(
             throw new InvalidOperationException(
                 $"Incompatible IPC version. Expected {IpcConstants.ProtocolVersion}, got {version}.");
 
-        return new RequestHeader(messageType, payloadLength);
+        if (payloadLength < 0)
+            throw new InvalidDataException($"IPC payload length cannot be negative: {payloadLength}.");
+
+        return new IpcMessageHeader(messageType, payloadLength);
     }
 }
