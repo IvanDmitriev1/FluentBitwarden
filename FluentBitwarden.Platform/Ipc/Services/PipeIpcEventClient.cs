@@ -1,6 +1,5 @@
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.Platform.Infrastructure;
-using FluentBitwarden.Platform.Infrastructure.Extensions;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
 using System.IO.Pipes;
@@ -69,17 +68,30 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            await using var pipe = new NamedPipeClientStream(
+                ".",
+                pipeName,
+                PipeDirection.In,
+                PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+
             try
             {
-                await ReadEventsAsync(stoppingToken);
+                await pipe.ConnectAsync(stoppingToken);
+
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
+                    using var bufferOwner = MemoryOwner<byte>.Allocate(header.PayloadLength);
+                    await pipe.ReadExactlyAsync(bufferOwner.Memory, stoppingToken);
+
+                    DispatchEvent(header.MessageType, bufferOwner.Memory, stoppingToken);
+                }
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (OperationCanceledException)
             {
-                break;
+                //
             }
-            catch (Exception exception) when (
-                exception is EndOfStreamException ||
-                (exception is IOException ioException && ioException.IsNamedPipeClientDisconnect()))
+            catch (IOException)
             {
                 Debug.WriteLine("IPC event connection closed; reconnecting.");
             }
@@ -92,44 +104,29 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
         }
     }
 
-    private async Task ReadEventsAsync(CancellationToken cancellationToken)
+    private void DispatchEvent(ushort messageType, ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
     {
-        await using var pipe = new NamedPipeClientStream(
-            ".",
-            pipeName,
-            PipeDirection.In,
-            PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        IIpcEventWaiter[] waiters;
+        IIpcEventSubscription[] subscriptions;
 
-        await pipe.ConnectAsync(cancellationToken);
-        while (!cancellationToken.IsCancellationRequested)
+        lock (_waiters)
         {
-            var header = await IpcMessageHeader.ReadAsync(pipe, cancellationToken);
+            waiters = _waiters.Where(w => w.MessageType == messageType).ToArray();
+        }
 
-            using var bufferOwner = MemoryOwner<byte>.Allocate(header.PayloadLength);
-            await pipe.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+        lock (_subscriptions)
+        {
+            subscriptions = _subscriptions.Where(s => s.MessageType == messageType).ToArray();
+        }
 
-            IIpcEventWaiter[] waiters;
-            IIpcEventSubscription[] subscriptions;
+        foreach (var waiter in waiters)
+        {
+            waiter.Complete(data.Span);
+        }
 
-            lock (_waiters)
-            {
-                waiters = _waiters.Where(w => w.MessageType == header.MessageType).ToArray();
-            }
-
-            lock (_subscriptions)
-            {
-                subscriptions = _subscriptions.Where(s => s.MessageType == header.MessageType).ToArray();
-            }
-
-            foreach (var waiter in waiters)
-            {
-                waiter.Complete(bufferOwner.Span);
-            }
-
-            foreach (var subscription in subscriptions)
-            {
-                _ = subscription.InvokeAsync(bufferOwner.Memory, cancellationToken);
-            }
+        foreach (var subscription in subscriptions)
+        {
+            _ = subscription.InvokeAsync(data, cancellationToken);
         }
     }
 

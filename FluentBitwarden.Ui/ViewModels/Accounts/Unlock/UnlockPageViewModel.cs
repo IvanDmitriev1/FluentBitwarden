@@ -29,10 +29,9 @@ public sealed partial class UnlockPageViewModel(
 
         switch (result)
         {
-            case AccountUnlockOutcome.Success:
-                appCoordinator.RefreshSession();
+            case AccountUnlockOutcome.Failure:
+                //TODO
                 break;
-
             case AccountUnlockOutcome.RequiresOnlineReauth:
                 appCoordinator.RequireSignIn(SelectedAccount);
                 break;

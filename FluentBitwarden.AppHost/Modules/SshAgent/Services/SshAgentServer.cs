@@ -36,12 +36,12 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
 
                 await HandleClientAsync(server, cts.Token);
             }
-            catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
+            catch (IOException)
+            {
+            }
+            catch (Exception e) when (e is OperationCanceledException or EndOfStreamException)
             {
                 await SshAgentProtocolWriter.WriteFailureAsync(server, stoppingToken);
-            }
-            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
-            {
             }
             catch (Exception e)
             {
@@ -52,8 +52,9 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
 
     private async Task HandleClientAsync(Stream stream, CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested && SshAgentProtocolReader.TryReadLength(stream, out int length))
+        while (!ct.IsCancellationRequested)
         {
+            int length = await SshAgentProtocolReader.ReadLengthAsync(stream, ct);
             using var bufferOwner = MemoryOwner<byte>.Allocate(length);
             await stream.ReadExactlyAsync(bufferOwner.Memory, ct);
 

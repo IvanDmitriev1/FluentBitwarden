@@ -1,5 +1,4 @@
 using FluentBitwarden.Platform.Infrastructure;
-using FluentBitwarden.Platform.Infrastructure.Extensions;
 using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
@@ -27,7 +26,7 @@ internal sealed class PipeIpcServer(
 
                 await ProcessRequestAsync(pipe, stoppingToken);
             }
-            catch (IOException ioException) when (ioException.IsNamedPipeClientDisconnect())
+            catch (IOException)
             {
                 Debug.WriteLine("IPC client disconnected before the server response was delivered.");
             }
