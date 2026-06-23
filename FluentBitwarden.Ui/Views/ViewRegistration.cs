@@ -13,9 +13,9 @@ internal static class ViewRegistration
     public static IServiceCollection AddViews(this IServiceCollection services)
     {
         services.AddTransient<ShellPage>();
+        services.AddTransient<LoadingPage>();
 
         return services
-            .AddView<LoadingPage, LoadingPageViewModel>()
             .AddView<UnlockPage, UnlockPageViewModel>()
             .AddView<OfflinePage, OfflinePageViewModel>()
             .AddView<LogInFlowPage, LogInFlowPageViewModel>()

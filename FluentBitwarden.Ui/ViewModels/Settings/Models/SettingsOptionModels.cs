@@ -1,5 +1,5 @@
 using FluentBitwarden.Contracts.Settings.Models;
-using FluentBitwarden.Converters;
+using FluentBitwarden.Infrastructure.Converters;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;

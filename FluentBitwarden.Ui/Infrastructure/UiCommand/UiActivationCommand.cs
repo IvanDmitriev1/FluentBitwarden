@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Infrastructure.AppLifecycle;
+namespace FluentBitwarden.Infrastructure.UiCommand;
 
 internal enum UiActivationCommand
 {

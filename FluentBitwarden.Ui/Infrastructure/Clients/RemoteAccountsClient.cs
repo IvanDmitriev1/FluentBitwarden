@@ -4,6 +4,7 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
+using FluentBitwarden.Platform.Ipc.Transport;
 
 namespace FluentBitwarden.Infrastructure.Clients;
 
@@ -22,4 +23,11 @@ internal sealed class RemoteAccountsClient(IIpcClient ipcClient) : IAccountsClie
     public ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request,
         CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<AccountUnlockRequest, AccountUnlockOutcome>(request, cancellationToken);
+
+    public async ValueTask LogOutAsync(
+        UserId accountId,
+        CancellationToken cancellationToken = default) =>
+        _ = await ipcClient.SendAsync<AccountLogOutRequest, IpcVoid>(
+            new AccountLogOutRequest(accountId),
+            cancellationToken);
 }

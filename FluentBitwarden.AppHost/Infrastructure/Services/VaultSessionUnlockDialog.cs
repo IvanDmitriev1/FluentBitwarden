@@ -14,11 +14,11 @@ internal sealed class VaultSessionUnlockDialog(
         if (vaultSessionCoordinator.TryGetUnlockedSession(out var session))
             return;
 
-        cancellationToken.ThrowIfCancellationRequested();
-
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         await using var _ = cancellationToken.Register(OnCancelled);
         vaultSessionCoordinator.SessionStatusChanged += VaultSessionCoordinatorOnSessionStatusChanged;
+        uiProcessLauncher.ProcessExited += OnCancelled;
 
         try
         {
@@ -28,6 +28,7 @@ internal sealed class VaultSessionUnlockDialog(
         finally
         {
             vaultSessionCoordinator.SessionStatusChanged -= VaultSessionCoordinatorOnSessionStatusChanged;
+            uiProcessLauncher.ProcessExited -= OnCancelled;
         }
 
         return;

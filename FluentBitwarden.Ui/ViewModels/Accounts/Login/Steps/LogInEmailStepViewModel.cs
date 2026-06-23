@@ -110,8 +110,8 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
 
         switch (outcome)
         {
-            case AccountLoginOutcome.Success:
-                _flow.OnSuccessLogIn();
+            case AccountLoginOutcome.Success success:
+                _flow.OnSuccessLogIn(success.Account);
                 return;
 
             case AccountLoginOutcome.TwoFactorRequired:

@@ -30,16 +30,13 @@ internal sealed class AccountLoginService(
         if (!result.TryGetPayload(out var accountSignIn))
             return result.Outcome;
 
+        var accountProfile = CreateAccountProfile(accountSignIn);
         accountStore.SaveAuthenticatedAccount(
-            new AccountProfile(
-                accountSignIn.UserId,
-                accountSignIn.Email,
-                accountSignIn.Environment,
-                LastSyncAt: DateTimeOffset.MinValue),
+            accountProfile,
             accountSignIn.AccountKeyMaterial,
             accountSignIn.AuthenticationTokens.RefreshToken);
 
-        return new AccountLoginOutcome.Success();
+        return new AccountLoginOutcome.Success(accountProfile);
     }
 
     private async Task<AccountLoginOperationResult> LoginWithPasswordAsync(AccountLoginRequest.PasswordRequest request, CancellationToken cancellationToken = default)
@@ -98,7 +95,7 @@ internal sealed class AccountLoginService(
         TokenExchangeOutcome outcome,
         BitwardenEnvironment environment) => outcome switch
         {
-            TokenExchangeOutcome.Authenticated success => AccountLoginOperationResult.WithPayload(new AccountLoginOutcome.Success(), CreateAuthenticationSuccess(success.AuthenticatedModel, environment)),
+            TokenExchangeOutcome.Authenticated success => CreateAuthenticationResult(success, environment),
             TokenExchangeOutcome.DeviceVerificationRequired dv =>
                 AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.DeviceVerificationRequired(dv.Message)),
             TokenExchangeOutcome.InvalidCredentials ic => AccountLoginOperationResult.WithoutPayload(new AccountLoginOutcome.InvalidCredentials(ic.Message)),
@@ -106,6 +103,22 @@ internal sealed class AccountLoginService(
                 twoFactorRequired.Challenge, email, serverAuthorizationHash)),
             _ => throw new InvalidOperationException("Unsupported password token outcome.")
         };
+
+    private static AccountLoginOperationResult CreateAuthenticationResult(
+        TokenExchangeOutcome.Authenticated success,
+        BitwardenEnvironment environment)
+    {
+        var authenticatedAccount = CreateAuthenticationSuccess(success.AuthenticatedModel, environment);
+        return AccountLoginOperationResult.WithPayload(
+            new AccountLoginOutcome.Success(CreateAccountProfile(authenticatedAccount)),
+            authenticatedAccount);
+    }
+
+    private static AccountProfile CreateAccountProfile(AuthenticatedAccount account) => new(
+        account.UserId,
+        account.Email,
+        account.Environment,
+        LastSyncAt: DateTimeOffset.MinValue);
 
     private static AuthenticatedAccount CreateAuthenticationSuccess(
         TokenAuthenticatedModel model,

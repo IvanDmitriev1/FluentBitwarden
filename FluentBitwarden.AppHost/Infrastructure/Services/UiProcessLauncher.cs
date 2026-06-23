@@ -18,10 +18,14 @@ internal sealed class UiProcessLauncher(IHostApplicationLifetime applicationLife
     {
         get
         {
-            using var _ = _lock.EnterScope();
-            return _uiProcess is not null;
+            lock (_lock)
+            {
+                return _uiProcess is not null;
+            }
         }
     }
+
+    public event Action? ProcessExited;
 
     public void ActivateMainWindow() => StartProcess(string.Empty);
     public void ActivateOverlay() => StartProcess("--overlay");
@@ -77,6 +81,7 @@ internal sealed class UiProcessLauncher(IHostApplicationLifetime applicationLife
 
     private void UiProcessOnExited(object? sender, EventArgs e)
     {
+        ProcessExited?.Invoke();
         CleanUpUiProcess();
 
         if (SettingsStore.Instance.Get(AppSettingKeys.App.CloseToTrayKey))

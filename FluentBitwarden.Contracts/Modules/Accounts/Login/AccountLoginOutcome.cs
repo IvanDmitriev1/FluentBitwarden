@@ -1,4 +1,6 @@
-﻿namespace FluentBitwarden.Contracts.Modules.Accounts.Login;
+﻿using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+
+namespace FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 [MemoryPackable]
 [MemoryPackUnion(0, typeof(Success))]
@@ -10,7 +12,7 @@ public abstract partial record AccountLoginOutcome
     private AccountLoginOutcome() { }
 
     [MemoryPackable]
-    public sealed partial record Success() : AccountLoginOutcome;
+    public sealed partial record Success(AccountProfile Account) : AccountLoginOutcome;
 
     [MemoryPackable]
     public sealed partial record TwoFactorRequired(

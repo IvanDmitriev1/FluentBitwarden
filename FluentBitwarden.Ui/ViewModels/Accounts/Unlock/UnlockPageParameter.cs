@@ -4,5 +4,4 @@ namespace FluentBitwarden.ViewModels.Accounts.Unlock;
 
 public sealed record UnlockPageParameter(
     IReadOnlyList<AccountProfile> Accounts,
-    AccountProfile FavoriteAccountProfile,
-    StartupFlowTarget StartupTarget = StartupFlowTarget.MainShell);
+    AccountProfile FavoriteAccountProfile);

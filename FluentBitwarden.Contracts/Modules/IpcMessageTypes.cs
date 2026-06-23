@@ -28,7 +28,6 @@ public static class IpcMessageTypes
         public const ushort LogIn = 201;
         public const ushort GetAccounts = 202;
         public const ushort Unlock = 203;
-        public const ushort Lock = 204;
         public const ushort Logout = 205;
         public const ushort GetUnlocked = 206;
     }

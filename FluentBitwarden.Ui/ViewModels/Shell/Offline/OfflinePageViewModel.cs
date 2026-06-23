@@ -1,12 +1,11 @@
 using Windows.Networking.Connectivity;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Views.Startup;
-using FluentBitwarden.Services.Navigation;
+using FluentBitwarden.Application;
 
 namespace FluentBitwarden.ViewModels.Shell.Offline;
 
 public sealed partial class OfflinePageViewModel(
-    INavigationService navigationService) : ObservableObject, IPageLifecycleAware<OfflinePageParameter>
+    IAppCoordinator appCoordinator) : ObservableObject, IPageLifecycleAware<OfflinePageParameter>
 {
     [ObservableProperty]
     public partial string Title { get; private set; } = string.Empty;
@@ -33,7 +32,7 @@ public sealed partial class OfflinePageViewModel(
         if (!NetworkInformation.HasInternetAccess)
             return;
 
-        navigationService.NavigateTo<LoadingPage>();
+        appCoordinator.RefreshSession();
     }
 
     private void ApplyReasonText(OfflinePageReason reason)
@@ -62,10 +61,10 @@ public sealed partial class OfflinePageViewModel(
 
         if (App.Current.DispatcherQueue.HasThreadAccess)
         {
-            navigationService.NavigateTo<LoadingPage>();
+            appCoordinator.RefreshSession();
             return;
         }
 
-        _ = App.Current.DispatcherQueue.TryEnqueue(() => navigationService.NavigateTo<LoadingPage>());
+        _ = App.Current.DispatcherQueue.TryEnqueue(appCoordinator.RefreshSession);
     }
 }

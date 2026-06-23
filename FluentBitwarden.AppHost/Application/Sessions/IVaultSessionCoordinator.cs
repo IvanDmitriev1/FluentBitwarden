@@ -8,7 +8,7 @@ namespace FluentBitwarden.AppHost.Application.Sessions;
 
 internal interface IVaultSessionCoordinator
 {
-    event Action<VaultSessionStatus>? SessionStatusChanged;
+    event Action<VaultSessionStatus> SessionStatusChanged;
 
     bool TryGetUnlockedSession([NotNullWhen(true)] out UnlockedSession? session);
     UnlockedSession GetUnlockedSession();

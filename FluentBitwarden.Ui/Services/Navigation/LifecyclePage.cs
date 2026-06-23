@@ -39,12 +39,11 @@ public abstract class LifecyclePage : Page
         CancelLoading();
     }
 
+    internal void Reload(IPageNavigationParameter parameter) => LoadViewModel(parameter);
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _isLoaded = true;
-
-        if (DataContext is ObservableRecipient recipient)
-            recipient.IsActive = true;
 
         if (!_hasPendingNavigation)
             return;
@@ -60,9 +59,6 @@ public abstract class LifecyclePage : Page
     {
         _isLoaded = false;
         CancelLoading();
-
-        if (DataContext is ObservableRecipient recipient)
-            recipient.IsActive = false;
 
         if (DataContext is IPageLifecycleAwareBase aware)
             aware.OnUnloading();
@@ -87,7 +83,7 @@ public abstract class LifecyclePage : Page
         catch (Exception e) when (token.IsCancellationRequested &&
                                   e is TaskCanceledException or OperationCanceledException)
         {
-            //
+            return;
         }
         catch (Exception e)
         {

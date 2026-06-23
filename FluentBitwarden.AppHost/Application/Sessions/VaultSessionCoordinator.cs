@@ -4,7 +4,6 @@ using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.AppHost.Infrastructure.Services;
 
 namespace FluentBitwarden.AppHost.Application.Sessions;
 
@@ -12,14 +11,13 @@ namespace FluentBitwarden.AppHost.Application.Sessions;
 internal sealed class VaultSessionCoordinator(
     IAccountUnlockService accountUnlockService,
     IVaultWorkspace vaultWorkspace,
-    IUiProcessLauncher uiProcessLauncher,
     IIpcEventPublisher eventPublisher)
     : IVaultSessionCoordinator
 {
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
     private UnlockedSession? _unlockedSession;
 
-    public event Action<VaultSessionStatus>? SessionStatusChanged;
+    public event Action<VaultSessionStatus> SessionStatusChanged = delegate { };
 
     public bool TryGetUnlockedSession([NotNullWhen(true)] out UnlockedSession? session)
     {
@@ -66,7 +64,7 @@ internal sealed class VaultSessionCoordinator(
         }
     }
 
-    public void RequestLock() => _ = LockAsync();
+    public void RequestLock() => _ = RequestLockAsync();
 
     public async ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken)
     {
@@ -87,26 +85,21 @@ internal sealed class VaultSessionCoordinator(
         }
     }
 
-    private async Task LockAsync()
+    private async Task RequestLockAsync(CancellationToken cancellationToken = default)
     {
+        await _transitionGate.WaitAsync(cancellationToken);
+
         try
         {
-            await _transitionGate.WaitAsync();
-            try
-            {
-                uiProcessLauncher.Exit();
-                vaultWorkspace.Close();
+            if (!TryGetUnlockedSession(out _))
+                return;
 
-                PublishSessionChange(null);
-            }
-            finally
-            {
-                _transitionGate.Release();
-            }
+            vaultWorkspace.Close();
+            PublishSessionChange(null);
         }
-        catch (Exception exception)
+        finally
         {
-            UnhandledExceptionLogger.WriteException(exception);
+            _transitionGate.Release();
         }
     }
 

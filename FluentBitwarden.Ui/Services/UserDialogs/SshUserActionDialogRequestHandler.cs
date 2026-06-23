@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Services.Window;

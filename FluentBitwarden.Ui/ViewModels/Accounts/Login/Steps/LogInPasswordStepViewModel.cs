@@ -46,8 +46,8 @@ internal sealed partial class LogInPasswordStepViewModel(LogInFlowPageViewModel 
 
         switch (outcome)
         {
-            case AccountLoginOutcome.Success:
-                flow.OnSuccessLogIn();
+            case AccountLoginOutcome.Success success:
+                flow.OnSuccessLogIn(success.Account);
                 return;
             case AccountLoginOutcome.InvalidCredentials e:
                 SetError(nameof(MasterPassword), e.Message);

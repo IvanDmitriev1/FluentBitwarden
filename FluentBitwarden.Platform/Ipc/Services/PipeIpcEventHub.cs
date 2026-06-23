@@ -36,14 +36,14 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
         
         try
         {
-            Task[] tasks;
+            Subscriber[] subscribers;
             lock (_subscribersLock)
             {
-                tasks = _subscribers.Select(subscriber => TryWriteAsync(subscriber, data, cancellationToken))
-                    .ToArray();
+                subscribers = _subscribers.ToArray();
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(subscribers
+                .Select(subscriber => TryWriteAsync(subscriber, data, cancellationToken)));
         }
         finally
         {
@@ -97,14 +97,6 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
         CancellationToken cancellationToken)
         where TEvent : IIpcEventMessage
     {
-        if (!subscriber.Pipe.IsConnected)
-        {
-            using var _ = _subscribersLock.EnterScope();
-            _subscribers.Remove(subscriber);
-            subscriber.Dispose();
-            return;
-        }
-
         try
         {
             await IpcWireProtocol.WriteEventAsync(
@@ -116,12 +108,18 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            throw;
+            //
         }
         catch (Exception exception) when (
             exception is IOException or ObjectDisposedException or InvalidOperationException)
         {
-            
+
+            lock (_subscribersLock)
+            {
+                _subscribers.Remove(subscriber);
+            }
+
+            subscriber.Dispose();
         }
     }
 }

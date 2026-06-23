@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml.Data;
 
-namespace FluentBitwarden.Converters;
+namespace FluentBitwarden.Infrastructure.Converters;
 
 public interface IOptionItem
 {

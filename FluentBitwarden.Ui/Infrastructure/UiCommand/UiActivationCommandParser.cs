@@ -1,7 +1,7 @@
 using Windows.ApplicationModel.Activation;
 using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.Infrastructure.AppLifecycle;
+namespace FluentBitwarden.Infrastructure.UiCommand;
 
 internal static class UiActivationCommandParser
 {
