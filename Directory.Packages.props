@@ -13,9 +13,12 @@
     <PackageVersion Include="CommunityToolkit.HighPerformance" Version="$(CommunityToolkitVersion)" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="$(CommunityToolkitVersion)" />
     <PackageVersion Include="ConfigureAwait.Fody" Version="3.4.1" />
+    <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.298" />
+    <PackageVersion Include="SourceGear.sqlite3" Version="3.50.4.5" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="$(NetPackageVersion)" />
   </ItemGroup>
   <ItemGroup Label="API Dependencies">
@@ -31,7 +34,6 @@
     <PackageVersion Include="Dapper.AOT" Version="1.0.52" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MemoryPack" Version="1.21.4" />
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.WindowsAppSDK.Foundation" Version="2.1.0" />
     <PackageVersion Include="Microsoft.WindowsAppSDK.Runtime" Version="$(WindowsAppSdkVersion)" />
