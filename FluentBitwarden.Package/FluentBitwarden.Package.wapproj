@@ -54,20 +54,20 @@
   <ItemGroup>
     <ProjectReference Include="..\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.AppHost\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.CommandPalette\FluentBitwarden.CommandPalette.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.CommandPalette\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
     <ProjectReference Include="..\FluentBitwarden.BrowseProxy\FluentBitwarden.BrowseProxy.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.BrowseProxy\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.Ui\FluentBitwarden.Ui.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>$(MSBuildThisFileDirectory)..\Build\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.Ui\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
