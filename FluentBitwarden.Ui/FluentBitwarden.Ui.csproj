@@ -80,4 +80,8 @@
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Infrastructure\Navigation\NewFolder\" />
+	</ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using BitwardenApi.Primitives.Ids;
 using FluentBitwarden.Platform.Infrastructure.Extensions;
 
 namespace FluentBitwarden.CommandPalette.Infrastructure;
@@ -19,6 +20,11 @@ internal static class FluentBitwardenProcessLauncher
         }
 
         using var _ = StartPackagedProcess(AppHostProjectDirectory, AppHostExecutable, "--headless");
+    }
+
+    public static void OpenItem(CipherId cipherId)
+    {
+        using var _ = StartPackagedProcess(UiProjectDirectory, UiExecutable, $"--open-item {cipherId}");
     }
 
     public static Process OpenUnlockOverlay()

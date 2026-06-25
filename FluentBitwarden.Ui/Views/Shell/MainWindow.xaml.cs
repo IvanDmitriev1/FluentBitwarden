@@ -1,5 +1,5 @@
 using FluentBitwarden.AttachedProperties;
-using FluentBitwarden.Services.Window;
+using FluentBitwarden.Infrastructure.Window;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 

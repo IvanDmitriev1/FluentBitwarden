@@ -8,7 +8,7 @@ namespace FluentBitwarden.ViewModels.Vault.Browse;
 
 public sealed partial class VaultPageViewModel(
     IVaultClient vaultClient,
-    ISiteIconCache siteIconCache) : ObservableObject, IPageLifecycleAware, IPageLifecycleAware<ShowVaultCipherMessage>
+    ISiteIconCache siteIconCache) : ObservableObject, IPageLifecycleAware, IPageLifecycleAware<ShowVaultCipherIntent>, IPageLifecycleAware<OpenVaultCipherIntent>
 {
     [ObservableProperty]
     public partial VaultCipher[] FilteredCiphers { get; private set; } = [];
@@ -65,14 +65,25 @@ public sealed partial class VaultPageViewModel(
 
     public Task OnLoadingAsync(CancellationToken cancellationToken) => EnsureLoadedAsync(cancellationToken);
 
-    public async Task OnLoadingAsync(ShowVaultCipherMessage param, CancellationToken cancellationToken)
+    public async Task OnLoadingAsync(ShowVaultCipherIntent param, CancellationToken cancellationToken)
     {
         await EnsureLoadedAsync(cancellationToken);
         await ApplyNavigationAsync(param, cancellationToken);
     }
 
+    public async Task OnLoadingAsync(OpenVaultCipherIntent param, CancellationToken cancellationToken)
+    {
+        var cipher = await vaultClient.GetCipherAsync(new GetVaultCipherRequest(param.CipherId), cancellationToken);
+        await EnsureLoadedAsync(cancellationToken);
+
+        if (cipher is not null)
+        {
+            await ApplyNavigationAsync(new ShowVaultCipherIntent(string.Empty, cipher), cancellationToken);
+        }
+    }
+
     private async Task ApplyNavigationAsync(
-        ShowVaultCipherMessage message,
+        ShowVaultCipherIntent message,
         CancellationToken cancellationToken)
     {
         _applyingParameter = true;
@@ -89,7 +100,6 @@ public sealed partial class VaultPageViewModel(
             _applyingParameter = false;
         }
     }
-
 
     public void OnUnloading() { }
 

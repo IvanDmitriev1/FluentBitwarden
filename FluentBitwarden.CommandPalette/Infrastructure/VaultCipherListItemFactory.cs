@@ -20,10 +20,14 @@ internal sealed class VaultCipherListItemFactory(
         {
             item.MoreCommands =
             [
+                new CommandContextItem(new OpenItemCommand(cipher))
+                {
+                    Title = "Open in app"
+                },
                 new CommandContextItem(new CopyVaultValueCommand(cipher.Username, "Username"))
                 {
                     Title = "Copy username",
-                },
+                }
             ];
         }
 

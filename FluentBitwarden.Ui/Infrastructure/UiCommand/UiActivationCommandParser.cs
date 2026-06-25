@@ -5,20 +5,29 @@ namespace FluentBitwarden.Infrastructure.UiCommand;
 
 internal static class UiActivationCommandParser
 {
-    public static UiActivationCommand From(AppActivationArguments args)
+    public static UiCliCommand From(AppActivationArguments activation)
     {
-        if (args.Data is not ILaunchActivatedEventArgs launchArgs)
-            return UiActivationCommand.ShowMainWindow;
+        if (activation.Data is not ILaunchActivatedEventArgs launchArgs)
+            return new UiCliCommand.OpenCommand();
 
-        string? firstSwitch = launchArgs.Arguments
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault(static value => value.StartsWith("--", StringComparison.Ordinal));
+        var args = launchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (args.Length <= 1)
+            return new UiCliCommand.OpenCommand();
 
-        return firstSwitch switch
+        return args[1] switch
         {
-            "--overlay" => UiActivationCommand.ShowOverlay,
-            "--exit" => UiActivationCommand.Exit,
-            _ => UiActivationCommand.ShowMainWindow
+            "--exit" => new UiCliCommand.ExitCommand(),
+            "--overlay" => new UiCliCommand.OverlayCommand(),
+            "--open-item" => args.Length == 3
+                ? ParseOpenItemCommand(args[2])
+                : throw new ArgumentException("--open-item requires an <itemId>"),
+            _ => throw new ArgumentException()
         };
+    }
+
+    private static UiCliCommand.OpenItemCommand ParseOpenItemCommand(ReadOnlySpan<char> data)
+    {
+        var cipherId = CipherId.Parse(data);
+        return new UiCliCommand.OpenItemCommand(cipherId);
     }
 }

@@ -1,5 +1,3 @@
-using FluentBitwarden.Contracts.Modules;
-
 namespace FluentBitwarden.Contracts.Modules.Vault;
 
 public enum VaultSessionStatus

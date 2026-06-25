@@ -6,10 +6,10 @@ using Windows.ApplicationModel;
 using Windows.Storage;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Services.Window;
-using FluentBitwarden.Services.Navigation;
 using FluentBitwarden.Contracts.Settings.Models;
 using FluentBitwarden.Platform.Infrastructure.Extensions;
+using FluentBitwarden.Infrastructure.Navigation;
+using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.ViewModels.Settings;
 

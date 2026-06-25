@@ -4,9 +4,6 @@ namespace FluentBitwarden.CommandPalette.Commands;
 
 internal sealed partial class CopyVaultValueCommand : InvokableCommand
 {
-    private readonly string _value;
-    private readonly string _valueName;
-
     public CopyVaultValueCommand(string value, string valueName)
     {
         _value = value;
@@ -15,9 +12,11 @@ internal sealed partial class CopyVaultValueCommand : InvokableCommand
         Icon = Icons.Copy;
     }
 
+    private readonly string _value;
+    private readonly string _valueName;
+
     public override ICommandResult Invoke()
     {
-
         ClipboardManager.SetText(_value);
         return CommandResult.ShowToast($"{_valueName} copied");
     }

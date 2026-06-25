@@ -1,8 +1,13 @@
 namespace FluentBitwarden.Infrastructure.UiCommand;
 
-internal enum UiActivationCommand
+
+public abstract record UiCliCommand
 {
-    ShowMainWindow,
-    ShowOverlay,
-    Exit
+    private UiCliCommand() { }
+
+    public sealed record OpenCommand : UiCliCommand;
+    public sealed record ExitCommand : UiCliCommand;
+    public sealed record OverlayCommand : UiCliCommand;
+    public sealed record OpenItemCommand(CipherId Id) : UiCliCommand;
+
 }

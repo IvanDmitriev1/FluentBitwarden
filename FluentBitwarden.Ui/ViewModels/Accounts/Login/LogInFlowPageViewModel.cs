@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Application;
+using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Services.Window;
+using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login;
 
@@ -11,16 +11,13 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
 {
     public LogInFlowPageViewModel(
         IAccountsClient accountsClient,
-        IAppCoordinator appCoordinator,
         IWindowManager windowManager)
     {
-        _appCoordinator = appCoordinator;
         _windowManager = windowManager;
         AccountsClient = accountsClient;
         CurrentStep = new LogInEmailStepViewModel(this, _windowManager);
     }
 
-    private readonly IAppCoordinator _appCoordinator;
     private readonly IWindowManager _windowManager;
 
     internal IAccountsClient AccountsClient { get; }
@@ -50,7 +47,6 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
 
     internal void OnSuccessLogIn(AccountProfile account)
     {
-        _appCoordinator.CompleteSignIn(account);
     }
 
     [RelayCommand]

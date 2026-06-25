@@ -1,4 +1,3 @@
-using FluentBitwarden.CommandPalette.Pages;
 using FluentBitwarden.Contracts.Infrastructure;
 
 namespace FluentBitwarden.CommandPalette.Commands;

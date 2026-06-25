@@ -2,7 +2,8 @@ using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
-using FluentBitwarden.Application;
+using FluentBitwarden.Application.Abstractions;
+using FluentBitwarden.Infrastructure.Navigation;
 
 namespace FluentBitwarden.ViewModels.Accounts.Unlock;
 
@@ -33,7 +34,8 @@ public sealed partial class UnlockPageViewModel(
                 //TODO
                 break;
             case AccountUnlockOutcome.RequiresOnlineReauth:
-                appCoordinator.RequireSignIn(SelectedAccount);
+                //appCoordinator.RequireSignIn(SelectedAccount);
+                //TODO
                 break;
         }
     }

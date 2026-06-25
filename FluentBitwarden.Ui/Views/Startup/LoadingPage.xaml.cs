@@ -1,6 +1,6 @@
 namespace FluentBitwarden.Views.Startup;
 
-public sealed partial class LoadingPage : LifecyclePage
+public sealed partial class LoadingPage : Page
 {
     public LoadingPage()
     {

@@ -15,7 +15,6 @@ internal sealed class VaultSessionUnlockDialog(IIpcEventClient eventClient) : IV
         process.EnableRaisingEvents = true;
         process.Exited += ProcessOnExited;
 
-
         try
         {
             var waitTask = eventClient.WaitAsync<VaultSessionStatusChangedEvent>(cts.Token);

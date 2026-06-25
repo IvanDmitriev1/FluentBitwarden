@@ -1,4 +1,4 @@
-using FluentBitwarden.Services.Navigation;
+using FluentBitwarden.Infrastructure.Navigation;
 
 namespace FluentBitwarden.Views.Settings;
 

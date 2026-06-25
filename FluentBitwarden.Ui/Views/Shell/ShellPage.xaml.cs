@@ -7,7 +7,7 @@ using FluentBitwarden.Controls.Vault;
 
 namespace FluentBitwarden.Views.Shell;
 
-public sealed partial class ShellPage : Page
+public sealed partial class ShellPage : Page, ILifeCycleAwarePage
 {
     static ShellPage()
     {
@@ -23,11 +23,21 @@ public sealed partial class ShellPage : Page
     public ShellPage()
     {
         InitializeComponent();
-        NavigateSection(typeof(VaultPage));
     }
 
     private static readonly IReadOnlyDictionary<string, Type> PageByTag;
     private static readonly IReadOnlyDictionary<Type, string> TagByPage;
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        var param = e.Parameter as IPageNavigationParameter;
+        Reload(param);
+    }
+
+    public void Reload(IPageNavigationParameter? parameter)
+    {
+        NavigateSection(typeof(VaultPage), parameter);
+    }
 
     [RelayCommand]
     private void PaneToggle()
@@ -77,7 +87,7 @@ public sealed partial class ShellPage : Page
     private void OnVaultCipherSelected(VaultCipherSearchBox.Selection selection)
     {
         NavigateSection(typeof(VaultPage),
-            PageNavigationParameter.From(new ShowVaultCipherMessage(selection.QueryText, selection.SelectedItem)));
+            PageNavigationParameter.From(new ShowVaultCipherIntent(selection.QueryText, selection.SelectedItem)));
     }
 
 
@@ -85,7 +95,7 @@ public sealed partial class ShellPage : Page
     {
         if (ContentFrame.CurrentSourcePageType == pageType)
         {
-            if (parameter is not null && ContentFrame.Content is LifecyclePage page)
+            if (parameter is not null && ContentFrame.Content is ILifeCycleAwarePage page)
                 page.Reload(parameter);
 
             return;

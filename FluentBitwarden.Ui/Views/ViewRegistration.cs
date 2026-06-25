@@ -14,10 +14,10 @@ internal static class ViewRegistration
     {
         services.AddTransient<ShellPage>();
         services.AddTransient<LoadingPage>();
+        services.AddTransient<OfflinePage>();
 
         return services
             .AddView<UnlockPage, UnlockPageViewModel>()
-            .AddView<OfflinePage, OfflinePageViewModel>()
             .AddView<LogInFlowPage, LogInFlowPageViewModel>()
             .AddView<SettingsPage, SettingsPageViewModel>()
             .AddView<VaultPage, VaultPageViewModel>();

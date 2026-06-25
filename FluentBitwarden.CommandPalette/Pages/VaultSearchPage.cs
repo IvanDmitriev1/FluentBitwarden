@@ -117,9 +117,9 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
                 generation,
                 items.Length == 0 ? [_listItemFactory.CreateNoResultsItem()] : items);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
-            return;
+            //
         }
         catch (Exception)
         {

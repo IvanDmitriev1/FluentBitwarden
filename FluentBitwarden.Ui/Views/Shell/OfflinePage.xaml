@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<navigation:LifecyclePage
+<Page
     x:Class="FluentBitwarden.Views.Shell.OfflinePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:navigation="using:FluentBitwarden.Services.Navigation"
     mc:Ignorable="d">
 
     <Grid
@@ -34,20 +33,14 @@
                     <TextBlock
                         HorizontalAlignment="Center"
                         Style="{ThemeResource TitleTextBlockStyle}"
-                        Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
+                        Text="Internet required" />
                     <TextBlock
                         HorizontalAlignment="Center"
-                        Text="{x:Bind ViewModel.Message, Mode=OneWay}"
+                        Text="Reconnect and try again"
                         TextAlignment="Center"
                         TextWrapping="WrapWholeWords" />
                 </StackPanel>
-
-                <Button
-                    HorizontalAlignment="Stretch"
-                    Command="{x:Bind ViewModel.RetryCommand}"
-                    Content="Retry"
-                    Style="{ThemeResource AccentButtonStyle}" />
             </StackPanel>
         </Border>
     </Grid>
-</navigation:LifecyclePage>
+</Page>

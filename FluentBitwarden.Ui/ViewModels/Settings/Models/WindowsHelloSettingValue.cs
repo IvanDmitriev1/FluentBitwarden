@@ -1,6 +1,6 @@
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
-using FluentBitwarden.Services.Window;
+using FluentBitwarden.Infrastructure.Window;
 using WinUIEx;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
@@ -37,10 +37,8 @@ public sealed partial class WindowsHelloSettingValue(
         if (_isLoading)
             return;
 
-        ArgumentNullException.ThrowIfNull(windowManager.ActiveWindow);
-
         _ = value
-            ? windowsHelloUnlockClient.EnableAsync(new EnableWindowsHelloRequest(windowManager.ActiveWindow.GetWindowHandle()))
+            ? windowsHelloUnlockClient.EnableAsync(new EnableWindowsHelloRequest(windowManager.WindowHandle))
             : windowsHelloUnlockClient.DisableAsync();
     }
 }
