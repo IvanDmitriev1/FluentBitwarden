@@ -16,21 +16,22 @@ internal sealed class PipeIpcServer(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await using var pipe = CreatePipe();
+            NamedPipeServerStream? pipe = CreatePipe();
 
             try
             {
-                Debug.WriteLine("Waiting for named pipe client......");
                 await pipe.WaitForConnectionAsync(stoppingToken);
-                Debug.WriteLine("Named pipe client connected.");
 
-                await ProcessRequestAsync(pipe, stoppingToken);
+                var requestPipe = pipe;
+                pipe = null;
+
+                _ = ProcessRequestAsync(requestPipe, stoppingToken);
             }
             catch (IOException)
             {
                 Debug.WriteLine("IPC client disconnected before the server response was delivered.");
             }
-            catch (Exception e) when (e is TaskCanceledException or OperationCanceledException or EndOfStreamException)
+            catch (OperationCanceledException)
             {
                 //
             }
@@ -38,13 +39,17 @@ internal sealed class PipeIpcServer(
             {
                 UnhandledExceptionLogger.WriteException(e);
             }
+            finally
+            {
+                pipe?.Dispose();
+            }
         }
     }
 
     private NamedPipeServerStream CreatePipe() => new(
         pipeName,
         PipeDirection.InOut,
-        maxNumberOfServerInstances: 1,
+        maxNumberOfServerInstances: NamedPipeServerStream.MaxAllowedServerInstances,
         PipeTransmissionMode.Byte,
         PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly,
         inBufferSize: 4 * 1024,
@@ -54,28 +59,46 @@ internal sealed class PipeIpcServer(
         NamedPipeServerStream pipe,
         CancellationToken stoppingToken)
     {
-        var authenticationLevel = ipcClientsVerifier.IsExpectedClient(pipe);
-
-        if (authenticationLevel == IpcAuthenticationLevel.Rejected)
+        try
         {
-            Debug.WriteLine("Rejected unauthorized IPC pipe client.");
-            return;
+            var authenticationLevel = ipcClientsVerifier.IsExpectedClient(pipe);
+            if (authenticationLevel == IpcAuthenticationLevel.Rejected)
+            {
+                Debug.WriteLine("Rejected unauthorized IPC pipe client.");
+                return;
+            }
+
+            var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
+            if (!endpoints.TryGetValue(header.MessageType, out var endpoint))
+            {
+                Debug.WriteLine($"Rejected unknown IPC message type: {header.MessageType}.");
+                return;
+            }
+
+            /*if (authenticationLevel != endpoint.AuthenticationLevel)
+            {
+                Debug.WriteLine("Rejected IPC message with incorrect authentication level.");
+                return;
+            }*/
+
+            await endpoint.Delegate.Invoke(pipe, header.PayloadLength, stoppingToken);
+            await pipe.FlushAsync(stoppingToken);
         }
-
-        var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
-        if (!endpoints.TryGetValue(header.MessageType, out var endpoint))
+        catch (IOException)
         {
-            Debug.WriteLine($"Rejected unknown IPC message type: {header.MessageType}.");
-            return;
+            Debug.WriteLine("IPC client disconnected before the server response was delivered.");
         }
-
-        /*if (authenticationLevel != endpoint.AuthenticationLevel)
+        catch (OperationCanceledException)
         {
-            Debug.WriteLine("Rejected IPC message with incorrect authentication level.");
-            return;
-        }*/
-
-        await endpoint.Delegate.Invoke(pipe, header.PayloadLength, stoppingToken);
-        await pipe.FlushAsync(stoppingToken);
+            //
+        }
+        catch (Exception e)
+        {
+            UnhandledExceptionLogger.WriteException(e);
+        }
+        finally
+        {
+            pipe.Dispose();
+        }
     }
 }

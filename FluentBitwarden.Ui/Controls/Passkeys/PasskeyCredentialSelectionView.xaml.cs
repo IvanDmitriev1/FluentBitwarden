@@ -1,13 +1,15 @@
+using Microsoft.UI.Xaml;
+
 namespace FluentBitwarden.Controls.Passkeys;
 
 public sealed partial class PasskeyCredentialSelectionView : UserControl
 { 
     public PasskeyCredentialSelectionView(IReadOnlyList<Fido2Credential> items)
     {
-        _items = items;
-        ListView.ItemsSource = _items;
-
         InitializeComponent();
+        Loaded += OnLoaded;
+
+        _items = items;
     }
 
     private readonly TaskCompletionSource<Fido2Credential> _selectedCredential =
@@ -20,6 +22,13 @@ public sealed partial class PasskeyCredentialSelectionView : UserControl
 
     public Task<Fido2Credential> WaitUntilSelectedAsync(CancellationToken cancellationToken) =>
         _selectedCredential.Task.WaitAsync(cancellationToken);
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoaded;
+
+        ListView.ItemsSource = _items;
+    }
 
     private void ListView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {

@@ -8,6 +8,7 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Views.Accounts;
 using FluentBitwarden.Views.Shell;
 using Windows.Networking.Connectivity;
+using FluentBitwarden.Views.Startup;
 
 namespace FluentBitwarden.Application.Implementations;
 
@@ -140,6 +141,10 @@ internal sealed class AppCoordinator : IAppCoordinator
                 if (_windowManager.ActiveMode == WindowMode.Main)
                 {
                     _windowManager.ReplacePage<ShellPage>(_currentIntent);
+                }
+                else
+                {
+                    _windowManager.ReplacePage<LoadingPage>();
                 }
                 break;
         }
