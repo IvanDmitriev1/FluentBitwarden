@@ -20,7 +20,7 @@ internal static class InfrastructureServiceCollectionExtensions
         });
 
         services.AddTransient<IAppSetupService, AppSetupService>();
-        services.AddSingleton<IUiProcessLauncher, UiProcessLauncher>();
+        services.AddSingleton<IUiProcessLauncher, AppHostUiProcessManager>();
 
         services.AddSingleton<IVaultSessionUnlockDialog, VaultSessionUnlockDialog>();
 

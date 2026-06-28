@@ -1,14 +1,8 @@
+using FluentBitwarden.Platform.Infrastructure.ProcessManager;
+
 namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
-internal interface IUiProcessLauncher
-{
-    bool IsRunning { get; }
-
-    event Action ProcessExited;
-
+internal interface IUiProcessLauncher : IProcessManager
+{ 
     void ActivateMainWindow();
-    void Activate();
-    void Exit();
 }
-
-

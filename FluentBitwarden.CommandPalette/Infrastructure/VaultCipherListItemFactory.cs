@@ -1,11 +1,13 @@
 using BitwardenApi.Vault.Items.Contracts;
+using FluentBitwarden.CommandPalette.Infrastructure.Services;
 using FluentBitwarden.Platform.SiteIcons;
 
 namespace FluentBitwarden.CommandPalette.Infrastructure;
 
 internal sealed class VaultCipherListItemFactory(
     ISiteIconCache siteIconCache,
-    OpenUnlockCommand openUnlockCommand)
+    OpenUnlockCommand openUnlockCommand,
+    IUiProcessManager uiProcessManager)
 {
     public IListItem Create(LoginVaultCipher cipher)
     {
@@ -20,7 +22,7 @@ internal sealed class VaultCipherListItemFactory(
         {
             item.MoreCommands =
             [
-                new CommandContextItem(new OpenItemCommand(cipher))
+                new CommandContextItem(new OpenItemCommand(cipher, uiProcessManager))
                 {
                     Title = "Open in app"
                 },
