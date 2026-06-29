@@ -17,5 +17,5 @@ public readonly record struct VaultCipherTypeOption(VaultCipherType? Value, stri
     public override string ToString() => Title;
 }
 
-public sealed partial class CipherTypeOptionOptionConverter()
+public sealed partial class VaultCipherTypeOptionConverter()
     : OptionItemConverter<VaultCipherType?, VaultCipherTypeOption>(VaultCipherTypeOption.All);

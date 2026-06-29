@@ -7,13 +7,13 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ms-appx:///Styles/MyStyles.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/ValidationFieldStyles.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/CountdownRingStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/PasswordBoxExStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/TextBoxExStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/SearchFilterBarStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/SiteIconStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/Vault/VaultStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/ValidationFieldStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/CountdownRingStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/PasswordBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/TextBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/SearchFilterBarStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/SiteIconStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherStyles.xaml" />
         <templates:OptionItemTemplates />
     </ResourceDictionary.MergedDictionaries>
 

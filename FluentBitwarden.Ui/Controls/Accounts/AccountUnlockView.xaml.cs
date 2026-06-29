@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Controls.Shared;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;

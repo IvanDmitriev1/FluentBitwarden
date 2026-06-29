@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Controls.VaultCiphers;
 using FluentBitwarden.Views.Settings;
 using FluentBitwarden.Views.Vault;
 using Microsoft.UI.Xaml.Navigation;
 using System.Diagnostics;
-using FluentBitwarden.Controls.Vault;
 
 namespace FluentBitwarden.Views.Shell;
 

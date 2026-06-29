@@ -7,9 +7,9 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:login="using:FluentBitwarden.Templates.Accounts.Login"
     xmlns:models="using:FluentBitwarden.ViewModels.Accounts.Login.Models"
-    xmlns:sharedControls="using:FluentBitwarden.Controls"
+    xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
     xmlns:states="using:FluentBitwarden.ViewModels.Accounts.Login.Steps"
-    xmlns:validation="using:FluentBitwarden.Controls">
+    xmlns:validation="using:FluentBitwarden.Controls.Shared">
 
     <DataTemplate x:Key="LogInEmailStepTemplate" x:DataType="states:LogInEmailStepViewModel">
         <StackPanel Spacing="22">

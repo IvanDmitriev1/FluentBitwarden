@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
     xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
-    xmlns:sharedControls="using:FluentBitwarden.Controls"
+    xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
     xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
     NavigationCacheMode="Required"
@@ -18,12 +18,12 @@
     <navigation:LifecyclePage.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ms-appx:///Templates/Vault/CipherListViewItemTemplate.xaml" />
-                <vault:CipherDetailTemplates />
-                <vault:CipherListItemDataTemplate />
+                <ResourceDictionary Source="ms-appx:///Templates/VaultCipher/VaultCipherListViewItemTemplate.xaml" />
+                <vault:VaultCipherDetailTemplates />
+                <vault:VaultCipherListItemDataTemplate />
             </ResourceDictionary.MergedDictionaries>
 
-            <models:CipherTypeOptionOptionConverter x:Key="CipherTypeOptionConverter" />
+            <models:VaultCipherTypeOptionConverter x:Key="VaultCipherTypeOptionConverter" />
         </ResourceDictionary>
     </navigation:LifecyclePage.Resources>
 
@@ -57,7 +57,7 @@
                             ItemTemplate="{StaticResource OptionItemComboBoxItemTemplate}"
                             ItemsSource="{x:Bind models:VaultCipherTypeOption.All}"
                             PlaceholderText="Filter by type"
-                            SelectedItem="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay, Converter={StaticResource CipherTypeOptionConverter}}" />
+                            SelectedItem="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay, Converter={StaticResource VaultCipherTypeOptionConverter}}" />
                     </sharedControls:SearchFilterBar.FilterContent>
                     <sharedControls:SearchFilterBar.SortFlyout>
                         <MenuFlyout Placement="BottomEdgeAlignedLeft">
@@ -100,7 +100,7 @@
                     attachedProperties:VaultListSelectionBehavior.BringToView="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
                     IsItemClickEnabled="False"
                     ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
-                    ItemTemplate="{StaticResource CipherListItemDataTemplate}"
+                    ItemTemplate="{StaticResource VaultCipherListItemDataTemplate}"
                     ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
                     SelectionMode="Single"
@@ -128,7 +128,7 @@
             Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
 
             <StackPanel
-                x:Name="CipherDetailsStackPanel"
+                x:Name="VaultCipherDetailsStackPanel"
                 Padding="20"
                 x:Load="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToBoolConverter}}"
                 Spacing="20">

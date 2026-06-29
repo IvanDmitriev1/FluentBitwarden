@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Templates.Vault.VaultCipherListItemDataTemplate"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls1="using:FluentBitwarden.Controls.Shared"
+    xmlns:extensions1="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
+    xmlns:models="using:BitwardenApi.Vault.Items.Contracts">
+
+    <x:Double x:Key="VaultCipherListItemDataTemplateIconSize">22</x:Double>
+
+    <DataTemplate x:Key="VaultCipherListItemDataTemplate" x:DataType="models:VaultCipher">
+        <Grid VerticalAlignment="Center" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <controls1:SiteIcon
+                Grid.Column="0"
+                FallbackGlyph="{x:Bind extensions1:VaultCipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
+                Size="{StaticResource VaultCipherListItemDataTemplateIconSize}"
+                Uri="{x:Bind extensions1:VaultCipherExtensions.GetDefaultSiteIconUri((models:VaultCipher))}" />
+
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="{x:Bind Name}"
+                    TextTrimming="CharacterEllipsis" />
+
+                <TextBlock
+                    x:Name="SubTitle"
+                    x:Load="{x:Bind extensions1:VaultCipherExtensions.HasSubtitle((models:VaultCipher))}"
+                    Opacity="0.72"
+                    Text="{x:Bind extensions1:VaultCipherExtensions.GetSubtitle((models:VaultCipher))}"
+                    TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Grid>
+    </DataTemplate>
+
+</ResourceDictionary>
