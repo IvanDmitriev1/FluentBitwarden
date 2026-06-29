@@ -9,7 +9,7 @@ namespace FluentBitwarden.Controls.Shared;
 [TemplatePart(Name = PartRevealButton, Type = typeof(Button))]
 [TemplatePart(Name = PartActionButton, Type = typeof(Button))]
 [TemplatePart(Name = PartHeaderContentPresenter, Type = typeof(ContentPresenter))]
-[DependencyProperty<string>("PlaceholderText", DefaultValue = "Enter your password")]
+[DependencyProperty<string>("PlaceholderText", DefaultValue = "")]
 [DependencyProperty<object>("ActionButtonContent")]
 [DependencyProperty<string>("ActionButtonToolTip")]
 [DependencyProperty<ICommand>("ActionButtonCommand")]

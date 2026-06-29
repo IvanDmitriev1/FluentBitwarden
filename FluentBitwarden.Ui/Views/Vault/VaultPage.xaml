@@ -24,6 +24,15 @@
             </ResourceDictionary.MergedDictionaries>
 
             <models:VaultCipherTypeOptionConverter x:Key="VaultCipherTypeOptionConverter" />
+            <x:String x:Key="VaultPageFilterPlaceholderText">Filter by type</x:String>
+            <x:String x:Key="VaultPageSearchFilterAutomationName">Vault filters and search</x:String>
+            <x:String x:Key="VaultPageCipherTypeAutomationName">Cipher type filter</x:String>
+            <x:String x:Key="VaultPageCipherListAutomationName">Vault ciphers</x:String>
+            <x:String x:Key="VaultPageSortFieldNameText">Title</x:String>
+            <x:String x:Key="VaultPageSortFieldCreatedText">Date created</x:String>
+            <x:String x:Key="VaultPageSortFieldModifiedText">Date modified</x:String>
+            <x:String x:Key="VaultPageSortAscendingText">Ascending</x:String>
+            <x:String x:Key="VaultPageSortDescendingText">Descending</x:String>
         </ResourceDictionary>
     </navigation:LifecyclePage.Resources>
 
@@ -47,6 +56,8 @@
                 </Grid.ColumnDefinitions>
 
                 <sharedControls:SearchFilterBar
+                    AutomationProperties.AutomationId="VaultPageSearchFilterBar"
+                    AutomationProperties.Name="{StaticResource VaultPageSearchFilterAutomationName}"
                     Grid.Row="0"
                     Grid.Column="0"
                     Padding="16,16,16,8"
@@ -54,9 +65,11 @@
                     SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <sharedControls:SearchFilterBar.FilterContent>
                         <ComboBox
+                            AutomationProperties.AutomationId="VaultPageCipherTypeFilter"
+                            AutomationProperties.Name="{StaticResource VaultPageCipherTypeAutomationName}"
                             ItemTemplate="{StaticResource OptionItemComboBoxItemTemplate}"
                             ItemsSource="{x:Bind models:VaultCipherTypeOption.All}"
-                            PlaceholderText="Filter by type"
+                            PlaceholderText="{StaticResource VaultPageFilterPlaceholderText}"
                             SelectedItem="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay, Converter={StaticResource VaultCipherTypeOptionConverter}}" />
                     </sharedControls:SearchFilterBar.FilterContent>
                     <sharedControls:SearchFilterBar.SortFlyout>
@@ -64,29 +77,29 @@
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                                Text="Title"
+                                Text="{StaticResource VaultPageSortFieldNameText}"
                                 Value="{x:Bind workspace:VaultCipherSortField.Name}" />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                                Text="Date created"
+                                Text="{StaticResource VaultPageSortFieldCreatedText}"
                                 Value="{x:Bind workspace:VaultCipherSortField.CreationDate}" />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                                Text="Date modified"
+                                Text="{StaticResource VaultPageSortFieldModifiedText}"
                                 Value="{x:Bind workspace:VaultCipherSortField.RevisionDate}" />
 
                             <MenuFlyoutSeparator />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
-                                Text="Newest first"
+                                Text="{StaticResource VaultPageSortAscendingText}"
                                 Value="{x:Bind workspace:VaultCipherSortDirection.Ascending}" />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
-                                Text="Oldest first"
+                                Text="{StaticResource VaultPageSortDescendingText}"
                                 Value="{x:Bind workspace:VaultCipherSortDirection.Descending}" />
 
                         </MenuFlyout>
@@ -95,6 +108,8 @@
 
                 <ListView
                     x:Name="VaultCipherList"
+                    AutomationProperties.AutomationId="VaultPageCipherList"
+                    AutomationProperties.Name="{StaticResource VaultPageCipherListAutomationName}"
                     Grid.Row="1"
                     Grid.Column="0"
                     attachedProperties:VaultListSelectionBehavior.BringToView="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"

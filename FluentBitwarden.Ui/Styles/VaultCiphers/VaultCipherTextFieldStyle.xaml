@@ -4,13 +4,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers">
 
+    <x:String x:Key="VaultCipherTextFieldCopyActionText">Copy</x:String>
+
     <Style TargetType="vault:VaultCipherTextField">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="vault:VaultCipherTextField">
                     <vault:VaultCipherFieldChrome
                         x:Name="PART_Chrome"
-                        ActionText="Copy"
+                        ActionText="{StaticResource VaultCipherTextFieldCopyActionText}"
                         Label="{TemplateBinding Label}">
 
                         <TextBlock

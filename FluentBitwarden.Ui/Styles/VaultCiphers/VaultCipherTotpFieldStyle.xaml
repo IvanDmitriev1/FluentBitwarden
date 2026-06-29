@@ -5,13 +5,15 @@
     xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers">
 
+    <x:String x:Key="VaultCipherTotpFieldCopyActionText">Copy</x:String>
+
     <Style TargetType="vault:VaultCipherTotpField">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="vault:VaultCipherTotpField">
                     <vault:VaultCipherFieldChrome
                         x:Name="PART_Chrome"
-                        ActionText="Copy"
+                        ActionText="{StaticResource VaultCipherTotpFieldCopyActionText}"
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"

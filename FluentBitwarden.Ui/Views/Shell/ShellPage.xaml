@@ -20,6 +20,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <templates1:VaultCipherAutosuggestItemTemplates />
             </ResourceDictionary.MergedDictionaries>
+            <x:String x:Key="ShellVaultSearchAutomationName">Vault search</x:String>
+            <x:String x:Key="ShellNavigationAutomationName">Main navigation</x:String>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -37,11 +39,17 @@
     </Page.KeyboardAccelerators>
 
     <attachedProperties:TitlebarProperties.Content>
-        <vault:VaultCipherSearchBox x:Name="VaultCipherSearchBox" VaultCipherSelectedCommand="{x:Bind VaultCipherSelectedCommand}" />
+        <vault:VaultCipherSearchBox
+            x:Name="VaultCipherSearchBox"
+            AutomationProperties.AutomationId="ShellVaultCipherSearchBox"
+            AutomationProperties.Name="{StaticResource ShellVaultSearchAutomationName}"
+            VaultCipherSelectedCommand="{x:Bind VaultCipherSelectedCommand}" />
     </attachedProperties:TitlebarProperties.Content>
 
     <NavigationView
         x:Name="Nav"
+        AutomationProperties.AutomationId="ShellNavigationView"
+        AutomationProperties.Name="{StaticResource ShellNavigationAutomationName}"
         IsBackButtonVisible="Collapsed"
         IsPaneToggleButtonVisible="False"
         IsSettingsVisible="True"

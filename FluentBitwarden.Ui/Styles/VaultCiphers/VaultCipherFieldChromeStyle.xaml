@@ -5,6 +5,9 @@
     xmlns:animatedVisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers">
 
+    <x:String x:Key="VaultCipherFieldChromeMenuButtonAutomationName">Field options</x:String>
+    <x:String x:Key="VaultCipherFieldChromeMenuButtonToolTip">Open field options</x:String>
+
     <Style TargetType="vault:VaultCipherFieldChrome">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -16,7 +19,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="vault:VaultCipherFieldChrome">
-                    <Grid ColumnSpacing="1">
+                    <Grid x:Name="Root" ColumnSpacing="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -26,7 +29,7 @@
                             x:Name="ChromeBorder"
                             Grid.Column="0"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="0">
+                            CornerRadius="{TemplateBinding CornerRadius}">
 
                             <Grid
                                 Grid.Column="0"
@@ -89,6 +92,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="ChromeBorder.Background" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
                                         <Setter Target="LabelTextBlock.Foreground" Value="{ThemeResource AccentTextFillColorSecondaryBrush}" />
+                                        <Setter Target="ActionTextBlock.Opacity" Value="1" />
                                         <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
                                         <Setter Target="PART_MenuButton.Opacity" Value="1" />
                                     </VisualState.Setters>
@@ -98,6 +102,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="ChromeBorder.Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
                                         <Setter Target="LabelTextBlock.Foreground" Value="{ThemeResource AccentTextFillColorSecondaryBrush}" />
+                                        <Setter Target="ActionTextBlock.Opacity" Value="1" />
                                         <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
                                         <Setter Target="PART_MenuButton.Opacity" Value="1" />
                                     </VisualState.Setters>
@@ -110,6 +115,24 @@
                                         <Setter Target="PART_MenuButton.Opacity" Value="0" />
                                         <Setter Target="PART_MenuButton.IsHitTestVisible" Value="False" />
                                         <Setter Target="LabelTextBlock.Foreground" Value="{ThemeResource TextOnAccentFillColorDisabledBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <VisualStateGroup x:Name="FocusStates">
+                                <VisualState x:Name="Unfocused" />
+
+                                <VisualState x:Name="Focused">
+                                    <VisualState.Setters>
+                                        <Setter Target="ActionTextBlock.Opacity" Value="1" />
+                                        <Setter Target="PART_MenuButton.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="PointerFocused">
+                                    <VisualState.Setters>
+                                        <Setter Target="ActionTextBlock.Opacity" Value="1" />
+                                        <Setter Target="PART_MenuButton.Opacity" Value="1" />
                                     </VisualState.Setters>
                                 </VisualState>
                             </VisualStateGroup>

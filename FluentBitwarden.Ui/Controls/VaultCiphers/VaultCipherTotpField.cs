@@ -16,6 +16,7 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
     private CountdownRing? _countdownRing;
     private DispatcherQueueTimer? _timer;
     private long _visibilityRegistrationToken;
+    private bool _isVisibilityCallbackRegistered;
 
     public VaultCipherTotpField()
     {
@@ -27,6 +28,14 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
 
     partial void OnTotpChanged()
     {
+        UpdateTotpDisplay();
+    }
+
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+        _countdownRing = GetTemplateChild(PartCountdownRing) as CountdownRing;
         UpdateTotpDisplay();
     }
 
@@ -46,34 +55,27 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _visibilityRegistrationToken = RegisterPropertyChangedCallback(
-            VisibilityProperty,
-            OnVisibilityChanged);
+        if (!_isVisibilityCallbackRegistered)
+        {
+            _visibilityRegistrationToken = RegisterPropertyChangedCallback(VisibilityProperty, OnVisibilityChanged);
+            _isVisibilityCallbackRegistered = true;
+        }
 
-        _timer = DispatcherQueue.CreateTimer();
-        _timer.Interval = TimeSpan.FromSeconds(1);
-        _timer.IsRepeating = true;
-        _timer.Tick += (_, _) => UpdateTotpDisplay();
-        _timer.Start();
+        EnsureTimer();
+        UpdateTimerState();
 
         UpdateTotpDisplay();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        UnregisterPropertyChangedCallback(VisibilityProperty, _visibilityRegistrationToken);
-
-        Loaded -= OnLoaded;
-        Unloaded -= OnUnloaded;
+        if (_isVisibilityCallbackRegistered)
+        {
+            UnregisterPropertyChangedCallback(VisibilityProperty, _visibilityRegistrationToken);
+            _isVisibilityCallbackRegistered = false;
+        }
 
         _timer?.Stop();
-    }
-
-    protected override void OnApplyTemplate()
-    {
-        base.OnApplyTemplate();
-
-        _countdownRing = GetTemplateChild(PartCountdownRing) as CountdownRing;
     }
 
     private void UpdateTotpDisplay()
@@ -89,29 +91,53 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
         DisplayCode = FormatCode(Totp.ComputeTotp());
 
         var remaining = Totp.ExpiresAt - DateTimeOffset.UtcNow;
-        var remainingSeconds = Math.Clamp((int)Math.Ceiling(remaining.TotalSeconds), (int)0, (int)Totp.Step);
+        var remainingSeconds = Math.Clamp((int)Math.Ceiling(remaining.TotalSeconds), 0, Totp.Step);
 
         _countdownRing.Maximum = Totp.Step;
         _countdownRing.Value = remainingSeconds;
+        return;
+
+        static string FormatCode(string code) => code.Length switch
+        {
+            6 => $"{code[..3]} {code[3..]}",
+            8 => $"{code[..4]} {code[4..]}",
+            _ => code
+        };
     }
 
     private void OnVisibilityChanged(DependencyObject sender, DependencyProperty dp)
     {
-        if (Visibility == Visibility.Collapsed)
+        UpdateTimerState();
+
+        if (Visibility == Visibility.Visible)
+            UpdateTotpDisplay();
+    }
+
+    private void EnsureTimer()
+    {
+        if (_timer is not null)
+            return;
+
+        _timer = DispatcherQueue.CreateTimer();
+        _timer.Interval = TimeSpan.FromSeconds(1);
+        _timer.IsRepeating = true;
+        _timer.Tick += OnTimerTick;
+    }
+
+    private void OnTimerTick(DispatcherQueueTimer sender, object args) => UpdateTotpDisplay();
+
+    private void UpdateTimerState()
+    {
+        if (_timer is null)
+            return;
+
+        if (Visibility == Visibility.Visible)
         {
-            _timer?.Stop();
+            _timer.Start();
         }
         else
         {
-            _timer?.Start();
-            UpdateTotpDisplay();
+            _timer.Stop();
         }
     }
-
-    private static string FormatCode(string code) => code.Length switch
-    {
-        6 => $"{code[..3]} {code[3..]}",
-        8 => $"{code[..4]} {code[4..]}",
-        _ => code
-    };
 }

@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
@@ -8,7 +9,15 @@ public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBa
 {
     private const string MaskPassword = "●●●●●●●●●●";
 
+    private const string RevealResourceKey = "VaultCipherPasswordFieldRevealText";
+    private const string ConcealResourceKey = "VaultCipherPasswordFieldConcealText";
+    private static readonly string MaskPasswordText = string.IsNullOrEmpty(MaskPassword)
+        ? new string('\u2022', 10)
+        : new string('\u2022', 10);
+
     private bool _isRevealed;
+    private MenuFlyout? _menuFlyout;
+    private MenuFlyoutItem? _toggleRevealMenuItem;
 
     public VaultCipherPasswordField()
     {
@@ -17,32 +26,64 @@ public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBa
 
     partial void OnPasswordChanged()
     {
-        DisplayText = MaskPassword;
+        UpdateDisplayText();
     }
 
     protected override FlyoutBase? CreateMenuFlyout()
     {
-        var flyout = new MenuFlyout();
-
-        var revealItem = new MenuFlyoutItem
+        if (_menuFlyout is null)
         {
-            Text = _isRevealed ? "Conceal" : "Reveal"
-        };
+            _toggleRevealMenuItem = new MenuFlyoutItem();
+            _toggleRevealMenuItem.Click += OnToggleRevealMenuItemClick;
 
-        revealItem.Click += (_, _) =>
-        {
-            _isRevealed = !_isRevealed;
-            DisplayText = _isRevealed
-                ? Password ?? string.Empty
-                : MaskPassword;
-        };
+            _menuFlyout = new MenuFlyout();
+            _menuFlyout.Items.Add(_toggleRevealMenuItem);
+        }
 
-        flyout.Items.Add(revealItem);
-        return flyout;
+        UpdateRevealMenuItemText();
+        return _menuFlyout;
     }
 
     protected override void OnPrimaryAction()
     {
         CopyTextToClipboard(Password);
+    }
+
+    private void OnToggleRevealMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        _isRevealed = !_isRevealed;
+        UpdateDisplayText();
+        UpdateRevealMenuItemText();
+    }
+
+    private void UpdateDisplayText()
+    {
+        DisplayText = _isRevealed
+            ? Password ?? string.Empty
+            : string.IsNullOrEmpty(Password)
+                ? string.Empty
+                : MaskPasswordText;
+    }
+
+    private void UpdateRevealMenuItemText()
+    {
+        if (_toggleRevealMenuItem is null)
+            return;
+
+        string key = _isRevealed ? ConcealResourceKey : RevealResourceKey;
+        string fallback = _isRevealed ? "Conceal" : "Reveal";
+
+        _toggleRevealMenuItem.Text = GetResourceString(key, fallback);
+    }
+
+    private static string GetResourceString(string key, string fallback)
+    {
+        if (Microsoft.UI.Xaml.Application.Current.Resources.TryGetValue(key, out object value)
+            && value is string resourceText)
+        {
+            return resourceText;
+        }
+
+        return fallback;
     }
 }

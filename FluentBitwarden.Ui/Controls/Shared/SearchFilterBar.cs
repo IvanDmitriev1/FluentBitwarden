@@ -1,5 +1,6 @@
 using Windows.System;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 
@@ -8,21 +9,23 @@ namespace FluentBitwarden.Controls.Shared;
 
 [TemplatePart(Name = PartSearchBox, Type = typeof(TextBox))]
 [TemplatePart(Name = PartSearchToggleButton, Type = typeof(Button))]
+[TemplatePart(Name = PartSortButton, Type = typeof(Button))]
 [TemplateVisualState(Name = StateNormal, GroupName = GroupSearchStates)]
 [TemplateVisualState(Name = StateSearchOpen, GroupName = GroupSearchStates)]
 [DependencyProperty<string>("SearchText", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.TwoWay)]
 [DependencyProperty<bool>("IsSearchOpen", DefaultValue = false, DefaultBindingMode = DefaultBindingMode.TwoWay)]
-[DependencyProperty<string>("SearchPlaceholderText", DefaultValue = "Search")]
-[DependencyProperty<object>("FilterContent", DefaultValue = null)]
+[DependencyProperty<string>("SearchPlaceholderText", DefaultValue = "")]
 [DependencyProperty<DataTemplate>("FilterContentTemplate")]
+[DependencyProperty<object>("FilterContent")]
 [DependencyProperty<FlyoutBase>("SortFlyout")]
-[DependencyProperty<string>("SearchButtonToolTip", DefaultValue = "Search")]
-[DependencyProperty<string>("CloseButtonToolTip", DefaultValue = "Close search")]
-[DependencyProperty<string>("SortButtonToolTip", DefaultValue = "Sort items")]
+[DependencyProperty<string>("SearchButtonToolTip", DefaultValue = "")]
+[DependencyProperty<string>("CloseButtonToolTip", DefaultValue = "")]
+[DependencyProperty<string>("SortButtonToolTip", DefaultValue = "")]
 public sealed partial class SearchFilterBar : Control
 {
     private const string PartSearchBox = "PART_SearchBox";
     private const string PartSearchToggleButton = "PART_SearchToggleButton";
+    private const string PartSortButton = "PART_SortButton";
 
     private const string GroupSearchStates = "SearchStates";
     private const string StateNormal = "Normal";
@@ -30,6 +33,7 @@ public sealed partial class SearchFilterBar : Control
 
     private TextBox? _searchBox;
     private Button? _searchToggleButton;
+    private Button? _sortButton;
     private bool _isTemplateApplied;
 
     public SearchFilterBar()
@@ -54,6 +58,7 @@ public sealed partial class SearchFilterBar : Control
 
         _searchBox = GetTemplateChild(PartSearchBox) as TextBox;
         _searchToggleButton = GetTemplateChild(PartSearchToggleButton) as Button;
+        _sortButton = GetTemplateChild(PartSortButton) as Button;
 
         _searchBox?.KeyDown += SearchBoxOnKeyDown;
         _searchToggleButton?.Click += OnSearchToggleButtonClick;
@@ -81,9 +86,23 @@ public sealed partial class SearchFilterBar : Control
             IsSearchOpen ? StateSearchOpen : StateNormal,
             useTransitions);
 
-        ToolTipService.SetToolTip(
-            _searchToggleButton,
-            IsSearchOpen ? CloseButtonToolTip : SearchButtonToolTip);
+        if (_searchToggleButton is not null)
+        {
+            string automationName = IsSearchOpen ? CloseButtonToolTip : SearchButtonToolTip;
+            ToolTipService.SetToolTip(_searchToggleButton, automationName);
+            AutomationProperties.SetName(_searchToggleButton, automationName);
+        }
+
+        if (_searchBox is not null)
+        {
+            AutomationProperties.SetName(_searchBox, SearchPlaceholderText);
+        }
+
+        if (_sortButton is not null)
+        {
+            ToolTipService.SetToolTip(_sortButton, SortButtonToolTip);
+            AutomationProperties.SetName(_sortButton, SortButtonToolTip);
+        }
 
         if (!IsSearchOpen)
         {

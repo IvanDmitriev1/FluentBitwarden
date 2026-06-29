@@ -13,12 +13,17 @@
             <ResourceDictionary.MergedDictionaries>
                 <templates:VaultCipherAutosuggestItemTemplates />
             </ResourceDictionary.MergedDictionaries>
+            <x:String x:Key="VaultCipherSearchBoxPlaceholderText">Search</x:String>
+            <x:String x:Key="VaultCipherSearchBoxAutomationName">Search vault</x:String>
         </ResourceDictionary>
     </UserControl.Resources>
 
     <AutoSuggestBox
+        x:Name="VaultCipherAutoSuggestBox"
+        AutomationProperties.AutomationId="VaultCipherSearchBox"
+        AutomationProperties.Name="{StaticResource VaultCipherSearchBoxAutomationName}"
         ItemTemplate="{StaticResource VaultCipherAutosuggestItemTemplate}"
-        PlaceholderText="Search.."
+        PlaceholderText="{StaticResource VaultCipherSearchBoxPlaceholderText}"
         QueryIcon="Find"
         QuerySubmitted="AutoSuggestBox_OnQuerySubmitted"
         TextChanged="AutoSuggestBox_OnTextChanged"

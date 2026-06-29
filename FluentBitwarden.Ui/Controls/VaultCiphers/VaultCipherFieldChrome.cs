@@ -4,8 +4,8 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 namespace FluentBitwarden.Controls.VaultCiphers;
 
 
-[TemplatePart(Name = PartTapTarget, Type = typeof(Button))]
-[TemplatePart(Name = PartActionText, Type = typeof(Button))]
+[TemplatePart(Name = PartChromeBorder, Type = typeof(Border))]
+[TemplatePart(Name = PartActionTextBlock, Type = typeof(TextBlock))]
 [TemplatePart(Name = PartMenuButton, Type = typeof(Button))]
 [DependencyProperty<string>("Label", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
 [DependencyProperty<string>("ActionText", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
@@ -13,15 +13,14 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 [DependencyProperty<Visibility>("MenuButtonVisibility", DefaultValue = Visibility.Collapsed)]
 public sealed partial class VaultCipherFieldChrome : Button
 {
-    private const string PartTapTarget = "PART_TapTarget";
-    private const string PartActionText = "PART_ActionText";
+    private const string PartChromeBorder = "ChromeBorder";
+    private const string PartActionTextBlock = "ActionTextBlock";
     private const string PartMenuButton = "PART_MenuButton";
 
     public VaultCipherFieldChrome()
     {
         DefaultStyleKey = typeof(VaultCipherFieldChrome);
     }
-
     partial void OnMenuFlyoutChanged()
     {
         MenuButtonVisibility = MenuFlyout is not null

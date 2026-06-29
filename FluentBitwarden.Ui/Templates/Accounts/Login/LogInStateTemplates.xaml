@@ -27,12 +27,12 @@
                     Text="Enter your email and choose the server to continue." />
             </StackPanel>
 
-            <validation:ValidationField Property="{Binding EmailValidation}">
+            <validation:ValidationField Property="{x:Bind EmailValidation}">
                 <sharedControls:TextBoxEx
-                    Command="{Binding ContinueCommand}"
+                    Command="{x:Bind ContinueCommand}"
                     InputScope="EmailSmtpAddress"
                     PlaceholderText="name@example.com"
-                    Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    Text="{x:Bind Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <sharedControls:TextBoxEx.Header>
                         <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Email" />
                     </sharedControls:TextBoxEx.Header>
@@ -46,8 +46,8 @@
                 <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Server" />
                 <controls:Segmented
                     HorizontalAlignment="Stretch"
-                    ItemsSource="{Binding Environments}"
-                    SelectedItem="{Binding SelectedEnvironment, Mode=TwoWay}">
+                    ItemsSource="{x:Bind Environments}"
+                    SelectedItem="{x:Bind SelectedEnvironment, Mode=TwoWay}">
                     <controls:Segmented.ItemTemplate>
                         <DataTemplate x:DataType="models:LogInEnvironmentOption">
                             <StackPanel Padding="10,6" Spacing="2">
@@ -63,12 +63,12 @@
                 </controls:Segmented>
             </StackPanel>
 
-            <StackPanel Spacing="4" Visibility="{Binding IsCustomEnvironmentSelected, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                <validation:ValidationField Property="{Binding CustomServerUrlValidation}">
+            <StackPanel Spacing="4" Visibility="{x:Bind IsCustomEnvironmentSelected, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                <validation:ValidationField Property="{x:Bind CustomServerUrlValidation}">
                     <sharedControls:TextBoxEx
-                        Command="{Binding ContinueCommand}"
+                        Command="{x:Bind ContinueCommand}"
                         PlaceholderText="https://vault.example.com"
-                        Text="{Binding CustomServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        Text="{x:Bind CustomServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <sharedControls:TextBoxEx.Header>
                             <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Server URL" />
                         </sharedControls:TextBoxEx.Header>
@@ -89,7 +89,7 @@
                 <Button
                     Height="36"
                     HorizontalAlignment="Stretch"
-                    Command="{Binding ContinueCommand}"
+                    Command="{x:Bind ContinueCommand}"
                     Content="Continue"
                     Style="{StaticResource AccentButtonStyle}" />
 
@@ -114,7 +114,7 @@
                         Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                 </Grid>
 
-                <Button HorizontalAlignment="Stretch" Command="{Binding LogInWithPasskeyCommand}">
+                <Button HorizontalAlignment="Stretch" Command="{x:Bind LogInWithPasskeyCommand}">
                     <StackPanel
                         HorizontalAlignment="Center"
                         Orientation="Horizontal"
@@ -128,9 +128,9 @@
                 <InfoBar
                     IsClosable="False"
                     IsOpen="True"
-                    Message="{Binding PasskeyErrorMessage, Mode=OneWay}"
+                    Message="{x:Bind PasskeyErrorMessage, Mode=OneWay}"
                     Severity="Error"
-                    Visibility="{Binding PasskeyErrorMessage, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
+                    Visibility="{x:Bind PasskeyErrorMessage, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
             </StackPanel>
         </StackPanel>
     </DataTemplate>
@@ -142,14 +142,14 @@
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Welcome back!" />
 
-            <accounts:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
+            <accounts:LoginAccountSummary Email="{x:Bind Email}" ServerDisplayName="{x:Bind ServerDisplayName}" />
 
-            <validation:ValidationField Property="{Binding MasterPasswordValidation}">
+            <validation:ValidationField Property="{x:Bind MasterPasswordValidation}">
                 <sharedControls:PasswordBoxEx
                     x:Name="MasterPasswordBox"
-                    ActionButtonCommand="{Binding LogInWithPasswordCommand}"
-                    ActionButtonCommandParameter="{Binding Password, ElementName=MasterPasswordBox}"
-                    Command="{Binding LogInWithPasswordCommand}"
+                    ActionButtonCommand="{x:Bind LogInWithPasswordCommand}"
+                    ActionButtonCommandParameter="{x:Bind MasterPasswordBox.Password, Mode=OneWay}"
+                    Command="{x:Bind LogInWithPasswordCommand}"
                     Header="Master password">
                     <sharedControls:PasswordBoxEx.ActionButtonContent>
                         <FontIcon
@@ -163,8 +163,8 @@
             <Button
                 Height="36"
                 HorizontalAlignment="Stretch"
-                Command="{Binding LogInWithPasswordCommand}"
-                CommandParameter="{Binding Password, ElementName=MasterPasswordBox}"
+                Command="{x:Bind LogInWithPasswordCommand}"
+                CommandParameter="{x:Bind MasterPasswordBox.Password, Mode=OneWay}"
                 Content="Continue"
                 Style="{StaticResource AccentButtonStyle}" />
         </StackPanel>
@@ -184,15 +184,15 @@
                     TextAlignment="Center" />
             </StackPanel>
 
-            <accounts:LoginAccountSummary Email="{Binding Email}" ServerDisplayName="{Binding ServerDisplayName}" />
+            <accounts:LoginAccountSummary Email="{x:Bind Email}" ServerDisplayName="{x:Bind ServerDisplayName}" />
 
 
             <StackPanel Spacing="12">
                 <ComboBox
                     HorizontalAlignment="Stretch"
                     Header="Method"
-                    ItemsSource="{Binding Providers, Mode=OneWay}"
-                    SelectedItem="{Binding SelectedProvider, Mode=TwoWay}">
+                    ItemsSource="{x:Bind Providers, Mode=OneWay}"
+                    SelectedItem="{x:Bind SelectedProvider, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="models:LogIn2FProviderOptionModel">
                             <StackPanel Spacing="2">
@@ -206,19 +206,19 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <validation:ValidationField Property="{Binding CodeValidation}">
+                <validation:ValidationField Property="{x:Bind CodeValidation}">
                     <sharedControls:TextBoxEx
-                        Command="{Binding LogIn2FCommand}"
+                        Command="{x:Bind LogIn2FCommand}"
                         Header="Verification code"
                         PlaceholderText="123456"
-                        Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{x:Bind Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </validation:ValidationField>
             </StackPanel>
 
             <Button
                 Height="36"
                 HorizontalAlignment="Stretch"
-                Command="{Binding LogIn2FCommand}"
+                Command="{x:Bind LogIn2FCommand}"
                 Content="Continue"
                 Style="{StaticResource AccentButtonStyle}" />
         </StackPanel>
