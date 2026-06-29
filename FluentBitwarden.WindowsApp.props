@@ -8,5 +8,10 @@
 	  <CsWin32RunAsBuildTask>true</CsWin32RunAsBuildTask>
 	 <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+	<SelfContained>false</SelfContained>
+	<PublishSelfContained>false</PublishSelfContained>
+	<PublishTrimmed>false</PublishTrimmed>
+	<PublishReadyToRun>false</PublishReadyToRun>
+	<PublishReadyToRunComposite>false</PublishReadyToRunComposite>
   </PropertyGroup>
 </Project>

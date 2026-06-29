@@ -68,7 +68,6 @@ try
         }
     }
 
-    return 0;
 }
 catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
 {

@@ -14,10 +14,6 @@
 
 	<!-- Publish Properties -->
 	<PropertyGroup>
-		<PublishReadyToRun Condition="'$(Configuration)' == 'Debug' or '$(SelfContained)' != 'true'">False</PublishReadyToRun>
-		<PublishReadyToRun Condition="'$(Configuration)' != 'Debug' and '$(SelfContained)' == 'true'">True</PublishReadyToRun>
-		<PublishTrimmed Condition="'$(Configuration)' == 'Debug' or '$(SelfContained)' != 'true'">False</PublishTrimmed>
-		<PublishTrimmed Condition="'$(Configuration)' != 'Debug' and '$(SelfContained)' == 'true'">True</PublishTrimmed>
 		<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
 		<UserSecretsId>edb536ff-1bce-4891-af57-fe1708de56cf</UserSecretsId>
 	</PropertyGroup>
