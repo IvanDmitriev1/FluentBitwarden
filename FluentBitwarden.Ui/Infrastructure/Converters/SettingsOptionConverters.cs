@@ -1,9 +1,6 @@
-using FluentBitwarden.Contracts.Settings.Models;
-using FluentBitwarden.Infrastructure.Converters;
-using FluentBitwarden.ViewModels.Settings.Models;
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Converters;
+namespace FluentBitwarden.Infrastructure.Converters;
 
 public sealed partial class ThemeOptionConverter() : OptionItemConverter<ElementTheme, ThemeOption>(ThemeOption.Options);
 

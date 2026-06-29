@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml.Data;
 
-namespace FluentBitwarden.Converters;
+namespace FluentBitwarden.Infrastructure.Converters;
 
 internal sealed partial class StringToUriConverter : IValueConverter
 {

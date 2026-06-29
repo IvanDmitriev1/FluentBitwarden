@@ -9,18 +9,19 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.ViewModels.Settings.Models"
     xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
+    xmlns:converters1="using:FluentBitwarden.Infrastructure.Converters"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
     <navigation:LifecyclePage.Resources>
         <x:Double x:Key="SettingsCardSpacing">4</x:Double>
 
-        <converters:ClipboardClearDelayOptionConverter x:Key="ClipboardClearDelayOptionConverter" />
-        <converters:LanguageOptionConverter x:Key="LanguageOptionConverter" />
-        <converters:SensitiveActionPolicyOptionConverter x:Key="SensitiveActionPolicyOptionConverter" />
-        <converters:ThemeOptionConverter x:Key="ThemeOptionConverter" />
-        <converters:VaultTimeoutOptionConverter x:Key="VaultTimeoutOptionConverter" />
-        <converters:VaultTimeoutTriggerOptionConverter x:Key="VaultTimeoutTriggerOptionConverter" />
+        <converters1:ClipboardClearDelayOptionConverter x:Key="ClipboardClearDelayOptionConverter" />
+        <converters1:LanguageOptionConverter x:Key="LanguageOptionConverter" />
+        <converters1:SensitiveActionPolicyOptionConverter x:Key="SensitiveActionPolicyOptionConverter" />
+        <converters1:ThemeOptionConverter x:Key="ThemeOptionConverter" />
+        <converters1:VaultTimeoutOptionConverter x:Key="VaultTimeoutOptionConverter" />
+        <converters1:VaultTimeoutTriggerOptionConverter x:Key="VaultTimeoutTriggerOptionConverter" />
 
         <Style x:Key="SettingsComboBoxStyle" TargetType="ComboBox">
             <Setter Property="MinWidth" Value="220" />

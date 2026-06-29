@@ -2,7 +2,7 @@ using Windows.Win32;
 using Windows.Win32.Foundation;
 using WinUIEx;
 
-namespace FluentBitwarden.Infrastructure.Window;
+namespace FluentBitwarden.Infrastructure.Extensions;
 
 public static class WindowExtensions
 {
@@ -12,7 +12,7 @@ public static class WindowExtensions
     public static void ShowAndActivate(this WindowEx window)
     {
         window.Show();
-        window.Restore();
+        window.BringToFront();
 
         if (!window.SetForegroundWindow())
             window.Activate();

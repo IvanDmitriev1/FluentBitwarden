@@ -1,3 +1,5 @@
+using StringToUriConverter = FluentBitwarden.Infrastructure.Converters.StringToUriConverter;
+
 namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
 
 public static class VaultCipherExtensions

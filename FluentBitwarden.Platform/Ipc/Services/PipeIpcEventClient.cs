@@ -100,7 +100,7 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
                 UnhandledExceptionLogger.WriteException(exception);
             }
 
-            await Task.Delay(ReconnectDelay, stoppingToken);
+            await Task.Delay(ReconnectDelay, stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
         }
     }
 

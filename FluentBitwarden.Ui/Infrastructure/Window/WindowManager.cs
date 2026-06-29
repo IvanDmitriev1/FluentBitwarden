@@ -1,4 +1,3 @@
-using FluentBitwarden.Infrastructure.Navigation;
 using FluentBitwarden.Views.Shell;
 using Microsoft.UI.Xaml;
 using System.Diagnostics;
@@ -41,7 +40,7 @@ internal sealed class WindowManager : IWindowManager
 
     public void ShowOrCreateWindow(WindowMode mode)
     {
-        if (!HasWindow)
+        if (!HasWindow || ActiveMode != mode)
             ReplaceWindow(mode);
         else
             ActivateWindow();
