@@ -1,0 +1,6 @@
+﻿CreateWindowExW
+DestroyWindow
+DefWindowProcW
+RegisterClassExW
+UnregisterClassW
+GetModuleHandleW

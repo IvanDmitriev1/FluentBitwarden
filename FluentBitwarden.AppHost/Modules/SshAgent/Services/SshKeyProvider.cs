@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Application.Sessions;
+using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
@@ -13,30 +13,25 @@ namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 [Fody.ConfigureAwait(false)]
 internal sealed class SshKeyProvider(
     IUnlockedVaultReader unlockedVault,
-    IVaultSessionCoordinator vaultSessionCoordinator,
-    ISshUserActionDialogClient sshUserActionDialogClient) : ISshKeyProvider
+    ISshUserActionDialogClient sshUserActionDialogClient,
+    IVaultSessionUnlockDialog vaultSessionUnlockDialog) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = VaultCipherType.SshKey };
 
-    //TODO REMOVE
-    private bool HasUnlockedSession => vaultSessionCoordinator.TryGetUnlockedSession(out _);
-
-    public Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
+    public async Task<SshIdentityQueryResult> ListIdentitiesAsync(CancellationToken token)
     {
-        //TODO implement userDialogClient.Unlock to ask user to unlock vault if it's locked instead of just denying the request
-        if (!HasUnlockedSession)
-            return Task.FromResult(SshIdentityQueryResult.Denied);
+        await vaultSessionUnlockDialog.WaitUntilUnlockAsync(token);
 
         var data = unlockedVault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
             .Select(static c => new SshPublicIdentityResponce(c.PublicKey.KeyBlob, c.Name))
             .ToList();
 
-        return Task.FromResult(SshIdentityQueryResult.Success(data));
+        return SshIdentityQueryResult.Success(data);
     }
 
     public async Task<SshSignatureResult> SignAsync(SshSignRequest request, CancellationToken token)
     {
-        if (!HasUnlockedSession || GetShhCipher(request.PublicKeyBlob) is not { } cipher)
+        if (GetShhCipher(request.PublicKeyBlob) is not { } cipher)
             return SshSignatureResult.Failed;
 
         var userVerificationPolicy = SettingsStore.Instance.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);

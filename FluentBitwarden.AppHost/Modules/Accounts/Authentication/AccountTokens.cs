@@ -19,7 +19,7 @@ internal sealed record AccountTokens(
             new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo),
             token,
             AccessToken.Empty,
-            DateTimeOffset.MinValue);
+            DateTimeOffset.UnixEpoch);
 
     public bool IsFor(BitwardenAccountContext accountContext) =>
         UserId == accountContext.UserId &&

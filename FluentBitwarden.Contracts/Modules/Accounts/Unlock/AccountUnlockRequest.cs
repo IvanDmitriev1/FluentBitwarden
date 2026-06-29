@@ -1,5 +1,4 @@
-﻿using FluentBitwarden.Contracts.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+﻿using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 

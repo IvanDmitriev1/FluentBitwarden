@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.Contracts.Modules.Ssh;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Ipc.Clients;

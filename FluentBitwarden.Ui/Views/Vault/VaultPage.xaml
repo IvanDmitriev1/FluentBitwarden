@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<lifecycle:LifecyclePage
+<navigation:LifecyclePage
     x:Class="FluentBitwarden.Views.Vault.VaultPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:attachedProperties="using:FluentBitwarden.AttachedProperties"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:lifecycle="using:FluentBitwarden.Services.Navigation"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
+    xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
     xmlns:sharedControls="using:FluentBitwarden.Controls"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
     xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
-    <lifecycle:LifecyclePage.Resources>
+    <navigation:LifecyclePage.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ms-appx:///Templates/Vault/CipherListViewItemTemplate.xaml" />
@@ -25,7 +25,7 @@
 
             <models:CipherTypeOptionOptionConverter x:Key="CipherTypeOptionConverter" />
         </ResourceDictionary>
-    </lifecycle:LifecyclePage.Resources>
+    </navigation:LifecyclePage.Resources>
 
     <SplitView
         x:Name="MainSplitView"
@@ -55,7 +55,7 @@
                     <sharedControls:SearchFilterBar.FilterContent>
                         <ComboBox
                             ItemTemplate="{StaticResource OptionItemComboBoxItemTemplate}"
-                            ItemsSource="{x:Bind models:CipherTypeOption.All}"
+                            ItemsSource="{x:Bind models:VaultCipherTypeOption.All}"
                             PlaceholderText="Filter by type"
                             SelectedItem="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay, Converter={StaticResource CipherTypeOptionConverter}}" />
                     </sharedControls:SearchFilterBar.FilterContent>
@@ -138,9 +138,9 @@
                     Orientation="Horizontal"
                     Spacing="24">
                     <sharedControls:SiteIcon
-                        FallbackGlyph="{x:Bind models:CipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
+                        FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
                         Size="36"
-                        Uri="{x:Bind models:CipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
+                        Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
                     <TextBlock
                         VerticalAlignment="Center"
                         Style="{StaticResource TitleTextBlockStyle}"
@@ -155,4 +155,4 @@
             </StackPanel>
         </ScrollViewer>
     </SplitView>
-</lifecycle:LifecyclePage>
+</navigation:LifecyclePage>

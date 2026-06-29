@@ -9,8 +9,7 @@ public interface IIpcClient
         where TRequest : IIpcRequestMessage;
 
     ValueTask<TResponse> SendAsync<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    TResponse>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         ushort messageType,
         CancellationToken cancellationToken = default);
 }

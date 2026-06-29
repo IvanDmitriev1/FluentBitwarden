@@ -47,7 +47,7 @@ internal sealed class VaultSynchronizer(
         }
         catch (OperationCanceledException)
         {
-            throw;
+            return VaultSyncResult.SkippedOffline;
         }
         catch (Exception e)
         {

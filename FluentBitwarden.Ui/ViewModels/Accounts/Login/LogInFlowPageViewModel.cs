@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Application.Abstractions;
+using FluentBitwarden.Application.Implementations;
+using FluentBitwarden.Application.Models;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
-using FluentBitwarden.Services.Navigation;
-using FluentBitwarden.Services.Window;
-using FluentBitwarden.Views.Startup;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login;
 
@@ -11,17 +13,17 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
 {
     public LogInFlowPageViewModel(
         IAccountsClient accountsClient,
-        INavigationService navigationService,
-        IWindowManager windowManager)
+        IWindowManager windowManager,
+        IAppCoordinator appCoordinator)
     {
-        _navigationService = navigationService;
         _windowManager = windowManager;
+        _appCoordinator = appCoordinator;
         AccountsClient = accountsClient;
         CurrentStep = new LogInEmailStepViewModel(this, _windowManager);
     }
 
-    private readonly INavigationService _navigationService;
     private readonly IWindowManager _windowManager;
+    private readonly IAppCoordinator _appCoordinator;
 
     internal IAccountsClient AccountsClient { get; }
     internal LogInFlowContext Context { get; } = new();
@@ -48,10 +50,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
         CurrentStep = new LogIn2FStepViewModel(twoFactorRequired, this);
     }
 
-    internal void OnSuccessLogIn()
-    {
-        _navigationService.NavigateTo<LoadingPage>();
-    }
+    internal Task OnSuccessLogIn(AccountProfile account) => _appCoordinator.RefreshSessionAsync();
 
     [RelayCommand]
     private void GoBack()

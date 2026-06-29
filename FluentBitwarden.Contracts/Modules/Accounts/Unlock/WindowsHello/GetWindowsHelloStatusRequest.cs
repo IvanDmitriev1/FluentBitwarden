@@ -1,6 +1,4 @@
-﻿using FluentBitwarden.Contracts.Ipc.Abstractions;
-
-namespace FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
+﻿namespace FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 
 [MemoryPackable]
 public readonly partial record struct GetWindowsHelloStatusRequest(UserId UserId) : IIpcRequestMessage

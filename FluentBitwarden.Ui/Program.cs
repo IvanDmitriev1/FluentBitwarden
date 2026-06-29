@@ -39,6 +39,7 @@ public static class Program
     public static void RedirectActivationTo(AppActivationArguments args, AppInstance keyInstance)
     {
         _redirectEventHandle = PInvoke.CreateEvent(null, bManualReset: true, bInitialState: false, lpName: null);
+        PInvoke.AllowSetForegroundWindow(keyInstance.ProcessId);
 
         Task.Run(() =>
         {

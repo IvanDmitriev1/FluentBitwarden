@@ -1,13 +1,9 @@
 namespace FluentBitwarden.Views.Startup;
 
-public sealed partial class LoadingPage : LifecyclePage
+public sealed partial class LoadingPage : Page
 {
-    public LoadingPage(LoadingPageViewModel viewModel)
+    public LoadingPage()
     {
-        ViewModel = viewModel;
-        DataContext = ViewModel;
         InitializeComponent();
     }
-
-    public LoadingPageViewModel ViewModel { get; }
 }

@@ -9,6 +9,7 @@ CreateEvent
 SetEvent
 CoWaitForMultipleObjects
 SetForegroundWindow
+AllowSetForegroundWindow
 
 WebAuthNGetApiVersionNumber
 WebAuthNAuthenticatorGetAssertion

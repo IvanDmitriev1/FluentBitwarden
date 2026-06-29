@@ -1,6 +1,6 @@
 global using System.Diagnostics;
 global using System.Diagnostics.CodeAnalysis;
-global using FluentBitwarden.Contracts.Ipc.Abstractions;
+global using FluentBitwarden.Contracts.Infrastructure.Ipc.Abstractions;
 global using FluentBitwarden.Platform.Ipc.Abstractions;
 global using FluentBitwarden.Platform.Ipc.Internal;
 global using MemoryPack;

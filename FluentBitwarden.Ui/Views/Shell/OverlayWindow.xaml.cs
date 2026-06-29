@@ -1,5 +1,4 @@
-using FluentBitwarden.Services.Window;
-using FluentBitwarden.Views.Startup;
+using FluentBitwarden.Infrastructure.Window;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using WinUIEx;
@@ -8,12 +7,10 @@ namespace FluentBitwarden.Views.Shell;
 
 public sealed partial class OverlayWindow : WinUIEx.WindowEx, IThemeChangeable
 {
-    public OverlayWindow(
-        NavigationService navigationService)
+    public OverlayWindow()
     {
         InitializeComponent();
 
-        navigationService.Initialize(Frame);
         this.PreventMaximizeOnTitleBarDoubleClick();
         this.CenterOnScreen();
 
@@ -28,22 +25,14 @@ public sealed partial class OverlayWindow : WinUIEx.WindowEx, IThemeChangeable
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(DragArea);
 
-        Frame.Navigate(
-            typeof(LoadingPage),
-            PageNavigationParameter.From(LoadingPageParameter.RequestHost));
     }
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;
-    public bool IsRequestHost { get; } = true;
+    public Frame NavigationFrame => Frame;
 
     public void ApplyTheme(ElementTheme themeMode)
     {
         RootElement.RequestedTheme = themeMode;
-    }
-
-    public void SetContent(Page content)
-    {
-        Frame.Content = content;
     }
 
     private void EscapeKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)

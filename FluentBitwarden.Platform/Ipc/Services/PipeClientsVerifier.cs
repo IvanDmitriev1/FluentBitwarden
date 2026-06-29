@@ -12,6 +12,7 @@ internal sealed class PipeClientsVerifier : IIpcClientsVerifier
         "FluentBitwarden.Ui.exe",
         "FluentBitwarden.AppHost.exe",
         "FluentBitwarden.BrowseProxy.exe",
+        "FluentBitwarden.CommandPalette.exe",
     ];
     public IpcAuthenticationLevel IsExpectedClient(NamedPipeServerStream pipe)
     {

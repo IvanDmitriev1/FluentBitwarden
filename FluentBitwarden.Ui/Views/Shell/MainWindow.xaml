@@ -32,10 +32,7 @@
             </controls:MyTitleBar.IconSource>
         </controls:MyTitleBar>
 
-        <Frame
-            x:Name="RootFrame"
-            Grid.Row="1"
-            Navigated="RootFrame_OnNavigated" />
+        <Frame x:Name="RootFrame" Grid.Row="1" />
     </Grid>
 
 </winUiEx:WindowEx>

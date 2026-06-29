@@ -1,5 +1,5 @@
-using FluentBitwarden.AppHost.Infrastructure.Abstractions;
 using FluentBitwarden.AppHost.Application.Sessions;
+using FluentBitwarden.AppHost.Infrastructure.Services;
 using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.AppHost.Application.Activation;

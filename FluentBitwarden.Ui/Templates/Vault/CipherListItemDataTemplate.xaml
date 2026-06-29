@@ -19,9 +19,9 @@
 
             <controls1:SiteIcon
                 Grid.Column="0"
-                FallbackGlyph="{x:Bind extensions1:CipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
+                FallbackGlyph="{x:Bind extensions1:VaultCipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
                 Size="{StaticResource CipherListItemDataTemplateIconSize}"
-                Uri="{x:Bind extensions1:CipherExtensions.GetDefaultSiteIconUri((models:VaultCipher))}" />
+                Uri="{x:Bind extensions1:VaultCipherExtensions.GetDefaultSiteIconUri((models:VaultCipher))}" />
 
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                 <TextBlock
@@ -31,9 +31,9 @@
 
                 <TextBlock
                     x:Name="SubTitle"
-                    x:Load="{x:Bind extensions1:CipherExtensions.HasSubtitle((models:VaultCipher))}"
+                    x:Load="{x:Bind extensions1:VaultCipherExtensions.HasSubtitle((models:VaultCipher))}"
                     Opacity="0.72"
-                    Text="{x:Bind extensions1:CipherExtensions.GetSubtitle((models:VaultCipher))}"
+                    Text="{x:Bind extensions1:VaultCipherExtensions.GetSubtitle((models:VaultCipher))}"
                     TextTrimming="CharacterEllipsis" />
             </StackPanel>
         </Grid>

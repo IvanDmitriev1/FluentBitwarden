@@ -1,13 +1,9 @@
 namespace FluentBitwarden.Views.Shell;
 
-public sealed partial class OfflinePage : LifecyclePage
+public sealed partial class OfflinePage : Page
 {
-    public OfflinePage(OfflinePageViewModel viewModel)
+    public OfflinePage()
     {
-        ViewModel = viewModel;
-        DataContext = viewModel;
         InitializeComponent();
     }
-
-    public OfflinePageViewModel ViewModel { get; }
 }

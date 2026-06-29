@@ -9,6 +9,7 @@
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:templates1="using:FluentBitwarden.Templates"
+    xmlns:vault="using:FluentBitwarden.Controls.Vault"
     attachedProperties:TitlebarProperties.NavigationFrame="{x:Bind ContentFrame}"
     attachedProperties:TitlebarProperties.PaneToggleCommand="{x:Bind PaneToggleCommand}"
     KeyboardAcceleratorPlacementMode="Hidden"
@@ -24,26 +25,19 @@
 
     <interactivity:Interaction.Behaviors>
         <behaviors:FocusBehavior>
-            <behaviors:FocusTarget Control="{x:Bind AutoSuggestBox}" />
+            <behaviors:FocusTarget Control="{x:Bind VaultCipherSearchBox}" />
         </behaviors:FocusBehavior>
     </interactivity:Interaction.Behaviors>
 
     <Page.KeyboardAccelerators>
-        <KeyboardAccelerator
+        <attachedProperties:FocusKeyboardAccelerator
             Key="F"
-            Invoked="SearchKeyboardAccelerator_Invoked"
-            Modifiers="Control" />
+            Modifiers="Control"
+            Target="{x:Bind VaultCipherSearchBox}" />
     </Page.KeyboardAccelerators>
 
     <attachedProperties:TitlebarProperties.Content>
-        <AutoSuggestBox
-            x:Name="AutoSuggestBox"
-            ItemTemplate="{StaticResource CipherAutosuggestItemTemplates}"
-            PlaceholderText="Search.."
-            QueryIcon="Find"
-            QuerySubmitted="AutoSuggestBox_OnQuerySubmitted"
-            TextChanged="AutoSuggestBox_OnTextChanged"
-            UpdateTextOnSelect="False" />
+        <vault:VaultCipherSearchBox x:Name="VaultCipherSearchBox" CipherSelectedCommand="{x:Bind VaultCipherSelectedCommand}" />
     </attachedProperties:TitlebarProperties.Content>
 
     <NavigationView

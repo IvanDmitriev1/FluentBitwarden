@@ -20,17 +20,19 @@ internal static class IpcServiceCollectionExtensions
         Justification = "IPC registration intentionally closes known AppHost handler invoker types at startup.")]
     public static IServiceCollection AddAppHostIpc(this IServiceCollection services)
     {
-        services.AddIpcServer(IpcConstants.AppHostPipeName, 2);
+        services.AddIpcServer(
+            IpcConstants.AppHostPipeName,
+            handlers => handlers
+                .Add<AccountsIpcHandler>()
+                .Add<WindowsHelloIpcHandler>()
+                .Add<VaultIpcHandler>()
+                .Add<BrowserExtensionIpcHandler>()
+                .Add<PasskeyIpcHandler>());
+        services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         services.AddIpcClient(IpcConstants.UiPipeName);
 
         services.AddSingleton<ISshUserActionDialogClient, SshUserActionDialogClient>();
         services.AddSingleton<IPasskeyCredentialSelectionClient, PasskeyCredentialSelectionClient>();
-
-        services.AddIpcRequestHandler<AccountsIpcHandler>();
-        services.AddIpcRequestHandler<WindowsHelloIpcHandler>();
-        services.AddIpcRequestHandler<VaultIpcHandler>();
-        services.AddIpcRequestHandler<BrowserExtensionIpcHandler>();
-        services.AddIpcRequestHandler<PasskeyIpcHandler>();
 
         return services;
     }

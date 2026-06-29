@@ -13,4 +13,15 @@
     <Configurations Condition="'$(Configurations)' == ''">Debug;Release</Configurations>
     <Platforms Condition="'$(Platforms)' == ''">x64;ARM64</Platforms>
   </PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<PublishTrimmed>false</PublishTrimmed>
+		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+		<EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+		<EnableAotAnalyzer>true</EnableAotAnalyzer>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' != 'Debug'">
+		<ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
+	</PropertyGroup>
 </Project>

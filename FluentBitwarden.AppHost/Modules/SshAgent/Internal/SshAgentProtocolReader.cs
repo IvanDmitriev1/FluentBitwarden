@@ -1,29 +1,18 @@
 ﻿using System.Buffers.Binary;
+using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 
 internal static class SshAgentProtocolReader
 {
-    public static bool TryReadLength(Stream stream, out int contentLength)
+    public static async Task<int> ReadLengthAsync(Stream stream, CancellationToken cancellationToken)
     {
-        contentLength = 0;
+        using var bufferOwner = MemoryOwner<byte>.Allocate(4);
+        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
 
-        Span<byte> buffer = stackalloc byte[4];
-        int read = stream.ReadAtLeast(buffer, buffer.Length, false);
-        if (read < buffer.Length)
-        {
-            return false;
-        }
-
-        uint packetLength = BinaryPrimitives.ReadUInt32BigEndian(buffer);
-        if (packetLength == 0)
-        {
-            return false;
-        }
-
-        contentLength = (int)packetLength;
-        return true;
+        uint contentLength = BinaryPrimitives.ReadUInt32BigEndian(bufferOwner.Span);
+        return (int)contentLength;
     }
 
     public static bool TryReadPacket(ReadOnlyMemory<byte> frame, out SshAgentPacket packet)

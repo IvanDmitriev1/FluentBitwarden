@@ -1,6 +1,6 @@
-using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FluentBitwarden.Platform.Ipc;
 
@@ -8,16 +8,43 @@ public static class IpcServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddIpcServer(string pipeName, int maxConcurrentConnections = 1)
+        public IServiceCollection AddIpcServer(
+            string pipeName,
+            Action<IpcRpcHandlerBuilder> configureHandlers)
         {
+            var handlers = new IpcRpcHandlerBuilder(services);
+            configureHandlers.Invoke(handlers);
+
             services.AddHostedService(sp =>
                 new PipeIpcServer(
-                    maxConcurrentConnections,
                     pipeName,
-                    sp.GetServices<IpcEndpoint>(),
+                    handlers.Build(sp),
                     sp.GetRequiredService<IIpcClientsVerifier>()));
 
-            services.AddSingleton<IIpcClientsVerifier, PipeClientsVerifier>();
+            services.TryAddSingleton<IIpcClientsVerifier, PipeClientsVerifier>();
+
+            return services;
+        }
+
+        public IServiceCollection AddIpcEventServer(string pipeName)
+        {
+            services.AddSingleton(sp =>
+                new PipeIpcEventHub(
+                    pipeName,
+                    sp.GetRequiredService<IIpcClientsVerifier>()));
+            services.AddHostedService(static sp => sp.GetRequiredService<PipeIpcEventHub>());
+            services.AddSingleton<IIpcEventPublisher>(static sp => sp.GetRequiredService<PipeIpcEventHub>());
+
+            services.TryAddSingleton<IIpcClientsVerifier, PipeClientsVerifier>();
+
+            return services;
+        }
+
+        public IServiceCollection AddIpcEventClient(string pipeName)
+        {
+            services.AddSingleton(_ => new PipeIpcEventClient(pipeName));
+            services.AddHostedService(static sp => sp.GetRequiredService<PipeIpcEventClient>());
+            services.AddSingleton<IIpcEventClient>(static sp => sp.GetRequiredService<PipeIpcEventClient>());
 
             return services;
         }
@@ -25,28 +52,6 @@ public static class IpcServiceCollectionExtensions
         public IServiceCollection AddIpcClient(string pipeName)
         {
             services.AddSingleton<IIpcClient>(_ => new PipeIpcClient(pipeName));
-            return services;
-        }
-
-        [RequiresDynamicCode("IPC handler registration closes generic invoker types at runtime.")]
-        [RequiresUnreferencedCode("IPC handler registration reflects over handler methods and message metadata.")]
-        public IServiceCollection AddIpcRequestHandler<
-            [DynamicallyAccessedMembers(
-                DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)]
-            THandler>()
-            where THandler : class, IIpcRequestsHandler
-        {
-            services.AddSingleton<THandler>();
-
-            foreach (var descriptor in IpcEndpointHandlerMethodDescriptorFactory.Discover<THandler>())
-            {
-                services.AddSingleton<IpcEndpoint>(sp =>
-                {
-                    var handler = sp.GetRequiredService<THandler>();
-                    return IpcEndpointFactory.Create(handler, descriptor);
-                });
-            }
-
             return services;
         }
     }
