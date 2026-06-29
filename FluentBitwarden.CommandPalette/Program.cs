@@ -1,6 +1,5 @@
-using FluentBitwarden.CommandPalette.Pages;
+using FluentBitwarden.CommandPalette.Application;
 using FluentBitwarden.Platform.SiteIcons;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.CommandPalette;
@@ -16,21 +15,10 @@ public static class Program
             return;
 
         var builder = Host.CreateApplicationBuilder();
-        builder.Services.AddInfrastructureServices();
-        builder.Services.AddSiteIconCache();
-
-        builder.Services.AddSingleton<FluentBitwardenCommandsProvider>();
-        builder.Services.AddSingleton(static services =>
-            new FluentBitwardenCommandPaletteExtension(
-                services.GetRequiredService<FluentBitwardenCommandsProvider>(),
-                services.GetRequiredService<IHostApplicationLifetime>()));
-
-        builder.Services.AddSingleton<OpenUnlockCommand>();
-
-        builder.Services.AddSingleton<VaultCipherListItemFactory>();
-        builder.Services.AddSingleton<VaultSearchPage>();
-
-        builder.Services.AddHostedService<CommandPaletteComServer>();
+        builder.Services
+            .AddInfrastructureServices()
+            .AddSiteIconCache()
+            .AddCommandPaletteApplicationServices();
 
         using var host = builder.Build();
         host.Run();

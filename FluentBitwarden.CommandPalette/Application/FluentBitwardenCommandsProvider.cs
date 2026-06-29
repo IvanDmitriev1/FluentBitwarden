@@ -1,6 +1,6 @@
 using FluentBitwarden.CommandPalette.Pages;
 
-namespace FluentBitwarden.CommandPalette;
+namespace FluentBitwarden.CommandPalette.Application;
 
 internal sealed partial class FluentBitwardenCommandsProvider : CommandProvider
 {

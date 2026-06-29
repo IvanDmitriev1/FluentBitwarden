@@ -33,7 +33,7 @@ internal sealed class AppCoordinator : IAppCoordinator
         eventClient.Subscribe<VaultSessionStatusChangedEvent>((_, _) =>
             App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync));
 
-        NetworkInformation.NetworkStatusChanged += OnNetworkStatusChanged;
+        //NetworkInformation.NetworkStatusChanged += OnNetworkStatusChanged;
     }
 
     private readonly IAppSessionResolver _sessionResolver;
@@ -150,7 +150,7 @@ internal sealed class AppCoordinator : IAppCoordinator
         }
     }
 
-    private void OnNetworkStatusChanged(object sender)
+    private void OnNetworkStatusChanged(object? sender)
     {
         if (!NetworkInformation.HasInternetAccess)
             return;

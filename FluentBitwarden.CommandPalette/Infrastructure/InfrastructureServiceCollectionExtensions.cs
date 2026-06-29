@@ -1,5 +1,4 @@
-using FluentBitwarden.CommandPalette.Infrastructure.Services;
-using FluentBitwarden.Contracts.Infrastructure;
+using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Platform.Ipc;
@@ -15,13 +14,11 @@ internal static class InfrastructureServiceCollectionExtensions
         services.AddIpcClient(IpcConstants.AppHostPipeName);
         services.AddIpcEventClient(IpcConstants.AppHostEventsPipeName);
         services.AddSingleton<IAccountsClient, RemoteAccountsClient>();
+        services.AddSingleton<IWindowsHelloUnlockClient, RemoteWindowsHelloUnlockClient>();
         services.AddSingleton<IVaultClient, RemoteVaultClient>();
 
-        services.AddSingleton<IVaultSessionUnlockDialog, VaultSessionUnlockDialog>();
-
-
-        services.AddSingleton<IUiProcessManager, ComPlateExtUiProcessManager>();
-        services.AddSingleton<IAppHostProcessManager, ComPlateExtAppHostProcessManager>();
+        services.AddSingleton<IUiProcessManager, CommandPaletteUiProcessManager>();
+        services.AddSingleton<IAppHostProcessManager, CommandPaletteAppHostProcessManager>();
 
         return services;
     }

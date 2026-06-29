@@ -1,4 +1,4 @@
-using BitwardenApi.Vault.Items.Contracts;
+using FluentBitwarden.CommandPalette.VaultListItems;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
@@ -15,7 +15,8 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 
     private readonly IAccountsClient _accountsClient;
     private readonly IVaultClient _vaultClient;
-    private readonly VaultCipherListItemFactory _listItemFactory;
+    private readonly UnlockVaultPage _unlockVaultPage;
+    private readonly VaultCipherListItemFactory _vaultCipherListItemFactory;
     private readonly IDisposable _sessionStatusSubscription;
 
     private IListItem[] _items = [];
@@ -26,19 +27,21 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         IAccountsClient accountsClient,
         IVaultClient vaultClient,
         IIpcEventClient eventClient,
-        VaultCipherListItemFactory listItemFactory)
+        UnlockVaultPage unlockVaultPage,
+        VaultCipherListItemFactory vaultCipherListItemFactory)
     {
         _accountsClient = accountsClient;
         _vaultClient = vaultClient;
-        _listItemFactory = listItemFactory;
+        _unlockVaultPage = unlockVaultPage;
+        _vaultCipherListItemFactory = vaultCipherListItemFactory;
         _sessionStatusSubscription = eventClient.Subscribe<VaultSessionStatusChangedEvent>(OnSessionStatusChanged);
 
-        Title = "FluentBitwarden logins";
+        Id = PageId;
+        Title = "FluentBitwarden vault";
         Name = "Search";
-        PlaceholderText = "Search logins";
+        PlaceholderText = "Search vault";
         Icon = Icons.Application;
         IsLoading = true;
-        Id = PageId;
 
         QueueSearch(string.Empty);
     }
@@ -91,7 +94,14 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 
             if (await _accountsClient.GetUnlockedAccount(cancellationToken) is null)
             {
-                PublishItems(generation, [_listItemFactory.CreateUnlockItem()]);
+                ListItem unlockListItem = new(_unlockVaultPage)
+                {
+                    Title = "Unlock vault",
+                    Subtitle = "Vault is locked. Unlock before searching.",
+                    Icon = Icons.Unlock
+                };
+
+                PublishItems(generation, [unlockListItem]);
                 return;
             }
 
@@ -101,21 +111,28 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
             var query = new VaultCipherQuery
             {
                 SearchText = searchText,
-                CipherType = VaultCipherType.Login,
                 Limit = 50,
                 SortField = VaultCipherSortField.Name,
                 SortDirection = VaultCipherSortDirection.Ascending,
             };
+
             var ciphers = await _vaultClient.SearchCiphersAsync(query, searchTimeout.Token);
-            var items = ciphers
-                .OfType<LoginVaultCipher>()
-                .Where(static cipher => !cipher.Reprompt && !string.IsNullOrWhiteSpace(cipher.Password))
-                .Select(_listItemFactory.Create)
+            if (ciphers.Length == 0)
+            {
+                PublishItems(generation, [
+                    new ListItem(new NoOpCommand())
+                    {
+                        Title = "No matching items",
+                        Subtitle = "Try a different search"
+                    }
+                ]);
+            }
+
+            var pushItems = ciphers
+                .Select(_vaultCipherListItemFactory.Create)
                 .ToArray();
 
-            PublishItems(
-                generation,
-                items.Length == 0 ? [_listItemFactory.CreateNoResultsItem()] : items);
+            PublishItems(generation, pushItems);
         }
         catch (OperationCanceledException)
         {
@@ -123,7 +140,12 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         }
         catch (Exception)
         {
-            PublishItems(generation, [_listItemFactory.CreateSearchErrorItem()]);
+            var errorItem = new ListItem(new NoOpCommand())
+            {
+                Title = "Could not search FluentBitwarden",
+                Subtitle = "Try the search again"
+            };
+            PublishItems(generation, [errorItem]);
         }
     }
 
@@ -136,5 +158,4 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         IsLoading = false;
         RaiseItemsChanged(items.Length);
     }
-
 }

@@ -5,19 +5,22 @@ namespace FluentBitwarden.CommandPalette.Commands;
 internal sealed partial class CopyVaultValueCommand : InvokableCommand
 {
     public CopyVaultValueCommand(string value, string valueName)
+        : this(() => value, valueName)
     {
-        _value = value;
-        _valueName = valueName;
+    }
+
+    public CopyVaultValueCommand(Func<string> valueFactory, string valueName)
+    {
+        _valueFactory = valueFactory;
         Name = $"Copy {valueName.ToLowerInvariant()}";
         Icon = Icons.Copy;
     }
 
-    private readonly string _value;
-    private readonly string _valueName;
+    private readonly Func<string> _valueFactory;
 
     public override ICommandResult Invoke()
     {
-        ClipboardManager.SetText(_value);
-        return CommandResult.ShowToast($"{_valueName} copied");
+        ClipboardManager.SetText(_valueFactory());
+        return CommandResult.Hide();
     }
 }

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using System.Runtime.InteropServices;
 
-namespace FluentBitwarden.CommandPalette;
+namespace FluentBitwarden.CommandPalette.Application;
 
 [Guid("284C1158-2735-42BB-A49F-269B620CB905")]
 public sealed partial class FluentBitwardenCommandPaletteExtension : IExtension, IDisposable

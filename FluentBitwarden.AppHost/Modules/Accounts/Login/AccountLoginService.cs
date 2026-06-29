@@ -118,7 +118,7 @@ internal sealed class AccountLoginService(
         account.UserId,
         account.Email,
         account.Environment,
-        LastSyncAt: DateTimeOffset.MinValue);
+        LastSyncAt: DateTimeOffset.UnixEpoch);
 
     private static AuthenticatedAccount CreateAuthenticationSuccess(
         TokenAuthenticatedModel model,

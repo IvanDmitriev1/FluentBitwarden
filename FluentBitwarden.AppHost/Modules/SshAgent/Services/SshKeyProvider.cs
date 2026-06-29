@@ -1,8 +1,8 @@
+using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
-using FluentBitwarden.Contracts.Infrastructure;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;

@@ -1,9 +1,9 @@
-using FluentBitwarden.CommandPalette.Infrastructure.Services;
+using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 using Microsoft.Extensions.Hosting;
 using Shmuelie.WinRTServer;
 using Shmuelie.WinRTServer.CsWinRT;
 
-namespace FluentBitwarden.CommandPalette;
+namespace FluentBitwarden.CommandPalette.Application;
 
 internal sealed partial class CommandPaletteComServer(
     FluentBitwardenCommandPaletteExtension extension,
