@@ -148,7 +148,7 @@
                 <sharedControls:PasswordBoxEx
                     x:Name="MasterPasswordBox"
                     ActionButtonCommand="{x:Bind LogInWithPasswordCommand}"
-                    ActionButtonCommandParameter="{x:Bind MasterPasswordBox.Password, Mode=OneWay}"
+                    ActionButtonCommandParameter="{Binding Password, ElementName=MasterPasswordBox}"
                     Command="{x:Bind LogInWithPasswordCommand}"
                     Header="Master password">
                     <sharedControls:PasswordBoxEx.ActionButtonContent>
@@ -164,7 +164,7 @@
                 Height="36"
                 HorizontalAlignment="Stretch"
                 Command="{x:Bind LogInWithPasswordCommand}"
-                CommandParameter="{x:Bind MasterPasswordBox.Password, Mode=OneWay}"
+                CommandParameter="{Binding Password, ElementName=MasterPasswordBox}"
                 Content="Continue"
                 Style="{StaticResource AccentButtonStyle}" />
         </StackPanel>

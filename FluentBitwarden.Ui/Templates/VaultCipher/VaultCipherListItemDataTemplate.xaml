@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls1="using:FluentBitwarden.Controls.Shared"
     xmlns:extensions1="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
-    xmlns:models="using:BitwardenApi.Vault.Items.Contracts">
+    xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
+    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon">
 
     <x:Double x:Key="VaultCipherListItemDataTemplateIconSize">22</x:Double>
 
@@ -16,7 +17,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <controls1:SiteIcon
+            <siteIcon:SiteIcon
                 Grid.Column="0"
                 FallbackGlyph="{x:Bind extensions1:VaultCipherExtensions.GetDefaultGlyph((models:VaultCipher))}"
                 Size="{StaticResource VaultCipherListItemDataTemplateIconSize}"

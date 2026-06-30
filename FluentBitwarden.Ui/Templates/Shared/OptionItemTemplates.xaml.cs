@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Templates;
+namespace FluentBitwarden.Templates.Shared;
 
 public partial class OptionItemTemplates : ResourceDictionary
 {
