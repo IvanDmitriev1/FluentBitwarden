@@ -1,4 +1,4 @@
-using StringToUriConverter = FluentBitwarden.Infrastructure.Converters.StringToUriConverter;
+using FluentBitwarden.Infrastructure.Converters;
 
 namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
 
@@ -6,10 +6,10 @@ public static class VaultCipherExtensions
 {
     public static Uri? GetDefaultSiteIconUri(this VaultCipher? cipher)
     {
-        if (cipher is not LoginVaultCipher loginCipher)
+        if (cipher is not LoginVaultCipher loinCipher)
             return null;
 
-        StringToUriConverter.TryConvert(loginCipher.Uris.FirstOrDefault(), out var uri);
+        StringToUriConverter.TryConvert(loinCipher.Uris.FirstOrDefault(), out var uri);
         return uri;
     }
 

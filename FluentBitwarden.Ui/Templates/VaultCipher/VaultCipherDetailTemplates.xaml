@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FluentBitwarden.Controls.Shared"
+    xmlns:extensions1="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
     xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers"
     xmlns:vault1="using:FluentBitwarden.Templates.Vault">
@@ -44,10 +45,12 @@
                     <ItemsControl.Items>
                         <vault:VaultCipherTextField Label="Username" Text="{x:Bind Username}" />
                         <vault:VaultCipherPasswordField Label="Password" Password="{x:Bind Password}" />
-                        <vault:VaultCipherTotpField
-                            Label="TOTP"
-                            Totp="{x:Bind Totp}"
-                            Visibility="{x:Bind Totp, Converter={StaticResource EmptyObjectToVisibilityConverter}}" />
+                        <vault:VaultCipherTextField
+                            ActionText=""
+                            Label="Passkey"
+                            Text="{x:Bind extensions1:VaultLoginCipherExtensions.CreatedAtFormatted(Fido2Credential)}"
+                            Visibility="{x:Bind Fido2Credential, Converter={StaticResource NullToVisibilityConverter}}" />
+                        <vault:VaultCipherTotpField Totp="{x:Bind Totp}" Visibility="{x:Bind Totp, Converter={StaticResource NullToVisibilityConverter}}" />
                     </ItemsControl.Items>
                 </ItemsControl>
             </Border>
@@ -57,18 +60,10 @@
                 <ItemsControl ItemsSource="{x:Bind Uris}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="x:String">
-                            <TextBlock
-                                Margin="0,0,0,8"
-                                Text="{x:Bind}"
-                                TextWrapping="Wrap" />
+                            <vault:VaultCipherUrlField Margin="0,0,0,8" Url="{x:Bind}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </StackPanel>
-
-            <StackPanel Orientation="Vertical">
-                <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="FIDO2 credentials" />
-                <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind Fido2Credentials.Count}" />
             </StackPanel>
         </StackPanel>
     </DataTemplate>

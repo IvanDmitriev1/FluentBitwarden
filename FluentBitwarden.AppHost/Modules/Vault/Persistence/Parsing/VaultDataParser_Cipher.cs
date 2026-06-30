@@ -73,7 +73,7 @@ public static partial class VaultDataParser
                 else if (r.ValueTextEquals("uris"u8) || r.ValueTextEquals("Uris"u8))
                     c.Uris = ReadJsonArray(ref r, k, ReadUri);
                 else if (r.ValueTextEquals("fido2Credentials"u8) || r.ValueTextEquals("Fido2Credentials"u8))
-                    c.Fido2Credentials = ReadJsonArray(ref r, k, ReadFido2Credential);
+                    c.Fido2Credential = ReadFirstFido2Credential(ref r, k);
                 else
                     return false;
 
@@ -284,10 +284,40 @@ public static partial class VaultDataParser
         return uri;
     }
 
+    private static Fido2Credential? ReadFirstFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    {
+        reader.Read();
+
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+
+        if (reader.TokenType != JsonTokenType.StartArray)
+            throw new JsonException("Expected a JSON array.");
+
+        Fido2Credential? credential = null;
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndArray)
+                break;
+
+            if (credential is null)
+            {
+                credential = ReadFido2Credential(ref reader, decryptKey);
+                continue;
+            }
+
+            if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+                reader.Skip();
+        }
+
+        return credential;
+    }
+
     private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
-            throw new JsonException("Each Fido2Credentials item must be a JSON object.");
+            throw new JsonException("Each fido2Credentials item must be a JSON object.");
 
         byte[]? credentialId = null;
         Fido2CredentialKeyType? keyType = null;

@@ -141,7 +141,7 @@
         <ScrollViewer
             HorizontalScrollBarVisibility="Disabled"
             VerticalScrollBarVisibility="Auto"
-            Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
+            Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
 
             <StackPanel
                 x:Name="VaultCipherDetailsStackPanel"

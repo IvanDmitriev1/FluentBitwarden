@@ -8,6 +8,7 @@
     <x:String x:Key="VaultCipherTotpFieldCopyActionText">Copy</x:String>
 
     <Style TargetType="vault:VaultCipherTotpField">
+        <Setter Property="Label" Value="Verification Code (TOTP)" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="vault:VaultCipherTotpField">
@@ -18,7 +19,6 @@
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         Label="{TemplateBinding Label}">
-
 
                         <StackPanel
                             HorizontalAlignment="Stretch"

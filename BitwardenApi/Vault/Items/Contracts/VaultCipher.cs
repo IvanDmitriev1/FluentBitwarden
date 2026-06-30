@@ -43,7 +43,7 @@ public sealed partial class LoginVaultCipher : VaultCipher
     [TotpValueFormatter]
     public TotpValue? Totp { get; set; }
     public List<string> Uris { get; set; } = [];
-    public List<Fido2Credential> Fido2Credentials { get; set; } = [];
+    public Fido2Credential? Fido2Credential { get; set; }
 }
 
 /// <remarks>Notes carries the secure note text via <see cref="VaultCipher.Notes"/>.</remarks>

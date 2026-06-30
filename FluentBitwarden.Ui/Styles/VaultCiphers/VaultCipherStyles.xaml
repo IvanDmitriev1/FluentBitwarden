@@ -6,6 +6,7 @@
         <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherTextFieldStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherPasswordFieldStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherTotpFieldStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherUrlFieldStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>
