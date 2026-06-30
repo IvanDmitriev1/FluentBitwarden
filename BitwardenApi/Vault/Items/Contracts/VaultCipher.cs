@@ -42,7 +42,7 @@ public sealed partial class LoginVaultCipher : VaultCipher
 
     [TotpValueFormatter]
     public TotpValue? Totp { get; set; }
-    public List<string> Uris { get; set; } = [];
+    public List<LoginUri> Uris { get; set; } = [];
     public Fido2Credential? Fido2Credential { get; set; }
 }
 

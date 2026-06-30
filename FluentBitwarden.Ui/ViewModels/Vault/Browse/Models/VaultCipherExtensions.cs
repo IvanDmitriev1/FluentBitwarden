@@ -1,16 +1,15 @@
-using FluentBitwarden.Infrastructure.Converters;
-
 namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
 
 public static class VaultCipherExtensions
 {
     public static Uri? GetDefaultSiteIconUri(this VaultCipher? cipher)
     {
-        if (cipher is not LoginVaultCipher loinCipher)
+        if (cipher is not LoginVaultCipher loginCipher)
             return null;
 
-        StringToUriConverter.TryConvert(loinCipher.Uris.FirstOrDefault(), out var uri);
-        return uri;
+        return loginCipher.Uris.FirstOrDefault() is { } loginUri && loginUri.TryGetWebUri(out var uri)
+            ? uri
+            : null;
     }
 
     public static string? GetSubtitle(this VaultCipher? cipher) => cipher switch

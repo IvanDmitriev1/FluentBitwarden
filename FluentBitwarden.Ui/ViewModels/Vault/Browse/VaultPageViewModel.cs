@@ -202,9 +202,8 @@ public sealed partial class VaultPageViewModel(
     {
         var urls = FilteredCiphers
             .OfType<LoginVaultCipher>()
-            .Select(static c => c.Uris.FirstOrDefault())
-            .Where(static s => !string.IsNullOrWhiteSpace(s))
-            .Select(static s => Uri.TryCreate(s, UriKind.Absolute, out var uri) ? uri : null)
+            .SelectMany(static c => c.Uris)
+            .Select(static u => u.TryGetWebUri(out var uri) ? uri : null)
             .Where(static uri => uri is not null)
             .Cast<Uri>()
             .ToList();

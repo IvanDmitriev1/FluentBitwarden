@@ -259,12 +259,13 @@ public static partial class VaultDataParser
         _ => throw new ArgumentOutOfRangeException()
     };
 
-    private static string ReadUri(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static LoginUri ReadUri(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
-            return string.Empty;
+            throw new JsonException("Each URI item must be a JSON object.");
 
         string? uri = null;
+        UriMatchType matchType = UriMatchType.Domain;
 
         while (reader.Read())
         {
@@ -276,12 +277,33 @@ public static partial class VaultDataParser
 
             if (reader.ValueTextEquals("uri"u8) || reader.ValueTextEquals("Uri"u8))
                 uri = ReadDecryptField(ref reader, decryptKey);
+            else if (reader.ValueTextEquals("match"u8) || reader.ValueTextEquals("Match"u8))
+                matchType = ReadUriMatchType(ref reader);
             else
                 SkipValue(ref reader);
         }
 
-        ArgumentNullException.ThrowIfNull(uri);
-        return uri;
+        return new LoginUri
+        {
+            Value = uri ?? throw new JsonException("URI item is missing Uri."),
+            MatchType = matchType
+        };
+    }
+
+    private static UriMatchType ReadUriMatchType(ref Utf8JsonReader reader)
+    {
+        reader.Read();
+
+        if (reader.TokenType == JsonTokenType.Null)
+            throw new JsonException("URI match cannot be NULL");
+
+        if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out int value))
+            throw new JsonException("URI match must be a valid Int32 value.");
+
+        if (!Enum.IsDefined(typeof(UriMatchType), value))
+            throw new JsonException($"Unsupported URI match type: {value}.");
+
+        return (UriMatchType)value;
     }
 
     private static Fido2Credential? ReadFirstFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)

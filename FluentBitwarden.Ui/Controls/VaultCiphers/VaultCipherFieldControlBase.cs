@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 namespace FluentBitwarden.Controls.VaultCiphers;
 
 [TemplatePart(Name = PartChrome, Type = typeof(VaultCipherFieldChrome))]
-[DependencyProperty<string>("Label", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
 [DependencyProperty<ICommand>("Command", DefaultBindingMode = DefaultBindingMode.OneTime)]
 public abstract partial class VaultCipherFieldControlBase : Control
 {

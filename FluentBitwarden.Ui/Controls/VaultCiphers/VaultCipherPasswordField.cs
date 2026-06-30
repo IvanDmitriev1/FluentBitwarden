@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
+[DependencyProperty<string>("Label", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
 [DependencyProperty<string>("Password", DefaultBindingMode = DefaultBindingMode.OneTime)]
 [DependencyProperty<string>("DisplayText", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneWay)]
 public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBase

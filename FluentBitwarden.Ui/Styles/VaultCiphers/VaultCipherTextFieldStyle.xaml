@@ -5,7 +5,6 @@
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers">
 
     <Style x:Key="DefaultVaultCipherTextFieldStyle" TargetType="vault:VaultCipherTextField">
-
         <Setter Property="ActionText" Value="Copy" />
 
         <Setter Property="Template">

@@ -24,9 +24,6 @@
 		<TrimmerRootAssembly Include="WinUIEx" />
 		<TrimmerRootAssembly Include="Microsoft.Xaml.Interactivity" />
 	</ItemGroup>
-	<ItemGroup>
-	  <None Remove="Styles\VaultCiphers\VaultCipherUrlFieldStyle.xaml" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
@@ -78,11 +75,5 @@
 	<PackageReference Include="WinUI.DependencyInjection" />
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
-
-	<ItemGroup>
-	  <Page Update="Styles\VaultCiphers\VaultCipherUrlFieldStyle.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
-	</ItemGroup>
 
 </Project>

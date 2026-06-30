@@ -64,11 +64,19 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
         return [.. contextItems];
     }
 
-    private static IconInfo GetIcon(LoginVaultCipher cipher, ISiteIconCache siteIconCache) =>
-        Uri.TryCreate(cipher.Uris.FirstOrDefault(), UriKind.Absolute, out var siteUri)
-        && siteIconCache.TryGetCachedFilePath(siteUri) is { } cachedFilePath
-            ? new IconInfo(cachedFilePath.LocalPath)
-            : Icons.Login;
+    private static IconInfo GetIcon(LoginVaultCipher cipher, ISiteIconCache siteIconCache)
+    {
+        foreach (var loginUri in cipher.Uris)
+        {
+            if (loginUri.TryGetWebUri(out var siteUri) &&
+                siteIconCache.TryGetCachedFilePath(siteUri) is { } cachedFilePath)
+            {
+                return new IconInfo(cachedFilePath.LocalPath);
+            }
+        }
+
+        return Icons.Login;
+    }
 
     private static ICommand? CreateCopyCommand(string? value, string valueName) =>
         string.IsNullOrWhiteSpace(value)

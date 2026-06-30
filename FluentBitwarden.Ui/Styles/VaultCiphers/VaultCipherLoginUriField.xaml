@@ -4,16 +4,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vaultCiphers="using:FluentBitwarden.Controls.VaultCiphers">
 
-    <Style TargetType="vaultCiphers:VaultCipherUrlField">
-        <Setter Property="Label" Value="URI" />
+    <Style TargetType="vaultCiphers:VaultCipherLoginUriField">
+        <Setter Property="SecondaryForeground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        <Setter Property="DomainForeground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}" />
 
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="vaultCiphers:VaultCipherUrlField">
+                <ControlTemplate TargetType="vaultCiphers:VaultCipherLoginUriField">
                     <vaultCiphers:VaultCipherFieldChrome
                         x:Name="PART_Chrome"
-                        ActionText="Copy"
-                        Label="{TemplateBinding Label}">
+                        ActionText="Open"
+                        Label="URI">
 
                         <TextBlock
                             x:Name="PART_TextBlock"
