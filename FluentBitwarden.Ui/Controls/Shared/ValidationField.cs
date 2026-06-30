@@ -10,68 +10,30 @@ namespace FluentBitwarden.Controls.Shared;
 [DependencyProperty<Visibility>("ErrorVisibility", DefaultValue = Visibility.Collapsed)]
 public sealed partial class ValidationField : ContentControl
 {
-    private INotifyDataErrorInfo? _currentValidationSource;
-    private string _currentPropertyName = string.Empty;
-    private bool _isLoaded;
-
     public ValidationField()
     {
         DefaultStyleKey = typeof(ValidationField);
-
-        Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
     }
 
-    partial void OnPropertyChanged()
-        => RefreshValidationSubscription();
-
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    partial void OnPropertyChanged(ValidatableProperty? oldValue, ValidatableProperty? newValue)
     {
-        _isLoaded = true;
-        RefreshValidationSubscription();
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        _isLoaded = false;
-        DetachValidationSource();
-    }
-
-    private void RefreshValidationSubscription()
-    {
-        if (!_isLoaded)
-            return;
-
-        INotifyDataErrorInfo? nextValidationSource = Property?.Source;
-        string nextPropertyName = Property?.PropertyName ?? string.Empty;
-
-        if (!ReferenceEquals(_currentValidationSource, nextValidationSource)
-            || !string.Equals(_currentPropertyName, nextPropertyName, StringComparison.Ordinal))
+        if (oldValue is not null)
         {
-            DetachValidationSource();
+            oldValue.Source.ErrorsChanged -= OnErrorsChanged;
+        }
 
-            _currentValidationSource = nextValidationSource;
-            _currentPropertyName = nextPropertyName;
-
-            if (_currentValidationSource is not null)
-            {
-                _currentValidationSource.ErrorsChanged += OnErrorsChanged;
-            }
+        if (newValue is not null)
+        {
+            newValue.Source.ErrorsChanged += OnErrorsChanged;
         }
 
         RefreshValidationState();
     }
 
-    private void DetachValidationSource()
+    protected override void OnApplyTemplate()
     {
-        if (_currentValidationSource is not null)
-        {
-            _currentValidationSource.ErrorsChanged -= OnErrorsChanged;
-            _currentValidationSource = null;
-        }
-
-        _currentPropertyName = string.Empty;
-        ClearValidationState();
+        base.OnApplyTemplate();
+        RefreshValidationState();
     }
 
     private void OnErrorsChanged(object? sender, DataErrorsChangedEventArgs e)
@@ -92,17 +54,20 @@ public sealed partial class ValidationField : ContentControl
 
     private bool ShouldRefreshFor(string? propertyName)
         => string.IsNullOrWhiteSpace(propertyName)
-           || string.Equals(propertyName, _currentPropertyName, StringComparison.Ordinal);
+           || string.Equals(propertyName, Property?.PropertyName, StringComparison.Ordinal);
 
     private void RefreshValidationState()
     {
-        if (_currentValidationSource is null || string.IsNullOrWhiteSpace(_currentPropertyName))
+        INotifyDataErrorInfo? validationSource = Property?.Source;
+        string propertyName = Property?.PropertyName ?? string.Empty;
+
+        if (validationSource is null || string.IsNullOrWhiteSpace(propertyName))
         {
             ClearValidationState();
             return;
         }
 
-        string errorMessage = GetFirstErrorMessage(_currentValidationSource.GetErrors(_currentPropertyName));
+        string errorMessage = GetFirstErrorMessage(validationSource.GetErrors(propertyName));
         if (string.IsNullOrEmpty(errorMessage))
         {
             ClearValidationState();

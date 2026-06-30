@@ -19,7 +19,6 @@
     </UserControl.Resources>
 
     <AutoSuggestBox
-        x:Name="VaultCipherAutoSuggestBox"
         AutomationProperties.AutomationId="VaultCipherSearchBox"
         AutomationProperties.Name="{StaticResource VaultCipherSearchBoxAutomationName}"
         ItemTemplate="{StaticResource VaultCipherAutosuggestItemTemplate}"

@@ -15,28 +15,36 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
 
     private CountdownRing? _countdownRing;
     private DispatcherQueueTimer? _timer;
-    private long _visibilityRegistrationToken;
-    private bool _isVisibilityCallbackRegistered;
+    private readonly DependencyPropertyCallbackRegistration _visibilityCallbackRegistration;
 
     public VaultCipherTotpField()
     {
         DefaultStyleKey = typeof(VaultCipherTotpField);
 
-        Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
+        _visibilityCallbackRegistration = new DependencyPropertyCallbackRegistration(
+            this,
+            VisibilityProperty,
+            static (sender, dp) => ((VaultCipherTotpField)sender).OnVisibilityChanged(dp));
     }
 
     partial void OnTotpChanged()
     {
         UpdateTotpDisplay();
+        UpdateTimerState();
     }
 
     protected override void OnApplyTemplate()
     {
+        DetachTemplateSubscriptions();
+
         base.OnApplyTemplate();
 
         _countdownRing = GetTemplateChild(PartCountdownRing) as CountdownRing;
+
+        _visibilityCallbackRegistration.Register();
+        EnsureTimer();
         UpdateTotpDisplay();
+        UpdateTimerState();
     }
 
     protected override FlyoutBase? CreateMenuFlyout()
@@ -53,29 +61,14 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
         CopyTextToClipboard(code);
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        if (!_isVisibilityCallbackRegistered)
-        {
-            _visibilityRegistrationToken = RegisterPropertyChangedCallback(VisibilityProperty, OnVisibilityChanged);
-            _isVisibilityCallbackRegistered = true;
-        }
+    private void OnTimerTick(DispatcherQueueTimer sender, object args) => UpdateTotpDisplay();
 
-        EnsureTimer();
+    private void OnVisibilityChanged(DependencyProperty dp)
+    {
         UpdateTimerState();
 
-        UpdateTotpDisplay();
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        if (_isVisibilityCallbackRegistered)
-        {
-            UnregisterPropertyChangedCallback(VisibilityProperty, _visibilityRegistrationToken);
-            _isVisibilityCallbackRegistered = false;
-        }
-
-        _timer?.Stop();
+        if (Visibility == Visibility.Visible)
+            UpdateTotpDisplay();
     }
 
     private void UpdateTotpDisplay()
@@ -105,14 +98,6 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
         };
     }
 
-    private void OnVisibilityChanged(DependencyObject sender, DependencyProperty dp)
-    {
-        UpdateTimerState();
-
-        if (Visibility == Visibility.Visible)
-            UpdateTotpDisplay();
-    }
-
     private void EnsureTimer()
     {
         if (_timer is not null)
@@ -124,20 +109,31 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
         _timer.Tick += OnTimerTick;
     }
 
-    private void OnTimerTick(DispatcherQueueTimer sender, object args) => UpdateTotpDisplay();
+    private void DetachTemplateSubscriptions()
+    {
+        _visibilityCallbackRegistration.Unregister();
+
+        if (_timer is not null)
+        {
+            _timer.Stop();
+            _timer.Tick -= OnTimerTick;
+            _timer = null;
+        }
+
+        _countdownRing = null;
+    }
 
     private void UpdateTimerState()
     {
         if (_timer is null)
             return;
 
-        if (Visibility == Visibility.Visible)
+        if (Visibility == Visibility.Visible && Totp is not null && _countdownRing is not null)
         {
             _timer.Start();
+            return;
         }
-        else
-        {
-            _timer.Stop();
-        }
+
+        _timer.Stop();
     }
 }

@@ -18,13 +18,17 @@ public sealed partial class SiteIcon : ContentControl
     private int NormalizedSize => Math.Max(1, (int)Math.Ceiling(Size));
 
     private readonly DispatcherQueue _dispatcherQueue;
+    private readonly DependencyPropertyCallbackRegistration _foregroundCallbackRegistration;
     private bool _isSubscribedToIconCached;
 
     public SiteIcon()
     {
         DefaultStyleKey = typeof(SiteIcon);
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-        RegisterPropertyChangedCallback(ForegroundProperty, static (sender, dp) => ((SiteIcon)sender).Refresh());
+        _foregroundCallbackRegistration = new DependencyPropertyCallbackRegistration(
+            this,
+            ForegroundProperty,
+            static (sender, dp) => ((SiteIcon)sender).Refresh());
     }
 
     partial void OnUriChanged() => Refresh();
@@ -33,9 +37,13 @@ public sealed partial class SiteIcon : ContentControl
 
     protected override void OnApplyTemplate()
     {
+        _foregroundCallbackRegistration.Unregister();
+
         base.OnApplyTemplate();
 
         UnsubscribeFromIconCached();
+        _foregroundCallbackRegistration.Register();
+        Refresh();
     }
 
     private void SiteIconCacheOnIconCached(object? sender, SiteIconCachedEventArgs e)
@@ -44,7 +52,7 @@ public sealed partial class SiteIcon : ContentControl
 
         _dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
         {
-            if (!IsLoaded || !Equals(Uri, cachedSiteUri))
+            if (!IsLoaded || Uri != cachedSiteUri)
                 return;
 
             Refresh();

@@ -7,13 +7,9 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 [DependencyProperty<string>("DisplayText", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneWay)]
 public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBase
 {
-    private const string MaskPassword = "●●●●●●●●●●";
-
-    private const string RevealResourceKey = "VaultCipherPasswordFieldRevealText";
-    private const string ConcealResourceKey = "VaultCipherPasswordFieldConcealText";
-    private static readonly string MaskPasswordText = string.IsNullOrEmpty(MaskPassword)
-        ? new string('\u2022', 10)
-        : new string('\u2022', 10);
+    private const string RevealMenuItemText = "Reveal";
+    private const string ConcealMenuItemText = "Conceal";
+    private static readonly string MaskPasswordText = new('\u2022', 10);
 
     private bool _isRevealed;
     private MenuFlyout? _menuFlyout;
@@ -70,20 +66,6 @@ public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBa
         if (_toggleRevealMenuItem is null)
             return;
 
-        string key = _isRevealed ? ConcealResourceKey : RevealResourceKey;
-        string fallback = _isRevealed ? "Conceal" : "Reveal";
-
-        _toggleRevealMenuItem.Text = GetResourceString(key, fallback);
-    }
-
-    private static string GetResourceString(string key, string fallback)
-    {
-        if (Microsoft.UI.Xaml.Application.Current.Resources.TryGetValue(key, out object value)
-            && value is string resourceText)
-        {
-            return resourceText;
-        }
-
-        return fallback;
+        _toggleRevealMenuItem.Text = _isRevealed ? ConcealMenuItemText : RevealMenuItemText;
     }
 }

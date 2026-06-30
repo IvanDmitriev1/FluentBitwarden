@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 namespace FluentBitwarden.Controls.VaultCiphers;
 
 [DependencyProperty<ICommand>("VaultCipherSelectedCommand")]
+[DependencyProperty<int>("MaxVisibleItems", DefaultValue = 8)]
 public sealed partial class VaultCipherSearchBox : UserControl
 {
     public sealed record Selection(string QueryText, VaultCipher SelectedItem);
@@ -50,7 +51,7 @@ public sealed partial class VaultCipherSearchBox : UserControl
             var ciphers = await _vaultClient.SearchCiphersAsync(new VaultCipherQuery()
             {
                 SearchText = searchText,
-                Limit = 8
+                Limit = MaxVisibleItems
             }, cancellationToken);
 
             if (cancellationToken.IsCancellationRequested
