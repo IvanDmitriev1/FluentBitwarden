@@ -8,6 +8,8 @@ public interface IAccountsClient
 {
     ValueTask<AccountProfile?> GetUnlockedAccount(CancellationToken cancellationToken = default);
 
+    ValueTask<AccountProfileDetails?> GetUnlockedAccountProfileDetails(CancellationToken cancellationToken = default);
+
     ValueTask<AccountProfile[]> GetAccountsAsync(
         CancellationToken cancellationToken = default);
 

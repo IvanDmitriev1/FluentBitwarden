@@ -7,7 +7,5 @@ internal sealed record UnlockedSession(AccountProfile Account, DecryptedUserKey 
     public AccountProfile Account { get; } = Account;
     public DecryptedUserKey UserKey { get; } = UserKey;
 
-    public BitwardenAccountContext AccountContext => new(Account.UserId, Account.Environment);
-
     public void Dispose() => UserKey.Dispose();
 }

@@ -17,6 +17,12 @@ internal sealed class AccountStore(IUnitOfWorkFactory unitOfWorkFactory) : IAcco
         return unitOfWork.AccountProfileRepository.GetById(userId);
     }
 
+    public AccountProfileDetails? GetAccountProfileDetails(UserId userId)
+    {
+        using var unitOfWork = unitOfWorkFactory.Create();
+        return unitOfWork.AccountProfileRepository.GetProfileDetails(userId);
+    }
+
     public AccountKeyMaterial? GetKeyMaterial(UserId userId)
     {
         using var unitOfWork = unitOfWorkFactory.Create();

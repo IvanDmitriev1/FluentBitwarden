@@ -22,6 +22,18 @@ internal sealed class AccountsIpcHandler(
         return ValueTask.FromResult(session?.Account);
     }
 
+    [IpcMessageHandler(IpcMessageTypes.Account.GetUnlockedProfileDetails)]
+    public ValueTask<AccountProfileDetails?> GetUnlockedAccountProfileDetails(CancellationToken cancellationToken = default)
+    {
+        if (!vaultSessionCoordinator.TryGetUnlockedSession(out var session))
+            return ValueTask.FromResult<AccountProfileDetails?>(null);
+
+        var details = accountStore.GetAccountProfileDetails(session.Account.UserId) ??
+                      throw new InvalidOperationException("Unlocked account profile details are missing.");
+
+        return ValueTask.FromResult<AccountProfileDetails?>(details);
+    }
+
     [IpcMessageHandler(IpcMessageTypes.Account.GetAccounts)]
     public ValueTask<AccountProfile[]> GetAccountsAsync(CancellationToken cancellationToken = default)
     {

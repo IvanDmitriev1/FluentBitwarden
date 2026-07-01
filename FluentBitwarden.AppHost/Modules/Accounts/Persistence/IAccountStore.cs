@@ -6,6 +6,7 @@ internal interface IAccountStore
 {
     AccountProfile[] GetAccounts();
     AccountProfile? GetAccount(UserId userId);
+    AccountProfileDetails? GetAccountProfileDetails(UserId userId);
     AccountKeyMaterial? GetKeyMaterial(UserId userId);
     RefreshToken GetRefreshToken(UserId userId);
 

@@ -30,6 +30,7 @@ public static class IpcMessageTypes
         public const ushort Unlock = 203;
         public const ushort Logout = 205;
         public const ushort GetUnlocked = 206;
+        public const ushort GetUnlockedProfileDetails = 207;
     }
 
     public static class WindowsHello

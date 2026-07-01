@@ -30,7 +30,7 @@ internal sealed class VaultKeyResolver(
 
         var id = organizationId;
         var organization = organizations.FirstOrDefault(candidate => candidate.Id == id);
-        if (organization.Id != id)
+        if (organization is null || organization.Id != id)
             throw new InvalidOperationException($"Organization key metadata is missing for organization {id}.");
 
         if (_organizationKeysById.TryGetValue(id, out var cachedKey))

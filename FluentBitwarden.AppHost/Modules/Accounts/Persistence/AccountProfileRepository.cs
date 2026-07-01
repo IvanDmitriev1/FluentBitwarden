@@ -14,7 +14,9 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
         string IdentityBase,
         string NotificationsBase,
         string VaultBase,
-        long LastSyncAtUnixMs,
+        long LastSyncAtUnixMs);
+
+    internal sealed record AccountProfileDetailsRow(
         string? ProfileName,
         string? ProfileCulture,
         long? ProfileCreationDateUnixMs,
@@ -30,11 +32,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                                identity_base,
                                notifications_base,
                                vault_base,
-                               last_sync_at_unix_ms,
-                               profile_name,
-                               profile_culture,
-                               profile_creation_date_unix_ms,
-                               profile_synced
+                               last_sync_at_unix_ms
                            FROM account_profiles
                            ORDER BY last_sync_at_unix_ms DESC;
                            """;
@@ -56,11 +54,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                                identity_base,
                                notifications_base,
                                vault_base,
-                               last_sync_at_unix_ms,
-                               profile_name,
-                               profile_culture,
-                               profile_creation_date_unix_ms,
-                               profile_synced
+                               last_sync_at_unix_ms
                            FROM account_profiles
                            WHERE user_id = @UserId COLLATE NOCASE;
                            """;
@@ -74,6 +68,29 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             transaction: Transaction);
 
         return row is null ? null : MapToDomain(row);
+    }
+
+    public AccountProfileDetails? GetProfileDetails(UserId accountId)
+    {
+        const string sql = """
+                           SELECT
+                               profile_name,
+                               profile_culture,
+                               profile_creation_date_unix_ms,
+                               profile_synced
+                           FROM account_profiles
+                           WHERE user_id = @UserId COLLATE NOCASE;
+                           """;
+
+        AccountProfileDetailsRow? row = Connection.QueryFirstOrDefault<AccountProfileDetailsRow>(
+            sql,
+            new
+            {
+                UserId = accountId.ToString()
+            },
+            transaction: Transaction);
+
+        return row is null ? null : MapProfileDetails(row);
     }
 
     public DateTimeOffset GetLastSyncTime(UserId accountId)
@@ -142,11 +159,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                                identity_base,
                                notifications_base,
                                vault_base,
-                               last_sync_at_unix_ms,
-                               profile_name,
-                               profile_culture,
-                               profile_creation_date_unix_ms,
-                               profile_synced
+                               last_sync_at_unix_ms
                            )
                            VALUES (
                                @UserId,
@@ -155,11 +168,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                                @IdentityBase,
                                @NotificationsBase,
                                @VaultBase,
-                               @LastSyncAtUnixMs,
-                               @ProfileName,
-                               @ProfileCulture,
-                               @ProfileCreationDateUnixMs,
-                               @ProfileSynced
+                               @LastSyncAtUnixMs
                            )
                            ON CONFLICT(user_id) DO UPDATE SET
                                email                         = excluded.email,
@@ -167,14 +176,9 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                                identity_base                 = excluded.identity_base,
                                notifications_base            = excluded.notifications_base,
                                vault_base                    = excluded.vault_base,
-                               last_sync_at_unix_ms          = excluded.last_sync_at_unix_ms,
-                               profile_name                  = excluded.profile_name,
-                               profile_culture               = excluded.profile_culture,
-                               profile_creation_date_unix_ms = excluded.profile_creation_date_unix_ms,
-                               profile_synced                = excluded.profile_synced;
+                               last_sync_at_unix_ms          = excluded.last_sync_at_unix_ms;
                            """;
 
-        var details = accountProfile.Profile;
         Connection.Execute(
             sql,
             new
@@ -185,11 +189,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                 IdentityBase = accountProfile.Environment.IdentityBase.ToString(),
                 NotificationsBase = accountProfile.Environment.NotificationsBase.ToString(),
                 VaultBase = accountProfile.Environment.VaultBase.ToString(),
-                LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds(),
-                ProfileName = details is null ? null : NullIfWhiteSpace(details.Name),
-                ProfileCulture = details is null ? null : NullIfWhiteSpace(details.Culture),
-                ProfileCreationDateUnixMs = details?.CreationDate.ToUnixTimeMilliseconds(),
-                ProfileSynced = details is null ? 0 : 1
+                LastSyncAtUnixMs = accountProfile.LastSyncAt.ToUnixTimeMilliseconds()
             },
             transaction: Transaction);
     }
@@ -218,10 +218,9 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             IdentityBase: new Uri(row.IdentityBase, UriKind.Absolute),
             NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute),
             VaultBase: new Uri(row.VaultBase, UriKind.Absolute)),
-        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs),
-        Profile: MapProfileDetails(row));
+        LastSyncAt: DateTimeOffset.FromUnixTimeMilliseconds(row.LastSyncAtUnixMs));
 
-    private static AccountProfileDetails? MapProfileDetails(AccountProfileRow row)
+    private static AccountProfileDetails? MapProfileDetails(AccountProfileDetailsRow row)
     {
         if (row.ProfileSynced == 0)
             return null;

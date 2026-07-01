@@ -1,5 +1,5 @@
-using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
+using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault;
@@ -42,24 +42,23 @@ internal sealed class VaultSessionCoordinator(
             if (!result.TryGetUserKey(out var userKey))
                 return result.Outcome;
 
-            var newSession = new UnlockedSession(request.Account, userKey);
+            var context = new BitwardenAccountContext(request.Account.UserId, request.Account.Environment);
+            bool forceSync = accountStore.GetAccountProfileDetails(context.UserId) is null;
 
-            try
-            {
-                await vaultWorkspace.OpenAsync(
-                    newSession.AccountContext,
-                    newSession.UserKey,
-                    forceSync: !newSession.Account.HasSyncedProfile,
-                    cancellationToken);
+            await vaultWorkspace.OpenAsync(
+                context,
+                userKey,
+                forceSync,
+                cancellationToken);
 
-                PublishSessionChange(newSession);
-                return result.Outcome;
-            }
-            catch
+            if (accountStore.GetAccountProfileDetails(context.UserId) is null)
             {
-                newSession.Dispose();
-                throw;
+                return new AccountUnlockOutcome.Failure(
+                    "Account profile details are not available. Connect to Bitwarden and unlock again.");
             }
+
+            PublishSessionChange(new UnlockedSession(request.Account, userKey));
+            return result.Outcome;
         }
         finally
         {
@@ -78,7 +77,7 @@ internal sealed class VaultSessionCoordinator(
                 return VaultSyncResult.Failed;
 
             var result = await vaultWorkspace.SyncAsync(
-                session.AccountContext,
+                session.Account.BitwardenAccountContext,
                 session.UserKey,
                 cancellationToken: cancellationToken);
 

@@ -13,6 +13,9 @@ internal sealed class RemoteAccountsClient(IIpcClient ipcClient) : IAccountsClie
     public ValueTask<AccountProfile?> GetUnlockedAccount(CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<AccountProfile?>(IpcMessageTypes.Account.GetUnlocked, cancellationToken);
 
+    public ValueTask<AccountProfileDetails?> GetUnlockedAccountProfileDetails(CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<AccountProfileDetails?>(IpcMessageTypes.Account.GetUnlockedProfileDetails, cancellationToken);
+
     public ValueTask<AccountProfile[]> GetAccountsAsync(CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<AccountProfile[]>(IpcMessageTypes.Account.GetAccounts, cancellationToken);
 

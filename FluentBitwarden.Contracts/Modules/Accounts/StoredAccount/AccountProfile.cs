@@ -5,9 +5,8 @@ public sealed partial record AccountProfile(
     UserId UserId,
     string Email,
     BitwardenEnvironment Environment,
-    DateTimeOffset LastSyncAt,
-    AccountProfileDetails? Profile = null)
+    DateTimeOffset LastSyncAt)
 {
     [MemoryPackIgnore]
-    public bool HasSyncedProfile => Profile is not null;
+    public BitwardenAccountContext BitwardenAccountContext { get; } = new(UserId, Environment);
 }
