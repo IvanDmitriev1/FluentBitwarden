@@ -34,6 +34,7 @@
             <x:String x:Key="VaultPageSortFieldModifiedText">Date modified</x:String>
             <x:String x:Key="VaultPageSortAscendingText">Ascending</x:String>
             <x:String x:Key="VaultPageSortDescendingText">Descending</x:String>
+            <x:String x:Key="VaultPageCipherDetailsItemHistoryText">Item history</x:String>
         </ResourceDictionary>
     </navigation:LifecyclePage.Resources>
 
@@ -138,36 +139,46 @@
 
         </SplitView.Pane>
 
-        <ScrollViewer
-            HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto"
-            Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
-
-            <StackPanel
-                Padding="20"
-                Spacing="20"
-                Visibility="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <ScrollViewer
+                Grid.Row="1"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto"
+                Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
                 <StackPanel
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="24">
-                    <siteIcon:SiteIcon
-                        FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
-                        Size="36"
-                        Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
-                    <TextBlock
+                    Padding="20"
+                    Spacing="20"
+                    Visibility="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                    <StackPanel
+                        HorizontalAlignment="Stretch"
                         VerticalAlignment="Center"
-                        Style="{StaticResource TitleTextBlockStyle}"
-                        Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+                        Orientation="Horizontal"
+                        Spacing="24">
+                        <siteIcon:SiteIcon
+                            FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
+                            Size="36"
+                            Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource TitleTextBlockStyle}"
+                            Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
 
-                <ContentControl
-                    HorizontalContentAlignment="Stretch"
-                    Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
-                    ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
-            </StackPanel>
-        </ScrollViewer>
+                    <ContentControl
+                        HorizontalContentAlignment="Stretch"
+                        Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
+                        ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
+
+                    <StackPanel>
+                        <TextBlock Text="{StaticResource VaultPageCipherDetailsItemHistoryText}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </SplitView>
 </navigation:LifecyclePage>

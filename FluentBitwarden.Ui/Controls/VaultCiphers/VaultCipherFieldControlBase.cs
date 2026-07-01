@@ -45,10 +45,10 @@ public abstract partial class VaultCipherFieldControlBase : Control
         if (_chrome is null)
             return;
 
-        _chrome.MenuFlyout = CreateMenuFlyout();
+        _chrome.Flyout = CreateMenuFlyout();
     }
 
-    private void OnChromeClick(object sender, RoutedEventArgs e)
+    private void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
     {
         OnPrimaryAction();
 

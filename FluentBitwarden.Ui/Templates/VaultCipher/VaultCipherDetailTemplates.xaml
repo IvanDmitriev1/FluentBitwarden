@@ -30,7 +30,7 @@
     </Style>
 
     <DataTemplate x:Key="VaultCipherLoginDetailsTemplate" x:DataType="models:LoginVaultCipher">
-        <StackPanel Spacing="6">
+        <StackPanel Spacing="12">
             <Border
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
