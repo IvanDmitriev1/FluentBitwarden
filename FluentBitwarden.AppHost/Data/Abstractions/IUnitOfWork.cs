@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+namespace FluentBitwarden.AppHost.Data.Abstractions;
 
 public interface IUnitOfWork : IDisposable
 {

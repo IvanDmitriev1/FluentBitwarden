@@ -15,26 +15,26 @@ internal partial class VaultReaderRepository
     };
 
     internal readonly record struct OrganizationRow(
+        string UserId,
         string OrganizationId,
         string? OrganizationUserId,
         string OrganizationName,
         int IsEnabled,
-        int UseKeyConnector,
+        int AccessSecretsManager,
         int? MemberStatus,
-        int? MemberType,
         byte[]? EncryptedOrganizationKey);
 
     private static VaultOrganizationDto ToDto(in OrganizationRow row) => new()
     {
         Id = OrganizationId.Parse(row.OrganizationId),
+        UserId = UserId.Parse(row.UserId),
         OrganizationUserId = row.OrganizationUserId is null
-            ? null
+            ? Guid.Empty
             : Guid.Parse(row.OrganizationUserId),
         Name = row.OrganizationName,
         Enabled = row.IsEnabled != 0,
-        UseKeyConnector = row.UseKeyConnector != 0,
-        Status = row.MemberStatus,
-        MemberType = row.MemberType,
+        AccessSecretsManager = row.AccessSecretsManager != 0,
+        Status = row.MemberStatus ?? -1,
         EncryptedOrganizationKey = row.EncryptedOrganizationKey is null
             ? EncString.Empty
             : EncString.FromBytes(row.EncryptedOrganizationKey)
@@ -46,7 +46,7 @@ internal partial class VaultReaderRepository
         int IsReadOnly,
         int CanManage,
         int HidePasswords,
-        int? CollectionType,
+        int CollectionType,
         byte[] EncryptedName);
 
     private static VaultCollectionDto ToDto(in CollectionRow row) => new()

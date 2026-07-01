@@ -1,7 +1,7 @@
-﻿using FluentBitwarden.AppHost.Infrastructure.Data;
+﻿using FluentBitwarden.AppHost.Data;
 using System.Data;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+namespace FluentBitwarden.AppHost.Data.Abstractions;
 
 internal interface IUnitOfWorkFactory
 {

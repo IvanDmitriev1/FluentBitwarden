@@ -11,9 +11,7 @@ internal sealed class NotificationsApi(
 {
     private HubConnection? _connection;
 
-    public async Task ConnectAsync(
-        BitwardenAccountContext accountContext,
-        CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(BitwardenAccountContext accountContext, CancellationToken cancellationToken = default)
     {
         if (_connection?.State is HubConnectionState.Connected
             or HubConnectionState.Connecting
@@ -104,9 +102,7 @@ internal sealed class NotificationsApi(
             _ => Task.CompletedTask,
         };
 
-    private Task PublishAsync<TNotification>(
-        JsonElement json,
-        JsonTypeInfo<TNotification> jsonTypeInfo)
+    private Task PublishAsync<TNotification>(JsonElement json, JsonTypeInfo<TNotification> jsonTypeInfo)
     {
         var notification = json.Deserialize(jsonTypeInfo) ?? throw new InvalidOperationException();
         var handler = serviceProvider.GetRequiredService<INotificationHandler<TNotification>>();

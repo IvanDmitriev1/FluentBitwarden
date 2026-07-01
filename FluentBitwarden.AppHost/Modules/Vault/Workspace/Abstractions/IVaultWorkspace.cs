@@ -7,6 +7,7 @@ internal interface IVaultWorkspace
     ValueTask OpenAsync(
         BitwardenAccountContext accountContext,
         DecryptedUserKey userKey,
+        bool forceSync,
         CancellationToken cancellationToken);
 
     Task<VaultSyncResult> SyncAsync(

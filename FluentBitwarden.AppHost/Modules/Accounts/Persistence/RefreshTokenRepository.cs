@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;

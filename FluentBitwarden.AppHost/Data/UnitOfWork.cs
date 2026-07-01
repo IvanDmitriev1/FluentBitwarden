@@ -1,10 +1,10 @@
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using Microsoft.Data.Sqlite;
 using IsolationLevel = System.Data.IsolationLevel;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Data;
+namespace FluentBitwarden.AppHost.Data;
 
 internal sealed class UnitOfWork : IUnitOfWork
 {

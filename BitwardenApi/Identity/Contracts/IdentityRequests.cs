@@ -10,7 +10,7 @@ public sealed record PasswordTwoFactorLoginRequest(
     BitwardenClientContext Context,
     string Email,
     string MasterPasswordHash,
-    TwoFactorProof TwoFactor,
+    IdentityTwoFactorProof TwoFactor,
     string Scope = "api offline_access");
 
 public sealed record RefreshLoginRequest(

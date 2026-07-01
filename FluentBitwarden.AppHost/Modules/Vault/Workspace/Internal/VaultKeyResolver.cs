@@ -33,9 +33,6 @@ internal sealed class VaultKeyResolver(
         if (organization.Id != id)
             throw new InvalidOperationException($"Organization key metadata is missing for organization {id}.");
 
-        if (organization.UseKeyConnector)
-            throw new NotSupportedException($"Organization {id} uses Key Connector, which is not supported.");
-
         if (_organizationKeysById.TryGetValue(id, out var cachedKey))
             return cachedKey;
 

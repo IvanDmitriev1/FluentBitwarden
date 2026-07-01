@@ -1,10 +1,9 @@
-using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
-using FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
+using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Data.Implementations;
 using Microsoft.Extensions.DependencyInjection;
 using Windows.Storage;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Data;
+namespace FluentBitwarden.AppHost.Data;
 
 internal static class ServiceCollectionExtensions
 {
@@ -13,7 +12,7 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services)
     {
         services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory(Path.Combine(ApplicationData.Current.LocalFolder.Path, DatabaseFileName)));
-        services.AddSingleton<IDataInitializationService, DataInitializationService>();
+        services.AddSingleton<IDataInitializationService, DbUpDataInitializationService>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
 
         return services;

@@ -10,9 +10,9 @@
     xmlns:models="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
     xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
     xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
+    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
     xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
-    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
@@ -57,11 +57,11 @@
                 </Grid.ColumnDefinitions>
 
                 <sharedControls:SearchFilterBar
-                    AutomationProperties.AutomationId="VaultPageSearchFilterBar"
-                    AutomationProperties.Name="{StaticResource VaultPageSearchFilterAutomationName}"
                     Grid.Row="0"
                     Grid.Column="0"
                     Padding="16,16,16,8"
+                    AutomationProperties.AutomationId="VaultPageSearchFilterBar"
+                    AutomationProperties.Name="{StaticResource VaultPageSearchFilterAutomationName}"
                     IsSearchOpen="{x:Bind ViewModel.IsSearchFieldOpen, Mode=TwoWay}"
                     SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <sharedControls:SearchFilterBar.FilterContent>
@@ -109,11 +109,11 @@
 
                 <ListView
                     x:Name="VaultCipherList"
-                    AutomationProperties.AutomationId="VaultPageCipherList"
-                    AutomationProperties.Name="{StaticResource VaultPageCipherListAutomationName}"
                     Grid.Row="1"
                     Grid.Column="0"
                     attachedProperties:VaultListSelectionBehavior.BringToView="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
+                    AutomationProperties.AutomationId="VaultPageCipherList"
+                    AutomationProperties.Name="{StaticResource VaultPageCipherListAutomationName}"
                     IsItemClickEnabled="False"
                     ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
                     ItemTemplate="{StaticResource VaultCipherListItemDataTemplate}"
@@ -144,10 +144,9 @@
             Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
 
             <StackPanel
-                x:Name="VaultCipherDetailsStackPanel"
                 Padding="20"
-                x:Load="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToBoolConverter}}"
-                Spacing="20">
+                Spacing="20"
+                Visibility="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
                 <StackPanel
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Center"

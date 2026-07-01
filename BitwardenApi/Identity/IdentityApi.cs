@@ -1,14 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
-using BitwardenApi.Infrastructure.Transport;
-using BitwardenApi.Notifications;
-using BitwardenApi.Notifications.Contracts;
-using BitwardenApi.Vault.Attachments;
-using BitwardenApi.Vault.Items;
-using BitwardenApi.Infrastructure.Transport;
-using BitwardenApi.Identity.Contracts;
-using BitwardenApi.Infrastructure.Encoding;
 using BitwardenApi.Identity.Internal;
 
 namespace BitwardenApi.Identity;
@@ -22,7 +14,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
             request.Context,
             request.CreatePasswordGrant(),
             "Identity login with password",
-            IdentityJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
             static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
@@ -33,7 +25,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
             request.Context,
             request.CreatePasswordWithTwoFactorGrant(),
             "Identity login with password and two-factor",
-            IdentityJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
             static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
@@ -64,7 +56,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
             request.Context,
             request.CreateWebAuthnGrant(),
             "Identity login with passkey",
-            IdentityJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
             static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
@@ -75,7 +67,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
             request.Context,
             request.CreateRefreshTokenGrant(),
             "Identity refresh token",
-            IdentityJsonContext.ConfiguredDefault.TokenRefreshSessionResponse,
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenRefreshSessionResponse,
             static payload => new TokenExchangeOutcome.SessionRefreshed(payload.ToTokenRefreshSessionModel()),
             cancellationToken);
 
@@ -86,7 +78,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
             request.Context,
             request.CreateDeviceGrant(),
             "Identity login with device",
-            IdentityJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
             static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
@@ -97,7 +89,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
             request.Context,
             request.CreateAuthorizationCodeGrant(),
             "Identity login with authorization code",
-            IdentityJsonContext.ConfiguredDefault.TokenAuthenticatedResponse,
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
             static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
             cancellationToken);
 
@@ -121,11 +113,9 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
         if (response is { IsSuccessStatusCode: false, StatusCode: HttpStatusCode.BadRequest })
         {
             var failureResponse = await response.Content.ReadFromJsonAsync(
-                IdentityJsonContext.ConfiguredDefault.TokenFailureResponse,
-                cancellationToken: cancellationToken);
-
-            if (failureResponse is null)
-                throw new InvalidDataException("Response JSON payload was empty.");
+                                      IdentityJsonContext.ConfiguredDefault.IdentityTokenFailureResponse,
+                                      cancellationToken: cancellationToken) ??
+                                  throw new InvalidDataException("Response JSON payload was empty.");
 
             return failureResponse.ToTokenFailureOutcome();
         }

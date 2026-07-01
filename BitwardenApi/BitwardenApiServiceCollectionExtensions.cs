@@ -1,6 +1,5 @@
 using BitwardenApi.Identity;
 using BitwardenApi.Notifications;
-using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Items;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -37,7 +36,7 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddSingleton<IIdentityApi, IdentityApi>();
         services.AddSingleton<IVaultItemsApi, VaultItemsApi>();
-        services.AddSingleton<IVaultAttachmentsApi, VaultAttachmentsApi>();
+        //services.AddSingleton<IVaultAttachmentsApi, VaultAttachmentsApi>();
 
         services.AddSingleton<INotificationsApi, NotificationsApi>();
 

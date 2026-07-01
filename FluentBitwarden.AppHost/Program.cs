@@ -1,8 +1,8 @@
 using BitwardenApi;
 using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Application.Activation;
+using FluentBitwarden.AppHost.Data;
 using FluentBitwarden.AppHost.Infrastructure;
-using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Infrastructure.Ipc;
 using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.AppHost.Modules.Accounts;

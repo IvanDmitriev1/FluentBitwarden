@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
+using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault;
@@ -11,13 +12,14 @@ namespace FluentBitwarden.AppHost.Application.Sessions;
 internal sealed class VaultSessionCoordinator(
     IAccountUnlockService accountUnlockService,
     IVaultWorkspace vaultWorkspace,
+    IAccountStore accountStore,
     IIpcEventPublisher eventPublisher)
     : IVaultSessionCoordinator
 {
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
     private UnlockedSession? _unlockedSession;
 
-    public event Action<VaultSessionStatus> SessionStatusChanged = delegate { };
+    public event Action<VaultSessionStatus>? SessionStatusChanged;
 
     public bool TryGetUnlockedSession([NotNullWhen(true)] out UnlockedSession? session)
     {
@@ -47,6 +49,7 @@ internal sealed class VaultSessionCoordinator(
                 await vaultWorkspace.OpenAsync(
                     newSession.AccountContext,
                     newSession.UserKey,
+                    forceSync: !newSession.Account.HasSyncedProfile,
                     cancellationToken);
 
                 PublishSessionChange(newSession);
@@ -74,10 +77,12 @@ internal sealed class VaultSessionCoordinator(
             if (!TryGetUnlockedSession(out var session))
                 return VaultSyncResult.Failed;
 
-            return await vaultWorkspace.SyncAsync(
+            var result = await vaultWorkspace.SyncAsync(
                 session.AccountContext,
                 session.UserKey,
                 cancellationToken: cancellationToken);
+
+            return result;
         }
         finally
         {
@@ -96,6 +101,8 @@ internal sealed class VaultSessionCoordinator(
 
             vaultWorkspace.Close();
             PublishSessionChange(null);
+
+            GC.Collect();
         }
         finally
         {
@@ -109,6 +116,7 @@ internal sealed class VaultSessionCoordinator(
         previousSession?.Dispose();
 
         VaultSessionStatus status = session is not null ? VaultSessionStatus.Unlocked : VaultSessionStatus.Locked;
+
         SessionStatusChanged?.Invoke(status);
         _ = eventPublisher.PublishAsync(new VaultSessionStatusChangedEvent(status));
     }

@@ -1,4 +1,3 @@
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;

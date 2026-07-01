@@ -32,6 +32,7 @@
   <ItemGroup Label="AppHost Dependencies">
     <PackageVersion Include="Dapper" Version="2.1.79" />
     <PackageVersion Include="Dapper.AOT" Version="1.0.52" />
+    <PackageVersion Include="dbup-sqlite" Version="6.0.4" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MemoryPack" Version="1.21.4" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />

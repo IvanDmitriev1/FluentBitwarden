@@ -1,8 +1,8 @@
 ﻿using System.Data;
-using FluentBitwarden.AppHost.Infrastructure.Data;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Data;
+using FluentBitwarden.AppHost.Data.Abstractions;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
+namespace FluentBitwarden.AppHost.Data.Implementations;
 
 internal sealed class UnitOfWorkFactory(ISqliteConnectionFactory connectionFactory) : IUnitOfWorkFactory
 {

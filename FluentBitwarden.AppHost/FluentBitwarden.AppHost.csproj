@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <Content Include="..\FluentBitwarden.Ui\Assets\Bitwarden_icon.ico" Link="Assets\Bitwarden_icon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Data\Migrations\**\*.sql" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
@@ -21,6 +22,7 @@
     </PackageReference>
     <PackageReference Include="Dapper" />
     <PackageReference Include="Dapper.AOT" />
+    <PackageReference Include="dbup-sqlite" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />
@@ -40,4 +42,8 @@
     <ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
     <ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
   </ItemGroup>
+
+  <Target Name="FailSqlMigrationsMarkedAsContent" BeforeTargets="BeforeBuild">
+    <Error Condition="'%(Content.Extension)' == '.sql'" Text="SQL migration file '%(Content.Identity)' is marked as Content. Add it as EmbeddedResource instead." />
+  </Target>
 </Project>

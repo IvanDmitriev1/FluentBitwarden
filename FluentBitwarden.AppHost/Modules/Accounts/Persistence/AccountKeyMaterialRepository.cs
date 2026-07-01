@@ -1,5 +1,5 @@
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
@@ -67,13 +67,13 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
                                @KdfParallelism
                            )
                            ON CONFLICT(user_id) DO UPDATE SET
-                               salt = excluded.salt,
-                               encrypted_user_key = excluded.encrypted_user_key,
+                               salt                  = excluded.salt,
+                               encrypted_user_key    = excluded.encrypted_user_key,
                                encrypted_private_key = excluded.encrypted_private_key,
-                               kdf_type = excluded.kdf_type,
-                               kdf_iterations = excluded.kdf_iterations,
-                               kdf_memory_mib = excluded.kdf_memory_mib,
-                               kdf_parallelism = excluded.kdf_parallelism;
+                               kdf_type              = excluded.kdf_type,
+                               kdf_iterations        = excluded.kdf_iterations,
+                               kdf_memory_mib        = excluded.kdf_memory_mib,
+                               kdf_parallelism       = excluded.kdf_parallelism;
                            """;
 
         var kdf = FlattenKdf(keyMaterial.KdfConfig);

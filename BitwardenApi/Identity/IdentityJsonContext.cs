@@ -1,15 +1,13 @@
 using System.Text.Json.Serialization;
-using BitwardenApi.Identity.Contracts;
-using BitwardenApi.Primitives;
 
 namespace BitwardenApi.Identity;
 
 [JsonSourceGenerationOptions(
     JsonSerializerDefaults.Web,
     GenerationMode = JsonSourceGenerationMode.Metadata)]
-[JsonSerializable(typeof(TokenAuthenticatedResponse))]
-[JsonSerializable(typeof(TokenRefreshSessionResponse))]
-[JsonSerializable(typeof(TokenFailureResponse))]
+[JsonSerializable(typeof(IdentityTokenAuthenticatedResponse))]
+[JsonSerializable(typeof(IdentityTokenRefreshSessionResponse))]
+[JsonSerializable(typeof(IdentityTokenFailureResponse))]
 [JsonSerializable(typeof(WebAuthnLoginAssertionOptionsResponse))]
 [JsonSerializable(typeof(WebAuthnLoginAssertionResponseRequest))]
 [JsonSerializable(typeof(PreloginRequest))]

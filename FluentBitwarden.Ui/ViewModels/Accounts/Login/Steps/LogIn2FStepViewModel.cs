@@ -69,7 +69,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
             context.BitwardenContext,
             _twoFactorRequired.Email,
             _twoFactorRequired.ServerAuthorizationHash,
-            new TwoFactorProof(Code, SelectedProvider.Provider)), CancellationToken.None);
+            new IdentityTwoFactorProof(Code, SelectedProvider.Provider)), CancellationToken.None);
 
         switch (outcome)
         {

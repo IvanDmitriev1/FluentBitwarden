@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 
-namespace FluentBitwarden.AppHost.Infrastructure.Data;
+namespace FluentBitwarden.AppHost.Data.Abstractions;
 
 public abstract class BaseRepository(SqliteTransaction transaction)
 {

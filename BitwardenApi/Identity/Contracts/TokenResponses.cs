@@ -1,10 +1,9 @@
 using System.Text.Json.Serialization;
-using BitwardenApi.Infrastructure.Cryptography;
-using BitwardenApi.Primitives;
+using BitwardenApi.Identity.Internal;
 
 namespace BitwardenApi.Identity.Contracts;
 
-internal record TokenRefreshSessionResponse
+internal record IdentityTokenRefreshSessionResponse
 {
     [JsonPropertyName("access_token")]
     public required AccessToken AccessToken { get; init; }
@@ -19,7 +18,7 @@ internal record TokenRefreshSessionResponse
     public required int ExpiresInSeconds { get; init; }
 }
 
-internal sealed record TokenAuthenticatedResponse : TokenRefreshSessionResponse
+internal sealed record IdentityTokenAuthenticatedResponse : IdentityTokenRefreshSessionResponse
 {
     [JsonPropertyName("privateKey")]
     public required EncString EncryptedPrivateKey { get; init; }
@@ -29,7 +28,7 @@ internal sealed record TokenAuthenticatedResponse : TokenRefreshSessionResponse
 }
 
 
-internal sealed class TokenFailureResponse
+internal sealed record IdentityTokenFailureResponse
 {
     [JsonPropertyName("error")]
     public required string Error { get; init; }
@@ -41,10 +40,9 @@ internal sealed class TokenFailureResponse
     public bool? DeviceVerificationRequest { get; init; }
 
     [JsonPropertyName("twoFactorProviders2")]
-    public Dictionary<string, Dictionary<string, JsonElement>?>? TwoFactorProviders2 { get; init; }
+    [JsonConverter(typeof(IdentityTwoFactorProviders2JsonConverter))]
+    public required IReadOnlyList<IdentityTwoFactorProviderOption> TwoFactorProviders2 { get; init; }
 }
-
-
 
 internal sealed class UserDecryptionOptions
 {

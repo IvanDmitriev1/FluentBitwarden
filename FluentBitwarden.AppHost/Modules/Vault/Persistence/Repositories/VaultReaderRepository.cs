@@ -1,6 +1,6 @@
 using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
@@ -35,13 +35,13 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         var rows = Connection.Query<OrganizationRow>(
             """
             SELECT
+                user_id,
                 organization_id,
                 organization_user_id,
                 organization_name,
                 is_enabled,
-                use_key_connector,
+                access_secrets_manager,
                 member_status,
-                member_type,
                 encrypted_organization_key
             FROM vault_organization
             WHERE user_id = @UserId

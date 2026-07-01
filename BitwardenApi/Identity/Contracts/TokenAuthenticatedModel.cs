@@ -1,5 +1,3 @@
-using BitwardenApi.Infrastructure.Cryptography;
-
 namespace BitwardenApi.Identity.Contracts;
 
 public sealed record TokenRefreshSessionModel(
