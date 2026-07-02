@@ -1,36 +1,113 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.System;
 using Exception = System.Exception;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
-[TemplatePart(Name = TextBlockPartName, Type = typeof(TextBlock))]
+[TemplatePart(Name = PartChrome, Type = typeof(VaultCipherFieldChrome))]
+[TemplatePart(Name = PartUriPrefixRun, Type = typeof(Run))]
+[TemplatePart(Name = PartUriDomainRun, Type = typeof(Run))]
+[TemplatePart(Name = PartUriSuffixRun, Type = typeof(Run))]
+[TemplateVisualState(Name = StateNormal, GroupName = GroupCommonStates)]
+[TemplateVisualState(Name = StatePointerOver, GroupName = GroupCommonStates)]
+[TemplateVisualState(Name = StatePressed, GroupName = GroupCommonStates)]
+[TemplateVisualState(Name = StateDisabled, GroupName = GroupCommonStates)]
 [DependencyProperty<LoginUri>("Uri")]
 [DependencyProperty<Brush>("DomainForeground")]
 [DependencyProperty<Brush>("SecondaryForeground")]
-public sealed partial class VaultCipherLoginUriField : VaultCipherFieldControlBase
+public sealed partial class VaultCipherLoginUriField : Control
 {
     private readonly record struct UriParts(string Prefix, string Domain, string Suffix);
 
-    private const string TextBlockPartName = "PART_TextBlock";
+    private const string PartChrome = "PART_Chrome";
+    private const string PartUriPrefixRun = "PART_UriPrefixRun";
+    private const string PartUriDomainRun = "PART_UriDomainRun";
+    private const string PartUriSuffixRun = "PART_UriSuffixRun";
 
-    private TextBlock? _textBlock;
+    private const string GroupCommonStates = "CommonStates";
+    private const string StateNormal = "Normal";
+    private const string StatePointerOver = "PointerOver";
+    private const string StatePressed = "Pressed";
+    private const string StateDisabled = "Disabled";
+
+    private readonly DependencyPropertyCallbackRegistration _isEnabledCallbackRegistration;
+
+    private bool _isPointerOver;
+    private bool _isPressed;
+    private VaultCipherFieldChrome? _chrome;
+    private Run? _uriPrefixRun;
+    private Run? _uriDomainRun;
+    private Run? _uriSuffixRun;
 
     public VaultCipherLoginUriField()
     {
         DefaultStyleKey = typeof(VaultCipherLoginUriField);
+        _isEnabledCallbackRegistration = new DependencyPropertyCallbackRegistration(
+            this,
+            IsEnabledProperty,
+            static (sender, dp) => ((VaultCipherLoginUriField)sender).OnIsEnabledChanged(dp));
     }
 
-    protected override FlyoutBase? CreateMenuFlyout()
+    protected override void OnApplyTemplate()
     {
-        return null;
+        _isEnabledCallbackRegistration.Unregister();
+        _chrome?.Click -= OnChromeClick;
+
+        base.OnApplyTemplate();
+
+        _chrome = GetTemplateChild(PartChrome) as VaultCipherFieldChrome;
+        _uriPrefixRun = GetTemplateChild(PartUriPrefixRun) as Run;
+        _uriDomainRun = GetTemplateChild(PartUriDomainRun) as Run;
+        _uriSuffixRun = GetTemplateChild(PartUriSuffixRun) as Run;
+
+        _chrome?.Click += OnChromeClick;
+        _isEnabledCallbackRegistration.Register();
+        UpdateUriParts();
+        UpdateVisualState(useTransitions: false);
     }
 
-    protected override async void OnPrimaryAction()
+    protected override void OnPointerEntered(PointerRoutedEventArgs args)
+    {
+        base.OnPointerEntered(args);
+
+        _isPointerOver = true;
+        UpdateVisualState();
+    }
+
+    protected override void OnPointerExited(PointerRoutedEventArgs args)
+    {
+        base.OnPointerExited(args);
+
+        _isPointerOver = false;
+        _isPressed = false;
+        UpdateVisualState();
+    }
+
+    protected override void OnPointerPressed(PointerRoutedEventArgs args)
+    {
+        base.OnPointerPressed(args);
+
+        _isPressed = true;
+        UpdateVisualState();
+    }
+
+    protected override void OnPointerReleased(PointerRoutedEventArgs args)
+    {
+        base.OnPointerReleased(args);
+
+        _isPressed = false;
+        UpdateVisualState();
+    }
+
+    partial void OnUriChanged() => UpdateUriParts();
+    partial void OnDomainForegroundChanged() => UpdateVisualState();
+    partial void OnSecondaryForegroundChanged() => UpdateVisualState();
+
+    private async void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
     {
         if (Uri is null || !Uri.TryGetWebUri(out var launchUri))
             return;
@@ -44,52 +121,54 @@ public sealed partial class VaultCipherLoginUriField : VaultCipherFieldControlBa
             Debug.WriteLine($"Failed to launch URI '{launchUri}': {exception}");
         }
     }
-
-    protected override void OnApplyTemplate()
+    private void UpdateUriParts()
     {
-        base.OnApplyTemplate();
-
-        _textBlock = GetTemplateChild(TextBlockPartName) as TextBlock;
-        UpdateText();
-    }
-
-    partial void OnUriChanged() => UpdateText();
-    partial void OnDomainForegroundChanged() => UpdateText();
-    partial void OnSecondaryForegroundChanged() => UpdateText();
-
-    private void UpdateText()
-    {
-        if (_textBlock is null)
-            return;
-
-        _textBlock.Inlines.Clear();
-
         if (Uri is not { } loginUri || string.IsNullOrWhiteSpace(loginUri.Value))
         {
+            SetUriParts(string.Empty, string.Empty, string.Empty);
             return;
         }
 
         if (!TryCreateUriParts(loginUri, out var parts))
         {
-            AddRun(loginUri.Value, SecondaryForeground);
+            SetUriParts(loginUri.Value, string.Empty, string.Empty);
             return;
         }
 
-        AddRun(parts.Prefix, SecondaryForeground);
-        AddRun(parts.Domain, DomainForeground);
-        AddRun(parts.Suffix, SecondaryForeground);
+        SetUriParts(parts.Prefix, parts.Domain, parts.Suffix);
     }
 
-    private void AddRun(string text, Brush? foreground)
+    private void SetUriParts(string prefix, string domain, string suffix)
     {
-        if (string.IsNullOrEmpty(text))
-            return;
+        _uriPrefixRun?.Text = prefix;
+        _uriDomainRun?.Text = domain;
+        _uriSuffixRun?.Text = suffix;
+    }
 
-        _textBlock?.Inlines.Add(new Run
+    private void OnIsEnabledChanged(DependencyProperty dp)
+    {
+        if (!IsEnabled)
         {
-            Text = text,
-            Foreground = foreground
-        });
+            _isPressed = false;
+        }
+
+        UpdateVisualState();
+    }
+
+    private void UpdateVisualState(bool useTransitions = true)
+    {
+        string state;
+
+        if (!IsEnabled)
+            state = StateDisabled;
+        else if (_isPressed)
+            state = StatePressed;
+        else if (_isPointerOver)
+            state = StatePointerOver;
+        else
+            state = StateNormal;
+
+        VisualStateManager.GoToState(this, state, useTransitions);
     }
 
     private static bool TryCreateUriParts(LoginUri loginUri, out UriParts parts)

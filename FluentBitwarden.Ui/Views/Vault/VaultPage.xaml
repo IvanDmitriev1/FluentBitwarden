@@ -7,6 +7,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:metadataTimeline="using:FluentBitwarden.Controls.Shared.MetadataTimeline"
     xmlns:models="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
     xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
     xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
@@ -34,7 +35,6 @@
             <x:String x:Key="VaultPageSortFieldModifiedText">Date modified</x:String>
             <x:String x:Key="VaultPageSortAscendingText">Ascending</x:String>
             <x:String x:Key="VaultPageSortDescendingText">Descending</x:String>
-            <x:String x:Key="VaultPageCipherDetailsItemHistoryText">Item history</x:String>
         </ResourceDictionary>
     </navigation:LifecyclePage.Resources>
 
@@ -174,9 +174,12 @@
                         Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
                         ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
 
-                    <StackPanel>
-                        <TextBlock Text="{StaticResource VaultPageCipherDetailsItemHistoryText}" />
-                    </StackPanel>
+                    <metadataTimeline:MetadataTimeline Header="{x:Bind models:VaultCipherExtensions.LastEditedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" ToggleAutomationName="Toggle item history">
+                        <metadataTimeline:MetadataTimelineItem Text="{x:Bind models:VaultCipherExtensions.AddedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" />
+                        <metadataTimeline:MetadataTimelineButtonItem
+                            Glyph="&#xE81C;"
+                            Text="View previous versions" />
+                    </metadataTimeline:MetadataTimeline>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

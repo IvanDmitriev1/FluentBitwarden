@@ -1,18 +1,21 @@
+using FluentBitwarden.Platform.Infrastructure.Clipboard;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using OtpNet;
 using FluentBitwarden.Controls.Shared;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
+[TemplatePart(Name = PartChrome, Type = typeof(VaultCipherFieldChrome))]
 [TemplatePart(Name = PartCountdownRing, Type = typeof(CountdownRing))]
 [DependencyProperty<TotpValue>("Totp")]
 [DependencyProperty<string>("DisplayCode", DefaultValue = "")]
-public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
+public sealed partial class VaultCipherTotpField : Control
 {
+    private const string PartChrome = "PART_Chrome";
     private const string PartCountdownRing = "PART_CountdownRing";
 
+    private VaultCipherFieldChrome? _chrome;
     private CountdownRing? _countdownRing;
     private DispatcherQueueTimer? _timer;
     private readonly DependencyPropertyCallbackRegistration _visibilityCallbackRegistration;
@@ -35,30 +38,28 @@ public sealed partial class VaultCipherTotpField : VaultCipherFieldControlBase
 
     protected override void OnApplyTemplate()
     {
+        _chrome?.Click -= OnChromeClick;
         DetachTemplateSubscriptions();
 
         base.OnApplyTemplate();
 
+        _chrome = GetTemplateChild(PartChrome) as VaultCipherFieldChrome;
         _countdownRing = GetTemplateChild(PartCountdownRing) as CountdownRing;
 
+        _chrome?.Click += OnChromeClick;
         _visibilityCallbackRegistration.Register();
         EnsureTimer();
         UpdateTotpDisplay();
         UpdateTimerState();
     }
 
-    protected override FlyoutBase? CreateMenuFlyout()
-    {
-        return null;
-    }
-
-    protected override void OnPrimaryAction()
+    private void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
     {
         if (Totp is null)
             return;
 
         var code = Totp.ComputeTotp();
-        CopyTextToClipboard(code);
+        ClipboardManager.SetText(code);
     }
 
     private void OnTimerTick(DispatcherQueueTimer sender, object args) => UpdateTotpDisplay();

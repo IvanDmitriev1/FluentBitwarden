@@ -12,6 +12,7 @@
         <ResourceDictionary Source="ms-appx:///Styles/Shared/TextBoxExStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/SearchFilterBarStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/SiteIconStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/MetadataTimelineStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 

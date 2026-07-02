@@ -1,7 +1,11 @@
+using System.Globalization;
+
 namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
 
 public static class VaultCipherExtensions
 {
+    private const string MetadataDateFormat = "dddd, MMMM d, yyyy 'at' h:mm:ss tt";
+
     public static Uri? GetDefaultSiteIconUri(this VaultCipher? cipher)
     {
         if (cipher is not LoginVaultCipher loginCipher)
@@ -30,4 +34,25 @@ public static class VaultCipherExtensions
         SshKeyVaultCipher => "\uE192",
         _ => "\uE774"
     };
+
+    public static string LastEditedAtFormatted(this VaultCipher? cipher)
+    {
+        return cipher is null
+            ? string.Empty
+            : $"Last edited {FormatMetadataDate(cipher.RevisionDate)}";
+    }
+
+    public static string AddedAtFormatted(this VaultCipher? cipher)
+    {
+        return cipher is null
+            ? string.Empty
+            : $"Added {FormatMetadataDate(cipher.CreationDate)}";
+    }
+
+    private static string FormatMetadataDate(DateTimeOffset date)
+    {
+        return date
+            .ToLocalTime()
+            .ToString(MetadataDateFormat, CultureInfo.CurrentCulture);
+    }
 }

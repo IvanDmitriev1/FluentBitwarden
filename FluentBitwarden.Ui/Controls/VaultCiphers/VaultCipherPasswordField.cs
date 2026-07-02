@@ -1,56 +1,80 @@
+using FluentBitwarden.Platform.Infrastructure.Clipboard;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls.Primitives;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
-[DependencyProperty<string>("Label", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
-[DependencyProperty<string>("Password", DefaultBindingMode = DefaultBindingMode.OneTime)]
-[DependencyProperty<string>("DisplayText", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneWay)]
-public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBase
+[TemplatePart(Name = PartChrome, Type = typeof(VaultCipherFieldChrome))]
+[TemplatePart(Name = PartRevealMenuItem, Type = typeof(MenuFlyoutItem))]
+[TemplatePart(Name = PartConcealMenuItem, Type = typeof(MenuFlyoutItem))]
+[TemplateVisualState(Name = StateConcealed, GroupName = GroupRevealStates)]
+[TemplateVisualState(Name = StateRevealed, GroupName = GroupRevealStates)]
+[DependencyProperty<string>("Label", DefaultValue = "")]
+[DependencyProperty<string>("Password")]
+[DependencyProperty<string>("DisplayText", DefaultValue = "")]
+public sealed partial class VaultCipherPasswordField : Control
 {
-    private const string RevealMenuItemText = "Reveal";
-    private const string ConcealMenuItemText = "Conceal";
+    private const string PartChrome = "PART_Chrome";
+    private const string PartRevealMenuItem = "PART_RevealMenuItem";
+    private const string PartConcealMenuItem = "PART_ConcealMenuItem";
+    private const string GroupRevealStates = "RevealStates";
+    private const string StateConcealed = "Concealed";
+    private const string StateRevealed = "Revealed";
     private static readonly string MaskPasswordText = new('\u2022', 10);
 
     private bool _isRevealed;
-    private MenuFlyout? _menuFlyout;
-    private MenuFlyoutItem? _toggleRevealMenuItem;
+    private VaultCipherFieldChrome? _chrome;
+    private MenuFlyoutItem? _revealMenuItem;
+    private MenuFlyoutItem? _concealMenuItem;
 
     public VaultCipherPasswordField()
     {
         DefaultStyleKey = typeof(VaultCipherPasswordField);
     }
 
-    partial void OnPasswordChanged()
+    partial void OnPasswordChanged() => UpdateDisplayText();
+
+    protected override void OnApplyTemplate()
+    {
+        _chrome?.Click -= OnChromeClick;
+        _revealMenuItem?.Click -= OnRevealMenuItemClick;
+        _concealMenuItem?.Click -= OnConcealMenuItemClick;
+
+        base.OnApplyTemplate();
+
+        _chrome = GetTemplateChild(PartChrome) as VaultCipherFieldChrome;
+        _revealMenuItem = GetTemplateChild(PartRevealMenuItem) as MenuFlyoutItem;
+        _concealMenuItem = GetTemplateChild(PartConcealMenuItem) as MenuFlyoutItem;
+
+        _chrome?.Click += OnChromeClick;
+        _revealMenuItem?.Click += OnRevealMenuItemClick;
+        _concealMenuItem?.Click += OnConcealMenuItemClick;
+
+        UpdateRevealState(useTransitions: false);
+    }
+
+    private void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args) =>
+        ClipboardManager.SetText(Password);
+
+    private void OnRevealMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        _isRevealed = true;
+        UpdateRevealState();
+    }
+
+    private void OnConcealMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        _isRevealed = false;
+        UpdateRevealState();
+    }
+
+    private void UpdateRevealState(bool useTransitions = true)
     {
         UpdateDisplayText();
-    }
 
-    protected override FlyoutBase? CreateMenuFlyout()
-    {
-        if (_menuFlyout is null)
-        {
-            _toggleRevealMenuItem = new MenuFlyoutItem();
-            _toggleRevealMenuItem.Click += OnToggleRevealMenuItemClick;
-
-            _menuFlyout = new MenuFlyout();
-            _menuFlyout.Items.Add(_toggleRevealMenuItem);
-        }
-
-        UpdateRevealMenuItemText();
-        return _menuFlyout;
-    }
-
-    protected override void OnPrimaryAction()
-    {
-        CopyTextToClipboard(Password);
-    }
-
-    private void OnToggleRevealMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        _isRevealed = !_isRevealed;
-        UpdateDisplayText();
-        UpdateRevealMenuItemText();
+        VisualStateManager.GoToState(
+            this,
+            _isRevealed ? StateRevealed : StateConcealed,
+            useTransitions);
     }
 
     private void UpdateDisplayText()
@@ -60,13 +84,5 @@ public sealed partial class VaultCipherPasswordField : VaultCipherFieldControlBa
             : string.IsNullOrEmpty(Password)
                 ? string.Empty
                 : MaskPasswordText;
-    }
-
-    private void UpdateRevealMenuItemText()
-    {
-        if (_toggleRevealMenuItem is null)
-            return;
-
-        _toggleRevealMenuItem.Text = _isRevealed ? ConcealMenuItemText : RevealMenuItemText;
     }
 }

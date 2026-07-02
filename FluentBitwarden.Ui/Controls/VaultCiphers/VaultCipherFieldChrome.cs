@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls.Primitives;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
@@ -7,16 +6,20 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 [TemplatePart(Name = PartPrimaryButton, Type = typeof(Button))]
 [TemplatePart(Name = PartSecondaryButton, Type = typeof(Button))]
 [TemplatePart(Name = PartActionTextBlock, Type = typeof(TextBlock))]
-[DependencyProperty<string>("Label", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
-[DependencyProperty<string>("ActionText", DefaultValue = "", DefaultBindingMode = DefaultBindingMode.OneTime)]
-[DependencyProperty<Visibility>("SecondaryButtonVisibility", DefaultValue = Visibility.Collapsed)]
+[TemplateVisualState(Name = StateNoFlyout, GroupName = GroupStates)]
+[TemplateVisualState(Name = StateHasFlyout, GroupName = GroupStates)]
+[DependencyProperty<string>("Label", DefaultValue = "")]
+[DependencyProperty<string>("ActionText", DefaultValue = "")]
 public sealed partial class VaultCipherFieldChrome : SplitButton
 {
     private const string PartPrimaryButton = "PrimaryButton";
     private const string PartSecondaryButton = "SecondaryButton";
     private const string PartActionTextBlock = "PART_ActionTextBlock";
 
-    private Button? _secondaryButton;
+    private const string GroupStates = "FlyoutAvailabilityStates";
+    private const string StateNoFlyout = "NoFlyout";
+    private const string StateHasFlyout = "HasFlyout";
+
     private readonly DependencyPropertyCallbackRegistration _flyoutCallbackRegistration;
 
     public VaultCipherFieldChrome()
@@ -25,45 +28,24 @@ public sealed partial class VaultCipherFieldChrome : SplitButton
         _flyoutCallbackRegistration = new DependencyPropertyCallbackRegistration(
             this,
             FlyoutProperty,
-            static (sender, dp) => ((VaultCipherFieldChrome)sender).OnFlyoutChanged(dp));
+            static (sender, _) => ((VaultCipherFieldChrome)sender).UpdateFlyoutState());
     }
 
     protected override void OnApplyTemplate()
     {
         _flyoutCallbackRegistration.Unregister();
 
-        if (_secondaryButton is not null)
-        {
-            _secondaryButton.Flyout = null;
-        }
-
         base.OnApplyTemplate();
 
-        _secondaryButton = GetTemplateChild(PartSecondaryButton) as Button;
         _flyoutCallbackRegistration.Register();
-        UpdateFlyoutState();
+        UpdateFlyoutState(useTransitions: false);
     }
 
-    private void OnFlyoutChanged(DependencyProperty dp)
+    private void UpdateFlyoutState(bool useTransitions = true)
     {
-        UpdateFlyoutState();
-    }
-
-    private void UpdateFlyoutState()
-    {
-        var flyout = Flyout;
-        SecondaryButtonVisibility = flyout is null
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-        if (flyout is not null)
-        {
-            flyout.Placement = FlyoutPlacementMode.BottomEdgeAlignedRight;
-        }
-
-        if (_secondaryButton is not null)
-        {
-            _secondaryButton.Flyout = flyout;
-        }
+        VisualStateManager.GoToState(
+            this,
+            Flyout is null ? StateNoFlyout : StateHasFlyout,
+            useTransitions);
     }
 }

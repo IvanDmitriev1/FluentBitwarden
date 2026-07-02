@@ -18,7 +18,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="vault:VaultCipherFieldChrome">
-                    <Grid x:Name="PART_RootGrid" Background="Transparent">
+                    <Grid
+                        x:Name="PART_RootGrid"
+                        Background="Transparent"
+                        CornerRadius="{TemplateBinding CornerRadius}">
                         <Grid.Resources>
                             <Style TargetType="Button">
                                 <Setter Property="Background" Value="Transparent" />
@@ -54,8 +57,8 @@
                                 x:Name="PrimaryButtonColumn"
                                 Width="*"
                                 MinWidth="0" />
-                            <ColumnDefinition x:Name="Separator" Width="1" />
-                            <ColumnDefinition x:Name="SecondaryButtonColumn" Width="Auto" />
+                            <ColumnDefinition x:Name="Separator" Width="0" />
+                            <ColumnDefinition x:Name="SecondaryButtonColumn" Width="0" />
                         </Grid.ColumnDefinitions>
 
                         <Grid x:Name="PrimaryBackgroundGrid" Background="{TemplateBinding Background}" />
@@ -63,7 +66,7 @@
                             x:Name="SecondaryBackgroundGrid"
                             Grid.Column="2"
                             Background="{TemplateBinding Background}"
-                            Visibility="{TemplateBinding SecondaryButtonVisibility}" />
+                            Visibility="Collapsed" />
 
                         <Grid
                             x:Name="Border"
@@ -97,7 +100,7 @@
                                     <TextBlock
                                         x:Name="PART_LabelTextBlock"
                                         Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
                                         Text="{TemplateBinding Label}" />
 
                                     <ContentPresenter
@@ -131,10 +134,11 @@
                             AutomationProperties.Name="{StaticResource VaultCipherFieldChromeMenuButtonAutomationName}"
                             Background="Transparent"
                             BorderThickness="0"
+                            Flyout="{TemplateBinding Flyout}"
                             Foreground="{TemplateBinding Foreground}"
                             IsTabStop="False"
                             ToolTipService.ToolTip="{StaticResource VaultCipherFieldChromeMenuButtonToolTip}"
-                            Visibility="{TemplateBinding SecondaryButtonVisibility}">
+                            Visibility="Collapsed">
                             <TextBlock
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
@@ -146,6 +150,26 @@
                         </Button>
 
                         <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="FlyoutAvailabilityStates">
+                                <VisualState x:Name="NoFlyout">
+                                    <VisualState.Setters>
+                                        <Setter Target="Separator.Width" Value="0" />
+                                        <Setter Target="SecondaryButtonColumn.Width" Value="0" />
+                                        <Setter Target="SecondaryBackgroundGrid.Visibility" Value="Collapsed" />
+                                        <Setter Target="SecondaryButton.Visibility" Value="Collapsed" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="HasFlyout">
+                                    <VisualState.Setters>
+                                        <Setter Target="Separator.Width" Value="1" />
+                                        <Setter Target="SecondaryButtonColumn.Width" Value="Auto" />
+                                        <Setter Target="SecondaryBackgroundGrid.Visibility" Value="Visible" />
+                                        <Setter Target="SecondaryButton.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualState x:Name="Normal" />
 

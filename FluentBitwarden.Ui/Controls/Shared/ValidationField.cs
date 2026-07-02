@@ -17,15 +17,8 @@ public sealed partial class ValidationField : ContentControl
 
     partial void OnPropertyChanged(ValidatableProperty? oldValue, ValidatableProperty? newValue)
     {
-        if (oldValue is not null)
-        {
-            oldValue.Source.ErrorsChanged -= OnErrorsChanged;
-        }
-
-        if (newValue is not null)
-        {
-            newValue.Source.ErrorsChanged += OnErrorsChanged;
-        }
+        oldValue?.Source.ErrorsChanged -= OnErrorsChanged;
+        newValue?.Source.ErrorsChanged += OnErrorsChanged;
 
         RefreshValidationState();
     }

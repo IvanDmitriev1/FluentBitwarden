@@ -58,7 +58,10 @@
             <ItemsControl ItemsSource="{x:Bind Uris}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="models:LoginUri">
-                        <vault:VaultCipherLoginUriField Margin="0,0,0,8" Uri="{x:Bind}" />
+                        <vault:VaultCipherLoginUriField
+                            Margin="0,0,0,8"
+                            CornerRadius="4"
+                            Uri="{x:Bind}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

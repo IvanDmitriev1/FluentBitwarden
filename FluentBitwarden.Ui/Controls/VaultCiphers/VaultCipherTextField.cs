@@ -1,27 +1,39 @@
-using Microsoft.UI.Xaml.Controls.Primitives;
+using FluentBitwarden.Platform.Infrastructure.Clipboard;
+using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
+[TemplatePart(Name = PartChrome, Type = typeof(VaultCipherFieldChrome))]
 [DependencyProperty<string>("Label", DefaultValue = "")]
 [DependencyProperty<string>("Text")]
 [DependencyProperty<string>("ActionText")]
-public partial class VaultCipherTextField : VaultCipherFieldControlBase
+public partial class VaultCipherTextField : Control
 {
+    private const string PartChrome = "PART_Chrome";
+
+    private VaultCipherFieldChrome? _chrome;
+
     public VaultCipherTextField()
     {
         DefaultStyleKey = typeof(VaultCipherTextField);
     }
 
-    protected override FlyoutBase? CreateMenuFlyout()
+    protected override void OnApplyTemplate()
     {
-        return null;
+        _chrome?.Click -= OnChromeClick;
+
+        base.OnApplyTemplate();
+
+        _chrome = GetTemplateChild(PartChrome) as VaultCipherFieldChrome;
+
+        _chrome?.Click += OnChromeClick;
     }
 
-    protected override void OnPrimaryAction()
+    private void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
     {
         if (string.IsNullOrEmpty(ActionText))
             return;
         
-        CopyTextToClipboard(Text);
+        ClipboardManager.SetText(Text);
     }
 }

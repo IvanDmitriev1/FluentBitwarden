@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vaultCiphers="using:FluentBitwarden.Controls.VaultCiphers">
 
+    <x:String x:Key="VaultCipherLoginUriFieldLabel">website</x:String>
+
     <Style TargetType="vaultCiphers:VaultCipherLoginUriField">
         <Setter Property="SecondaryForeground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
         <Setter Property="DomainForeground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}" />
@@ -14,13 +16,50 @@
                     <vaultCiphers:VaultCipherFieldChrome
                         x:Name="PART_Chrome"
                         ActionText="Open"
-                        Label="URI">
-
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Label="{StaticResource VaultCipherLoginUriFieldLabel}">
                         <TextBlock
                             x:Name="PART_TextBlock"
-                            Style="{StaticResource BodyLargeTextBlockStyle}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
                             TextTrimming="CharacterEllipsis"
-                            TextWrapping="NoWrap" />
+                            TextWrapping="NoWrap">
+                            <TextBlock.Inlines><Run x:Name="PART_UriPrefixRun" /><Run x:Name="PART_UriDomainRun" /><Run x:Name="PART_UriSuffixRun" /></TextBlock.Inlines>
+                        </TextBlock>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_UriPrefixRun.Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <Setter Target="PART_UriDomainRun.Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                        <Setter Target="PART_UriSuffixRun.Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_UriPrefixRun.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                        <Setter Target="PART_UriDomainRun.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                        <Setter Target="PART_UriSuffixRun.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_UriPrefixRun.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
+                                        <Setter Target="PART_UriDomainRun.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
+                                        <Setter Target="PART_UriSuffixRun.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_UriPrefixRun.Foreground" Value="{ThemeResource TextFillColorDisabledBrush}" />
+                                        <Setter Target="PART_UriDomainRun.Foreground" Value="{ThemeResource TextFillColorDisabledBrush}" />
+                                        <Setter Target="PART_UriSuffixRun.Foreground" Value="{ThemeResource TextFillColorDisabledBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
                     </vaultCiphers:VaultCipherFieldChrome>
                 </ControlTemplate>
             </Setter.Value>
