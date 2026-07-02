@@ -1,5 +1,6 @@
 using BitwardenApi.Identity;
 using BitwardenApi.Notifications;
+using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Items;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -34,11 +35,21 @@ public static class BitwardenApiServiceCollectionExtensions
             .AddHttpMessageHandler<BitwardenAuthorizationHandler>()
             .AddBitwardenReadRetry();
 
+        services.AddHttpClient("BitwardenApiAttachmentDownloadHttpClient", static client =>
+            {
+                client.Timeout = Timeout.InfiniteTimeSpan;
+                client.DefaultRequestVersion = HttpVersion.Version20;
+                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+            })
+            .AddHttpMessageHandler<BitwardenAuthorizationHandler>()
+            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
+            .AddBitwardenReadRetry();
+
         services.AddSingleton<IIdentityApi, IdentityApi>();
         services.AddSingleton<IVaultItemsApi, VaultItemsApi>();
-        //services.AddSingleton<IVaultAttachmentsApi, VaultAttachmentsApi>();
+        services.AddSingleton<IVaultCipherAttachmentApi, VaultCipherAttachmentApi>();
 
-        services.AddSingleton<INotificationsApi, NotificationsApi>();
+        services.AddSingleton<IBitwardenNotificationsApi, BitwardenNotificationsApi>();
 
         return services;
     }

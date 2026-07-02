@@ -1,3 +1,4 @@
+using BitwardenApi.Vault.Attachments.Contracts;
 using MemoryPack;
 
 namespace BitwardenApi.Vault.Items.Contracts;
@@ -30,6 +31,8 @@ public abstract partial class VaultCipher
     public required DateTimeOffset RevisionDate { get; set; }
     public required DateTimeOffset CreationDate { get; set; }
     public required DateTimeOffset? DeletedDate { get; set; }
+
+    public VaultCipherAttachment[] Attachments { get; set; } = [];
 }
 
 [MemoryPackable]

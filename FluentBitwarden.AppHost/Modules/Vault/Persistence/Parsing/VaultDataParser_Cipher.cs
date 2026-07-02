@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using BitwardenApi.Vault.Attachments.Contracts;
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
@@ -48,7 +49,7 @@ public static partial class VaultDataParser
         ref Utf8JsonReader reader,
         scoped ReadOnlySpan<byte> decryptionKey)
     {
-        return dto.VaultCipherType switch
+        VaultCipher parsedCipher = dto.VaultCipherType switch
         {
             VaultCipherType.Login => ParseLoginCipher((LoginVaultCipher)cipher, ref reader, decryptionKey),
             VaultCipherType.SecureNote => ParseSecureNoteCipher((SecureNoteVaultCipher)cipher, ref reader, decryptionKey),
@@ -57,6 +58,33 @@ public static partial class VaultDataParser
             VaultCipherType.SshKey => ParseSshKeyCipher((SshKeyVaultCipher)cipher, ref reader, decryptionKey),
             _ => throw new NotSupportedException($"Unsupported vaultCipher type: {dto.VaultCipherType}")
         };
+
+        parsedCipher.Attachments = ParseAttachments(dto.Id, dto.Attachments, decryptionKey);
+        return parsedCipher;
+    }
+
+    private static VaultCipherAttachment[] ParseAttachments(
+        CipherId cipherId,
+        ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachmentDtos,
+        scoped ReadOnlySpan<byte> decryptionKey)
+    {
+        if (attachmentDtos is not { Length: > 0 })
+            return [];
+
+        var attachments = new VaultCipherAttachment[attachmentDtos.Length];
+        for (int i = 0; i < attachmentDtos.Length; i++)
+        {
+            ref readonly var dto = ref attachmentDtos[i];
+            attachments[i] = new VaultCipherAttachment
+            {
+                Id = dto.Id,
+                CipherId = cipherId,
+                FileName = dto.EncryptedFileName.Decode(decryptionKey),
+                Size = dto.Size
+            };
+        }
+
+        return attachments;
     }
 
     private static LoginVaultCipher ParseLoginCipher(LoginVaultCipher vaultCipher, ref Utf8JsonReader reader,
@@ -265,7 +293,7 @@ public static partial class VaultDataParser
             throw new JsonException("Each URI item must be a JSON object.");
 
         string? uri = null;
-        UriMatchType matchType = UriMatchType.Domain;
+        LoginUri.MatchType matchType = LoginUri.MatchType.Domain;
 
         while (reader.Read())
         {
@@ -286,11 +314,11 @@ public static partial class VaultDataParser
         return new LoginUri
         {
             Value = uri ?? throw new JsonException("URI item is missing Uri."),
-            MatchType = matchType
+            Match = matchType
         };
     }
 
-    private static UriMatchType ReadUriMatchType(ref Utf8JsonReader reader)
+    private static LoginUri.MatchType ReadUriMatchType(ref Utf8JsonReader reader)
     {
         reader.Read();
 
@@ -300,10 +328,10 @@ public static partial class VaultDataParser
         if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out int value))
             throw new JsonException("URI match must be a valid Int32 value.");
 
-        if (!Enum.IsDefined(typeof(UriMatchType), value))
+        if (!Enum.IsDefined(typeof(LoginUri.MatchType), value))
             throw new JsonException($"Unsupported URI match type: {value}.");
 
-        return (UriMatchType)value;
+        return (LoginUri.MatchType)value;
     }
 
     private static Fido2Credential? ReadFirstFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)

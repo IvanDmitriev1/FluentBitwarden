@@ -1,4 +1,6 @@
 using System.Globalization;
+using BitwardenApi.Vault.Attachments.Contracts;
+using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
 
@@ -25,6 +27,13 @@ public static class VaultCipherExtensions
     };
 
     public static bool HasSubtitle(this VaultCipher cipher) => !string.IsNullOrEmpty(cipher.GetSubtitle());
+
+    public static bool HasAttachments(VaultCipher? cipher) => cipher?.Attachments.Length > 0;
+
+    public static Visibility AttachmentsVisibility(VaultCipher? cipher) =>
+        HasAttachments(cipher) ? Visibility.Visible : Visibility.Collapsed;
+
+    public static VaultCipherAttachment[] GetAttachments(VaultCipher? cipher) => cipher?.Attachments ?? [];
 
     public static string GetDefaultGlyph(VaultCipher? cipher) => cipher switch
     {

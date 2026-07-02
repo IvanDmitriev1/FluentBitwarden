@@ -1,6 +1,6 @@
 namespace BitwardenApi.Notifications;
 
-public interface INotificationsApi : IAsyncDisposable
+public interface IBitwardenNotificationsApi : IAsyncDisposable
 {
     Task ConnectAsync(
         BitwardenAccountContext accountContext,

@@ -6,9 +6,19 @@ namespace BitwardenApi.Vault.Items.Contracts;
 [MemoryPackable]
 public sealed partial class LoginUri
 {
+    public enum MatchType
+    {
+        Domain = 0,
+        Host = 1,
+        StartsWith = 2,
+        Exact = 3,
+        RegularExpression = 4,
+        Never = 5,
+    }
+
     private Uri? _uri;
 
-    public UriMatchType MatchType { get; set; } = UriMatchType.Domain;
+    public MatchType Match { get; set; } = MatchType.Domain;
 
     public string Value
     {

@@ -4,10 +4,10 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace BitwardenApi.Notifications;
 
-internal sealed class NotificationsApi(
+internal sealed class BitwardenNotificationsApi(
     IBitwardenAccessTokenProvider accessTokenProvider,
     IServiceProvider serviceProvider)
-    : INotificationsApi
+    : IBitwardenNotificationsApi
 {
     private HubConnection? _connection;
 

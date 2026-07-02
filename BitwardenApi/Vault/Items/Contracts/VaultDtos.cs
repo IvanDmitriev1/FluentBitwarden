@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using BitwardenApi.Vault.Attachments.Contracts;
 
 namespace BitwardenApi.Vault.Items.Contracts;
 
@@ -131,5 +132,7 @@ public readonly struct VaultCipherDto
     [JsonPropertyName("data")]
     [JsonConverter(typeof(StringToUtf8BytesConverter))]
     public required byte[] Data { get; init; }
+
+    public VaultCipherAttachmentDownloadResponse[]? Attachments { get; init; }
 }
 

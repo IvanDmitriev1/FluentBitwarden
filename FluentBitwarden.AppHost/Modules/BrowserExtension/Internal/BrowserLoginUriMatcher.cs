@@ -11,11 +11,11 @@ internal static class BrowserLoginUriMatcher
 
     private static bool Matches(LoginUri loginUri, BrowserPageUri pageUri)
     {
-        var matchType = loginUri.MatchType;
-        if (matchType == UriMatchType.Never)
+        var matchType = loginUri.Match;
+        if (matchType == LoginUri.MatchType.Never)
             return false;
 
-        if (matchType == UriMatchType.RegularExpression)
+        if (matchType == LoginUri.MatchType.RegularExpression)
             return MatchesRegex(loginUri.Value, pageUri.Value.AbsoluteUri);
 
         if (!loginUri.TryGetWebUri(out var savedUri))
@@ -23,18 +23,18 @@ internal static class BrowserLoginUriMatcher
 
         return matchType switch
         {
-            UriMatchType.Domain =>
+            LoginUri.MatchType.Domain =>
                 DomainHost.TryCreate(savedUri, out var savedHost) &&
                 pageUri.Host.IsSameOrSubdomainOf(savedHost),
 
-            UriMatchType.Host =>
+            LoginUri.MatchType.Host =>
                 DomainHost.TryCreate(savedUri, out var savedHost) &&
                 string.Equals(savedHost.Value, pageUri.Host.Value, StringComparison.OrdinalIgnoreCase),
 
-            UriMatchType.StartsWith =>
+            LoginUri.MatchType.StartsWith =>
                 GetComparableUri(pageUri.Value).StartsWith(GetComparableUri(savedUri), StringComparison.OrdinalIgnoreCase),
 
-            UriMatchType.Exact =>
+            LoginUri.MatchType.Exact =>
                 string.Equals(GetComparableUri(pageUri.Value), GetComparableUri(savedUri), StringComparison.OrdinalIgnoreCase),
 
             _ => false

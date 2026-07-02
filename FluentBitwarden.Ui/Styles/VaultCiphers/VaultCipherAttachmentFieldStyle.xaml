@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers">
+
+    <x:String x:Key="VaultCipherAttachmentFieldLabel">Attachment</x:String>
+    <x:String x:Key="VaultCipherAttachmentFieldGlyph">&#xE723;</x:String>
+
+    <Style TargetType="vault:VaultCipherAttachmentField">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="vault:VaultCipherAttachmentField">
+                    <vault:VaultCipherFieldChrome x:Name="PART_Chrome" ActionText="Download">
+                        <Grid ColumnSpacing="12" RowSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" MinWidth="0" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Grid.Column="0"
+                                FontSize="22"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="{StaticResource VaultCipherAttachmentFieldGlyph}"
+                                Style="{StaticResource IconStyle}" />
+
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock
+                                    x:Name="PART_FileNameTextBlock"
+                                    Style="{StaticResource BodyLargeTextBlockStyle}"
+                                    TextWrapping="NoWrap" />
+                                <TextBlock
+                                    x:Name="PART_SizeTextBlock"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+                        </Grid>
+                    </vault:VaultCipherFieldChrome>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

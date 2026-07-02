@@ -13,6 +13,7 @@
     xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
     xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
+    xmlns:vaultCiphers="using:FluentBitwarden.Controls.VaultCiphers"
     xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
@@ -174,11 +175,17 @@
                         Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
                         ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
 
+                    <sharedControls:DividedCardItemsControl ItemsSource="{x:Bind models:VaultCipherExtensions.GetAttachments(ViewModel.SelectedCipher), Mode=OneWay}" Visibility="{x:Bind models:VaultCipherExtensions.AttachmentsVisibility(ViewModel.SelectedCipher), Mode=OneWay}">
+                        <sharedControls:DividedCardItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <vaultCiphers:VaultCipherAttachmentField Attachment="{Binding}" />
+                            </DataTemplate>
+                        </sharedControls:DividedCardItemsControl.ItemTemplate>
+                    </sharedControls:DividedCardItemsControl>
+
                     <metadataTimeline:MetadataTimeline Header="{x:Bind models:VaultCipherExtensions.LastEditedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" ToggleAutomationName="Toggle item history">
                         <metadataTimeline:MetadataTimelineItem Text="{x:Bind models:VaultCipherExtensions.AddedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" />
-                        <metadataTimeline:MetadataTimelineButtonItem
-                            Glyph="&#xE81C;"
-                            Text="View previous versions" />
+                        <metadataTimeline:MetadataTimelineButtonItem Glyph="&#xE81C;" Text="View previous versions" />
                     </metadataTimeline:MetadataTimeline>
                 </StackPanel>
             </ScrollViewer>

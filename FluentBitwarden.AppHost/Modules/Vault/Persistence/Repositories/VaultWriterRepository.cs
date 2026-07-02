@@ -1,6 +1,7 @@
 using Dapper;
 using FluentBitwarden.AppHost.Data.Abstractions;
 using Microsoft.Data.Sqlite;
+using BitwardenApi.Vault.Attachments.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
@@ -186,6 +187,46 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 
             WritePayloadBlob(rowId, dto.Data);
             WriteCipherAssignments(cipherId, dto.FolderId, dto.CollectionIds);
+            WriteCipherAttachments(cipherId, dto.Attachments);
+        }
+    }
+
+    private void WriteCipherAttachments(string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)
+    {
+        if (attachments.Length == 0)
+            return;
+
+        for (int i = 0; i < attachments.Length; i++)
+        {
+            ref readonly var attachment = ref attachments[i];
+
+            Connection.Execute(
+                """
+                INSERT INTO vault_cipher_attachment (
+                    user_id,
+                    cipher_id,
+                    attachment_id,
+                    sort_order,
+                    encrypted_file_name,
+                    size)
+                VALUES (
+                    @UserId,
+                    @CipherId,
+                    @AttachmentId,
+                    @SortOrder,
+                    @EncryptedFileName,
+                    @Size)
+                """,
+                new
+                {
+                    UserId = _userIdStr,
+                    CipherId = cipherId,
+                    AttachmentId = attachment.Id.ToString(),
+                    SortOrder = i,
+                    EncryptedFileName = attachment.EncryptedFileName.ToByteArray(),
+                    Size = attachment.Size.Bytes
+                },
+                transaction: Transaction);
         }
     }
 
