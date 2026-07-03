@@ -19,13 +19,34 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="sharedControls:DividedCardItemsControl">
-                    <Border
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="{TemplateBinding CornerRadius}">
-                        <ItemsPresenter />
-                    </Border>
+                    <StackPanel>
+                        <TextBlock
+                            x:Name="PART_LabelTextBlock"
+                            Margin="0,0,0,8"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Text="{TemplateBinding Label}" />
+
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                            <ItemsPresenter />
+                        </Border>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="LabelStates">
+                                <VisualState x:Name="HasLabel" />
+
+                                <VisualState x:Name="NoLabel">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_LabelTextBlock.Visibility" Value="Collapsed" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </StackPanel>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

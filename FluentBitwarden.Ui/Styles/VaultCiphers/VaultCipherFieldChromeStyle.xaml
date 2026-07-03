@@ -96,9 +96,10 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0" Spacing="2">
+                                <StackPanel Grid.Column="0">
                                     <TextBlock
                                         x:Name="PART_LabelTextBlock"
+                                        Margin="0,0,0,2"
                                         Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                         Style="{StaticResource BodyStrongTextBlockStyle}"
                                         Text="{TemplateBinding Label}" />
@@ -150,6 +151,16 @@
                         </Button>
 
                         <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="LabelStates">
+                                <VisualState x:Name="HasLabel" />
+
+                                <VisualState x:Name="NoLabel">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_LabelTextBlock.Visibility" Value="Collapsed" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
                             <VisualStateGroup x:Name="FlyoutAvailabilityStates">
                                 <VisualState x:Name="NoFlyout">
                                     <VisualState.Setters>

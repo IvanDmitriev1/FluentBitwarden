@@ -16,11 +16,10 @@
                     <vaultCiphers:VaultCipherFieldChrome
                         x:Name="PART_Chrome"
                         ActionText="Open"
-                        CornerRadius="{TemplateBinding CornerRadius}"
-                        Label="{StaticResource VaultCipherLoginUriFieldLabel}">
+                        CornerRadius="{TemplateBinding CornerRadius}">
                         <TextBlock
                             x:Name="PART_TextBlock"
-                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Style="{StaticResource BodyTextBlockStyle}"
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="NoWrap">
                             <TextBlock.Inlines><Run x:Name="PART_UriPrefixRun" /><Run x:Name="PART_UriDomainRun" /><Run x:Name="PART_UriSuffixRun" /></TextBlock.Inlines>

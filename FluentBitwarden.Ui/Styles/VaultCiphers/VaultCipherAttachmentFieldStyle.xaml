@@ -28,7 +28,7 @@
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock
                                     x:Name="PART_FileNameTextBlock"
-                                    Style="{StaticResource BodyLargeTextBlockStyle}"
+                                    Style="{StaticResource BodyTextBlockStyle}"
                                     TextWrapping="NoWrap" />
                                 <TextBlock
                                     x:Name="PART_SizeTextBlock"

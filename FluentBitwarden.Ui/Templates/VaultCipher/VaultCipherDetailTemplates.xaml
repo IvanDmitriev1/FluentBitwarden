@@ -45,7 +45,10 @@
                 </controls:DividedCardItemsControl.Items>
             </controls:DividedCardItemsControl>
 
-            <controls:DividedCardItemsControl ItemsSource="{x:Bind Uris}">
+            <controls:DividedCardItemsControl
+                ItemsSource="{x:Bind Uris}"
+                Label="Websites"
+                Visibility="{x:Bind Uris, Converter={StaticResource EmptyCollectionToVisibilityConverter}}">
                 <controls:DividedCardItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="models:LoginUri">
                         <vault:VaultCipherLoginUriField Uri="{x:Bind}" />

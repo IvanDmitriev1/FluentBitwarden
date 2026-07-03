@@ -175,7 +175,10 @@
                         Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
                         ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
 
-                    <sharedControls:DividedCardItemsControl ItemsSource="{x:Bind models:VaultCipherExtensions.GetAttachments(ViewModel.SelectedCipher), Mode=OneWay}" Visibility="{x:Bind models:VaultCipherExtensions.AttachmentsVisibility(ViewModel.SelectedCipher), Mode=OneWay}">
+                    <sharedControls:DividedCardItemsControl
+                        ItemsSource="{x:Bind ViewModel.SelectedCipher.Attachments, Mode=OneWay}"
+                        Label="Attachments"
+                        Visibility="{x:Bind ViewModel.SelectedCipher.Attachments, Mode=OneWay, Converter={StaticResource EmptyCollectionToVisibilityConverter}}">
                         <sharedControls:DividedCardItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <vaultCiphers:VaultCipherAttachmentField Attachment="{Binding}" />
