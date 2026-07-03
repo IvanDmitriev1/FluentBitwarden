@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.AppHost.Data.Abstractions;
+﻿using BitwardenApi.Vault.Cryptography;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 

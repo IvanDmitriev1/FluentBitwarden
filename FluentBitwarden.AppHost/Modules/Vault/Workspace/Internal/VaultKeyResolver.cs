@@ -1,6 +1,7 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance.Buffers;
+using BitwardenApi.Vault.Cryptography;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
@@ -10,23 +11,23 @@ internal sealed class VaultKeyResolver(
     VaultOrganizationDto[] organizations)
     : IDisposable
 {
-    private readonly Dictionary<OrganizationId, byte[]> _organizationKeysById = [];
+    private readonly Dictionary<OrganizationId, DecryptedOrganizationKey> _organizationKeysById = [];
     private readonly RSA _privateKey = CreatePrivateKey(decryptedUserKey, accountKeyMaterial);
 
     public void Dispose()
     {
         foreach (var key in _organizationKeysById.Values)
         {
-            CryptographicOperations.ZeroMemory(key);
+            key.Dispose();
         }
 
         _privateKey.Dispose();
     }
 
-    public ReadOnlySpan<byte> GetKey(OrganizationId organizationId)
+    public DecryptedVaultKey GetKey(OrganizationId organizationId)
     {
         if (organizationId.IsEmpty)
-            return decryptedUserKey.Key;
+            return decryptedUserKey;
 
         var id = organizationId;
         var organization = organizations.FirstOrDefault(candidate => candidate.Id == id);
@@ -40,20 +41,9 @@ internal sealed class VaultKeyResolver(
         if (encryptedOrganizationKey.IsEmpty)
             throw new InvalidOperationException($"Organization {id} does not include an encrypted organization key.");
 
-        using var plaintextBufferOwner = SpanOwner<byte>.Allocate(encryptedOrganizationKey.MaxPlaintextByteCount);
-        Span<byte> plaintextBuffer = plaintextBufferOwner.Span;
-
-        try
-        {
-            int bytesWritten = encryptedOrganizationKey.DecodeRsaTo(_privateKey, plaintextBuffer);
-            var organizationKey = plaintextBuffer[..bytesWritten].ToArray();
-            _organizationKeysById.Add(id, organizationKey);
-            return organizationKey;
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(plaintextBuffer);
-        }
+        var organizationKey = DecryptedOrganizationKey.Create(id, encryptedOrganizationKey, _privateKey);
+        _organizationKeysById.Add(id, organizationKey);
+        return organizationKey;
     }
 
     private static RSA CreatePrivateKey(DecryptedUserKey decryptedUserKey, AccountKeyMaterial accountKeyMaterial)

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;

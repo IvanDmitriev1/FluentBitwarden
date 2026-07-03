@@ -3,6 +3,7 @@ using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Platform.Infrastructure;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using BitwardenApi.Vault.Cryptography;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 

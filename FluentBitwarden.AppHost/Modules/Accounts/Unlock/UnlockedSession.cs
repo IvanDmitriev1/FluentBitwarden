@@ -1,3 +1,4 @@
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;

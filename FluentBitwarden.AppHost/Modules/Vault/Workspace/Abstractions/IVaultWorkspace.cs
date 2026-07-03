@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+﻿using BitwardenApi.Vault.Cryptography;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 

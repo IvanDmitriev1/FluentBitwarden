@@ -1,3 +1,4 @@
+using BitwardenApi.Vault.Cryptography;
 using CommunityToolkit.HighPerformance.Buffers;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -12,7 +13,7 @@ internal static class EncryptedJsonValueReader
 
     public static T ParseEncryptedValue<T>(
         this ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> key,
+        DecryptedVaultCipherKey key,
         DecryptedJsonValueParser<T> parser)
     {
         int length = reader.ValueSpan.Length;
@@ -41,7 +42,7 @@ internal static class EncryptedJsonValueReader
 
     public static T ReadRequired<T>(
         ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> key,
+        DecryptedVaultCipherKey key,
         DecryptedJsonValueParser<T> parser)
     {
         reader.Read();
