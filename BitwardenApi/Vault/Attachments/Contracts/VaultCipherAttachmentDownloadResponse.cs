@@ -14,7 +14,7 @@ public readonly struct VaultCipherAttachmentDownloadResponse
     public required EncString EncryptedFileName { get; init; }
 
     [JsonPropertyName("key")]
-    public required EncString EncryptedKey { get; init; }
+    public required EncString ProtectedAttachmentKey { get; init; }
 
     [JsonPropertyName("size")]
     public required FileSize Size { get; init; }

@@ -7,7 +7,7 @@ namespace BitwardenApi.Vault.Cryptography;
 /// A decrypted symmetric vault key: the account user key or an organization key.
 /// Encrypts vault items directly, or wraps per-cipher individual keys.
 /// </summary>
-public abstract class DecryptedVaultKey(byte[] key) : IDisposable
+public abstract class SymmetricCryptoKey(byte[] key) : IDisposable
 {
     private bool _disposed;
 
@@ -30,10 +30,10 @@ public abstract class DecryptedVaultKey(byte[] key) : IDisposable
     }
 }
 
-public static class DecryptedVaultKeyExtensions
+public static class SymmetricCryptoKeyExtensions
 {
     extension(in EncString value)
     {
-        public string Decode(DecryptedVaultKey key) => value.Decode(key.Key);
+        public string Decode(SymmetricCryptoKey key) => value.Decode(key.Key);
     }
 }

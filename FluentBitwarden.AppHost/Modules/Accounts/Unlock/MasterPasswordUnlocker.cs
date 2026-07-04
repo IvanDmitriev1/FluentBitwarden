@@ -11,14 +11,14 @@ internal sealed class MasterPasswordUnlocker
     {
         try
         {
-            var decryptedKey = accountKeyMaterial.EncryptedUserKey.Decrypt(
+            var decryptedKey = accountKeyMaterial.ProtectedUserKey.Decrypt(
                 masterPassword,
                 accountKeyMaterial.Salt,
                 accountKeyMaterial.KdfConfig);
 
             return AccountUnlockResult.WithUserKey(
                 new AccountUnlockOutcome.Success(),
-                new DecryptedUserKey(accountKeyMaterial.UserId, decryptedKey));
+                new UserKey(accountKeyMaterial.UserId, decryptedKey));
         }
         catch (CryptographicException exception)
         {

@@ -1,4 +1,5 @@
 using BitwardenApi.Vault.Attachments.Contracts;
+using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
@@ -24,7 +25,7 @@ internal partial class VaultReaderRepository
         int IsEnabled,
         int AccessSecretsManager,
         int? MemberStatus,
-        byte[]? EncryptedOrganizationKey);
+        byte[]? ProtectedOrganizationKey);
 
     private static VaultOrganizationDto ToDto(in OrganizationRow row) => new()
     {
@@ -37,9 +38,9 @@ internal partial class VaultReaderRepository
         Enabled = row.IsEnabled != 0,
         AccessSecretsManager = row.AccessSecretsManager != 0,
         Status = row.MemberStatus ?? -1,
-        EncryptedOrganizationKey = row.EncryptedOrganizationKey is null
-            ? EncString.Empty
-            : EncString.FromBytes(row.EncryptedOrganizationKey)
+        ProtectedOrganizationKey = row.ProtectedOrganizationKey is null
+            ? AsymmetricEncString.Empty
+            : AsymmetricEncString.FromBytes(row.ProtectedOrganizationKey)
     };
 
     internal readonly record struct CollectionRow(
@@ -67,7 +68,7 @@ internal partial class VaultReaderRepository
         string CipherId,
         string? OrganizationId,
         string? FolderId,
-        byte[]? EncryptedCipherKey,
+        byte[]? ProtectedCipherKey,
         int CipherType,
         long RevisionDateUnixMs,
         long CreationDateUnixMs,
@@ -88,6 +89,13 @@ internal partial class VaultReaderRepository
         byte[] EncryptedFileName,
         long Size);
 
+    internal sealed class CipherKeyMaterialRow
+    {
+        public required string CipherId { get; init; }
+        public string? OrganizationId { get; init; }
+        public byte[]? ProtectedCipherKey { get; init; }
+    }
+
     private static VaultCipherDto ToDto(
         in CipherRow row,
         CollectionId[] collectionIds,
@@ -101,7 +109,7 @@ internal partial class VaultReaderRepository
             ? FolderId.Empty
             : FolderId.Parse(row.FolderId),
         CollectionIds = collectionIds,
-        EncryptedKey = row.EncryptedCipherKey is null ? EncString.Empty : EncString.FromBytes(row.EncryptedCipherKey),
+        ProtectedCipherKey = row.ProtectedCipherKey is null ? EncString.Empty : EncString.FromBytes(row.ProtectedCipherKey),
         VaultCipherType = (VaultCipherType)row.CipherType,
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
         CreationDate = DateTimeOffset.FromUnixTimeMilliseconds(row.CreationDateUnixMs),
@@ -124,7 +132,16 @@ internal partial class VaultReaderRepository
         Id = AttachmentId.Parse(row.AttachmentId),
         Url = string.Empty,
         EncryptedFileName = EncString.FromBytes(row.EncryptedFileName),
-        EncryptedKey = EncString.Empty,
+        ProtectedAttachmentKey = EncString.Empty,
         Size = FileSize.FromBytes(row.Size)
     };
+
+    private static VaultCipherKeyMaterial ToKeyMaterial(CipherKeyMaterialRow row) => new(
+        CipherId: CipherId.Parse(row.CipherId),
+        OrganizationId: row.OrganizationId is null
+            ? OrganizationId.Empty
+            : OrganizationId.Parse(row.OrganizationId),
+        ProtectedCipherKey: row.ProtectedCipherKey is null
+            ? EncString.Empty
+            : EncString.FromBytes(row.ProtectedCipherKey));
 }

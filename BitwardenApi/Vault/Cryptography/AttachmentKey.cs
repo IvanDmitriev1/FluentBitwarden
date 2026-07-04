@@ -4,15 +4,15 @@ using CommunityToolkit.HighPerformance.Buffers;
 namespace BitwardenApi.Vault.Cryptography;
 
 /// <summary>
-/// Decrypted per-attachment key from VaultCipherAttachmentDownloadResponse.EncryptedKey.
+/// Decrypted per-attachment key from VaultCipherAttachmentDownloadResponse.ProtectedAttachmentKey.
 /// Heap-allocated because attachment download/decryption is asynchronous; zeroed on Dispose.
 /// </summary>
-public sealed class DecryptedVaultCipherAttachmentKey : IDisposable
+public sealed class AttachmentKey : IDisposable
 {
     private readonly MemoryOwner<byte> _owner;
     private bool _disposed;
 
-    private DecryptedVaultCipherAttachmentKey(MemoryOwner<byte> owner) => _owner = owner;
+    private AttachmentKey(MemoryOwner<byte> owner) => _owner = owner;
 
     internal ReadOnlySpan<byte> Key
     {
@@ -23,15 +23,15 @@ public sealed class DecryptedVaultCipherAttachmentKey : IDisposable
         }
     }
 
-    public static DecryptedVaultCipherAttachmentKey Create(
+    public static AttachmentKey Create(
         in EncString encryptedKey,
-        DecryptedVaultCipherKey cipherKey)
+        CipherKey cipherKey)
     {
         var owner = MemoryOwner<byte>.Allocate(encryptedKey.MaxPlaintextByteCount);
         try
         {
             int bytesWritten = encryptedKey.DecodeTo(cipherKey.Key, owner.Span);
-            return new DecryptedVaultCipherAttachmentKey(owner[..bytesWritten]);
+            return new AttachmentKey(owner[..bytesWritten]);
         }
         catch
         {

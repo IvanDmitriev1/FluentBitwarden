@@ -13,7 +13,7 @@ internal static class EncryptedJsonValueReader
 
     public static T ParseEncryptedValue<T>(
         this ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey key,
+        CipherKey key,
         DecryptedJsonValueParser<T> parser)
     {
         int length = reader.ValueSpan.Length;
@@ -42,7 +42,7 @@ internal static class EncryptedJsonValueReader
 
     public static T ReadRequired<T>(
         ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey key,
+        CipherKey key,
         DecryptedJsonValueParser<T> parser)
     {
         reader.Read();

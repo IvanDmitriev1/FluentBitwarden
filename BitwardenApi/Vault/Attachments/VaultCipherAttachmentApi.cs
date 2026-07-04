@@ -8,9 +8,12 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
     public async Task DownloadToAsync(
         BitwardenAccountContext accountContext,
         VaultCipherAttachment attachment,
-        Func<Stream, Task> streamHandler,
+        VaultCipherAttachmentStreamHandler streamHandler,
         CancellationToken cancellationToken = default)
     {
+        attachment.CipherId.ThrowIfEmpty();
+        attachment.Id.ThrowIfEmpty();
+
         using var httpClient = httpClientFactory.CreateAttachmentDownloadClient();
 
         var downloadResponse = await GetAttachmentDownloadResponseAsync(
@@ -34,7 +37,7 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
         downloadHttpResponse.EnsureSuccess("Vault attachment download", cancellationToken);
 
         await using var stream = await downloadHttpResponse.Content.ReadAsStreamAsync(cancellationToken);
-        await streamHandler.Invoke(stream);
+        await streamHandler.Invoke(stream, downloadResponse.ProtectedAttachmentKey);
     }
 
     private async Task<VaultCipherAttachmentDownloadResponse> GetAttachmentDownloadResponseAsync(

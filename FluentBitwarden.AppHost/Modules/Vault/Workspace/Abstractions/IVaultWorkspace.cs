@@ -7,16 +7,16 @@ internal interface IVaultWorkspace
 {
     ValueTask OpenAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey userKey,
+        UserKey userKey,
         bool forceSync,
         CancellationToken cancellationToken);
 
     Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey decryptedUserKey,
+        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default);
 
-    void Reload(DecryptedUserKey userKey);
+    void Reload(UserKey userKey);
     void Close();
 }

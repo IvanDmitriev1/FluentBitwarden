@@ -47,7 +47,7 @@ public sealed class VaultOrganizationDto
     public bool AccessSecretsManager { get; init; }
 
     [JsonPropertyName("key")]
-    public EncString EncryptedOrganizationKey { get; init; }
+    public AsymmetricEncString ProtectedOrganizationKey { get; init; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement> Settings { get; set; } = [];
@@ -107,7 +107,7 @@ public readonly struct VaultCipherDto
     /// More recent ciphers uses individual encryption keys to encrypt the other fields of the Cipher.
     /// </summary>
     [JsonPropertyName("key")]
-    public EncString EncryptedKey { get; init; }
+    public EncString ProtectedCipherKey { get; init; }
 
     [JsonPropertyName("type")]
     public required VaultCipherType VaultCipherType { get; init; }

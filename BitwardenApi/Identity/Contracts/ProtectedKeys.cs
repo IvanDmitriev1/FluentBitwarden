@@ -5,17 +5,17 @@ using System.Text.Json.Serialization;
 
 namespace BitwardenApi.Identity.Contracts;
 
-public readonly record struct EncryptedUserKey(EncString Value)
+public readonly record struct ProtectedUserKey(EncString Value)
 {
-    public static EncryptedUserKey Create(EncString value) => new(value);
+    public static ProtectedUserKey Create(EncString value) => new(value);
 
     public byte[] Decrypt(ReadOnlySpan<char> masterPassword, ReadOnlySpan<char> salt, KdfConfig kdfConfig)
     {
-        Span<byte> stretchedMasterKey = stackalloc byte[64];
-        MasterPassword.StretchMasterKey(masterPassword, salt, kdfConfig, stretchedMasterKey);
+        using var masterKey = MasterKey.Derive(masterPassword, salt, kdfConfig);
+        using var stretchedMasterKey = masterKey.Stretch();
 
         byte[] userKey = new byte[Value.MaxPlaintextByteCount];
-        int bytesWritten = Value.DecodeTo(stretchedMasterKey, userKey);
+        int bytesWritten = Value.DecodeTo(stretchedMasterKey.Span, userKey);
         if (bytesWritten == userKey.Length)
             return userKey;
 
@@ -30,7 +30,7 @@ public readonly record struct EncryptedUserKey(EncString Value)
     }
 }
 
-public readonly record struct EncryptedPrivateKey(EncString Value)
+public readonly record struct ProtectedPrivateKey(EncString Value)
 {
-    public static EncryptedPrivateKey Create(EncString value) => new(value);
+    public static ProtectedPrivateKey Create(EncString value) => new(value);
 }

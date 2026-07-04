@@ -16,7 +16,7 @@ internal sealed class VaultWorkspace(
 
     public async ValueTask OpenAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey userKey,
+        UserKey userKey,
         bool forceSync,
         CancellationToken cancellationToken)
     {
@@ -40,7 +40,7 @@ internal sealed class VaultWorkspace(
 
     public async Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey decryptedUserKey,
+        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default)
     {
@@ -56,7 +56,7 @@ internal sealed class VaultWorkspace(
         return result;
     }
 
-    public void Reload(DecryptedUserKey userKey)
+    public void Reload(UserKey userKey)
     {
         var data = vaultLoader.Load(userKey);
         Volatile.Write(ref _state, new WorkspaceState(userKey.UserId, data));

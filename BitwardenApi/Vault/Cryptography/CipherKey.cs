@@ -6,15 +6,15 @@ namespace BitwardenApi.Vault.Cryptography;
 
 /// <summary>
 /// The effective decryption key for a single vault cipher: the base vault key when the cipher
-/// has no individual key, otherwise the decrypted VaultCipherDto.EncryptedKey.
+/// has no individual key, otherwise the decrypted VaultCipherDto.ProtectedCipherKey.
 /// Owns pooled key material; the creator must dispose it (zeroes the buffer).
 /// </summary>
-public readonly ref struct DecryptedVaultCipherKey
+public readonly ref struct CipherKey
 {
     private readonly SpanOwner<byte> _owner;
     private readonly int _length;
 
-    private DecryptedVaultCipherKey(SpanOwner<byte> owner, int length)
+    private CipherKey(SpanOwner<byte> owner, int length)
     {
         _owner = owner;
         _length = length;
@@ -22,21 +22,21 @@ public readonly ref struct DecryptedVaultCipherKey
 
     internal ReadOnlySpan<byte> Key => _owner.Span[.._length];
 
-    public static DecryptedVaultCipherKey Create(in EncString encryptedKey, DecryptedVaultKey baseKey)
+    public static CipherKey Create(in EncString encryptedKey, SymmetricCryptoKey baseKey)
     {
         if (encryptedKey.IsEmpty)
         {
             var baseKeyBytes = baseKey.Key;
             var baseOwner = SpanOwner<byte>.Allocate(baseKeyBytes.Length);
             baseKeyBytes.CopyTo(baseOwner.Span);
-            return new DecryptedVaultCipherKey(baseOwner, baseKeyBytes.Length);
+            return new CipherKey(baseOwner, baseKeyBytes.Length);
         }
 
         var owner = SpanOwner<byte>.Allocate(encryptedKey.MaxPlaintextByteCount);
         try
         {
             int bytesWritten = encryptedKey.DecodeTo(baseKey.Key, owner.Span);
-            return new DecryptedVaultCipherKey(owner, bytesWritten);
+            return new CipherKey(owner, bytesWritten);
         }
         catch
         {
@@ -53,13 +53,13 @@ public readonly ref struct DecryptedVaultCipherKey
     }
 }
 
-public static class DecryptedVaultCipherKeyExtensions
+public static class CipherKeyExtensions
 {
     extension(in EncString value)
     {
-        public string Decode(DecryptedVaultCipherKey key) => value.Decode(key.Key);
+        public string Decode(CipherKey key) => value.Decode(key.Key);
     }
 
-    public static int DecodeEncStringInPlace(this Span<byte> encodedUtf8, DecryptedVaultCipherKey key)
+    public static int DecodeEncStringInPlace(this Span<byte> encodedUtf8, CipherKey key)
         => encodedUtf8.DecodeEncStringInPlace(key.Key);
 }

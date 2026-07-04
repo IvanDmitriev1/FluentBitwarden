@@ -19,7 +19,7 @@ internal static class IdentityJsonMapper
             dto.RefreshToken,
             dto.TwoFactorToken,
             expiresAt,
-            EncryptedPrivateKey.Create(dto.EncryptedPrivateKey),
+            ProtectedPrivateKey.Create(dto.ProtectedPrivateKey),
             dto.UserDecryptionOptions.MasterPasswordUnlock.ToMasterPasswordUnlockModel());
     }
 
@@ -48,7 +48,7 @@ internal static class IdentityJsonMapper
         return new MasterPasswordUnlockModel(
             kdfConfig,
             dto.Salt,
-            EncryptedUserKey.Create(dto.MasterKeyEncryptedUserKey));
+            ProtectedUserKey.Create(dto.MasterKeyEncryptedUserKey));
     }
 }
 

@@ -2,6 +2,7 @@ using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
 using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
@@ -43,7 +44,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
                 is_enabled,
                 access_secrets_manager,
                 member_status,
-                encrypted_organization_key
+                encrypted_organization_key AS ProtectedOrganizationKey
             FROM vault_organization
             WHERE user_id = @UserId
             ORDER BY row_id;
@@ -88,7 +89,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
                 vc.cipher_id,
                 vc.organization_id,
                 vcf.folder_id,
-                vc.encrypted_cipher_key,
+                vc.encrypted_cipher_key AS ProtectedCipherKey,
                 vc.cipher_type,
                 vc.revision_date_unix_ms,
                 vc.creation_date_unix_ms,
@@ -134,6 +135,30 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             var dto = ToDto(row, collectionIds ?? [], attachments ?? []);
             onCipher.Invoke(stateObj, ref dto, bufferOwner.Span[..bytesWritten]);
         }
+    }
+
+    public VaultCipherKeyMaterial? GetCipherKeyMaterial(UserId userId, CipherId cipherId)
+    {
+        userId.ThrowIfEmpty();
+        cipherId.ThrowIfEmpty();
+
+        var row = Connection.QueryFirstOrDefault<CipherKeyMaterialRow>(
+            """
+            SELECT
+                cipher_id AS CipherId,
+                organization_id AS OrganizationId,
+                encrypted_cipher_key AS ProtectedCipherKey
+            FROM vault_cipher
+            WHERE cipher_id = @CipherId AND user_id = @UserId;
+            """,
+            new
+            {
+                CipherId = cipherId.ToString(),
+                UserId = userId.ToString()
+            },
+            transaction: Transaction);
+
+        return row is null ? null : ToKeyMaterial(row);
     }
 
     private Dictionary<string, CollectionId[]> GetCollectionIdsByCipherId(string userId)

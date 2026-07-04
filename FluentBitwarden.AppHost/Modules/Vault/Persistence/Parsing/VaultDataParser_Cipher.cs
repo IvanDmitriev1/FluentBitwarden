@@ -10,12 +10,12 @@ public static partial class VaultDataParser
     public static VaultCipher ParseAndDecryptCipher(
         ref readonly VaultCipherDto dto,
         ReadOnlySpan<byte> payload,
-        DecryptedVaultKey baseKey)
+        SymmetricCryptoKey baseKey)
     {
         var cipher = CreateCipher(in dto);
         var reader = CreateObjectReader(payload);
 
-        using var key = DecryptedVaultCipherKey.Create(dto.EncryptedKey, baseKey);
+        using var key = CipherKey.Create(dto.ProtectedCipherKey, baseKey);
         return ParseWithKey(in dto, cipher, ref reader, key);
     }
 
@@ -23,7 +23,7 @@ public static partial class VaultDataParser
         ref readonly VaultCipherDto dto,
         VaultCipher cipher,
         ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey decryptionKey)
+        CipherKey decryptionKey)
     {
         VaultCipher parsedCipher = dto.VaultCipherType switch
         {
@@ -42,7 +42,7 @@ public static partial class VaultDataParser
     private static VaultCipherAttachment[] ParseAttachments(
         CipherId cipherId,
         ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachmentDtos,
-        DecryptedVaultCipherKey decryptionKey)
+        CipherKey decryptionKey)
     {
         if (attachmentDtos is not { Length: > 0 })
             return [];
@@ -64,7 +64,7 @@ public static partial class VaultDataParser
     }
 
     private static LoginVaultCipher ParseLoginCipher(LoginVaultCipher vaultCipher, ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey decryptKey)
+        CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, k) =>
             {
@@ -85,10 +85,10 @@ public static partial class VaultDataParser
             });
 
 
-    private static SecureNoteVaultCipher ParseSecureNoteCipher(SecureNoteVaultCipher vaultCipher, ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static SecureNoteVaultCipher ParseSecureNoteCipher(SecureNoteVaultCipher vaultCipher, ref Utf8JsonReader reader, CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref _, _, _) => false);
 
-    private static CardVaultCipher ParseCardCipher(CardVaultCipher vaultCipher, ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static CardVaultCipher ParseCardCipher(CardVaultCipher vaultCipher, ref Utf8JsonReader reader, CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref r, c, k) =>
         {
             if (r.ValueTextEquals("cardholderName"u8) || r.ValueTextEquals("CardholderName"u8))
@@ -110,7 +110,7 @@ public static partial class VaultDataParser
         });
 
     private static IdentityVaultCipher ParseIdentityCipher(IdentityVaultCipher vaultCipher, ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey decryptKey)
+        CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, k) =>
             {
@@ -155,7 +155,7 @@ public static partial class VaultDataParser
                 return true;
             });
 
-    private static SshKeyVaultCipher ParseSshKeyCipher(SshKeyVaultCipher vaultCipher, ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static SshKeyVaultCipher ParseSshKeyCipher(SshKeyVaultCipher vaultCipher, ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         return ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, k) =>
@@ -186,7 +186,7 @@ public static partial class VaultDataParser
             });
     }
 
-    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, VaultCipher vaultCipher, DecryptedVaultCipherKey decryptKey)
+    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, VaultCipher vaultCipher, CipherKey decryptKey)
     {
         if (reader.ValueTextEquals("name"u8) || reader.ValueTextEquals("Name"u8))
         {
@@ -263,7 +263,7 @@ public static partial class VaultDataParser
         _ => throw new ArgumentOutOfRangeException()
     };
 
-    private static LoginUri ReadUri(ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static LoginUri ReadUri(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Each URI item must be a JSON object.");
@@ -310,7 +310,7 @@ public static partial class VaultDataParser
         return (LoginUri.MatchType)value;
     }
 
-    private static Fido2Credential? ReadFirstFido2Credential(ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static Fido2Credential? ReadFirstFido2Credential(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         reader.Read();
 
@@ -340,7 +340,7 @@ public static partial class VaultDataParser
         return credential;
     }
 
-    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Each fido2Credentials item must be a JSON object.");
@@ -415,7 +415,7 @@ public static partial class VaultDataParser
         };
     }
 
-    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, DecryptedVaultCipherKey decryptKey)
+    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         reader.Read();
 

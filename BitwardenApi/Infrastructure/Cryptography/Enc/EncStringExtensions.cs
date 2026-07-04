@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwardenApi.Infrastructure.Cryptography.Enc;
@@ -20,12 +19,6 @@ public static class EncStringExtensions
         {
             EncStringParts parts = value.CreateParts();
             return AesCbcHmac.DecryptTo(in parts, key, destination);
-        }
-
-        public int DecodeRsaTo(RSA privateKey, Span<byte> destination)
-        {
-            EncStringParts parts = value.CreateParts();
-            return RsaOaep.DecryptTo(in parts, privateKey, destination);
         }
     }
 

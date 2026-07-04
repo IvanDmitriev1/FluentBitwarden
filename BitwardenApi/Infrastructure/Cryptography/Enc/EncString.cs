@@ -150,7 +150,7 @@ public readonly struct EncString : IEquatable<EncString>
         if (bytes.Length < HeaderLength)
             throw new FormatException("The provided value is not a packed EncString.");
 
-        EncStringType type = (EncStringType)bytes[0];
+        EncryptionType type = (EncryptionType)bytes[0];
         int ivLength = BinaryPrimitives.ReadInt32LittleEndian(bytes.Slice(1, 4));
         int dataLength = BinaryPrimitives.ReadInt32LittleEndian(bytes.Slice(5, 4));
         int macLength = BinaryPrimitives.ReadInt32LittleEndian(bytes.Slice(9, 4));
@@ -219,7 +219,7 @@ public readonly struct EncString : IEquatable<EncString>
         if (value.IsEmpty)
             return false;
 
-        EncStringType type = EncStringType.AesCbc256_B64;
+        EncryptionType type = EncryptionType.AesCbc256_B64;
         int payloadOffset = 0;
         int dotIndex = value.IndexOf((byte)'.');
         if (dotIndex >= 0)
@@ -229,7 +229,7 @@ public readonly struct EncString : IEquatable<EncString>
                 Utf8Parser.TryParse(typeToken, out int typeValue, out int consumed) &&
                 consumed == typeToken.Length)
             {
-                type = (EncStringType)typeValue;
+                type = (EncryptionType)typeValue;
                 payloadOffset = dotIndex + 1;
             }
         }
@@ -249,15 +249,15 @@ public readonly struct EncString : IEquatable<EncString>
 
         layout = (type, segmentCount) switch
         {
-            (EncStringType.AesCbc256_B64, 2) => new SegmentLayout(
+            (EncryptionType.AesCbc256_B64, 2) => new SegmentLayout(
                 type, segments[1].Offset, segments[1].Length, segments[0].Offset, segments[0].Length, 0, 0),
-            (EncStringType.AesCbc256_HmacSha256_B64, 3) => new SegmentLayout(
+            (EncryptionType.AesCbc256_HmacSha256_B64, 3) => new SegmentLayout(
                 type, segments[1].Offset, segments[1].Length, segments[0].Offset, segments[0].Length,
                 segments[2].Offset, segments[2].Length),
-            (EncStringType.Rsa2048_OaepSha1_B64 or EncStringType.Rsa2048_OaepSha256_B64, 1) => new SegmentLayout(
+            (EncryptionType.Rsa2048_OaepSha1_B64 or EncryptionType.Rsa2048_OaepSha256_B64, 1) => new SegmentLayout(
                 type, segments[0].Offset, segments[0].Length, 0, 0, 0, 0),
-            (EncStringType.Rsa2048_OaepSha1_HmacSha256_B64 or
-                EncStringType.Rsa2048_OaepSha256_HmacSha256_B64, 2) => new SegmentLayout(
+            (EncryptionType.Rsa2048_OaepSha1_HmacSha256_B64 or
+                EncryptionType.Rsa2048_OaepSha256_HmacSha256_B64, 2) => new SegmentLayout(
                 type, segments[0].Offset, segments[0].Length, 0, 0, segments[1].Offset, segments[1].Length),
             _ => default
         };
@@ -266,7 +266,7 @@ public readonly struct EncString : IEquatable<EncString>
     }
 
     internal readonly record struct SegmentLayout(
-        EncStringType Type,
+        EncryptionType Type,
         int DataOffset,
         int DataLength,
         int IvOffset,
@@ -277,7 +277,7 @@ public readonly struct EncString : IEquatable<EncString>
         public bool HasIv => IvLength > 0;
         public bool HasMac => MacLength > 0;
 
-        public static SegmentLayout CreatePacked(EncStringType type, int ivLength, int dataLength, int macLength)
+        public static SegmentLayout CreatePacked(EncryptionType type, int ivLength, int dataLength, int macLength)
         {
             int dataOffset = checked(HeaderLength + ivLength);
             int macOffset = checked(dataOffset + dataLength);

@@ -7,6 +7,6 @@ public interface IVaultCipherAttachmentApi
     Task DownloadToAsync(
         BitwardenAccountContext accountContext,
         VaultCipherAttachment attachment,
-        Func<Stream, Task> streamHandler,
+        VaultCipherAttachmentStreamHandler streamHandler,
         CancellationToken cancellationToken = default);
 }

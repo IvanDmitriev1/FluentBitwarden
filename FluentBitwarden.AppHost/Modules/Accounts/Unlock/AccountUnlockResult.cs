@@ -6,11 +6,11 @@ namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 
 internal readonly struct AccountUnlockResult
 {
-    private readonly DecryptedUserKey? _userKey;
+    private readonly UserKey? _userKey;
 
     private AccountUnlockResult(
         AccountUnlockOutcome outcome,
-        DecryptedUserKey? userKey)
+        UserKey? userKey)
     {
         Outcome = outcome;
         _userKey = userKey;
@@ -18,12 +18,12 @@ internal readonly struct AccountUnlockResult
 
     public static AccountUnlockResult WithoutUserKey(AccountUnlockOutcome outcome) => new(outcome, null);
 
-    public static AccountUnlockResult WithUserKey(AccountUnlockOutcome outcome, DecryptedUserKey userKey) =>
+    public static AccountUnlockResult WithUserKey(AccountUnlockOutcome outcome, UserKey userKey) =>
         new(outcome, userKey);
 
     public AccountUnlockOutcome Outcome { get; }
 
-    public bool TryGetUserKey([NotNullWhen(true)] out DecryptedUserKey? userKey)
+    public bool TryGetUserKey([NotNullWhen(true)] out UserKey? userKey)
     {
         userKey = _userKey;
         return userKey is not null;

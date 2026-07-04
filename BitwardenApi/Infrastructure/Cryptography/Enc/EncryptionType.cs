@@ -1,6 +1,6 @@
 namespace BitwardenApi.Infrastructure.Cryptography.Enc;
 
-public enum EncStringType : byte
+public enum EncryptionType : byte
 {
     AesCbc256_B64 = 0,
     AesCbc256_HmacSha256_B64 = 2,

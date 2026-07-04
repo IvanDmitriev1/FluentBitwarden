@@ -6,7 +6,7 @@ public static partial class VaultDataParser
 {
     public static VaultCollection ParseAndDecryptCollection(
         ref readonly VaultCollectionDto dto,
-        DecryptedVaultKey key)
+        SymmetricCryptoKey key)
     {
         return new VaultCollection
         {

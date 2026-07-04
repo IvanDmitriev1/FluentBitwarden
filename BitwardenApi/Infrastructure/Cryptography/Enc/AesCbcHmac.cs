@@ -42,8 +42,8 @@ internal static class AesCbcHmac
         Span<byte> destination) =>
         parts.Type switch
         {
-            EncStringType.AesCbc256_B64 => DecryptToAesCbcOnly(in parts, key, destination),
-            EncStringType.AesCbc256_HmacSha256_B64 => DecryptToAesCbcWithHmac(in parts, key, destination),
+            EncryptionType.AesCbc256_B64 => DecryptToAesCbcOnly(in parts, key, destination),
+            EncryptionType.AesCbc256_HmacSha256_B64 => DecryptToAesCbcWithHmac(in parts, key, destination),
             _ => throw new CryptographicException($"Unsupported symmetric EncString type: {parts.Type}.")
         };
 

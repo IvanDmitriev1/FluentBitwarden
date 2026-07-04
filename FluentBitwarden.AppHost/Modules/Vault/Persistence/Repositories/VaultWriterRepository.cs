@@ -34,7 +34,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @IsEnabled,
                     @AccessSecretsManager,
                     @MemberStatus,
-                    @EncryptedOrganizationKey)
+                    @ProtectedOrganizationKey)
                 """,
                 new
                 {
@@ -47,9 +47,9 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     IsEnabled = dto.Enabled ? 1 : 0,
                     AccessSecretsManager = dto.AccessSecretsManager ? 1 : 0,
                     MemberStatus = dto.Status,
-                    EncryptedOrganizationKey = dto.EncryptedOrganizationKey.IsEmpty
+                    ProtectedOrganizationKey = dto.ProtectedOrganizationKey.IsEmpty
                         ? null
-                        : dto.EncryptedOrganizationKey.ToByteArray()
+                        : dto.ProtectedOrganizationKey.ToByteArray()
                 },
                 transaction: Transaction);
         }
@@ -158,7 +158,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @Reprompt,
                     @Edit,
                     @ViewPassword,
-                    @EncryptedKey,
+                    @ProtectedCipherKey,
                     zeroblob(@Size))
                 RETURNING row_id
                 """,
@@ -178,9 +178,9 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     Reprompt = dto.Reprompt ? 1 : 0,
                     Edit = dto.Edit ? 1 : 0,
                     ViewPassword = dto.ViewPassword ? 1 : 0,
-                    EncryptedKey = dto.EncryptedKey.IsEmpty
+                    ProtectedCipherKey = dto.ProtectedCipherKey.IsEmpty
                         ? null
-                        : dto.EncryptedKey.ToByteArray(),
+                        : dto.ProtectedCipherKey.ToByteArray(),
                     Size = dto.Data.Length
                 },
                 transaction: Transaction);

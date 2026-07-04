@@ -1,19 +1,19 @@
 ﻿using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
-internal sealed class VaultLoader(IUnitOfWorkFactory unitOfWorkFactory)
+internal sealed class VaultLoader(
+    IUnitOfWorkFactory unitOfWorkFactory,
+    IVaultKeyResolverFactory keyResolverFactory)
 {
-    public LoadedVaultData Load(DecryptedUserKey decryptedUserKey)
+    public LoadedVaultData Load(UserKey decryptedUserKey)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-
-        var organizationDtos = unitOfWork.VaultReaderRepository.GetAllOrganizations(decryptedUserKey.UserId);
-        var accountKeyMaterial = unitOfWork.AccountKeyMaterialRepository.GetById(decryptedUserKey.UserId) ?? throw new ArgumentException("Account key material not found.");
-        using var keyResolver = new VaultKeyResolver(decryptedUserKey, accountKeyMaterial, organizationDtos);
+        using var keyResolver = keyResolverFactory.Create(unitOfWork, decryptedUserKey);
 
         var ciphersById = new Dictionary<CipherId, VaultCipher>();
         var cipherIdsByCollectionId = new Dictionary<CollectionId, HashSet<CipherId>>();
@@ -25,7 +25,7 @@ internal sealed class VaultLoader(IUnitOfWorkFactory unitOfWorkFactory)
             {
                 var (ciphers, collectionIndex, resolver) = state;
 
-                var key = resolver.GetKey(dto.OrganizationId);
+                var key = resolver.GetKeyForOrganization(dto.OrganizationId);
                 var cipher = VaultDataParser.ParseAndDecryptCipher(in dto, payload, key);
                 ciphers.Add(cipher.Id, cipher);
                 AddCollectionMembership(collectionIndex, in dto);
@@ -41,7 +41,7 @@ internal sealed class VaultLoader(IUnitOfWorkFactory unitOfWorkFactory)
         for (int i = 0; i < collectionDtos.Length; i++)
         {
             ref readonly var dto = ref collectionDtos[i];
-            var key = keyResolver.GetKey(dto.OrganizationId);
+            var key = keyResolver.GetKeyForOrganization(dto.OrganizationId);
             collections.Add(VaultDataParser.ParseAndDecryptCollection(in dto, key));
         }
 

@@ -14,7 +14,7 @@ internal sealed class VaultSynchronizer(
 {
     public async Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey decryptedUserKey,
+        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default)
     {

@@ -21,7 +21,7 @@ internal record IdentityTokenRefreshSessionResponse
 internal sealed record IdentityTokenAuthenticatedResponse : IdentityTokenRefreshSessionResponse
 {
     [JsonPropertyName("privateKey")]
-    public required EncString EncryptedPrivateKey { get; init; }
+    public required EncString ProtectedPrivateKey { get; init; }
 
     [JsonPropertyName("userDecryptionOptions")]
     public required UserDecryptionOptions UserDecryptionOptions { get; init; }

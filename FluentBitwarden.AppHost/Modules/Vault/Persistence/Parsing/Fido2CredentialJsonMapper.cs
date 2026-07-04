@@ -9,7 +9,7 @@ internal static class Fido2CredentialJsonMapper
 {
     public static Fido2CredentialKeyType ReadKeyType(
         ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey key,
+        CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
             static value =>
@@ -24,7 +24,7 @@ internal static class Fido2CredentialJsonMapper
 
     public static Fido2CredentialKeyAlgorithm ReadKeyAlgorithm(
         ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey key,
+        CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
             static (value) =>
@@ -39,7 +39,7 @@ internal static class Fido2CredentialJsonMapper
 
     public static Fido2CredentialKeyCurve ReadKeyCurve(
         ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey key,
+        CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
             static value =>
@@ -54,7 +54,7 @@ internal static class Fido2CredentialJsonMapper
 
     public static byte[] ReadCredentialId(
         ref Utf8JsonReader reader,
-        DecryptedVaultCipherKey key,
+        CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
             static value =>

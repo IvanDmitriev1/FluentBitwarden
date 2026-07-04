@@ -3,24 +3,24 @@ using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwardenApi.Vault.Cryptography;
 
-public sealed class DecryptedOrganizationKey : DecryptedVaultKey
+public sealed class OrganizationKey : SymmetricCryptoKey
 {
     public OrganizationId OrganizationId { get; }
 
-    private DecryptedOrganizationKey(OrganizationId organizationId, byte[] key) : base(key)
+    private OrganizationKey(OrganizationId organizationId, byte[] key) : base(key)
         => OrganizationId = organizationId;
 
-    public static DecryptedOrganizationKey Create(
+    public static OrganizationKey Create(
         OrganizationId organizationId,
-        in EncString encryptedOrganizationKey,
-        RSA privateKey)
+        in AsymmetricEncString encryptedOrganizationKey,
+        PrivateKey privateKey)
     {
         using var bufferOwner = SpanOwner<byte>.Allocate(encryptedOrganizationKey.MaxPlaintextByteCount);
         Span<byte> buffer = bufferOwner.Span;
         try
         {
-            int bytesWritten = encryptedOrganizationKey.DecodeRsaTo(privateKey, buffer);
-            return new DecryptedOrganizationKey(organizationId, buffer[..bytesWritten].ToArray());
+            int bytesWritten = privateKey.Decrypt(encryptedOrganizationKey, buffer);
+            return new OrganizationKey(organizationId, buffer[..bytesWritten].ToArray());
         }
         finally
         {

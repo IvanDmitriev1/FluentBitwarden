@@ -84,8 +84,8 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             {
                 UserId = keyMaterial.UserId.ToString(),
                 Salt = keyMaterial.Salt,
-                EncryptedUserKey = keyMaterial.EncryptedUserKey.Value.ToByteArray(),
-                EncryptedPrivateKey = keyMaterial.EncryptedPrivateKey.Value.ToByteArray(),
+                EncryptedUserKey = keyMaterial.ProtectedUserKey.Value.ToByteArray(),
+                EncryptedPrivateKey = keyMaterial.ProtectedPrivateKey.Value.ToByteArray(),
                 KdfType = (int)kdf.Type,
                 KdfIterations = kdf.Iterations,
                 KdfMemoryMib = kdf.MemoryMib,
@@ -112,8 +112,8 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
         UserId: UserId.Parse(row.UserId),
         Salt: row.Salt,
         KdfConfig: BuildKdf(row),
-        EncryptedUserKey: EncryptedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),
-        EncryptedPrivateKey: EncryptedPrivateKey.Create(EncString.FromBytes(row.EncryptedPrivateKey)));
+        ProtectedUserKey: ProtectedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),
+        ProtectedPrivateKey: ProtectedPrivateKey.Create(EncString.FromBytes(row.EncryptedPrivateKey)));
 
     private static KdfConfig BuildKdf(in AccountKeyMaterialRow row) =>
         (KdfType)row.KdfType switch

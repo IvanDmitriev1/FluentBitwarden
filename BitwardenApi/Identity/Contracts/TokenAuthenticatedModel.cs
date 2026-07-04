@@ -11,7 +11,7 @@ public sealed record TokenAuthenticatedModel(
     RefreshToken RefreshToken,
     TwoFactorToken? TwoFactorToken,
     DateTimeOffset ExpiresAt,
-    EncryptedPrivateKey PrivateKey,
+    ProtectedPrivateKey PrivateKey,
     MasterPasswordUnlockModel MasterPasswordUnlockModel);
 
-public sealed record MasterPasswordUnlockModel(KdfConfig KdfConfig, string Salt, EncryptedUserKey UserKey);
+public sealed record MasterPasswordUnlockModel(KdfConfig KdfConfig, string Salt, ProtectedUserKey UserKey);
