@@ -14,10 +14,7 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
         attachment.CipherId.ThrowIfEmpty();
         attachment.Id.ThrowIfEmpty();
 
-        using var httpClient = httpClientFactory.CreateAttachmentDownloadClient();
-
         var downloadResponse = await GetAttachmentDownloadResponseAsync(
-            httpClient,
             accountContext,
             attachment,
             cancellationToken);
@@ -28,8 +25,11 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
                 $"Attachment download URL is not an absolute URI for attachment '{attachment.Id}'.");
         }
 
+        // The download URL is a pre-signed third-party storage URL; it is fetched with a bare client
+        // that carries no Bitwarden authorization header, so the access token is never leaked to it.
+        using var downloadClient = httpClientFactory.CreateAttachmentDownloadClient();
         using var downloadRequest = new HttpRequestMessage(HttpMethod.Get, downloadUri);
-        using var downloadHttpResponse = await httpClient.SendAsync(
+        using var downloadHttpResponse = await downloadClient.SendAsync(
             downloadRequest,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
@@ -41,16 +41,19 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
     }
 
     private async Task<VaultCipherAttachmentDownloadResponse> GetAttachmentDownloadResponseAsync(
-        HttpClient httpClient,
         BitwardenAccountContext accountContext,
         VaultCipherAttachment attachment,
         CancellationToken cancellationToken)
     {
+        using var httpClient = httpClientFactory.CreateVaultClient();
+
         Uri requestUri = new(
             accountContext.Environment.ApiBase,
             $"/ciphers/{attachment.CipherId.Value}/attachment/{attachment.Id.Value}");
 
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        requestMessage.SetBitwardenAccountContext(accountContext);
+
         using var response = await httpClient.SendAsync(
             requestMessage,
             HttpCompletionOption.ResponseHeadersRead,

@@ -1,6 +1,9 @@
-﻿using BitwardenApi.Vault.Attachments.Contracts;
+using BitwardenApi.Vault.Attachments.Contracts;
+using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using Humanizer;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.Storage.Pickers;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
@@ -47,7 +50,33 @@ public sealed partial class VaultCipherAttachmentField : Control
         _sizeTextBlock.Text = Attachment.Size.Bytes.Bytes().Humanize();
     }
 
-    private void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
+    private async void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
     {
+        if (Attachment is null)
+            return;
+
+        ArgumentNullException.ThrowIfNull(_chrome);
+
+        try
+        {
+            _chrome.IsEnabled = false;
+
+            var fileSavePicker = new FileSavePicker(XamlRoot.ContentIslandEnvironment.AppWindowId)
+            {
+                SuggestedFileName = Attachment.FileName,
+                SuggestedStartLocation = PickerLocationId.Downloads
+            };
+
+            var result = await fileSavePicker.PickSaveFileAsync();
+            if (result is null)
+                return;
+
+            await App.Current.GetRequiredService<IVaultClient>()
+                .DownloadCipherAttachmentAsync(new DownloadVaultCipherAttachmentRequest(Attachment, result.Path));
+        }
+        finally
+        {
+            _chrome.IsEnabled = true;
+        }
     }
 }

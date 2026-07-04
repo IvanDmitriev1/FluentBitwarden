@@ -2,14 +2,12 @@ using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Collections.ObjectModel;
 using Windows.Networking.Connectivity;
-using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Platform.SiteIcons;
 
 namespace FluentBitwarden.ViewModels.Vault.Browse;
 
 public sealed partial class VaultPageViewModel(
     IVaultClient vaultClient,
-    IAccountsClient accountsClient,
     ISiteIconCache siteIconCache) : ObservableObject, IPageLifecycleAware, IPageLifecycleAware<ShowVaultCipherIntent>, IPageLifecycleAware<OpenVaultCipherIntent>
 {
     [ObservableProperty]

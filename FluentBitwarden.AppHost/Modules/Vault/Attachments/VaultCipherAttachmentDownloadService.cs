@@ -1,6 +1,8 @@
 using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Attachments.Contracts;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Application.Sessions;
-using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
@@ -12,43 +14,44 @@ internal sealed class VaultCipherAttachmentDownloadService(
     IUnitOfWorkFactory unitOfWorkFactory,
     IVaultKeyResolverFactory keyResolverFactory) : IVaultCipherAttachmentDownloadService
 {
-    public async Task DownloadAsync(
+    public Task DownloadAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {
-        request.Attachment.CipherId.ThrowIfEmpty();
-        request.Attachment.Id.ThrowIfEmpty();
-
         var unlockedSession = vaultSessionCoordinator.GetUnlockedSession();
-        var userKey = unlockedSession.UserKey;
-        userKey.UserId.ThrowIfEmpty();
 
-        VaultCipherKeyMaterial cipherKeyMaterial;
-        VaultKeyResolver keyResolver;
+        return attachmentApi.DownloadToAsync(
+            unlockedSession.Account.BitwardenAccountContext,
+            request.Attachment,
+            async (encStream, protectedAttachmentKey) =>
+            {
+                using var attachmentKey = ResolveAttachmentKey(unlockedSession, request.Attachment, protectedAttachmentKey);
 
-        // One unit of work reads the cipher key material and the resolver's key material in a single
-        // transaction; the resolver holds no database handle after construction, so the unit of work
-        // can be disposed before the download.
-        using (var unitOfWork = unitOfWorkFactory.Create())
-        {
-            cipherKeyMaterial = unitOfWork.VaultReaderRepository.GetCipherKeyMaterial(userKey.UserId, request.Attachment.CipherId) ??
-                                throw new InvalidOperationException($"Cipher key material is missing for cipher '{request.Attachment.CipherId}'.");
-
-            keyResolver = keyResolverFactory.Create(unitOfWork, userKey);
-        }
-
-        using (keyResolver)
-        {
-            await attachmentApi.DownloadToAsync(
-                unlockedSession.Account.BitwardenAccountContext,
-                request.Attachment, (encStream, protectedAttachmentKey) =>
-                {
-                    using (keyResolver.CreateAttachmentKey(cipherKeyMaterial, protectedAttachmentKey))
+                await using var plaintextStream = new FileStream(
+                    request.DestinationPath,
+                    new FileStreamOptions
                     {
-                        return Task.CompletedTask;
-                    }
-                },
-                cancellationToken);
-        }
+                        Mode = FileMode.CreateNew,
+                        Access = FileAccess.ReadWrite,
+                        Share = FileShare.None,
+                        Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+                    });
+
+                await EncFile.DecryptToAsync(attachmentKey, encStream, plaintextStream, cancellationToken);
+            },
+            cancellationToken);
+    }
+
+
+    private AttachmentKey ResolveAttachmentKey(UnlockedSession unlockedSession, VaultCipherAttachment attachment, EncString protectedAttachmentKey)
+    {
+        using var unitOfWork = unitOfWorkFactory.Create();
+        var cipherKeyMaterial = unitOfWork.VaultReaderRepository.GetCipherKeyMaterial(unlockedSession.UserKey.UserId, attachment.CipherId) ??
+                                throw new InvalidOperationException($"Cipher key material is missing for cipher '{attachment.CipherId}'.");
+
+        using var keyResolver = keyResolverFactory.Create(unitOfWork, unlockedSession.UserKey);
+
+        var attachmentKey = keyResolver.CreateAttachmentKey(cipherKeyMaterial, protectedAttachmentKey);
+        return attachmentKey;
     }
 }

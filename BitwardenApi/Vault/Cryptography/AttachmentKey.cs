@@ -9,6 +9,10 @@ namespace BitwardenApi.Vault.Cryptography;
 /// </summary>
 public sealed class AttachmentKey : IDisposable
 {
+    private const int MacByteLength = 32;
+    private const int EncryptionKeyByteLength = 32;
+    private const int KeyByteLength = 64;
+
     private readonly MemoryOwner<byte> _owner;
     private bool _disposed;
 
@@ -23,15 +27,36 @@ public sealed class AttachmentKey : IDisposable
         }
     }
 
+    /// <summary>The 32-byte AES key half. Heap-backed, so it is safe to use across await points.</summary>
+    internal ReadOnlySpan<byte> AesKey
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _owner.Span[..EncryptionKeyByteLength];
+        }
+    }
+
+    /// <summary>The 32-byte HMAC key half. Heap-backed, so it is safe to use across await points.</summary>
+    internal ReadOnlySpan<byte> MacKey
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _owner.Span.Slice(EncryptionKeyByteLength, MacByteLength);
+        }
+    }
+
+
     public static AttachmentKey Create(
         in EncString encryptedKey,
         CipherKey cipherKey)
     {
-        var owner = MemoryOwner<byte>.Allocate(encryptedKey.MaxPlaintextByteCount);
+        var owner = MemoryOwner<byte>.Allocate(KeyByteLength);
         try
         {
-            int bytesWritten = encryptedKey.DecodeTo(cipherKey.Key, owner.Span);
-            return new AttachmentKey(owner[..bytesWritten]);
+            encryptedKey.DecodeTo(cipherKey.Key, owner.Span);
+            return new AttachmentKey(owner);
         }
         catch
         {
