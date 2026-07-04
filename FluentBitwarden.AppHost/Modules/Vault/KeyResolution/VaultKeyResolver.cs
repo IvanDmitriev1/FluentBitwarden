@@ -20,12 +20,14 @@ internal sealed class VaultKeyResolver : IDisposable
     private readonly Dictionary<OrganizationId, OrganizationKey> _organizationKeysById = [];
     private bool _disposed;
 
+    private PrivateKey? _privateKey;
+
     private PrivateKey PrivateKey
     {
         get
         {
             ThrowIfDisposed();
-            return field ??= CreatePrivateKey(_userKey, _protectedPrivateKey);
+            return _privateKey ??= CreatePrivateKey(_userKey, _protectedPrivateKey);
         }
     }
 
@@ -85,7 +87,7 @@ internal sealed class VaultKeyResolver : IDisposable
             key.Dispose();
         }
 
-        PrivateKey.Dispose();
+        _privateKey?.Dispose();
     }
 
     private AsymmetricEncString GetProtectedOrganizationKey(OrganizationId organizationId)
