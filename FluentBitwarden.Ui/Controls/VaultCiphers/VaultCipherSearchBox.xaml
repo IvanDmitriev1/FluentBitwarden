@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="FluentBitwarden.Controls.VaultCiphers.VaultCipherSearchBox"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:templates="using:FluentBitwarden.Templates"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <templates:VaultCipherAutosuggestItemTemplates />
+            </ResourceDictionary.MergedDictionaries>
+            <x:String x:Key="VaultCipherSearchBoxPlaceholderText">Search</x:String>
+            <x:String x:Key="VaultCipherSearchBoxAutomationName">Search vault</x:String>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <AutoSuggestBox
+        AutomationProperties.AutomationId="VaultCipherSearchBox"
+        AutomationProperties.Name="{StaticResource VaultCipherSearchBoxAutomationName}"
+        ItemTemplate="{StaticResource VaultCipherAutosuggestItemTemplate}"
+        PlaceholderText="{StaticResource VaultCipherSearchBoxPlaceholderText}"
+        QueryIcon="Find"
+        QuerySubmitted="AutoSuggestBox_OnQuerySubmitted"
+        TextChanged="AutoSuggestBox_OnTextChanged"
+        UpdateTextOnSelect="False" />
+</UserControl>

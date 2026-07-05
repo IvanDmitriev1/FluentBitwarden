@@ -35,11 +35,21 @@ public static class BitwardenApiServiceCollectionExtensions
             .AddHttpMessageHandler<BitwardenAuthorizationHandler>()
             .AddBitwardenReadRetry();
 
+        // The blob download targets pre-signed third-party storage URLs. It deliberately carries no
+        // Bitwarden authorization header or client headers so the access token is never disclosed.
+        services.AddHttpClient("BitwardenApiAttachmentDownloadHttpClient", static client =>
+            {
+                client.Timeout = Timeout.InfiniteTimeSpan;
+                client.DefaultRequestVersion = HttpVersion.Version20;
+                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+            })
+            .AddBitwardenReadRetry();
+
         services.AddSingleton<IIdentityApi, IdentityApi>();
         services.AddSingleton<IVaultItemsApi, VaultItemsApi>();
-        services.AddSingleton<IVaultAttachmentsApi, VaultAttachmentsApi>();
+        services.AddSingleton<IVaultCipherAttachmentApi, VaultCipherAttachmentApi>();
 
-        services.AddSingleton<INotificationsApi, NotificationsApi>();
+        services.AddSingleton<IBitwardenNotificationsApi, BitwardenNotificationsApi>();
 
         return services;
     }

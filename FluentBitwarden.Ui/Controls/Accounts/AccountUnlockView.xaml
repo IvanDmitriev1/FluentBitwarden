@@ -4,12 +4,18 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
-    xmlns:controls1="using:FluentBitwarden.Controls"
+    xmlns:controls1="using:FluentBitwarden.Controls.Shared"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     KeyboardAcceleratorPlacementMode="Hidden"
     mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <x:String x:Key="AccountUnlockPasswordBoxAutomationName">Master password</x:String>
+        <x:String x:Key="AccountUnlockActionButtonToolTip">Unlock</x:String>
+        <x:String x:Key="AccountUnlockWindowsHelloToolTip">Unlock with Windows Hello</x:String>
+    </UserControl.Resources>
 
     <interactivity:Interaction.Behaviors>
         <behaviors:FocusBehavior>
@@ -29,11 +35,13 @@
 
         <controls1:PasswordBoxEx
             x:Name="PasswordBox"
+            AutomationProperties.AutomationId="AccountUnlockPasswordBox"
+            AutomationProperties.Name="{StaticResource AccountUnlockPasswordBoxAutomationName}"
             Grid.Row="0"
             Grid.Column="0"
             VerticalAlignment="Center"
             ActionButtonCommand="{x:Bind UnlockCommand}"
-            ActionButtonToolTip="Unlock"
+            ActionButtonToolTip="{StaticResource AccountUnlockActionButtonToolTip}"
             Command="{x:Bind UnlockCommand}"
             IsEnabled="True">
             <controls1:PasswordBoxEx.ActionButtonContent>
@@ -43,6 +51,8 @@
 
         <Button
             x:Name="WindowsHelloButton"
+            AutomationProperties.AutomationId="AccountUnlockWindowsHelloButton"
+            AutomationProperties.Name="{StaticResource AccountUnlockWindowsHelloToolTip}"
             Grid.Row="0"
             Grid.Column="1"
             Width="40"
@@ -50,7 +60,7 @@
             Padding="0"
             Command="{x:Bind UnlockWithWindowsHelloCommand}"
             Style="{StaticResource AccentButtonStyle}"
-            ToolTipService.ToolTip="Unlock with Windows Hello">
+            ToolTipService.ToolTip="{StaticResource AccountUnlockWindowsHelloToolTip}">
             <FontIcon
                 FontFamily="{ThemeResource SymbolThemeFontFamily}"
                 FontSize="16"

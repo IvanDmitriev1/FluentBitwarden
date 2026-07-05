@@ -1,17 +1,18 @@
 using System.Buffers.Text;
 using System.Text;
 using System.Text.Json;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {
-    private static string ReadRequiredDecryptField(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey,
+    private static string ReadRequiredDecryptField(ref Utf8JsonReader reader, CipherKey decryptKey,
         string propertyName) => ReadDecryptField(ref reader, decryptKey) ??
                                 throw new JsonException($"{propertyName} must not be null.");
 
-    private static int ReadRequiredEncryptedInt32(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static int ReadRequiredEncryptedInt32(ref Utf8JsonReader reader, CipherKey decryptKey)
         => EncryptedJsonValueReader.ReadRequired(ref reader, decryptKey, static (scoped value) =>
         {
             if (Utf8Parser.TryParse(value, out int parsed, out int bytesConsumed) && bytesConsumed == value.Length)
@@ -22,7 +23,7 @@ public static partial class VaultDataParser
             throw new JsonException($"Property must be a valid Int32 value.");
         });
 
-    private static bool ReadRequiredEncryptedBoolean(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static bool ReadRequiredEncryptedBoolean(ref Utf8JsonReader reader, CipherKey decryptKey)
         => EncryptedJsonValueReader.ReadRequired(ref reader, decryptKey, static (scoped value) =>
         {
             if (Ascii.EqualsIgnoreCase(value, "true"u8) || value.SequenceEqual("1"u8))
@@ -40,7 +41,7 @@ public static partial class VaultDataParser
 
     private static byte[] ReadBase64UrlBytes(
         ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> decryptKey)
+        CipherKey decryptKey)
         => EncryptedJsonValueReader.ReadRequired(ref reader, decryptKey,
             static value => Base64Url.DecodeFromUtf8(value));
 

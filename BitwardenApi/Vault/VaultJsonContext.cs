@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using BitwardenApi.Vault.Attachments.Contracts;
 
 namespace BitwardenApi.Vault;
 
@@ -12,8 +13,9 @@ namespace BitwardenApi.Vault;
 [JsonSerializable(typeof(List<VaultFolderDto>))]
 [JsonSerializable(typeof(List<VaultCollectionDto>))]
 [JsonSerializable(typeof(List<VaultCipherDto>))]
-[JsonSerializable(typeof(AttachmentUploadInit))]
-[JsonSerializable(typeof(AttachmentUploadRenewal))]
+[JsonSerializable(typeof(VaultCipherAttachmentDownloadResponse))]
+[JsonSerializable(typeof(List<VaultCipherAttachmentDownloadResponse>))]
+[JsonSerializable(typeof(FileSize))]
 [JsonSerializable(typeof(Int64))]
 internal sealed partial class VaultJsonContext : JsonSerializerContext
 {
@@ -27,6 +29,7 @@ internal sealed partial class VaultJsonContext : JsonSerializerContext
         options.Converters.Add(new OrganizationId.OrganizationIdSystemTextJsonConverter());
         options.Converters.Add(new CollectionId.CollectionIdSystemTextJsonConverter());
         options.Converters.Add(new AttachmentId.AttachmentIdSystemTextJsonConverter());
+        options.Converters.Add(new UserId.UserIdSystemTextJsonConverter());
         return options;
     }
 }

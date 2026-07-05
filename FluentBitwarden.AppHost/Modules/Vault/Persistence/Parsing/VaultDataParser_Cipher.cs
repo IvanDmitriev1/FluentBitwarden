@@ -1,6 +1,6 @@
-using System.Security.Cryptography;
 using System.Text.Json;
-using CommunityToolkit.HighPerformance.Buffers;
+using BitwardenApi.Vault.Attachments.Contracts;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
@@ -10,45 +10,22 @@ public static partial class VaultDataParser
     public static VaultCipher ParseAndDecryptCipher(
         ref readonly VaultCipherDto dto,
         ReadOnlySpan<byte> payload,
-        scoped ReadOnlySpan<byte> baseKey)
+        SymmetricCryptoKey baseKey)
     {
         var cipher = CreateCipher(in dto);
         var reader = CreateObjectReader(payload);
 
-        if (dto.EncryptedKey.IsEmpty)
-        {
-            return ParseWithKey(in dto, cipher, ref reader, baseKey);
-        }
-
-        var encryptedKey = dto.EncryptedKey;
-        bool useStackBuffer = encryptedKey.MaxPlaintextByteCount <= 256;
-
-        using var keyBufferOwner = useStackBuffer
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(encryptedKey.MaxPlaintextByteCount);
-
-        Span<byte> keyBuffer = useStackBuffer
-            ? stackalloc byte[encryptedKey.MaxPlaintextByteCount]
-            : keyBufferOwner.Span;
-
-        try
-        {
-            int bytesWritten = encryptedKey.DecodeTo(baseKey, keyBuffer);
-            return ParseWithKey(in dto, cipher, ref reader, keyBuffer[..bytesWritten]);
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(keyBuffer);
-        }
+        using var key = CipherKey.Create(dto.ProtectedCipherKey, baseKey);
+        return ParseWithKey(in dto, cipher, ref reader, key);
     }
 
     private static VaultCipher ParseWithKey(
         ref readonly VaultCipherDto dto,
         VaultCipher cipher,
         ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> decryptionKey)
+        CipherKey decryptionKey)
     {
-        return dto.VaultCipherType switch
+        VaultCipher parsedCipher = dto.VaultCipherType switch
         {
             VaultCipherType.Login => ParseLoginCipher((LoginVaultCipher)cipher, ref reader, decryptionKey),
             VaultCipherType.SecureNote => ParseSecureNoteCipher((SecureNoteVaultCipher)cipher, ref reader, decryptionKey),
@@ -57,12 +34,39 @@ public static partial class VaultDataParser
             VaultCipherType.SshKey => ParseSshKeyCipher((SshKeyVaultCipher)cipher, ref reader, decryptionKey),
             _ => throw new NotSupportedException($"Unsupported vaultCipher type: {dto.VaultCipherType}")
         };
+
+        parsedCipher.Attachments = ParseAttachments(dto.Id, dto.Attachments, decryptionKey);
+        return parsedCipher;
+    }
+
+    private static VaultCipherAttachment[] ParseAttachments(
+        CipherId cipherId,
+        ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachmentDtos,
+        CipherKey decryptionKey)
+    {
+        if (attachmentDtos is not { Length: > 0 })
+            return [];
+
+        var attachments = new VaultCipherAttachment[attachmentDtos.Length];
+        for (int i = 0; i < attachmentDtos.Length; i++)
+        {
+            ref readonly var dto = ref attachmentDtos[i];
+            attachments[i] = new VaultCipherAttachment
+            {
+                Id = dto.Id,
+                CipherId = cipherId,
+                FileName = dto.EncryptedFileName.Decode(decryptionKey),
+                Size = dto.Size
+            };
+        }
+
+        return attachments;
     }
 
     private static LoginVaultCipher ParseLoginCipher(LoginVaultCipher vaultCipher, ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> decryptKey)
+        CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey,
-            static (ref r, c, scoped k) =>
+            static (ref r, c, k) =>
             {
                 if (r.ValueTextEquals("username"u8) || r.ValueTextEquals("Username"u8))
                     c.Username = ReadRequiredDecryptField(ref r, k, "Username");
@@ -73,7 +77,7 @@ public static partial class VaultDataParser
                 else if (r.ValueTextEquals("uris"u8) || r.ValueTextEquals("Uris"u8))
                     c.Uris = ReadJsonArray(ref r, k, ReadUri);
                 else if (r.ValueTextEquals("fido2Credentials"u8) || r.ValueTextEquals("Fido2Credentials"u8))
-                    c.Fido2Credentials = ReadJsonArray(ref r, k, ReadFido2Credential);
+                    c.Fido2Credential = ReadFirstFido2Credential(ref r, k);
                 else
                     return false;
 
@@ -81,11 +85,11 @@ public static partial class VaultDataParser
             });
 
 
-    private static SecureNoteVaultCipher ParseSecureNoteCipher(SecureNoteVaultCipher vaultCipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref _, _, scoped _) => false);
+    private static SecureNoteVaultCipher ParseSecureNoteCipher(SecureNoteVaultCipher vaultCipher, ref Utf8JsonReader reader, CipherKey decryptKey)
+        => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref _, _, _) => false);
 
-    private static CardVaultCipher ParseCardCipher(CardVaultCipher vaultCipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
-        => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref r, c, scoped k) =>
+    private static CardVaultCipher ParseCardCipher(CardVaultCipher vaultCipher, ref Utf8JsonReader reader, CipherKey decryptKey)
+        => ParseCipherObject(vaultCipher, ref reader, decryptKey, static (ref r, c, k) =>
         {
             if (r.ValueTextEquals("cardholderName"u8) || r.ValueTextEquals("CardholderName"u8))
                 c.CardholderName = ReadDecryptField(ref r, k);
@@ -106,9 +110,9 @@ public static partial class VaultDataParser
         });
 
     private static IdentityVaultCipher ParseIdentityCipher(IdentityVaultCipher vaultCipher, ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> decryptKey)
+        CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey,
-            static (ref r, c, scoped k) =>
+            static (ref r, c, k) =>
             {
                 if (r.ValueTextEquals("title"u8) || r.ValueTextEquals("Title"u8))
                     c.Title = ReadDecryptField(ref r, k);
@@ -151,10 +155,10 @@ public static partial class VaultDataParser
                 return true;
             });
 
-    private static SshKeyVaultCipher ParseSshKeyCipher(SshKeyVaultCipher vaultCipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static SshKeyVaultCipher ParseSshKeyCipher(SshKeyVaultCipher vaultCipher, ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         return ParseCipherObject(vaultCipher, ref reader, decryptKey,
-            static (ref r, c, scoped k) =>
+            static (ref r, c, k) =>
             {
                 if (r.ValueTextEquals("privateKey"u8) || r.ValueTextEquals("PrivateKey"u8))
                 {
@@ -182,7 +186,7 @@ public static partial class VaultDataParser
             });
     }
 
-    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, VaultCipher vaultCipher, scoped ReadOnlySpan<byte> decryptKey)
+    private static bool TryReadCommonCipherProperty(ref Utf8JsonReader reader, VaultCipher vaultCipher, CipherKey decryptKey)
     {
         if (reader.ValueTextEquals("name"u8) || reader.ValueTextEquals("Name"u8))
         {
@@ -259,12 +263,13 @@ public static partial class VaultDataParser
         _ => throw new ArgumentOutOfRangeException()
     };
 
-    private static string ReadUri(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static LoginUri ReadUri(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
-            return string.Empty;
+            throw new JsonException("Each URI item must be a JSON object.");
 
         string? uri = null;
+        LoginUri.MatchType matchType = LoginUri.MatchType.Domain;
 
         while (reader.Read())
         {
@@ -276,18 +281,69 @@ public static partial class VaultDataParser
 
             if (reader.ValueTextEquals("uri"u8) || reader.ValueTextEquals("Uri"u8))
                 uri = ReadDecryptField(ref reader, decryptKey);
+            else if (reader.ValueTextEquals("match"u8) || reader.ValueTextEquals("Match"u8))
+                matchType = ReadUriMatchType(ref reader);
             else
                 SkipValue(ref reader);
         }
 
-        ArgumentNullException.ThrowIfNull(uri);
-        return uri;
+        return new LoginUri
+        {
+            Value = uri ?? throw new JsonException("URI item is missing Uri."),
+            Match = matchType
+        };
     }
 
-    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static LoginUri.MatchType ReadUriMatchType(ref Utf8JsonReader reader)
+    {
+        reader.Read();
+
+        if (reader.TokenType == JsonTokenType.Null)
+            throw new JsonException("URI match cannot be NULL");
+
+        if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out int value))
+            throw new JsonException("URI match must be a valid Int32 value.");
+
+        if (!Enum.IsDefined(typeof(LoginUri.MatchType), value))
+            throw new JsonException($"Unsupported URI match type: {value}.");
+
+        return (LoginUri.MatchType)value;
+    }
+
+    private static Fido2Credential? ReadFirstFido2Credential(ref Utf8JsonReader reader, CipherKey decryptKey)
+    {
+        reader.Read();
+
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+
+        if (reader.TokenType != JsonTokenType.StartArray)
+            throw new JsonException("Expected a JSON array.");
+
+        Fido2Credential? credential = null;
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndArray)
+                break;
+
+            if (credential is null)
+            {
+                credential = ReadFido2Credential(ref reader, decryptKey);
+                continue;
+            }
+
+            if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+                reader.Skip();
+        }
+
+        return credential;
+    }
+
+    private static Fido2Credential ReadFido2Credential(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
-            throw new JsonException("Each Fido2Credentials item must be a JSON object.");
+            throw new JsonException("Each fido2Credentials item must be a JSON object.");
 
         byte[]? credentialId = null;
         Fido2CredentialKeyType? keyType = null;
@@ -359,7 +415,7 @@ public static partial class VaultDataParser
         };
     }
 
-    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static TotpValue? ReadTotpCredential(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         reader.Read();
 

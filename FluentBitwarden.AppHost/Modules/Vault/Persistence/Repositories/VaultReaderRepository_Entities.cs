@@ -1,3 +1,6 @@
+using BitwardenApi.Vault.Attachments.Contracts;
+using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
+
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
 internal partial class VaultReaderRepository
@@ -15,29 +18,29 @@ internal partial class VaultReaderRepository
     };
 
     internal readonly record struct OrganizationRow(
+        string UserId,
         string OrganizationId,
         string? OrganizationUserId,
         string OrganizationName,
         int IsEnabled,
-        int UseKeyConnector,
+        int AccessSecretsManager,
         int? MemberStatus,
-        int? MemberType,
-        byte[]? EncryptedOrganizationKey);
+        byte[]? ProtectedOrganizationKey);
 
     private static VaultOrganizationDto ToDto(in OrganizationRow row) => new()
     {
         Id = OrganizationId.Parse(row.OrganizationId),
+        UserId = UserId.Parse(row.UserId),
         OrganizationUserId = row.OrganizationUserId is null
-            ? null
+            ? Guid.Empty
             : Guid.Parse(row.OrganizationUserId),
         Name = row.OrganizationName,
         Enabled = row.IsEnabled != 0,
-        UseKeyConnector = row.UseKeyConnector != 0,
-        Status = row.MemberStatus,
-        MemberType = row.MemberType,
-        EncryptedOrganizationKey = row.EncryptedOrganizationKey is null
-            ? EncString.Empty
-            : EncString.FromBytes(row.EncryptedOrganizationKey)
+        AccessSecretsManager = row.AccessSecretsManager != 0,
+        Status = row.MemberStatus ?? -1,
+        ProtectedOrganizationKey = row.ProtectedOrganizationKey is null
+            ? AsymmetricEncString.Empty
+            : AsymmetricEncString.FromBytes(row.ProtectedOrganizationKey)
     };
 
     internal readonly record struct CollectionRow(
@@ -46,7 +49,7 @@ internal partial class VaultReaderRepository
         int IsReadOnly,
         int CanManage,
         int HidePasswords,
-        int? CollectionType,
+        int CollectionType,
         byte[] EncryptedName);
 
     private static VaultCollectionDto ToDto(in CollectionRow row) => new()
@@ -65,7 +68,7 @@ internal partial class VaultReaderRepository
         string CipherId,
         string? OrganizationId,
         string? FolderId,
-        byte[]? EncryptedCipherKey,
+        byte[]? ProtectedCipherKey,
         int CipherType,
         long RevisionDateUnixMs,
         long CreationDateUnixMs,
@@ -80,7 +83,23 @@ internal partial class VaultReaderRepository
         string CipherId,
         string CollectionId);
 
-    private static VaultCipherDto ToDto(in CipherRow row, CollectionId[] collectionIds) => new()
+    internal readonly record struct CipherAttachmentRow(
+        string CipherId,
+        string AttachmentId,
+        byte[] EncryptedFileName,
+        long Size);
+
+    internal sealed class CipherKeyMaterialRow
+    {
+        public required string CipherId { get; init; }
+        public string? OrganizationId { get; init; }
+        public byte[]? ProtectedCipherKey { get; init; }
+    }
+
+    private static VaultCipherDto ToDto(
+        in CipherRow row,
+        CollectionId[] collectionIds,
+        VaultCipherAttachmentDownloadResponse[] attachments) => new()
     {
         Id = CipherId.Parse(row.CipherId),
         OrganizationId = row.OrganizationId is null
@@ -90,7 +109,7 @@ internal partial class VaultReaderRepository
             ? FolderId.Empty
             : FolderId.Parse(row.FolderId),
         CollectionIds = collectionIds,
-        EncryptedKey = row.EncryptedCipherKey is null ? EncString.Empty : EncString.FromBytes(row.EncryptedCipherKey),
+        ProtectedCipherKey = row.ProtectedCipherKey is null ? EncString.Empty : EncString.FromBytes(row.ProtectedCipherKey),
         VaultCipherType = (VaultCipherType)row.CipherType,
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
         CreationDate = DateTimeOffset.FromUnixTimeMilliseconds(row.CreationDateUnixMs),
@@ -104,6 +123,25 @@ internal partial class VaultReaderRepository
         Reprompt = row.Reprompt != 0,
         Edit = row.CanEdit != 0,
         ViewPassword = row.CanViewPassword != 0,
-        Data = []
+        Data = [],
+        Attachments = attachments
     };
+
+    private static VaultCipherAttachmentDownloadResponse ToDto(in CipherAttachmentRow row) => new()
+    {
+        Id = AttachmentId.Parse(row.AttachmentId),
+        Url = string.Empty,
+        EncryptedFileName = EncString.FromBytes(row.EncryptedFileName),
+        ProtectedAttachmentKey = EncString.Empty,
+        Size = FileSize.FromBytes(row.Size)
+    };
+
+    private static VaultCipherKeyMaterial ToKeyMaterial(CipherKeyMaterialRow row) => new(
+        CipherId: CipherId.Parse(row.CipherId),
+        OrganizationId: row.OrganizationId is null
+            ? OrganizationId.Empty
+            : OrganizationId.Parse(row.OrganizationId),
+        ProtectedCipherKey: row.ProtectedCipherKey is null
+            ? EncString.Empty
+            : EncString.FromBytes(row.ProtectedCipherKey));
 }

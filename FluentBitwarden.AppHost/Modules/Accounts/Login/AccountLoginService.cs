@@ -42,7 +42,7 @@ internal sealed class AccountLoginService(
     private async Task<AccountLoginOperationResult> LoginWithPasswordAsync(AccountLoginRequest.PasswordRequest request, CancellationToken cancellationToken = default)
     {
         string serverAuthorizationHash =
-            MasterPassword.HashMasterPassword(request.Email, request.MasterPassword, new KdfConfig.Pbkdf2(600000));
+            MasterPassword.HashMasterPassword(request.Email, request.MasterPassword, new KdfConfig.Pbkdf2(600000)).Value;
 
         var passwordLoginRequest = new PasswordLoginRequest(request.Context, request.Email, serverAuthorizationHash);
 

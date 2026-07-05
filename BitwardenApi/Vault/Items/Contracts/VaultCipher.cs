@@ -1,3 +1,4 @@
+using BitwardenApi.Vault.Attachments.Contracts;
 using MemoryPack;
 
 namespace BitwardenApi.Vault.Items.Contracts;
@@ -30,6 +31,8 @@ public abstract partial class VaultCipher
     public required DateTimeOffset RevisionDate { get; set; }
     public required DateTimeOffset CreationDate { get; set; }
     public required DateTimeOffset? DeletedDate { get; set; }
+
+    public VaultCipherAttachment[] Attachments { get; set; } = [];
 }
 
 [MemoryPackable]
@@ -42,8 +45,8 @@ public sealed partial class LoginVaultCipher : VaultCipher
 
     [TotpValueFormatter]
     public TotpValue? Totp { get; set; }
-    public List<string> Uris { get; set; } = [];
-    public List<Fido2Credential> Fido2Credentials { get; set; } = [];
+    public List<LoginUri> Uris { get; set; } = [];
+    public Fido2Credential? Fido2Credential { get; set; }
 }
 
 /// <remarks>Notes carries the secure note text via <see cref="VaultCipher.Notes"/>.</remarks>

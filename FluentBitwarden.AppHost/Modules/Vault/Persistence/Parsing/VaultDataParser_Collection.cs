@@ -1,10 +1,12 @@
+using BitwardenApi.Vault.Cryptography;
+
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {
     public static VaultCollection ParseAndDecryptCollection(
         ref readonly VaultCollectionDto dto,
-        scoped ReadOnlySpan<byte> key)
+        SymmetricCryptoKey key)
     {
         return new VaultCollection
         {

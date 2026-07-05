@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
@@ -15,6 +15,12 @@ internal sealed class AccountStore(IUnitOfWorkFactory unitOfWorkFactory) : IAcco
     {
         using var unitOfWork = unitOfWorkFactory.Create();
         return unitOfWork.AccountProfileRepository.GetById(userId);
+    }
+
+    public AccountProfileDetails? GetAccountProfileDetails(UserId userId)
+    {
+        using var unitOfWork = unitOfWorkFactory.Create();
+        return unitOfWork.AccountProfileRepository.GetProfileDetails(userId);
     }
 
     public AccountKeyMaterial? GetKeyMaterial(UserId userId)

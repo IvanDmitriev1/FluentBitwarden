@@ -1,5 +1,5 @@
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 

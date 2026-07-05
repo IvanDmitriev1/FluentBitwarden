@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
@@ -9,7 +10,7 @@ internal sealed class WindowsHelloUnlocker(WindowsHelloKeyStore keyStore)
 {
     public Task<bool> IsSupportedAsync() => WindowsHelloTpmKeyProtector.IsSupportedAsync();
 
-    public void Enable(DecryptedUserKey decryptedKey, IntPtr hwnd)
+    public void Enable(UserKey decryptedKey, IntPtr hwnd)
     {
         var keyName = decryptedKey.UserId.ToString();
 
@@ -50,7 +51,7 @@ internal sealed class WindowsHelloUnlocker(WindowsHelloKeyStore keyStore)
 
             return AccountUnlockResult.WithUserKey(
                 new AccountUnlockOutcome.Success(),
-                new DecryptedUserKey(userId, decryptedBytes));
+                new UserKey(userId, decryptedBytes));
         }
         catch (WindowsHelloAuthenticationCanceledException)
         {

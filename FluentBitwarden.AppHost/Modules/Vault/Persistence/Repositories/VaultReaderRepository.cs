@@ -1,6 +1,8 @@
 using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
+using BitwardenApi.Vault.Attachments.Contracts;
+using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
@@ -35,14 +37,14 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         var rows = Connection.Query<OrganizationRow>(
             """
             SELECT
+                user_id,
                 organization_id,
                 organization_user_id,
                 organization_name,
                 is_enabled,
-                use_key_connector,
+                access_secrets_manager,
                 member_status,
-                member_type,
-                encrypted_organization_key
+                encrypted_organization_key AS ProtectedOrganizationKey
             FROM vault_organization
             WHERE user_id = @UserId
             ORDER BY row_id;
@@ -79,6 +81,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
     {
         var userIdString = userId.ToString();
         var collectionIdsByCipherId = GetCollectionIdsByCipherId(userIdString);
+        var attachmentsByCipherId = GetAttachmentsByCipherId(userIdString);
         var cipherRows = Connection.Query<CipherRow>(
             """
             SELECT
@@ -86,7 +89,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
                 vc.cipher_id,
                 vc.organization_id,
                 vcf.folder_id,
-                vc.encrypted_cipher_key,
+                vc.encrypted_cipher_key AS ProtectedCipherKey,
                 vc.cipher_type,
                 vc.revision_date_unix_ms,
                 vc.creation_date_unix_ms,
@@ -128,9 +131,34 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             int bytesWritten = blob.Read(bufferOwner.Span);
 
             collectionIdsByCipherId.TryGetValue(row.CipherId, out var collectionIds);
-            var dto = ToDto(row, collectionIds ?? []);
+            attachmentsByCipherId.TryGetValue(row.CipherId, out var attachments);
+            var dto = ToDto(row, collectionIds ?? [], attachments ?? []);
             onCipher.Invoke(stateObj, ref dto, bufferOwner.Span[..bytesWritten]);
         }
+    }
+
+    public VaultCipherKeyMaterial? GetCipherKeyMaterial(UserId userId, CipherId cipherId)
+    {
+        userId.ThrowIfEmpty();
+        cipherId.ThrowIfEmpty();
+
+        var row = Connection.QueryFirstOrDefault<CipherKeyMaterialRow>(
+            """
+            SELECT
+                cipher_id AS CipherId,
+                organization_id AS OrganizationId,
+                encrypted_cipher_key AS ProtectedCipherKey
+            FROM vault_cipher
+            WHERE cipher_id = @CipherId AND user_id = @UserId;
+            """,
+            new
+            {
+                CipherId = cipherId.ToString(),
+                UserId = userId.ToString()
+            },
+            transaction: Transaction);
+
+        return row is null ? null : ToKeyMaterial(row);
     }
 
     private Dictionary<string, CollectionId[]> GetCollectionIdsByCipherId(string userId)
@@ -152,6 +180,30 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             .ToDictionary(
                 static group => group.Key,
                 static group => group.Select(static row => CollectionId.Parse(row.CollectionId)).ToArray(),
+                StringComparer.OrdinalIgnoreCase);
+    }
+
+    private Dictionary<string, VaultCipherAttachmentDownloadResponse[]> GetAttachmentsByCipherId(string userId)
+    {
+        var rows = Connection.Query<CipherAttachmentRow>(
+            """
+            SELECT
+                cipher_id AS CipherId,
+                attachment_id AS AttachmentId,
+                encrypted_file_name AS EncryptedFileName,
+                size AS Size
+            FROM vault_cipher_attachment
+            WHERE user_id = @UserId
+            ORDER BY cipher_id, sort_order;
+            """,
+            new { UserId = userId },
+            transaction: Transaction);
+
+        return rows
+            .GroupBy(static row => row.CipherId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                static group => group.Key,
+                static group => group.Select(static row => ToDto(row)).ToArray(),
                 StringComparer.OrdinalIgnoreCase);
     }
 }

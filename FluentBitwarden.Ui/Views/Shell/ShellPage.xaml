@@ -9,7 +9,7 @@
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:templates1="using:FluentBitwarden.Templates"
-    xmlns:vault="using:FluentBitwarden.Controls.Vault"
+    xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers"
     attachedProperties:TitlebarProperties.NavigationFrame="{x:Bind ContentFrame}"
     attachedProperties:TitlebarProperties.PaneToggleCommand="{x:Bind PaneToggleCommand}"
     KeyboardAcceleratorPlacementMode="Hidden"
@@ -18,8 +18,10 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <templates1:CipherAutosuggestItemTemplates />
+                <templates1:VaultCipherAutosuggestItemTemplates />
             </ResourceDictionary.MergedDictionaries>
+            <x:String x:Key="ShellVaultSearchAutomationName">Vault search</x:String>
+            <x:String x:Key="ShellNavigationAutomationName">Main navigation</x:String>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -37,11 +39,17 @@
     </Page.KeyboardAccelerators>
 
     <attachedProperties:TitlebarProperties.Content>
-        <vault:VaultCipherSearchBox x:Name="VaultCipherSearchBox" CipherSelectedCommand="{x:Bind VaultCipherSelectedCommand}" />
+        <vault:VaultCipherSearchBox
+            x:Name="VaultCipherSearchBox"
+            AutomationProperties.AutomationId="ShellVaultCipherSearchBox"
+            AutomationProperties.Name="{StaticResource ShellVaultSearchAutomationName}"
+            VaultCipherSelectedCommand="{x:Bind VaultCipherSelectedCommand}" />
     </attachedProperties:TitlebarProperties.Content>
 
     <NavigationView
         x:Name="Nav"
+        AutomationProperties.AutomationId="ShellNavigationView"
+        AutomationProperties.Name="{StaticResource ShellNavigationAutomationName}"
         IsBackButtonVisible="Collapsed"
         IsPaneToggleButtonVisible="False"
         IsSettingsVisible="True"

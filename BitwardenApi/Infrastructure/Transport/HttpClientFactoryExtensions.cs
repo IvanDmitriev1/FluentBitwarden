@@ -7,5 +7,8 @@ internal static class HttpClientFactoryExtensions
 
     public static HttpClient CreateVaultClient(this IHttpClientFactory factory) =>
         factory.CreateClient("BitwardenApiVaultHttpClient");
+
+    public static HttpClient CreateAttachmentDownloadClient(this IHttpClientFactory factory) =>
+        factory.CreateClient("BitwardenApiAttachmentDownloadHttpClient");
 }
 

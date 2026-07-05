@@ -40,14 +40,14 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
         var options = new ParallelOptions()
         {
             CancellationToken = cts.Token,
-            MaxDegreeOfParallelism = Environment.ProcessorCount >= 4 ? 4 : 2
+            MaxDegreeOfParallelism = 4
         };
 
         try
         {
             await Parallel.ForEachAsync(siteUris, options, CacheIconAsync);
         }
-        catch (Exception e) when (e is TaskCanceledException or OperationCanceledException)
+        catch (OperationCanceledException e)
         {
             Debug.WriteLine($"Site icon cache preload was canceled: {e.Message}");
         }
@@ -94,7 +94,7 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
             _cachedFilePaths[siteUri] = new Uri(filePath, UriKind.Absolute);
             IconCached?.Invoke(this, new SiteIconCachedEventArgs(siteUri, filePath));
         }
-        catch (Exception e) when (e is TaskCanceledException or OperationCanceledException)
+        catch (OperationCanceledException e)
         {
             Debug.WriteLine($"Site icon cache preload was canceled for {siteUri}: {e.Message}");
         }

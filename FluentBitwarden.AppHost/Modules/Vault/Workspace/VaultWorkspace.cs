@@ -1,4 +1,5 @@
-﻿using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
+﻿using BitwardenApi.Vault.Cryptography;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
@@ -15,13 +16,14 @@ internal sealed class VaultWorkspace(
 
     public async ValueTask OpenAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey userKey,
+        UserKey userKey,
+        bool forceSync,
         CancellationToken cancellationToken)
     {
         Reload(userKey);
 
         var data = Volatile.Read(ref _state).Data;
-        if (data.CiphersById.Count > 0)
+        if (!forceSync && data.CiphersById.Count > 0)
             return;
 
         var result = await vaultSynchronizer.SyncAsync(
@@ -29,6 +31,7 @@ internal sealed class VaultWorkspace(
             userKey,
             force: true,
             cancellationToken);
+
         if (result == VaultSyncResult.Synced)
         {
             Reload(userKey);
@@ -37,7 +40,7 @@ internal sealed class VaultWorkspace(
 
     public async Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey decryptedUserKey,
+        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default)
     {
@@ -46,13 +49,14 @@ internal sealed class VaultWorkspace(
             decryptedUserKey,
             force,
             cancellationToken);
+
         if (result == VaultSyncResult.Synced)
             Reload(decryptedUserKey);
 
         return result;
     }
 
-    public void Reload(DecryptedUserKey userKey)
+    public void Reload(UserKey userKey)
     {
         var data = vaultLoader.Load(userKey);
         Volatile.Write(ref _state, new WorkspaceState(userKey.UserId, data));

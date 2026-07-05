@@ -7,10 +7,13 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:metadataTimeline="using:FluentBitwarden.Controls.Shared.MetadataTimeline"
     xmlns:models="using:FluentBitwarden.ViewModels.Vault.Browse.Models"
     xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
-    xmlns:sharedControls="using:FluentBitwarden.Controls"
+    xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
+    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
+    xmlns:vaultCiphers="using:FluentBitwarden.Controls.VaultCiphers"
     xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
@@ -18,12 +21,21 @@
     <navigation:LifecyclePage.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ms-appx:///Templates/Vault/CipherListViewItemTemplate.xaml" />
-                <vault:CipherDetailTemplates />
-                <vault:CipherListItemDataTemplate />
+                <ResourceDictionary Source="ms-appx:///Templates/VaultCipher/VaultCipherListViewItemTemplate.xaml" />
+                <vault:VaultCipherDetailTemplates />
+                <vault:VaultCipherListItemDataTemplate />
             </ResourceDictionary.MergedDictionaries>
 
-            <models:CipherTypeOptionOptionConverter x:Key="CipherTypeOptionConverter" />
+            <models:VaultCipherTypeOptionConverter x:Key="VaultCipherTypeOptionConverter" />
+            <x:String x:Key="VaultPageFilterPlaceholderText">Filter by type</x:String>
+            <x:String x:Key="VaultPageSearchFilterAutomationName">Vault filters and search</x:String>
+            <x:String x:Key="VaultPageCipherTypeAutomationName">Cipher type filter</x:String>
+            <x:String x:Key="VaultPageCipherListAutomationName">Vault ciphers</x:String>
+            <x:String x:Key="VaultPageSortFieldNameText">Title</x:String>
+            <x:String x:Key="VaultPageSortFieldCreatedText">Date created</x:String>
+            <x:String x:Key="VaultPageSortFieldModifiedText">Date modified</x:String>
+            <x:String x:Key="VaultPageSortAscendingText">Ascending</x:String>
+            <x:String x:Key="VaultPageSortDescendingText">Descending</x:String>
         </ResourceDictionary>
     </navigation:LifecyclePage.Resources>
 
@@ -50,43 +62,47 @@
                     Grid.Row="0"
                     Grid.Column="0"
                     Padding="16,16,16,8"
+                    AutomationProperties.AutomationId="VaultPageSearchFilterBar"
+                    AutomationProperties.Name="{StaticResource VaultPageSearchFilterAutomationName}"
                     IsSearchOpen="{x:Bind ViewModel.IsSearchFieldOpen, Mode=TwoWay}"
                     SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <sharedControls:SearchFilterBar.FilterContent>
                         <ComboBox
+                            AutomationProperties.AutomationId="VaultPageCipherTypeFilter"
+                            AutomationProperties.Name="{StaticResource VaultPageCipherTypeAutomationName}"
                             ItemTemplate="{StaticResource OptionItemComboBoxItemTemplate}"
                             ItemsSource="{x:Bind models:VaultCipherTypeOption.All}"
-                            PlaceholderText="Filter by type"
-                            SelectedItem="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay, Converter={StaticResource CipherTypeOptionConverter}}" />
+                            PlaceholderText="{StaticResource VaultPageFilterPlaceholderText}"
+                            SelectedItem="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay, Converter={StaticResource VaultCipherTypeOptionConverter}}" />
                     </sharedControls:SearchFilterBar.FilterContent>
                     <sharedControls:SearchFilterBar.SortFlyout>
                         <MenuFlyout Placement="BottomEdgeAlignedLeft">
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                                Text="Title"
+                                Text="{StaticResource VaultPageSortFieldNameText}"
                                 Value="{x:Bind workspace:VaultCipherSortField.Name}" />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                                Text="Date created"
+                                Text="{StaticResource VaultPageSortFieldCreatedText}"
                                 Value="{x:Bind workspace:VaultCipherSortField.CreationDate}" />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                                Text="Date modified"
+                                Text="{StaticResource VaultPageSortFieldModifiedText}"
                                 Value="{x:Bind workspace:VaultCipherSortField.RevisionDate}" />
 
                             <MenuFlyoutSeparator />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
-                                Text="Newest first"
+                                Text="{StaticResource VaultPageSortAscendingText}"
                                 Value="{x:Bind workspace:VaultCipherSortDirection.Ascending}" />
 
                             <sharedControls:RadioMenuFlyoutItem
                                 SelectedValue="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
-                                Text="Oldest first"
+                                Text="{StaticResource VaultPageSortDescendingText}"
                                 Value="{x:Bind workspace:VaultCipherSortDirection.Descending}" />
 
                         </MenuFlyout>
@@ -98,9 +114,11 @@
                     Grid.Row="1"
                     Grid.Column="0"
                     attachedProperties:VaultListSelectionBehavior.BringToView="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
+                    AutomationProperties.AutomationId="VaultPageCipherList"
+                    AutomationProperties.Name="{StaticResource VaultPageCipherListAutomationName}"
                     IsItemClickEnabled="False"
                     ItemContainerStyle="{StaticResource VaultCipherListViewItemStyle}"
-                    ItemTemplate="{StaticResource CipherListItemDataTemplate}"
+                    ItemTemplate="{StaticResource VaultCipherListItemDataTemplate}"
                     ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
                     SelectionMode="Single"
@@ -122,37 +140,58 @@
 
         </SplitView.Pane>
 
-        <ScrollViewer
-            HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto"
-            Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource EmptyObjectToVisibilityConverter}, Mode=OneWay}">
-
-            <StackPanel
-                x:Name="CipherDetailsStackPanel"
-                Padding="20"
-                x:Load="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToBoolConverter}}"
-                Spacing="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <ScrollViewer
+                Grid.Row="1"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto"
+                Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
                 <StackPanel
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="24">
-                    <sharedControls:SiteIcon
-                        FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
-                        Size="36"
-                        Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
-                    <TextBlock
+                    Padding="20"
+                    Spacing="20"
+                    Visibility="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                    <StackPanel
+                        HorizontalAlignment="Stretch"
                         VerticalAlignment="Center"
-                        Style="{StaticResource TitleTextBlockStyle}"
-                        Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+                        Orientation="Horizontal"
+                        Spacing="24">
+                        <siteIcon:SiteIcon
+                            FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
+                            Size="36"
+                            Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource TitleTextBlockStyle}"
+                            Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
 
-                <ContentControl
-                    HorizontalContentAlignment="Stretch"
-                    Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
-                    ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
-            </StackPanel>
-        </ScrollViewer>
+                    <ContentControl
+                        HorizontalContentAlignment="Stretch"
+                        Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
+                        ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
+
+                    <sharedControls:DividedCardItemsControl
+                        ItemsSource="{x:Bind ViewModel.SelectedCipher.Attachments, Mode=OneWay}"
+                        Label="Attachments"
+                        Visibility="{x:Bind ViewModel.SelectedCipher.Attachments, Mode=OneWay, Converter={StaticResource EmptyCollectionToVisibilityConverter}}">
+                        <sharedControls:DividedCardItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <vaultCiphers:VaultCipherAttachmentField Attachment="{Binding}" />
+                            </DataTemplate>
+                        </sharedControls:DividedCardItemsControl.ItemTemplate>
+                    </sharedControls:DividedCardItemsControl>
+
+                    <metadataTimeline:MetadataTimeline Header="{x:Bind models:VaultCipherExtensions.LastEditedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" ToggleAutomationName="Toggle item history">
+                        <metadataTimeline:MetadataTimelineItem Text="{x:Bind models:VaultCipherExtensions.AddedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" />
+                        <metadataTimeline:MetadataTimelineButtonItem Glyph="&#xE81C;" Text="View previous versions" />
+                    </metadataTimeline:MetadataTimeline>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </SplitView>
 </navigation:LifecyclePage>

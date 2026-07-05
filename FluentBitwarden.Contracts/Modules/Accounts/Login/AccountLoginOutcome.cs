@@ -16,7 +16,7 @@ public abstract partial record AccountLoginOutcome
 
     [MemoryPackable]
     public sealed partial record TwoFactorRequired(
-        TwoFactorChallenge Challenge,
+        IdentityTwoFactorChallenge Challenge,
         string Email,
         string ServerAuthorizationHash) : AccountLoginOutcome;
 

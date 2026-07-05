@@ -31,7 +31,8 @@ internal sealed class PasskeyCredentialSelectionRequestHandler(
         var ciphers = await vaultClient.SearchCiphersAsync(loginCipherQuery, cancellationToken);
         return ciphers
             .OfType<LoginVaultCipher>()
-            .SelectMany(static cipher => cipher.Fido2Credentials)
+            .Select(static cipher => cipher.Fido2Credential)
+            .OfType<Fido2Credential>()
             .Where(credential => string.Equals(credential.RpId, request.RpId, StringComparison.OrdinalIgnoreCase))
             .ToArray();
     }

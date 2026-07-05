@@ -8,7 +8,5 @@ global using BitwardenApi.Infrastructure.Transport;
 global using BitwardenApi.Notifications.Contracts;
 global using BitwardenApi.Primitives;
 global using BitwardenApi.Primitives.Ids;
-global using BitwardenApi.Vault;
-global using BitwardenApi.Vault.Attachments.Contracts;
 global using BitwardenApi.Vault.Items.Contracts;
 global using StronglyTypedIds;

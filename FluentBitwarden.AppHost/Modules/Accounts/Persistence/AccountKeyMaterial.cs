@@ -4,5 +4,5 @@ internal sealed record AccountKeyMaterial(
     UserId UserId,
     string Salt,
     KdfConfig KdfConfig,
-    EncryptedUserKey EncryptedUserKey,
-    EncryptedPrivateKey EncryptedPrivateKey);
+    ProtectedUserKey ProtectedUserKey,
+    ProtectedPrivateKey ProtectedPrivateKey);

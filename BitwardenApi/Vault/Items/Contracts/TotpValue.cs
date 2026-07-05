@@ -3,6 +3,7 @@ using MemoryPack;
 using OtpNet;
 using System.Buffers.Text;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace BitwardenApi.Vault.Items.Contracts;
 
@@ -100,13 +101,13 @@ public sealed partial class TotpValue(TotpValue.State state)
             var key = pair[..eq];
             var value = pair[(eq + 1)..];
 
-            if (System.Text.Ascii.EqualsIgnoreCase(key, "secret"u8))
-                secret = System.Text.Encoding.ASCII.GetString(value);
-            else if (System.Text.Ascii.EqualsIgnoreCase(key, "algorithm"u8))
-                Enum.TryParse(System.Text.Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
-            else if (System.Text.Ascii.EqualsIgnoreCase(key, "digits"u8))
+            if (Ascii.EqualsIgnoreCase(key, "secret"u8))
+                secret = Encoding.ASCII.GetString(value);
+            else if (Ascii.EqualsIgnoreCase(key, "algorithm"u8))
+                Enum.TryParse(Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
+            else if (Ascii.EqualsIgnoreCase(key, "digits"u8))
                 Utf8Parser.TryParse(value, out digits, out _);
-            else if (System.Text.Ascii.EqualsIgnoreCase(key, "period"u8))
+            else if (Ascii.EqualsIgnoreCase(key, "period"u8))
                 Utf8Parser.TryParse(value, out period, out _);
         }
 

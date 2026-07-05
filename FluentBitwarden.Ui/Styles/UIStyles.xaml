@@ -2,19 +2,19 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:templates="using:FluentBitwarden.Templates"
-    xmlns:uiStyles="using:FluentBitwarden.Styles">
+    xmlns:shared="using:FluentBitwarden.Templates.Shared">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ms-appx:///Styles/MyStyles.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/ValidationFieldStyles.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/CountdownRingStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/PasswordBoxExStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/TextBoxExStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/SearchFilterBarStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/SiteIconStyle.xaml" />
-        <ResourceDictionary Source="ms-appx:///Styles/Vault/VaultStyles.xaml" />
-        <templates:OptionItemTemplates />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/ValidationFieldStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/CountdownRingStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/PasswordBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/TextBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/SearchFilterBarStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/SiteIconStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/DividedCardItemsControlStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/MetadataTimelineStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

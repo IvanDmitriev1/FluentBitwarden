@@ -11,10 +11,10 @@ internal static class RsaOaep
     {
         var padding = parts.Type switch
         {
-            EncStringType.Rsa2048_OaepSha256_B64 => RSAEncryptionPadding.OaepSHA256,
-            EncStringType.Rsa2048_OaepSha1_B64 => RSAEncryptionPadding.OaepSHA1,
-            EncStringType.Rsa2048_OaepSha256_HmacSha256_B64 or
-                EncStringType.Rsa2048_OaepSha1_HmacSha256_B64 =>
+            EncryptionType.Rsa2048_OaepSha256_B64 => RSAEncryptionPadding.OaepSHA256,
+            EncryptionType.Rsa2048_OaepSha1_B64 => RSAEncryptionPadding.OaepSHA1,
+            EncryptionType.Rsa2048_OaepSha256_HmacSha256_B64 or
+                EncryptionType.Rsa2048_OaepSha1_HmacSha256_B64 =>
                 throw new CryptographicException($"Unsupported signed RSA EncString type: {parts.Type}."),
             _ => throw new CryptographicException($"Unsupported RSA EncString type: {parts.Type}.")
         };

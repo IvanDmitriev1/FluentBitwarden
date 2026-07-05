@@ -1,13 +1,14 @@
 using System.Text;
 using System.Text.Json;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {
-    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, scoped ReadOnlySpan<byte> decryptKey) where T : VaultCipher;
-    private delegate T JsonArrayItemReader<out T>(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey);
+    private delegate bool CipherPropertyReader<in T>(ref Utf8JsonReader reader, T cipher, CipherKey decryptKey) where T : VaultCipher;
+    private delegate T JsonArrayItemReader<out T>(ref Utf8JsonReader reader, CipherKey decryptKey);
 
     private static Utf8JsonReader CreateObjectReader(ReadOnlySpan<byte> payload)
     {
@@ -20,7 +21,7 @@ public static partial class VaultDataParser
         return reader;
     }
 
-    private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey,
+    private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, CipherKey decryptKey,
         CipherPropertyReader<T> readProperty) where T : VaultCipher
     {
         while (reader.Read())
@@ -49,7 +50,7 @@ public static partial class VaultDataParser
             reader.Skip();
     }
 
-    private static string? ReadDecryptField(ref Utf8JsonReader reader, scoped ReadOnlySpan<byte> decryptKey)
+    private static string? ReadDecryptField(ref Utf8JsonReader reader, CipherKey decryptKey)
     {
         reader.Read();
 
@@ -63,7 +64,7 @@ public static partial class VaultDataParser
 
     private static List<T> ReadJsonArray<T>(
         ref Utf8JsonReader reader,
-        scoped ReadOnlySpan<byte> decryptKey,
+        CipherKey decryptKey,
         JsonArrayItemReader<T> readItem)
     {
         reader.Read();

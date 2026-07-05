@@ -21,6 +21,7 @@ public static class IpcMessageTypes
         public const ushort GetCollections = 104;
         public const ushort GetStatus = 105;
         public const ushort SessionStatusChanged = 106;
+        public const ushort DownloadCipherAttachment = 107;
     }
 
     public static class Account
@@ -30,6 +31,7 @@ public static class IpcMessageTypes
         public const ushort Unlock = 203;
         public const ushort Logout = 205;
         public const ushort GetUnlocked = 206;
+        public const ushort GetUnlockedProfileDetails = 207;
     }
 
     public static class WindowsHello

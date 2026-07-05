@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherFieldChromeStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherTextFieldStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherPasswordFieldStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherTotpFieldStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherLoginUriField.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/VaultCiphers/VaultCipherAttachmentFieldStyle.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

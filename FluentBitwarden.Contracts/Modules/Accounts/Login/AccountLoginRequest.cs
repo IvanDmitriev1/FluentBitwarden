@@ -22,5 +22,5 @@ public abstract partial record AccountLoginRequest : IIpcRequestMessage
         BitwardenClientContext Context,
         string Email,
         string ServerAuthorizationHash,
-        TwoFactorProof TwoFactorProof) : AccountLoginRequest;
+        IdentityTwoFactorProof TwoFactorProof) : AccountLoginRequest;
 }

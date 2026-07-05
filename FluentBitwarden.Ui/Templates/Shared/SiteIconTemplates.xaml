@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Templates.Shared.SiteIconTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:shared="using:FluentBitwarden.Templates.Shared"
+    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon">
+
+    <DataTemplate x:Key="SiteIconFallbackTemplate" x:DataType="siteIcon:SiteIconFallbackContent">
+        <FontIcon
+            Width="{x:Bind Size}"
+            Height="{x:Bind Size}"
+            FontSize="{x:Bind Size}"
+            Foreground="{x:Bind Foreground}"
+            Glyph="{x:Bind Glyph}"
+            Style="{StaticResource IconStyle}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="SiteIconImageTemplate" x:DataType="siteIcon:SiteIconImageContent">
+        <Border
+            Width="{x:Bind Size}"
+            Height="{x:Bind Size}"
+            CornerRadius="{x:Bind CornerRadius}">
+
+            <Image
+                IsHitTestVisible="False"
+                Source="{x:Bind Source}"
+                Stretch="UniformToFill" />
+
+        </Border>
+    </DataTemplate>
+
+    <shared:SiteIconTemplateSelector
+        x:Key="SiteIconTemplateSelector"
+        FallbackTemplate="{StaticResource SiteIconFallbackTemplate}"
+        ImageTemplate="{StaticResource SiteIconImageTemplate}" />
+
+</ResourceDictionary>

@@ -1,5 +1,5 @@
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
@@ -67,13 +67,13 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
                                @KdfParallelism
                            )
                            ON CONFLICT(user_id) DO UPDATE SET
-                               salt = excluded.salt,
-                               encrypted_user_key = excluded.encrypted_user_key,
+                               salt                  = excluded.salt,
+                               encrypted_user_key    = excluded.encrypted_user_key,
                                encrypted_private_key = excluded.encrypted_private_key,
-                               kdf_type = excluded.kdf_type,
-                               kdf_iterations = excluded.kdf_iterations,
-                               kdf_memory_mib = excluded.kdf_memory_mib,
-                               kdf_parallelism = excluded.kdf_parallelism;
+                               kdf_type              = excluded.kdf_type,
+                               kdf_iterations        = excluded.kdf_iterations,
+                               kdf_memory_mib        = excluded.kdf_memory_mib,
+                               kdf_parallelism       = excluded.kdf_parallelism;
                            """;
 
         var kdf = FlattenKdf(keyMaterial.KdfConfig);
@@ -84,8 +84,8 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             {
                 UserId = keyMaterial.UserId.ToString(),
                 Salt = keyMaterial.Salt,
-                EncryptedUserKey = keyMaterial.EncryptedUserKey.Value.ToByteArray(),
-                EncryptedPrivateKey = keyMaterial.EncryptedPrivateKey.Value.ToByteArray(),
+                EncryptedUserKey = keyMaterial.ProtectedUserKey.Value.ToByteArray(),
+                EncryptedPrivateKey = keyMaterial.ProtectedPrivateKey.Value.ToByteArray(),
                 KdfType = (int)kdf.Type,
                 KdfIterations = kdf.Iterations,
                 KdfMemoryMib = kdf.MemoryMib,
@@ -112,8 +112,8 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
         UserId: UserId.Parse(row.UserId),
         Salt: row.Salt,
         KdfConfig: BuildKdf(row),
-        EncryptedUserKey: EncryptedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),
-        EncryptedPrivateKey: EncryptedPrivateKey.Create(EncString.FromBytes(row.EncryptedPrivateKey)));
+        ProtectedUserKey: ProtectedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),
+        ProtectedPrivateKey: ProtectedPrivateKey.Create(EncString.FromBytes(row.EncryptedPrivateKey)));
 
     private static KdfConfig BuildKdf(in AccountKeyMaterialRow row) =>
         (KdfType)row.KdfType switch

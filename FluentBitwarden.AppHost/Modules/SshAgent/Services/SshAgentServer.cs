@@ -39,9 +39,9 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
             catch (IOException)
             {
             }
-            catch (Exception e) when (e is OperationCanceledException or EndOfStreamException)
+            catch (OperationCanceledException)
             {
-                await SshAgentProtocolWriter.WriteFailureAsync(server, stoppingToken);
+                
             }
             catch (Exception e)
             {

@@ -1,8 +1,9 @@
 using Windows.Networking.Connectivity;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Platform.Infrastructure;
+using FluentBitwarden.AppHost.Data.Abstractions;
+using BitwardenApi.Vault.Cryptography;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
@@ -13,7 +14,7 @@ internal sealed class VaultSynchronizer(
 {
     public async Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        DecryptedUserKey decryptedUserKey,
+        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default)
     {
@@ -28,19 +29,19 @@ internal sealed class VaultSynchronizer(
             }
 
             var response = await vaultApiClient.GetSyncAsync(accountContext, cancellationToken);
+            if (response.Profile.Id != decryptedUserKey.UserId)
+                throw new InvalidDataException("Sync profile user id did not match the unlocked account.");
 
             using var unitOfWork = unitOfWorkFactory.Create();
             var repository = new VaultWriterRepository(unitOfWork.Transaction, decryptedUserKey.UserId);
+            var syncTime = DateTimeOffset.UtcNow;
 
-            var organizations = response.Profile.Organizations;
-            if (organizations is { Length: > 0 })
-                repository.WriteOrganizations(organizations);
-
+            repository.WriteOrganizations(response.Profile.Organizations ?? []);
             repository.WriteFolders(response.Folders);
             repository.WriteCollections(response.Collections);
             repository.WriteCiphers(response.VaultCiphers);
 
-            unitOfWork.AccountProfileRepository.UpdateSyncTime(decryptedUserKey.UserId, DateTimeOffset.UtcNow);
+            unitOfWork.AccountProfileRepository.UpdateSyncedProfile(decryptedUserKey.UserId, response.Profile, syncTime);
             unitOfWork.SaveChanges();
 
             return VaultSyncResult.Synced;

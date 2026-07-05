@@ -1,6 +1,7 @@
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using Microsoft.Data.Sqlite;
+using BitwardenApi.Vault.Attachments.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
@@ -22,9 +23,8 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     organization_user_id,
                     organization_name,
                     is_enabled,
-                    use_key_connector,
+                    access_secrets_manager,
                     member_status,
-                    member_type,
                     encrypted_organization_key)
                 VALUES (
                     @UserId,
@@ -32,24 +32,24 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @OrganizationUserId,
                     @OrganizationName,
                     @IsEnabled,
-                    @UseKeyConnector,
+                    @AccessSecretsManager,
                     @MemberStatus,
-                    @MemberType,
-                    @EncryptedOrganizationKey)
+                    @ProtectedOrganizationKey)
                 """,
                 new
                 {
                     UserId = _userIdStr,
                     OrganizationId = dto.Id.ToString(),
-                    OrganizationUserId = dto.OrganizationUserId?.ToString(),
+                    OrganizationUserId = dto.OrganizationUserId == Guid.Empty
+                        ? null
+                        : dto.OrganizationUserId.ToString(),
                     OrganizationName = dto.Name,
                     IsEnabled = dto.Enabled ? 1 : 0,
-                    UseKeyConnector = dto.UseKeyConnector ? 1 : 0,
+                    AccessSecretsManager = dto.AccessSecretsManager ? 1 : 0,
                     MemberStatus = dto.Status,
-                    MemberType = dto.MemberType,
-                    EncryptedOrganizationKey = dto.EncryptedOrganizationKey.IsEmpty
+                    ProtectedOrganizationKey = dto.ProtectedOrganizationKey.IsEmpty
                         ? null
-                        : dto.EncryptedOrganizationKey.ToByteArray()
+                        : dto.ProtectedOrganizationKey.ToByteArray()
                 },
                 transaction: Transaction);
         }
@@ -158,7 +158,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @Reprompt,
                     @Edit,
                     @ViewPassword,
-                    @EncryptedKey,
+                    @ProtectedCipherKey,
                     zeroblob(@Size))
                 RETURNING row_id
                 """,
@@ -178,15 +178,55 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     Reprompt = dto.Reprompt ? 1 : 0,
                     Edit = dto.Edit ? 1 : 0,
                     ViewPassword = dto.ViewPassword ? 1 : 0,
-                    EncryptedKey = dto.EncryptedKey.IsEmpty
+                    ProtectedCipherKey = dto.ProtectedCipherKey.IsEmpty
                         ? null
-                        : dto.EncryptedKey.ToByteArray(),
+                        : dto.ProtectedCipherKey.ToByteArray(),
                     Size = dto.Data.Length
                 },
                 transaction: Transaction);
 
             WritePayloadBlob(rowId, dto.Data);
             WriteCipherAssignments(cipherId, dto.FolderId, dto.CollectionIds);
+            WriteCipherAttachments(cipherId, dto.Attachments);
+        }
+    }
+
+    private void WriteCipherAttachments(string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)
+    {
+        if (attachments.Length == 0)
+            return;
+
+        for (int i = 0; i < attachments.Length; i++)
+        {
+            ref readonly var attachment = ref attachments[i];
+
+            Connection.Execute(
+                """
+                INSERT INTO vault_cipher_attachment (
+                    user_id,
+                    cipher_id,
+                    attachment_id,
+                    sort_order,
+                    encrypted_file_name,
+                    size)
+                VALUES (
+                    @UserId,
+                    @CipherId,
+                    @AttachmentId,
+                    @SortOrder,
+                    @EncryptedFileName,
+                    @Size)
+                """,
+                new
+                {
+                    UserId = _userIdStr,
+                    CipherId = cipherId,
+                    AttachmentId = attachment.Id.ToString(),
+                    SortOrder = i,
+                    EncryptedFileName = attachment.EncryptedFileName.ToByteArray(),
+                    Size = attachment.Size.Bytes
+                },
+                transaction: Transaction);
         }
     }
 
