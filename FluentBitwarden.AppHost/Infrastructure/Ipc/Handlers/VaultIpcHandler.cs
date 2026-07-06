@@ -35,6 +35,11 @@ internal sealed class VaultIpcHandler(
         return ValueTask.FromResult(cipher);
     }
 
+    public ValueTask<VaultCipher?> SaveCipherAsync(
+        SaveVaultCipherRequest request,
+        CancellationToken cancellationToken = default) =>
+        vaultSessionCoordinator.SaveCipherAsync(request.Cipher, cancellationToken);
+
     public async ValueTask DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default) =>

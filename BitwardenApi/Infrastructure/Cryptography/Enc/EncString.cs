@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Buffers.Text;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using CommunityToolkit.HighPerformance.Buffers;
 
@@ -9,6 +10,12 @@ namespace BitwardenApi.Infrastructure.Cryptography.Enc;
 [JsonConverter(typeof(EncStringJsonConverter))]
 public readonly struct EncString : IEquatable<EncString>
 {
+    public static readonly EncString Empty = new();
+
+    private const int IvByteLength = 16;
+    private const int MacByteLength = 32;
+    private const int BlockByteLength = 16;
+
     private const int HeaderLength = 13;
     private const int MaxStackByteCount = 512;
 
@@ -57,8 +64,57 @@ public readonly struct EncString : IEquatable<EncString>
 
     internal EncStringParts CreateParts() => _layout.CreateParts(_bytes);
 
+    /// <summary>
+    /// <see cref="Utf8JsonWriter"/>'s segmented write methods (<c>WriteStringValueSegment</c>/
+    /// <c>WriteBase64StringSegment</c>) cannot be mixed within one value — every segment of a
+    /// value must use the same overload — so they don't fit this wire format, which alternates
+    /// literal separators ("."/"|") with base64 chunks. A single pre-sized buffer is used instead.
+    /// </summary>
+    internal void WriteTo(Utf8JsonWriter writer)
+    {
+        if (IsEmpty)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-    public static readonly EncString Empty = new();
+        EncStringParts parts = CreateParts();
+        if (parts.Type is not (EncryptionType.AesCbc256_HmacSha256_B64 or EncryptionType.AesCbc256_B64))
+            throw new NotSupportedException($"Encoding EncString type {parts.Type} is not supported.");
+
+        int ivEncodedLength = Base64.GetMaxEncodedToUtf8Length(parts.Iv.Length);
+        int dataEncodedLength = Base64.GetMaxEncodedToUtf8Length(parts.Data.Length);
+        int macEncodedLength = parts.Mac.Length > 0 ? Base64.GetMaxEncodedToUtf8Length(parts.Mac.Length) : 0;
+        int totalLength = 2 + ivEncodedLength + 1 + dataEncodedLength + (macEncodedLength > 0 ? 1 + macEncodedLength : 0);
+
+        using var bufferOwner = totalLength <= MaxStackByteCount
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(totalLength);
+
+        Span<byte> buffer = totalLength <= MaxStackByteCount
+            ? stackalloc byte[totalLength]
+            : bufferOwner.Span;
+
+        int offset = 0;
+        buffer[offset++] = (byte)('0' + (byte)parts.Type); // both supported types are single-digit (0, 2)
+        buffer[offset++] = (byte)'.';
+
+        Base64.EncodeToUtf8(parts.Iv, buffer[offset..], out _, out int ivWritten);
+        offset += ivWritten;
+        buffer[offset++] = (byte)'|';
+
+        Base64.EncodeToUtf8(parts.Data, buffer[offset..], out _, out int dataWritten);
+        offset += dataWritten;
+
+        if (macEncodedLength > 0)
+        {
+            buffer[offset++] = (byte)'|';
+            Base64.EncodeToUtf8(parts.Mac, buffer[offset..], out _, out int macWritten);
+            offset += macWritten;
+        }
+
+        writer.WriteStringValue(buffer[..offset]);
+    }
 
     public static EncString FromBytes(byte[] packedBytes)
     {
@@ -100,6 +156,61 @@ public readonly struct EncString : IEquatable<EncString>
         byte[] bytes = Pack(in parts);
 
         return new EncString(bytes,
+            SegmentLayout.CreatePacked(parts.Type, parts.Iv.Length, parts.Data.Length, parts.Mac.Length));
+    }
+
+    public static EncString Encrypt(string plaintext, ReadOnlySpan<byte> key)
+    {
+        int maxByteCount = System.Text.Encoding.UTF8.GetMaxByteCount(plaintext.Length);
+        bool useStack = maxByteCount <= MaxStackByteCount;
+
+        using var bufferOwner = useStack
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(maxByteCount);
+
+        Span<byte> buffer = useStack
+            ? stackalloc byte[maxByteCount]
+            : bufferOwner.Span;
+
+        try
+        {
+            int written = System.Text.Encoding.UTF8.GetBytes(plaintext, buffer);
+            return Encrypt(buffer[..written], key);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(buffer);
+        }
+    }
+
+    public static EncString Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> key)
+    {
+        int ciphertextCapacity = plaintext.Length + BlockByteLength;
+        bool useStack = ciphertextCapacity <= MaxStackByteCount;
+
+        using var ciphertextOwner = useStack
+            ? SpanOwner<byte>.Empty
+            : SpanOwner<byte>.Allocate(ciphertextCapacity);
+
+        Span<byte> ciphertext = useStack
+            ? stackalloc byte[ciphertextCapacity]
+            : ciphertextOwner.Span;
+
+        Span<byte> iv = stackalloc byte[IvByteLength];
+        Span<byte> mac = stackalloc byte[MacByteLength];
+        RandomNumberGenerator.Fill(iv);
+
+        int ciphertextLength = AesCbcHmac.EncryptTo(plaintext, key, iv, ciphertext, mac);
+
+        var parts = new EncStringParts(
+            EncryptionType.AesCbc256_HmacSha256_B64,
+            ciphertext[..ciphertextLength],
+            iv,
+            mac);
+
+        byte[] bytes = Pack(in parts);
+        return new EncString(
+            bytes,
             SegmentLayout.CreatePacked(parts.Type, parts.Iv.Length, parts.Data.Length, parts.Mac.Length));
     }
 

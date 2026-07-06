@@ -48,7 +48,7 @@ internal sealed class VaultItemsApi(
             cancellationToken: cancellationToken) ?? throw new InvalidOperationException();
     }
 
-    public async Task<VaultCipherDto> GetCipherAsync(
+    public async Task<VaultCipherResponse> GetCipherAsync(
         BitwardenAccountContext accountContext,
         CipherId cipherId,
         CancellationToken cancellationToken = default)
@@ -65,9 +65,49 @@ internal sealed class VaultItemsApi(
             cancellationToken);
 
         response.EnsureSuccess("Vault get vaultCipher", cancellationToken);
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        return await response.Content.ReadFromJsonAsync(VaultJsonContext.Default.VaultCipherResponse, cancellationToken);
+    }
 
-        return JsonSerializer.Deserialize(stream, VaultJsonContext.Default.VaultCipherDto);
+    public Task<VaultCipherResponse> CreateCipherAsync(
+        BitwardenAccountContext accountContext,
+        VaultCipherRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        Uri requestUri = new(accountContext.Environment.ApiBase, "/ciphers");
+        return SendCipherAsync(accountContext, HttpMethod.Post, requestUri, request, "Vault create vaultCipher", cancellationToken);
+    }
+
+    public Task<VaultCipherResponse> UpdateCipherAsync(
+        BitwardenAccountContext accountContext,
+        CipherId cipherId,
+        VaultCipherRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        Uri requestUri = new(accountContext.Environment.ApiBase, $"/ciphers/{cipherId:D}");
+        return SendCipherAsync(accountContext, HttpMethod.Put, requestUri, request, "Vault update vaultCipher", cancellationToken);
+    }
+
+    private async Task<VaultCipherResponse> SendCipherAsync(
+        BitwardenAccountContext accountContext,
+        HttpMethod method,
+        Uri requestUri,
+        VaultCipherRequest request,
+        string operationName,
+        CancellationToken cancellationToken)
+    {
+        using var httpClient = httpClientFactory.CreateVaultClient();
+
+        using var requestMessage = new HttpRequestMessage(method, requestUri);
+        requestMessage.Content = JsonContent.Create(request, VaultJsonContext.Default.VaultCipherRequest);
+        requestMessage.SetBitwardenAccountContext(accountContext);
+
+        using var response = await httpClient.SendAsync(
+            requestMessage,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        response.EnsureSuccess(operationName, cancellationToken);
+        return await response.Content.ReadFromJsonAsync(VaultJsonContext.Default.VaultCipherResponse, cancellationToken);
     }
 
     public async Task DeleteCipherAsync(

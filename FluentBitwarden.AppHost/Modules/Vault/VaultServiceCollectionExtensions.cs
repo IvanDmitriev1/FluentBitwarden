@@ -18,6 +18,9 @@ internal static class VaultServiceCollectionExtensions
 
         services.AddSingleton<IVaultKeyResolverFactory, VaultKeyResolverFactory>();
 
+        services.AddSingleton<VaultCipherRequestFactory>();
+        services.AddSingleton<VaultCipherSaver>();
+
         services.AddSingleton<VaultWorkspace>();
         services.AddSingleton<IVaultWorkspace>(
             static serviceProvider => serviceProvider.GetRequiredService<VaultWorkspace>());

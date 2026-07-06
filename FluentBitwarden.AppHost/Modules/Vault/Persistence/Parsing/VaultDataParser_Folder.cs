@@ -4,7 +4,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 
 public static partial class VaultDataParser
 {
-    public static VaultFolder ParseAndDecryptFolder(ref readonly VaultFolderDto dto, UserKey decryptedUserKey)
+    public static VaultFolder ParseAndDecryptFolder(ref readonly VaultFolderResponse dto, UserKey decryptedUserKey)
     {
         return new VaultFolder
         {

@@ -78,10 +78,28 @@ internal sealed class VaultSessionCoordinator(
 
             var result = await vaultWorkspace.SyncAsync(
                 session.Account.BitwardenAccountContext,
-                session.UserKey,
                 cancellationToken: cancellationToken);
 
             return result;
+        }
+        finally
+        {
+            _transitionGate.Release();
+        }
+    }
+
+    public async ValueTask<VaultCipher?> SaveCipherAsync(VaultCipher cipher, CancellationToken cancellationToken)
+    {
+        await _transitionGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!TryGetUnlockedSession(out var session))
+                return null;
+
+            return await vaultWorkspace.SaveCipherAsync(
+                session.Account.BitwardenAccountContext,
+                cipher,
+                cancellationToken);
         }
         finally
         {

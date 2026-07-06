@@ -6,7 +6,7 @@ namespace BitwardenApi.Vault.Cryptography;
 
 /// <summary>
 /// The effective decryption key for a single vault cipher: the base vault key when the cipher
-/// has no individual key, otherwise the decrypted VaultCipherDto.ProtectedCipherKey.
+/// has no individual key, otherwise the decrypted VaultCipherResponse.ProtectedCipherKey.
 /// Owns pooled key material; the creator must dispose it (zeroes the buffer).
 /// </summary>
 public readonly ref struct CipherKey

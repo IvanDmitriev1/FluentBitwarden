@@ -24,6 +24,11 @@ internal sealed class RemoteVaultClient(IIpcClient client) : IVaultClient
         return client.SendAsync<GetVaultCipherRequest, VaultCipher?>(request, cancellationToken);
     }
 
+    public ValueTask<VaultCipher?> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default)
+    {
+        return client.SendAsync<SaveVaultCipherRequest, VaultCipher?>(request, cancellationToken);
+    }
+
     public async ValueTask DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)

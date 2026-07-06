@@ -16,4 +16,5 @@ internal interface IVaultSessionCoordinator
     ValueTask<AccountUnlockOutcome> UnlockAsync(AccountUnlockRequest request, CancellationToken cancellationToken);
     void RequestLock();
     ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken);
+    ValueTask<VaultCipher?> SaveCipherAsync(VaultCipher cipher, CancellationToken cancellationToken);
 }

@@ -9,6 +9,7 @@ public interface IVaultClient
 
     ValueTask<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default);
     ValueTask<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default);
+    ValueTask<VaultCipher?> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default);
     ValueTask DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default);

@@ -9,7 +9,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
 {
     private readonly string _userIdStr = userId.ToString();
 
-    public void WriteOrganizations(ReadOnlySpan<VaultOrganizationDto> organizations)
+    public void WriteOrganizations(ReadOnlySpan<VaultOrganizationResponse> organizations)
     {
         Connection.Execute("DELETE FROM vault_organization WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
@@ -55,7 +55,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
         }
     }
 
-    public void WriteFolders(ReadOnlySpan<VaultFolderDto> folders)
+    public void WriteFolders(ReadOnlySpan<VaultFolderResponse> folders)
     {
         Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
@@ -77,7 +77,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
         }
     }
 
-    public void WriteCollections(ReadOnlySpan<VaultCollectionDto> collections)
+    public void WriteCollections(ReadOnlySpan<VaultCollectionResponse> collections)
     {
         Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
@@ -121,74 +121,96 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
         }
     }
 
-    public void WriteCiphers(ReadOnlySpan<VaultCipherDto> ciphers)
+    public void WriteCiphers(ReadOnlySpan<VaultCipherResponse> ciphers)
     {
         Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in ciphers)
         {
-            var cipherId = dto.Id.ToString();
-            var rowId = Connection.ExecuteScalar<long>(
-                """
-                INSERT INTO vault_cipher (
-                    user_id,
-                    cipher_id,
-                    organization_id,
-                    cipher_type,
-                    revision_date_unix_ms,
-                    creation_date_unix_ms,
-                    deleted_date_unix_ms,
-                    archived_date_unix_ms,
-                    is_favorite,
-                    reprompt,
-                    can_edit,
-                    can_view_password,
-                    encrypted_cipher_key,
-                    encrypted_payload)
-                VALUES (
-                    @UserId,
-                    @CipherId,
-                    @OrganizationId,
-                    @CipherType,
-                    @RevisionDateUnixMs,
-                    @CreationDateUnixMs,
-                    @DeletedDateUnixMs,
-                    @ArchivedDateUnixMs,
-                    @Favorite,
-                    @Reprompt,
-                    @Edit,
-                    @ViewPassword,
-                    @ProtectedCipherKey,
-                    zeroblob(@Size))
-                RETURNING row_id
-                """,
-                new
-                {
-                    UserId = _userIdStr,
-                    CipherId = cipherId,
-                    OrganizationId = dto.OrganizationId.IsEmpty
-                        ? null
-                        : dto.OrganizationId.ToString(),
-                    CipherType = (int)dto.VaultCipherType,
-                    RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
-                    CreationDateUnixMs = dto.CreationDate.ToUnixTimeMilliseconds(),
-                    DeletedDateUnixMs = dto.DeletedDate?.ToUnixTimeMilliseconds(),
-                    ArchivedDateUnixMs = dto.ArchivedDate?.ToUnixTimeMilliseconds(),
-                    Favorite = dto.Favorite ? 1 : 0,
-                    Reprompt = dto.Reprompt ? 1 : 0,
-                    Edit = dto.Edit ? 1 : 0,
-                    ViewPassword = dto.ViewPassword ? 1 : 0,
-                    ProtectedCipherKey = dto.ProtectedCipherKey.IsEmpty
-                        ? null
-                        : dto.ProtectedCipherKey.ToByteArray(),
-                    Size = dto.Data.Length
-                },
-                transaction: Transaction);
-
-            WritePayloadBlob(rowId, dto.Data);
-            WriteCipherAssignments(cipherId, dto.FolderId, dto.CollectionIds);
-            WriteCipherAttachments(cipherId, dto.Attachments);
+            InsertCipher(in dto);
         }
+    }
+
+    /// <summary>
+    /// Writes a single cipher (e.g. after a create/update save), replacing any existing row for
+    /// it. <c>vault_cipher_attachment</c>/<c>vault_cipher_folder</c>/<c>vault_cipher_collection</c>
+    /// declare <c>ON DELETE CASCADE</c> on <c>(user_id, cipher_id)</c> and foreign keys are
+    /// enabled on the connection, so their old child rows are cleared before the insert re-adds
+    /// them; other cached ciphers are untouched.
+    /// </summary>
+    public void UpsertCipher(ref readonly VaultCipherResponse dto)
+    {
+        Connection.Execute(
+            "DELETE FROM vault_cipher WHERE user_id = @UserId AND cipher_id = @CipherId;",
+            new { UserId = _userIdStr, CipherId = dto.Id.ToString() },
+            transaction: Transaction);
+
+        InsertCipher(in dto);
+    }
+
+    private void InsertCipher(ref readonly VaultCipherResponse dto)
+    {
+        var cipherId = dto.Id.ToString();
+        var rowId = Connection.ExecuteScalar<long>(
+            """
+            INSERT INTO vault_cipher (
+                user_id,
+                cipher_id,
+                organization_id,
+                cipher_type,
+                revision_date_unix_ms,
+                creation_date_unix_ms,
+                deleted_date_unix_ms,
+                archived_date_unix_ms,
+                is_favorite,
+                reprompt,
+                can_edit,
+                can_view_password,
+                encrypted_cipher_key,
+                encrypted_payload)
+            VALUES (
+                @UserId,
+                @CipherId,
+                @OrganizationId,
+                @CipherType,
+                @RevisionDateUnixMs,
+                @CreationDateUnixMs,
+                @DeletedDateUnixMs,
+                @ArchivedDateUnixMs,
+                @Favorite,
+                @Reprompt,
+                @Edit,
+                @ViewPassword,
+                @ProtectedCipherKey,
+                zeroblob(@Size))
+            RETURNING row_id
+            """,
+            new
+            {
+                UserId = _userIdStr,
+                CipherId = cipherId,
+                OrganizationId = dto.OrganizationId.IsEmpty
+                    ? null
+                    : dto.OrganizationId.ToString(),
+                CipherType = (int)dto.VaultCipherType,
+                RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
+                CreationDateUnixMs = dto.CreationDate.ToUnixTimeMilliseconds(),
+                DeletedDateUnixMs = dto.DeletedDate?.ToUnixTimeMilliseconds(),
+                ArchivedDateUnixMs = dto.ArchivedDate?.ToUnixTimeMilliseconds(),
+                Favorite = dto.Favorite ? 1 : 0,
+                Reprompt = dto.Reprompt ? 1 : 0,
+                Edit = dto.Edit ? 1 : 0,
+                ViewPassword = dto.ViewPassword ? 1 : 0,
+                ProtectedCipherKey = dto.ProtectedCipherKey.IsEmpty
+                    ? null
+                    : dto.ProtectedCipherKey.ToByteArray(),
+                Size = dto.Data.Length
+            },
+            transaction: Transaction);
+
+        WritePayloadBlob(rowId, dto.Data);
+        WriteCipherAssignments(cipherId, dto.FolderId, dto.CollectionIds);
+        WriteCipherAttachments(cipherId, dto.Attachments);
     }
 
     private void WriteCipherAttachments(string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)

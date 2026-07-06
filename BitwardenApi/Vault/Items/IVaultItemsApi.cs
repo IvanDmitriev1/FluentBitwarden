@@ -10,9 +10,20 @@ public interface IVaultItemsApi
         BitwardenAccountContext accountContext,
         CancellationToken cancellationToken = default);
 
-    Task<VaultCipherDto> GetCipherAsync(
+    Task<VaultCipherResponse> GetCipherAsync(
         BitwardenAccountContext accountContext,
         CipherId cipherId,
+        CancellationToken cancellationToken = default);
+
+    Task<VaultCipherResponse> CreateCipherAsync(
+        BitwardenAccountContext accountContext,
+        VaultCipherRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<VaultCipherResponse> UpdateCipherAsync(
+        BitwardenAccountContext accountContext,
+        CipherId cipherId,
+        VaultCipherRequest request,
         CancellationToken cancellationToken = default);
 
     Task DeleteCipherAsync(

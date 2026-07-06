@@ -50,7 +50,7 @@ internal sealed class VaultLoader(
 
     private static void AddCollectionMembership(
         Dictionary<CollectionId, HashSet<CipherId>> collectionIndex,
-        ref readonly VaultCipherDto dto)
+        ref readonly VaultCipherResponse dto)
     {
         var collectionIds = dto.CollectionIds;
         if (collectionIds.Length == 0)

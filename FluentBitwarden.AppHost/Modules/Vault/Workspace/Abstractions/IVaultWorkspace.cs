@@ -13,10 +13,13 @@ internal interface IVaultWorkspace
 
     Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default);
 
-    void Reload(UserKey userKey);
+    ValueTask<VaultCipher> SaveCipherAsync(
+        BitwardenAccountContext accountContext,
+        VaultCipher cipher,
+        CancellationToken cancellationToken = default);
+
     void Close();
 }

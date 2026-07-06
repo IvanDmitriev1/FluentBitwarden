@@ -19,8 +19,6 @@ public sealed class EncStringJsonConverter : JsonConverter<EncString>
     public override void Write(
         Utf8JsonWriter writer,
         EncString value,
-        JsonSerializerOptions options)
-    {
-        throw new NotSupportedException("Writing EncString values is not supported.");
-    }
+        JsonSerializerOptions options) =>
+        value.WriteTo(writer);
 }

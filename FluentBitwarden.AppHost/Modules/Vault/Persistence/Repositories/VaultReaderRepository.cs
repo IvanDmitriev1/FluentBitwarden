@@ -11,10 +11,10 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
 {
     public delegate void CipherVisitor<in TState>(
         TState state,
-        ref readonly VaultCipherDto dto,
+        ref readonly VaultCipherResponse dto,
         ReadOnlySpan<byte> payload);
 
-    public VaultFolderDto[] GetAllFolders(UserId userId)
+    public VaultFolderResponse[] GetAllFolders(UserId userId)
     {
         var rows = Connection.Query<FolderRow>(
             """
@@ -32,7 +32,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         return rows.Select(static row => ToDto(row)).ToArray();
     }
 
-    public VaultOrganizationDto[] GetAllOrganizations(UserId userId)
+    public VaultOrganizationResponse[] GetAllOrganizations(UserId userId)
     {
         var rows = Connection.Query<OrganizationRow>(
             """
@@ -55,7 +55,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         return rows.Select(static row => ToDto(row)).ToArray();
     }
 
-    public VaultCollectionDto[] GetAllCollections(UserId userId)
+    public VaultCollectionResponse[] GetAllCollections(UserId userId)
     {
         var rows = Connection.Query<CollectionRow>(
             """

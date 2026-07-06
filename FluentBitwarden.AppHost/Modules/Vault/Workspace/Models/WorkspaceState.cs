@@ -1,6 +1,8 @@
-﻿namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
+﻿using BitwardenApi.Vault.Cryptography;
 
-internal sealed record WorkspaceState(UserId UserId, LoadedVaultData Data)
+namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
+
+internal sealed record WorkspaceState(UserKey? UserKey, LoadedVaultData Data)
 {
-    public static readonly WorkspaceState Empty = new(UserId.Empty, new LoadedVaultData([], [], [], []));
+    public static readonly WorkspaceState Empty = new(null, new LoadedVaultData([], [], [], []));
 }

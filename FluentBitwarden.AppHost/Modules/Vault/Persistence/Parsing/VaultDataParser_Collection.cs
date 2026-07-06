@@ -5,7 +5,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 public static partial class VaultDataParser
 {
     public static VaultCollection ParseAndDecryptCollection(
-        ref readonly VaultCollectionDto dto,
+        ref readonly VaultCollectionResponse dto,
         SymmetricCryptoKey key)
     {
         return new VaultCollection

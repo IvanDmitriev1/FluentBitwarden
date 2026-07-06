@@ -40,6 +40,36 @@ public sealed partial class TotpValue(TotpValue.State state)
 
     public string ComputeTotp() => _totp.ComputeTotp();
 
+    /// <summary>
+    /// Renders the value back to the storable secret string: a bare Base32 secret for default
+    /// TOTP parameters, otherwise an <c>otpauth://</c> URL. Inverse of <see cref="TryParse"/>.
+    /// </summary>
+    public string ToStorageString()
+    {
+        string secret = Base32Encoding.ToString(StateObj.SecretBytes).TrimEnd('=');
+
+        bool isDefault = StateObj is
+        {
+            Type: OtpType.Totp,
+            HashMode: OtpHashMode.Sha1,
+            Digits: 6,
+            PeriodSeconds: 30
+        };
+
+        if (isDefault)
+            return secret;
+
+        string type = StateObj.Type == OtpType.Hotp ? "hotp" : "totp";
+        string algorithm = StateObj.HashMode switch
+        {
+            OtpHashMode.Sha256 => "SHA256",
+            OtpHashMode.Sha512 => "SHA512",
+            _ => "SHA1"
+        };
+
+        return $"otpauth://{type}/?secret={secret}&algorithm={algorithm}&digits={StateObj.Digits}&period={StateObj.PeriodSeconds}";
+    }
+
     public static bool TryParse(Span<byte> value, [NotNullWhen(true)] out TotpValue? result)
     {
         if (value.IsEmpty)

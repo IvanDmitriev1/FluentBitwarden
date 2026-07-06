@@ -1,6 +1,6 @@
 using BitwardenApi.Vault.Cryptography;
+using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
-using System.Text;
 using System.Text.Json;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
@@ -12,45 +12,21 @@ internal static class Fido2CredentialJsonMapper
         CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
-            static value =>
-            {
-                if (Ascii.EqualsIgnoreCase(value, "public-key"u8))
-                {
-                    return Fido2CredentialKeyType.PublicKey;
-                }
-
-                throw new JsonException($"Property contains an unsupported Fido2 credential key type.");
-            });
+            static value => Fido2CredentialEnumExtensions.ParseKeyType(value));
 
     public static Fido2CredentialKeyAlgorithm ReadKeyAlgorithm(
         ref Utf8JsonReader reader,
         CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
-            static (value) =>
-            {
-                if (Ascii.EqualsIgnoreCase(value, "ECDSA"u8))
-                {
-                    return Fido2CredentialKeyAlgorithm.Ecdsa;
-                }
-
-                throw new JsonException("Property contains an unsupported Fido2 credential key algorithm.");
-            });
+            static value => Fido2CredentialEnumExtensions.ParseKeyAlgorithm(value));
 
     public static Fido2CredentialKeyCurve ReadKeyCurve(
         ref Utf8JsonReader reader,
         CipherKey key,
         string propertyName)
         => EncryptedJsonValueReader.ReadRequired(ref reader, key,
-            static value =>
-            {
-                if (Ascii.EqualsIgnoreCase(value, "P-256"u8))
-                {
-                    return Fido2CredentialKeyCurve.P256;
-                }
-
-                throw new JsonException("Property contains an unsupported Fido2 credential key curve.");
-            });
+            static value => Fido2CredentialEnumExtensions.ParseKeyCurve(value));
 
     public static byte[] ReadCredentialId(
         ref Utf8JsonReader reader,

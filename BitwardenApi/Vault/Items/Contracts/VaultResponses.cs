@@ -6,19 +6,19 @@ namespace BitwardenApi.Vault.Items.Contracts;
 public sealed record VaultSyncResponse
 {
     [JsonPropertyName("profile")]
-    public required VaultProfileDto Profile { get; init; }
+    public required VaultProfileResponse Profile { get; init; }
 
     [JsonPropertyName("folders")]
-    public VaultFolderDto[] Folders { get; init; } = [];
+    public VaultFolderResponse[] Folders { get; init; } = [];
 
     [JsonPropertyName("collections")]
-    public VaultCollectionDto[] Collections { get; init; } = [];
+    public VaultCollectionResponse[] Collections { get; init; } = [];
 
     [JsonPropertyName("ciphers")]
-    public VaultCipherDto[] VaultCiphers { get; init; } = [];
+    public VaultCipherResponse[] VaultCiphers { get; init; } = [];
 }
 
-public sealed class VaultProfileDto
+public sealed class VaultProfileResponse
 {
     public required UserId Id { get; init; }
     public required string Name { get; init; }
@@ -26,13 +26,13 @@ public sealed class VaultProfileDto
     public required string Culture { get; init; }
     public required DateTimeOffset CreationDate { get; init; }
 
-    public required VaultOrganizationDto[] Organizations { get; init; }
+    public required VaultOrganizationResponse[] Organizations { get; init; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement> Settings { get; set; } = [];
 }
 
-public sealed class VaultOrganizationDto
+public sealed class VaultOrganizationResponse
 {
     public required OrganizationId Id { get; init; }
     public required UserId UserId { get; init; }
@@ -53,7 +53,7 @@ public sealed class VaultOrganizationDto
     public Dictionary<string, JsonElement> Settings { get; set; } = [];
 }
 
-public struct VaultFolderDto
+public struct VaultFolderResponse
 {
     public FolderId Id { get; set; }
     public DateTimeOffset RevisionDate { get; set; }
@@ -62,7 +62,7 @@ public struct VaultFolderDto
     public EncString EncryptedName { get; set; }
 }
 
-public record struct VaultCollectionDto
+public record struct VaultCollectionResponse
 {
     public CollectionId Id { get; set; }
 
@@ -85,7 +85,7 @@ public record struct VaultCollectionDto
     public EncString EncryptedName { get; set; }
 }
 
-public readonly struct VaultCipherDto
+public readonly struct VaultCipherResponse
 {
     public required CipherId Id { get; init; }
 
@@ -135,4 +135,3 @@ public readonly struct VaultCipherDto
 
     public VaultCipherAttachmentDownloadResponse[]? Attachments { get; init; }
 }
-

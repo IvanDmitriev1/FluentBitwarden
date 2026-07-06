@@ -117,7 +117,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
 
     public void UpdateSyncedProfile(
         UserId accountId,
-        VaultProfileDto profile,
+        VaultProfileResponse profile,
         DateTimeOffset syncTime)
     {
         const string sql = """

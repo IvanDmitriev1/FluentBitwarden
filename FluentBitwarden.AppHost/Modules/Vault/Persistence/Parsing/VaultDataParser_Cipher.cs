@@ -8,7 +8,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 public static partial class VaultDataParser
 {
     public static VaultCipher ParseAndDecryptCipher(
-        ref readonly VaultCipherDto dto,
+        ref readonly VaultCipherResponse dto,
         ReadOnlySpan<byte> payload,
         SymmetricCryptoKey baseKey)
     {
@@ -20,7 +20,7 @@ public static partial class VaultDataParser
     }
 
     private static VaultCipher ParseWithKey(
-        ref readonly VaultCipherDto dto,
+        ref readonly VaultCipherResponse dto,
         VaultCipher cipher,
         ref Utf8JsonReader reader,
         CipherKey decryptionKey)
@@ -203,7 +203,7 @@ public static partial class VaultDataParser
         return false;
     }
 
-    private static VaultCipher CreateCipher(ref readonly VaultCipherDto dto) => dto.VaultCipherType switch
+    private static VaultCipher CreateCipher(ref readonly VaultCipherResponse dto) => dto.VaultCipherType switch
     {
         VaultCipherType.Login => new LoginVaultCipher
         {

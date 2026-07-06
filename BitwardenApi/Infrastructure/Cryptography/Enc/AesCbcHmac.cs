@@ -12,6 +12,66 @@ internal static class AesCbcHmac
     private const int EncryptionKeyByteLength = 32;
     private const int CombinedKeyByteLength = 64;
 
+    public static int EncryptTo(
+        ReadOnlySpan<byte> plaintext,
+        ReadOnlySpan<byte> key,
+        ReadOnlySpan<byte> iv,
+        Span<byte> ciphertextDestination,
+        Span<byte> macDestination)
+    {
+        ValidateIv(iv);
+
+        if (key.Length < CombinedKeyByteLength)
+            throw new CryptographicException("A 64-byte key is required for HMAC-protected EncStrings.");
+
+        if (macDestination.Length < MacByteLength)
+            throw new ArgumentException("MAC destination span was too small.", nameof(macDestination));
+
+        int ciphertextLength = EncryptAesCbcPkcs7(
+            plaintext,
+            key[..EncryptionKeyByteLength],
+            iv,
+            ciphertextDestination);
+
+        ComputeMac(
+            key.Slice(EncryptionKeyByteLength, MacByteLength),
+            iv,
+            ciphertextDestination[..ciphertextLength],
+            macDestination);
+
+        return ciphertextLength;
+    }
+
+    private static int EncryptAesCbcPkcs7(
+        ReadOnlySpan<byte> plaintext,
+        ReadOnlySpan<byte> key,
+        ReadOnlySpan<byte> iv,
+        Span<byte> destination)
+    {
+        using var aes = Aes.Create();
+        aes.SetKey(key);
+
+        if (!aes.TryEncryptCbc(plaintext, iv, destination, out int written, PaddingMode.PKCS7))
+        {
+            throw new ArgumentException(
+                "Destination span was too small for the encrypted ciphertext.", nameof(destination));
+        }
+
+        return written;
+    }
+
+    private static void ComputeMac(
+        ReadOnlySpan<byte> macKey,
+        ReadOnlySpan<byte> iv,
+        ReadOnlySpan<byte> ciphertext,
+        Span<byte> destination)
+    {
+        using var hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, macKey);
+        hmac.AppendData(iv);
+        hmac.AppendData(ciphertext);
+        hmac.GetHashAndReset(destination);
+    }
+
     public static string Decrypt(in EncStringParts parts, ReadOnlySpan<byte> key)
     {
         int maxPlaintextLength = parts.Data.Length;

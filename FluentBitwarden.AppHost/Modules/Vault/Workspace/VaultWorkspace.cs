@@ -10,7 +10,8 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultWorkspace(
     VaultSynchronizer vaultSynchronizer,
-    VaultLoader vaultLoader) : IVaultWorkspace, IUnlockedVaultReader
+    VaultLoader vaultLoader,
+    VaultCipherSaver vaultCipherSaver) : IVaultWorkspace, IUnlockedVaultReader
 {
     private WorkspaceState _state = WorkspaceState.Empty;
 
@@ -40,26 +41,27 @@ internal sealed class VaultWorkspace(
 
     public async Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
-        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default)
     {
-        var result = await vaultSynchronizer.SyncAsync(
-            accountContext,
-            decryptedUserKey,
-            force,
-            cancellationToken);
+        var userKey = RequireUserKey();
+        var result = await vaultSynchronizer.SyncAsync(accountContext, userKey, force, cancellationToken);
 
         if (result == VaultSyncResult.Synced)
-            Reload(decryptedUserKey);
+            Reload(userKey);
 
         return result;
     }
 
-    public void Reload(UserKey userKey)
+    public async ValueTask<VaultCipher> SaveCipherAsync(
+        BitwardenAccountContext accountContext,
+        VaultCipher cipher,
+        CancellationToken cancellationToken = default)
     {
-        var data = vaultLoader.Load(userKey);
-        Volatile.Write(ref _state, new WorkspaceState(userKey.UserId, data));
+        var userKey = RequireUserKey();
+        var savedCipher = await vaultCipherSaver.SaveAsync(accountContext, userKey, cipher, cancellationToken);
+        UpsertCipher(savedCipher);
+        return savedCipher;
     }
 
     public void Close() => Volatile.Write(ref _state, WorkspaceState.Empty);
@@ -123,4 +125,17 @@ internal sealed class VaultWorkspace(
             .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
     }
+
+    private void Reload(UserKey userKey) =>
+        Volatile.Write(ref _state, new WorkspaceState(userKey, vaultLoader.Load(userKey)));
+
+    private void UpsertCipher(VaultCipher cipher)
+    {
+        var state = Volatile.Read(ref _state);
+        var ciphersById = new Dictionary<CipherId, VaultCipher>(state.Data.CiphersById) { [cipher.Id] = cipher };
+        Volatile.Write(ref _state, state with { Data = state.Data with { CiphersById = ciphersById } });
+    }
+
+    private UserKey RequireUserKey() =>
+        Volatile.Read(ref _state).UserKey ?? throw new InvalidOperationException("Vault workspace is not open.");
 }

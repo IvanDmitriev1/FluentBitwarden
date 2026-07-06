@@ -10,7 +10,7 @@ internal partial class VaultReaderRepository
         long RevisionDateUnixMs,
         byte[] EncryptedName);
 
-    private static VaultFolderDto ToDto(in FolderRow row) => new()
+    private static VaultFolderResponse ToDto(in FolderRow row) => new()
     {
         Id = FolderId.Parse(row.FolderId),
         RevisionDate = DateTimeOffset.FromUnixTimeMilliseconds(row.RevisionDateUnixMs),
@@ -27,7 +27,7 @@ internal partial class VaultReaderRepository
         int? MemberStatus,
         byte[]? ProtectedOrganizationKey);
 
-    private static VaultOrganizationDto ToDto(in OrganizationRow row) => new()
+    private static VaultOrganizationResponse ToDto(in OrganizationRow row) => new()
     {
         Id = OrganizationId.Parse(row.OrganizationId),
         UserId = UserId.Parse(row.UserId),
@@ -52,7 +52,7 @@ internal partial class VaultReaderRepository
         int CollectionType,
         byte[] EncryptedName);
 
-    private static VaultCollectionDto ToDto(in CollectionRow row) => new()
+    private static VaultCollectionResponse ToDto(in CollectionRow row) => new()
     {
         Id = CollectionId.Parse(row.CollectionId),
         OrganizationId = row.OrganizationId is null ? OrganizationId.Empty : OrganizationId.Parse(row.OrganizationId),
@@ -96,7 +96,7 @@ internal partial class VaultReaderRepository
         public byte[]? ProtectedCipherKey { get; init; }
     }
 
-    private static VaultCipherDto ToDto(
+    private static VaultCipherResponse ToDto(
         in CipherRow row,
         CollectionId[] collectionIds,
         VaultCipherAttachmentDownloadResponse[] attachments) => new()

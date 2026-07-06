@@ -34,7 +34,7 @@ internal sealed class VaultKeyResolver : IDisposable
     internal VaultKeyResolver(
         UserKey userKey,
         ProtectedPrivateKey protectedPrivateKey,
-        VaultOrganizationDto[] organizations)
+        VaultOrganizationResponse[] organizations)
     {
         _userKey = userKey;
         _protectedPrivateKey = protectedPrivateKey;
