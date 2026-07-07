@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="FluentBitwarden.Controls.VaultCiphers.VaultCipherDetailView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:contracts="using:BitwardenApi.Vault.Items.Contracts"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:metadataTimeline="using:FluentBitwarden.Controls.Shared.MetadataTimeline"
+    xmlns:models="using:FluentBitwarden.ViewModels.Vault.Models"
+    xmlns:shared="using:FluentBitwarden.Controls.Shared"
+    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon"
+    xmlns:vault="using:FluentBitwarden.Templates.Vault"
+    xmlns:vaultCiphers="using:FluentBitwarden.Controls.VaultCiphers"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <vault:VaultCipherViewTemplates />
+                <vault:VaultCipherEditTemplates />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Padding="20" Spacing="20">
+                <!--  Edit  -->
+                <StackPanel Spacing="20" Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                    <TextBox
+                        AutomationProperties.AutomationId="VaultCipherNameEdit"
+                        FontSize="20"
+                        Header="Name"
+                        PlaceholderText="Name"
+                        Text="{x:Bind SelectedCipher.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ComboBox
+                            MinWidth="180"
+                            Header="Folder"
+                            ItemsSource="{x:Bind Folders, Mode=OneWay}"
+                            PlaceholderText="No Folder"
+                            SelectedValue="{x:Bind SelectedCipher.FolderId, Mode=TwoWay, Converter={StaticResource FolderIdSelectedValueConverter}}"
+                            SelectedValuePath="Id">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="contracts:VaultFolder">
+                                    <TextBlock Text="{x:Bind Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <ComboBox
+                            MinWidth="180"
+                            Header="Owner"
+                            IsEnabled="False"
+                            PlaceholderText="My Vault" />
+                    </StackPanel>
+                    <ContentControl
+                        HorizontalContentAlignment="Stretch"
+                        Content="{x:Bind SelectedCipher, Mode=OneWay}"
+                        ContentTemplateSelector="{StaticResource VaultCipherEditTemplateSelector}" />
+                </StackPanel>
+                <!--  View  -->
+                <StackPanel Spacing="20" Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource InverseBoolToVis}}">
+                    <StackPanel
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="24"
+                        Visibility="{x:Bind SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                        <siteIcon:SiteIcon
+                            FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(SelectedCipher), Mode=OneWay}"
+                            Size="36"
+                            Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(SelectedCipher), Mode=OneWay}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource TitleTextBlockStyle}"
+                            Text="{x:Bind SelectedCipher.Name, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <ContentControl
+                        HorizontalContentAlignment="Stretch"
+                        Content="{x:Bind SelectedCipher, Mode=OneWay}"
+                        ContentTemplateSelector="{StaticResource VaultCipherViewTemplateSelector}"
+                        Visibility="{x:Bind SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
+                    <shared:DividedCardItemsControl
+                        ItemsSource="{x:Bind SelectedCipher.Attachments, Mode=OneWay}"
+                        Label="Attachments"
+                        Visibility="{x:Bind SelectedCipher.Attachments, Mode=OneWay, Converter={StaticResource EmptyCollectionToVisibilityConverter}}">
+                        <shared:DividedCardItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <vaultCiphers:VaultCipherAttachmentField Attachment="{Binding}" />
+                            </DataTemplate>
+                        </shared:DividedCardItemsControl.ItemTemplate>
+                    </shared:DividedCardItemsControl>
+                    <metadataTimeline:MetadataTimeline
+                        Header="{x:Bind models:VaultCipherExtensions.LastEditedAtFormatted(SelectedCipher), Mode=OneWay}"
+                        ToggleAutomationName="Toggle item history"
+                        Visibility="{x:Bind SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                        <metadataTimeline:MetadataTimelineItem Text="{x:Bind models:VaultCipherExtensions.AddedAtFormatted(SelectedCipher), Mode=OneWay}" />
+                        <metadataTimeline:MetadataTimelineButtonItem Glyph="&#xE81C;" Text="View previous versions" />
+                    </metadataTimeline:MetadataTimeline>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

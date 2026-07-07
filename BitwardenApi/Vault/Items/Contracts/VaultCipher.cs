@@ -33,6 +33,25 @@ public abstract partial class VaultCipher
     public required DateTimeOffset? DeletedDate { get; set; }
 
     public VaultCipherAttachment[] Attachments { get; set; } = [];
+
+    /// <summary>
+    /// Creates an empty, unsaved cipher of the requested <paramref name="type"/>,
+    /// ready to be populated in the editor.
+    /// </summary>
+    public static VaultCipher CreateBlankCipher(VaultCipherType type)
+    {
+        var timestamp = DateTimeOffset.UtcNow;
+
+        return type switch
+        {
+            VaultCipherType.Login => new LoginVaultCipher { Id = CipherId.Empty, Name = string.Empty, Favorite = false, Reprompt = false, RevisionDate = timestamp, CreationDate = timestamp, DeletedDate = null },
+            VaultCipherType.SecureNote => new SecureNoteVaultCipher { Id = CipherId.Empty, Name = string.Empty, Favorite = false, Reprompt = false, RevisionDate = timestamp, CreationDate = timestamp, DeletedDate = null },
+            VaultCipherType.Card => new CardVaultCipher { Id = CipherId.Empty, Name = string.Empty, Favorite = false, Reprompt = false, RevisionDate = timestamp, CreationDate = timestamp, DeletedDate = null },
+            VaultCipherType.Identity => new IdentityVaultCipher { Id = CipherId.Empty, Name = string.Empty, Favorite = false, Reprompt = false, RevisionDate = timestamp, CreationDate = timestamp, DeletedDate = null },
+            VaultCipherType.SshKey => new SshKeyVaultCipher { Id = CipherId.Empty, Name = string.Empty, Favorite = false, Reprompt = false, RevisionDate = timestamp, CreationDate = timestamp, DeletedDate = null },
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown vault cipher type."),
+        };
+    }
 }
 
 [MemoryPackable]

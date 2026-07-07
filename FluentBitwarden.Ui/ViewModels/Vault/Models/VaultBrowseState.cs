@@ -3,7 +3,7 @@ using BitwardenApi.Primitives;
 using FluentBitwarden.Platform.Settings.Composition;
 using Windows.Storage;
 
-namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
+namespace FluentBitwarden.ViewModels.Vault.Models;
 
 public sealed record VaultBrowseState(string SearchText, CipherId SelectedCipherId) : ICompositeSettingValue<VaultBrowseState>
 {

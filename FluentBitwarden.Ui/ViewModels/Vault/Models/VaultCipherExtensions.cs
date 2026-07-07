@@ -2,7 +2,7 @@ using System.Globalization;
 using BitwardenApi.Vault.Attachments.Contracts;
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
+namespace FluentBitwarden.ViewModels.Vault.Models;
 
 public static class VaultCipherExtensions
 {

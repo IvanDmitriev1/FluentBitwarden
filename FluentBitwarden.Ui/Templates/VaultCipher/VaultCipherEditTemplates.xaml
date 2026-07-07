@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="FluentBitwarden.Templates.Vault.VaultCipherEditTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="using:FluentBitwarden.AttachedProperties"
+    xmlns:controls="using:FluentBitwarden.Controls.Shared"
+    xmlns:extensions11="using:FluentBitwarden.ViewModels.Vault.Models"
+    xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
+    xmlns:vault1="using:FluentBitwarden.Templates.Vault">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ms-appx:///Templates/VaultCipher/VaultCipherFieldStyles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate x:Key="VaultCipherLoginEditTemplate" x:DataType="models:LoginVaultCipher">
+        <StackPanel Spacing="12">
+            <controls:DividedCardItemsControl>
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Username" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Password" />
+                        <controls:PasswordBoxEx
+                            HorizontalAlignment="Stretch"
+                            behaviors:PasswordBoxEditBehavior.BoundPassword="{x:Bind Password, Mode=TwoWay}"
+                            PlaceholderText="Password" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Authenticator key (TOTP)" />
+                        <TextBox behaviors:TotpEditBehavior.Source="{x:Bind Totp, Mode=TwoWay}" Style="{StaticResource EditTextBoxStyle}" />
+                    </StackPanel>
+
+                    <Grid
+                        x:Name="PasskeyPanel"
+                        Padding="12"
+                        ColumnSpacing="12"
+                        Visibility="{x:Bind Fido2Credential, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Passkey" />
+                            <TextBlock
+                                Margin="0"
+                                Style="{StaticResource FieldValueTextBlockStyle}"
+                                Text="{x:Bind extensions11:VaultLoginCipherExtensions.CreatedAtFormatted(Fido2Credential)}" />
+                        </StackPanel>
+                        <Button
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            behaviors:PasskeyEditBehavior.RemovePanel="{Binding ElementName=PasskeyPanel}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTipService.ToolTip="Remove passkey">
+                            <FontIcon
+                                FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                Glyph="&#xE74D;" />
+                        </Button>
+                    </Grid>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+
+            <controls:DividedCardItemsControl
+                x:Name="WebsitesCard"
+                behaviors:UriListEditBehavior.Source="{x:Bind Uris}"
+                Label="Websites">
+                <controls:DividedCardItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:LoginUri">
+                        <Grid Padding="12,12,12,0" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                Grid.Column="0"
+                                Style="{StaticResource EditTextBoxStyle}"
+                                Text="{x:Bind Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button
+                                Grid.Column="1"
+                                VerticalAlignment="Top"
+                                behaviors:UriListEditBehavior.Target="{Binding ElementName=WebsitesCard}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ToolTipService.ToolTip="Remove website">
+                                <FontIcon
+                                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    Glyph="&#xE74D;" />
+                            </Button>
+                        </Grid>
+                    </DataTemplate>
+                </controls:DividedCardItemsControl.ItemTemplate>
+            </controls:DividedCardItemsControl>
+
+            <Button
+                HorizontalAlignment="Stretch"
+                behaviors:UriListEditBehavior.Target="{Binding ElementName=WebsitesCard}"
+                Content="Add website" />
+
+            <controls:DividedCardItemsControl Label="Notes">
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12">
+                        <TextBox
+                            Margin="0"
+                            Style="{StaticResource EditMultiLineTextBoxStyle}"
+                            Text="{x:Bind Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="VaultCipherSecureNoteEditTemplate" x:DataType="models:SecureNoteVaultCipher">
+        <controls:DividedCardItemsControl>
+            <controls:DividedCardItemsControl.Items>
+                <StackPanel Padding="12">
+                    <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Contents" />
+                    <TextBox
+                        Margin="0"
+                        Style="{StaticResource EditMultiLineTextBoxStyle}"
+                        Text="{x:Bind Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </controls:DividedCardItemsControl.Items>
+        </controls:DividedCardItemsControl>
+    </DataTemplate>
+
+    <DataTemplate x:Key="VaultCipherCardEditTemplate" x:DataType="models:CardVaultCipher">
+        <StackPanel Spacing="12">
+            <controls:DividedCardItemsControl>
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Cardholder name" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind CardholderName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Brand" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Brand, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Number" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Number, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Security code" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Expiration month" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind ExpMonth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12,12,12,0">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Expiration year" />
+                        <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind ExpYear, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+
+            <controls:DividedCardItemsControl Label="Notes">
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12">
+                        <TextBox
+                            Margin="0"
+                            Style="{StaticResource EditMultiLineTextBoxStyle}"
+                            Text="{x:Bind Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="VaultCipherIdentityEditTemplate" x:DataType="models:IdentityVaultCipher">
+        <StackPanel Spacing="12">
+            <Grid ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <controls:DividedCardItemsControl Grid.Column="0">
+                    <controls:DividedCardItemsControl.Items>
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Title" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="First name" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind FirstName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Middle name" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind MiddleName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Last name" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind LastName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Company" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Company, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Email" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Phone" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Username" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="SSN" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Ssn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </controls:DividedCardItemsControl.Items>
+                </controls:DividedCardItemsControl>
+
+                <controls:DividedCardItemsControl Grid.Column="1">
+                    <controls:DividedCardItemsControl.Items>
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Address 1" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Address1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Address 2" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Address2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Address 3" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Address3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="City" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind City, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="State" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind State, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Postal code" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind PostalCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Country" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind Country, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Passport number" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind PassportNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Padding="12,12,12,0">
+                            <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="License number" />
+                            <TextBox Style="{StaticResource EditTextBoxStyle}" Text="{x:Bind LicenseNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </controls:DividedCardItemsControl.Items>
+                </controls:DividedCardItemsControl>
+            </Grid>
+
+            <controls:DividedCardItemsControl Label="Notes">
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12">
+                        <TextBox
+                            Margin="0"
+                            Style="{StaticResource EditMultiLineTextBoxStyle}"
+                            Text="{x:Bind Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="VaultCipherSshKeyEditTemplate" x:DataType="models:SshKeyVaultCipher">
+        <StackPanel Spacing="12">
+            <controls:DividedCardItemsControl>
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Private key" />
+                        <TextBox
+                            Margin="0"
+                            Style="{StaticResource EditMultiLineTextBoxStyle}"
+                            Text="{x:Bind PrivateKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Fingerprint" />
+                        <TextBlock
+                            Margin="0"
+                            Style="{StaticResource FieldValueTextBlockStyle}"
+                            Text="{x:Bind KeyFingerprint}" />
+                    </StackPanel>
+
+                    <StackPanel Padding="12">
+                        <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Public key" />
+                        <TextBlock
+                            Margin="0"
+                            Style="{StaticResource FieldValueTextBlockStyle}"
+                            Text="{x:Bind PublicKey.RawKey}" />
+                    </StackPanel>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+
+            <controls:DividedCardItemsControl Label="Notes">
+                <controls:DividedCardItemsControl.Items>
+                    <StackPanel Padding="12">
+                        <TextBox
+                            Margin="0"
+                            Style="{StaticResource EditMultiLineTextBoxStyle}"
+                            Text="{x:Bind Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </controls:DividedCardItemsControl.Items>
+            </controls:DividedCardItemsControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <vault1:VaultCipherTemplateSelector
+        x:Key="VaultCipherEditTemplateSelector"
+        CardTemplate="{StaticResource VaultCipherCardEditTemplate}"
+        IdentityTemplate="{StaticResource VaultCipherIdentityEditTemplate}"
+        LoginTemplate="{StaticResource VaultCipherLoginEditTemplate}"
+        SecureNoteTemplate="{StaticResource VaultCipherSecureNoteEditTemplate}"
+        SshKeyTemplate="{StaticResource VaultCipherSshKeyEditTemplate}" />
+
+</ResourceDictionary>

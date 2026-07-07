@@ -6,11 +6,11 @@ namespace BitwardenApi.Vault.Attachments.Contracts;
 public sealed partial class VaultCipherAttachment
 {
     [StronglyTypedIdFormatter<AttachmentId>]
-    public AttachmentId Id { get; init; }
+    public AttachmentId Id { get; set; }
 
     [StronglyTypedIdFormatter<CipherId>]
-    public CipherId CipherId { get; init; }
+    public CipherId CipherId { get; set; }
 
-    public string FileName { get; init; } = string.Empty;
-    public FileSize Size { get; init; }
+    public string FileName { get; set; } = string.Empty;
+    public FileSize Size { get; set; }
 }

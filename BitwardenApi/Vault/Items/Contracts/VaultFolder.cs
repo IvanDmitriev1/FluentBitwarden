@@ -6,8 +6,8 @@ namespace BitwardenApi.Vault.Items.Contracts;
 public sealed partial class VaultFolder
 {
     [StronglyTypedIdFormatter<FolderId>]
-    public required FolderId Id { get; init; }
+    public FolderId Id { get; set; }
 
-    public required string Name { get; init; }
-    public DateTimeOffset RevisionDate { get; init; }
+    public string Name { get; set; } = string.Empty;
+    public DateTimeOffset RevisionDate { get; set; }
 }

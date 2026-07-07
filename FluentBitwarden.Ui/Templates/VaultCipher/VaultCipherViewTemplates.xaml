@@ -1,36 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
-    x:Class="FluentBitwarden.Templates.Vault.VaultCipherDetailTemplates"
+    x:Class="FluentBitwarden.Templates.Vault.VaultCipherViewTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:contracts="using:BitwardenApi.Vault.Attachments.Contracts"
     xmlns:controls="using:FluentBitwarden.Controls.Shared"
-    xmlns:extensions1="using:FluentBitwarden.ViewModels.Vault.Models"
+    xmlns:extensions11="using:FluentBitwarden.ViewModels.Vault.Models"
     xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers"
     xmlns:vault1="using:FluentBitwarden.Templates.Vault">
 
-    <Style x:Key="FieldLabelTextBlockStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
-        <Setter Property="Margin" Value="0,0,0,4" />
-    </Style>
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ms-appx:///Templates/VaultCipher/VaultCipherFieldStyles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="FieldValueTextBlockStyle" TargetType="TextBlock">
-        <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="Margin" Value="0,0,0,12" />
-    </Style>
-
-    <Style x:Key="ReadOnlyMultiLineTextBoxStyle" TargetType="TextBox">
-        <Setter Property="IsReadOnly" Value="True" />
-        <Setter Property="AcceptsReturn" Value="True" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="MinHeight" Value="96" />
-        <Setter Property="Margin" Value="0,0,0,12" />
-    </Style>
-
-    <DataTemplate x:Key="VaultCipherLoginDetailsTemplate" x:DataType="models:LoginVaultCipher">
+    <DataTemplate x:Key="VaultCipherLoginViewTemplate" x:DataType="models:LoginVaultCipher">
         <StackPanel Spacing="12">
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>
@@ -39,7 +22,7 @@
                     <vault:VaultCipherTextField
                         ActionText=""
                         Label="Passkey"
-                        Text="{x:Bind extensions1:VaultLoginCipherExtensions.CreatedAtFormatted(Fido2Credential)}"
+                        Text="{x:Bind extensions11:VaultLoginCipherExtensions.CreatedAtFormatted(Fido2Credential)}"
                         Visibility="{x:Bind Fido2Credential, Converter={StaticResource NullToVisibilityConverter}}" />
                     <vault:VaultCipherTotpField Totp="{x:Bind Totp}" Visibility="{x:Bind Totp, Converter={StaticResource NullToVisibilityConverter}}" />
                 </controls:DividedCardItemsControl.Items>
@@ -58,14 +41,14 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherSecureNoteDetailsTemplate" x:DataType="models:SecureNoteVaultCipher">
+    <DataTemplate x:Key="VaultCipherSecureNoteViewTemplate" x:DataType="models:SecureNoteVaultCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Contents" />
             <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind Notes}" />
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherCardDetailsTemplate" x:DataType="models:CardVaultCipher">
+    <DataTemplate x:Key="VaultCipherCardViewTemplate" x:DataType="models:CardVaultCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Cardholder name" />
             <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind CardholderName}" />
@@ -87,7 +70,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherIdentityDetailsTemplate" x:DataType="models:IdentityVaultCipher">
+    <DataTemplate x:Key="VaultCipherIdentityViewTemplate" x:DataType="models:IdentityVaultCipher">
         <StackPanel>
             <Grid ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
@@ -156,7 +139,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherSshKeyDetailsTemplate" x:DataType="models:SshKeyVaultCipher">
+    <DataTemplate x:Key="VaultCipherSshKeyViewTemplate" x:DataType="models:SshKeyVaultCipher">
         <StackPanel>
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>
@@ -169,11 +152,11 @@
     </DataTemplate>
 
     <vault1:VaultCipherTemplateSelector
-        x:Key="VaultCipherTemplateSelector"
-        CardTemplate="{StaticResource VaultCipherCardDetailsTemplate}"
-        IdentityTemplate="{StaticResource VaultCipherIdentityDetailsTemplate}"
-        LoginTemplate="{StaticResource VaultCipherLoginDetailsTemplate}"
-        SecureNoteTemplate="{StaticResource VaultCipherSecureNoteDetailsTemplate}"
-        SshKeyTemplate="{StaticResource VaultCipherSshKeyDetailsTemplate}" />
+        x:Key="VaultCipherViewTemplateSelector"
+        CardTemplate="{StaticResource VaultCipherCardViewTemplate}"
+        IdentityTemplate="{StaticResource VaultCipherIdentityViewTemplate}"
+        LoginTemplate="{StaticResource VaultCipherLoginViewTemplate}"
+        SecureNoteTemplate="{StaticResource VaultCipherSecureNoteViewTemplate}"
+        SshKeyTemplate="{StaticResource VaultCipherSshKeyViewTemplate}" />
 
 </ResourceDictionary>

@@ -1,6 +1,6 @@
 using FluentBitwarden.Infrastructure.Converters;
 
-namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
+namespace FluentBitwarden.ViewModels.Vault.Models;
 
 public readonly record struct VaultCipherTypeOption(VaultCipherType? Value, string Title) : IOptionItem<VaultCipherType?>
 {

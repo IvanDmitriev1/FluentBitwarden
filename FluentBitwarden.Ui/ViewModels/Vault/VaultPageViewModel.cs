@@ -1,17 +1,18 @@
-using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using System.Collections.ObjectModel;
 using Windows.Networking.Connectivity;
+using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Platform.SiteIcons;
 
-namespace FluentBitwarden.ViewModels.Vault.Browse;
+namespace FluentBitwarden.ViewModels.Vault;
 
 public sealed partial class VaultPageViewModel(
     IVaultClient vaultClient,
     ISiteIconCache siteIconCache) : ObservableObject, IPageLifecycleAware, IPageLifecycleAware<ShowVaultCipherIntent>, IPageLifecycleAware<OpenVaultCipherIntent>
 {
     [ObservableProperty]
-    public partial VaultCipher[] FilteredCiphers { get; private set; } = [];
+    public partial ObservableCollection<VaultCipher> FilteredCiphers { get; private set; } = [];
 
     [ObservableProperty]
     public partial ObservableCollection<VaultFolder> Folders { get; private set; } = [];
@@ -23,6 +24,9 @@ public sealed partial class VaultPageViewModel(
     public partial VaultCipher? SelectedCipher { get; set; }
 
     [ObservableProperty]
+    public partial VaultCipher? EditingCipher { get; set; }
+
+    [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -32,7 +36,7 @@ public sealed partial class VaultPageViewModel(
     public partial VaultCipherSortDirection CipherSortDirection { get; set; } = VaultCipherSortDirection.Ascending;
 
     [ObservableProperty]
-    public partial bool IsSearchFieldOpen { get; set; }
+    public partial bool IsEditing { get; private set; }
 
     private bool _hasInitialized;
     private bool _applyingParameter;
@@ -45,9 +49,6 @@ public sealed partial class VaultPageViewModel(
 
     partial void OnSearchTextChanged(string value)
     {
-        if (!string.IsNullOrWhiteSpace(value))
-            IsSearchFieldOpen = true;
-
         if (!_applyingParameter)
             _ = QueryCiphersAsync();
     }
@@ -55,14 +56,14 @@ public sealed partial class VaultPageViewModel(
 
     partial void OnSelectedCipherChanged(VaultCipher? value)
     {
-        if (value is null)
-        {
-            SettingsStore.Instance.SetComposite(UiSettingKeys.Vault.StateKey, VaultBrowseState.Default);
-            return;
-        }
+        var composite = value is null
+            ? VaultBrowseState.Default
+            : new VaultBrowseState(SearchText, value.Id);
 
-        var composite = new VaultBrowseState(SearchText, value.Id);
         SettingsStore.Instance.SetComposite(UiSettingKeys.Vault.StateKey, composite);
+
+        EditingCipher = value;
+        CancelEditCipher();
     }
 
     partial void OnCipherSortFieldChanged(VaultCipherSortField value)
@@ -96,6 +97,64 @@ public sealed partial class VaultPageViewModel(
         await LoadOrApplyNavigationAsync(new ShowVaultCipherIntent(string.Empty, cipher), cancellationToken);
     }
 
+    public void OnUnloading() { }
+
+    [RelayCommand]
+    private void BeginEditCipher()
+    {
+        if (SelectedCipher is null)
+            return;
+
+        EditingCipher = SelectedCipher;
+        IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void BeginCreateCipher(VaultCipherType type)
+    {
+        EditingCipher = VaultCipher.CreateBlankCipher(type);
+        IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void CancelEditCipher()
+    {
+        IsEditing = false;
+
+        if (EditingCipher?.Id == CipherId.Empty)
+        {
+            SelectedCipher = null;
+            EditingCipher = null;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveCipher(CancellationToken cancellationToken)
+    {
+        if (EditingCipher is null)
+            return;
+
+        var saved = await vaultClient.SaveCipherAsync(new SaveVaultCipherRequest(EditingCipher), cancellationToken);
+        if (saved is null)
+            return; // Save failed; stay in edit mode so the user can retry.
+
+        IsEditing = false;
+        ApplySavedCipher();
+        return;
+
+        void ApplySavedCipher()
+        {
+            var index = FilteredCiphers.IndexOf(saved);
+
+            if (index >= 0)
+                FilteredCiphers[index] = saved;
+            else
+                FilteredCiphers.Add(saved);
+
+            SelectedCipher = saved;
+        }
+    }
+
     private Task LoadOrApplyNavigationAsync(
         ShowVaultCipherIntent intent,
         CancellationToken cancellationToken) => _hasInitialized
@@ -121,8 +180,6 @@ public sealed partial class VaultPageViewModel(
         }
     }
 
-    public void OnUnloading() { }
-
     private async Task EnsureLoadedAsync(
         CancellationToken cancellationToken,
         ShowVaultCipherIntent? initialNavigation = null)
@@ -133,9 +190,6 @@ public sealed partial class VaultPageViewModel(
         _applyingParameter = true;
         try
         {
-            OnPropertyChanged(nameof(CipherSortField));
-            OnPropertyChanged(nameof(CipherSortDirection));
-
             Folders.ReplaceWith(await vaultClient.GetFoldersAsync(cancellationToken));
             await QueryCiphersAsync(cancellationToken);
 
@@ -179,7 +233,7 @@ public sealed partial class VaultPageViewModel(
             SortDirection = CipherSortDirection
         }, cancellationToken);
 
-        FilteredCiphers = ciphers;
+        FilteredCiphers.ReplaceWith(ciphers);
     }
 
     private async Task SyncVault(CancellationToken cancellationToken)
@@ -197,7 +251,6 @@ public sealed partial class VaultPageViewModel(
             ? null
             : FilteredCiphers.FirstOrDefault(c => c.Id == selectedCipherId);
     }
-
     private Task PreloadSiteIconsAsync()
     {
         var urls = FilteredCiphers

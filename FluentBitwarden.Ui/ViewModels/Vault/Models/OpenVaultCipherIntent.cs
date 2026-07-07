@@ -1,3 +1,3 @@
-﻿namespace FluentBitwarden.ViewModels.Vault.Browse.Models;
+﻿namespace FluentBitwarden.ViewModels.Vault.Models;
 
 public sealed record OpenVaultCipherIntent(CipherId CipherId);
