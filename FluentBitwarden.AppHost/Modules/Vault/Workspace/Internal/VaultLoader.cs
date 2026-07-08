@@ -1,6 +1,4 @@
-using BitwardenApi.Infrastructure.Cryptography.Enc;
 using BitwardenApi.Vault.Cryptography;
-using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
@@ -22,15 +20,12 @@ internal sealed class VaultLoader(
 
         unitOfWork.VaultReaderRepository.ReadAllCiphers(
             decryptedUserKey.UserId,
-            (ciphersById, cipherIdsByCollectionId, accountKeyService, organizationKeys),
-            static (state, ref readonly dto, payload) =>
+            (ref readonly dto, payload) =>
             {
-                var (ciphers, collectionIndex, keyService, orgKeys) = state;
-
-                var key = keyService.GetOrganizationKey(dto.OrganizationId, orgKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
+                var key = accountKeyService.GetOrganizationKey(dto.OrganizationId, organizationKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
                 var cipher = VaultDataParser.ParseAndDecryptCipher(in dto, payload, key);
-                ciphers.Add(cipher.Id, cipher);
-                AddCollectionMembership(collectionIndex, in dto);
+                ciphersById.Add(cipher.Id, cipher);
+                CipherCollectionIndex.Add(cipherIdsByCollectionId, dto.Id, dto.CollectionIds);
             });
 
 
@@ -48,28 +43,5 @@ internal sealed class VaultLoader(
         }
 
         return new LoadedVaultData(ciphersById, cipherIdsByCollectionId, folders, collections);
-    }
-
-    private static void AddCollectionMembership(
-        Dictionary<CollectionId, HashSet<CipherId>> collectionIndex,
-        ref readonly VaultCipherResponse dto)
-    {
-        var collectionIds = dto.CollectionIds;
-        if (collectionIds.Length == 0)
-            return;
-
-        foreach (var collectionId in collectionIds)
-        {
-            if (collectionId.IsEmpty)
-                continue;
-
-            if (!collectionIndex.TryGetValue(collectionId, out var cipherIds))
-            {
-                cipherIds = [];
-                collectionIndex.Add(collectionId, cipherIds);
-            }
-
-            cipherIds.Add(dto.Id);
-        }
     }
 }

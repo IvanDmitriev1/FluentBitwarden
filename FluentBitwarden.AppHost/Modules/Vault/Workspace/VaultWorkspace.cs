@@ -13,6 +13,7 @@ internal sealed class VaultWorkspace(
     VaultLoader vaultLoader,
     VaultCipherSaver vaultCipherSaver) : IVaultWorkspace, IUnlockedVaultReader
 {
+    private readonly System.Threading.Lock _stateLock = new();
     private WorkspaceState _state = WorkspaceState.Empty;
 
     public async ValueTask OpenAsync(
@@ -64,7 +65,11 @@ internal sealed class VaultWorkspace(
         return savedCipher;
     }
 
-    public void Close() => Volatile.Write(ref _state, WorkspaceState.Empty);
+    public void Close()
+    {
+        lock (_stateLock)
+            Volatile.Write(ref _state, WorkspaceState.Empty);
+    }
 
     public VaultCipher? GetCipher(CipherId id)
     {
@@ -126,14 +131,21 @@ internal sealed class VaultWorkspace(
             .ToArray();
     }
 
-    private void Reload(UserKey userKey) =>
-        Volatile.Write(ref _state, new WorkspaceState(userKey, vaultLoader.Load(userKey)));
+    private void Reload(UserKey userKey)
+    {
+        var loaded = new WorkspaceState(userKey, vaultLoader.Load(userKey));
+        lock (_stateLock)
+            Volatile.Write(ref _state, loaded);
+    }
 
     private void UpsertCipher(VaultCipher cipher)
     {
-        var state = Volatile.Read(ref _state);
-        var ciphersById = new Dictionary<CipherId, VaultCipher>(state.Data.CiphersById) { [cipher.Id] = cipher };
-        Volatile.Write(ref _state, state with { Data = state.Data with { CiphersById = ciphersById } });
+        lock (_stateLock)
+        {
+            var state = Volatile.Read(ref _state);
+            var ciphersById = new Dictionary<CipherId, VaultCipher>(state.Data.CiphersById) { [cipher.Id] = cipher };
+            Volatile.Write(ref _state, state with { Data = state.Data with { CiphersById = ciphersById } });
+        }
     }
 
     private UserKey RequireUserKey() =>

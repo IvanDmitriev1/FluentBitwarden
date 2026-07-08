@@ -11,10 +11,7 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
 internal sealed class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    public delegate void CipherVisitor<in TState>(
-        TState state,
-        ref readonly VaultCipherResponse dto,
-        ReadOnlySpan<byte> payload);
+    public delegate void CipherHandler(ref readonly VaultCipherResponse dto, ReadOnlySpan<byte> payload);
 
     public VaultFolderResponse[] GetAllFolders(UserId userId)
     {
@@ -79,7 +76,7 @@ internal sealed class VaultReaderRepository(SqliteTransaction transaction) : Bas
         return rows.Select(static row => VaultCollectionMapper.ToDomain(row)).ToArray();
     }
 
-    public void ReadAllCiphers<TState>(UserId userId, TState stateObj, CipherVisitor<TState> onCipher)
+    public void ReadAllCiphers(UserId userId, CipherHandler onCipher)
     {
         var userIdString = userId.ToString();
         var collectionIdsByCipherId = GetCollectionIdsByCipherId(userIdString);
@@ -134,7 +131,7 @@ internal sealed class VaultReaderRepository(SqliteTransaction transaction) : Bas
             collectionIdsByCipherId.TryGetValue(row.CipherId, out var collectionIds);
             attachmentsByCipherId.TryGetValue(row.CipherId, out var attachments);
             var dto = VaultCipherMapper.ToDomain(row, collectionIds ?? [], attachments ?? []);
-            onCipher.Invoke(stateObj, ref dto, bufferOwner.Span[..bytesWritten]);
+            onCipher.Invoke(ref dto, bufferOwner.Span[..bytesWritten]);
         }
     }
 

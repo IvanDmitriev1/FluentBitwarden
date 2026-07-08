@@ -1,8 +1,7 @@
 using Windows.Networking.Connectivity;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.Platform.Infrastructure;
-using FluentBitwarden.AppHost.Data.Abstractions;
 using BitwardenApi.Vault.Cryptography;
+using FluentBitwarden.AppHost.Infrastructure.Extensions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
@@ -59,10 +58,16 @@ internal sealed class VaultSynchronizer(
         BitwardenAccountContext accountContext,
         CancellationToken cancellationToken)
     {
+        var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
+
         using var unitOfWork = unitOfWorkFactory.Create();
         var lastSync = unitOfWork.VaultReaderRepository.GetLastSyncTime(accountContext.UserId);
+        if (lastSync is null)
+            return true;
+        
+        var lastSyncTrunc = lastSync.Value.TruncateToSeconds();
+        var revisionTrunc = revisionDate.TruncateToSeconds();
 
-        var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
-        return lastSync is null || lastSync <= revisionDate;
+        return lastSyncTrunc < revisionTrunc;
     }
 }

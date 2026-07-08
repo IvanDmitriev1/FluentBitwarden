@@ -168,12 +168,9 @@ public static partial class VaultDataParser
                 {
                     var rawKey = ReadRequiredDecryptField(ref r, k, "publicKey");
                     if (!OpenSshPublicKey.TryParse(rawKey, out var key))
-                    {
-                        //TODO Remove later
-                        c.PublicKey = OpenSshPublicKey.CreateUnparsed(rawKey);
-                    }
-
-                    c.PublicKey = key;
+                        c.PublicKey = OpenSshPublicKey.CreateUnparsed(rawKey); // TODO: remove once all keys parse
+                    else
+                        c.PublicKey = key;
                 }
                 else if (r.ValueTextEquals("keyFingerprint"u8) || r.ValueTextEquals("KeyFingerprint"u8))
                 {
