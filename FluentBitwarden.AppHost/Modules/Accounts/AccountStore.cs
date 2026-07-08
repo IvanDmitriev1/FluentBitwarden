@@ -1,7 +1,6 @@
-using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
-namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
+namespace FluentBitwarden.AppHost.Modules.Accounts;
 
 internal sealed class AccountStore(IUnitOfWorkFactory unitOfWorkFactory) : IAccountStore
 {

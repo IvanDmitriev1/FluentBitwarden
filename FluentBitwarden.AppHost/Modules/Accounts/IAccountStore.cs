@@ -1,6 +1,6 @@
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
-namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
+namespace FluentBitwarden.AppHost.Modules.Accounts;
 
 internal interface IAccountStore
 {

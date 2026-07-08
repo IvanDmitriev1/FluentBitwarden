@@ -14,6 +14,7 @@ internal sealed class UnitOfWork : IDisposable
 
         AccountProfileRepository = new AccountProfileRepository(Transaction);
         AccountKeyMaterialRepository = new AccountKeyMaterialRepository(Transaction);
+        WindowsHelloKeyStoreRepository = new WindowsHelloKeyStoreRepository(Transaction);
         VaultReaderRepository = new VaultReaderRepository(Transaction);
         VaultWriterRepository = new VaultWriterRepository(Transaction);
         RefreshTokenRepository = new RefreshTokenRepository(Transaction);
@@ -26,6 +27,7 @@ internal sealed class UnitOfWork : IDisposable
 
     public AccountProfileRepository AccountProfileRepository { get; }
     public AccountKeyMaterialRepository AccountKeyMaterialRepository { get; }
+    public WindowsHelloKeyStoreRepository WindowsHelloKeyStoreRepository { get; }
     public VaultReaderRepository VaultReaderRepository { get; }
     public VaultWriterRepository VaultWriterRepository { get; }
     public RefreshTokenRepository RefreshTokenRepository { get; }

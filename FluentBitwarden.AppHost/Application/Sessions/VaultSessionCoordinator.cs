@@ -1,5 +1,5 @@
+using FluentBitwarden.AppHost.Modules.Accounts;
 using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
-using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using FluentBitwarden.AppHost.Modules.Vault.Attachments;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;

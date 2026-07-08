@@ -1,6 +1,6 @@
 using FluentBitwarden.AppHost.Application.Sessions;
+using FluentBitwarden.AppHost.Modules.Accounts;
 using FluentBitwarden.AppHost.Modules.Accounts.Login;
-using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;

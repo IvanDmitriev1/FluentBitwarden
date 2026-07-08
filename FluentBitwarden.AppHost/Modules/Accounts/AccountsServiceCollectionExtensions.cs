@@ -1,7 +1,6 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
 using FluentBitwarden.AppHost.Modules.Accounts.Login;
-using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,7 +13,6 @@ internal static class AccountsServiceCollectionExtensions
         services.AddSingleton<IAccountStore, AccountStore>();
         services.AddSingleton<IAccountLoginService, AccountLoginService>();
 
-        services.AddSingleton<WindowsHelloKeyStore>();
         services.AddSingleton<WindowsHelloUnlocker>();
         services.AddSingleton<MasterPasswordUnlocker>();
 

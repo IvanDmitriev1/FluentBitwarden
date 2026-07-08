@@ -1,12 +1,13 @@
 using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
+using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
-using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 
-internal sealed class WindowsHelloUnlocker(WindowsHelloKeyStore keyStore)
+internal sealed class WindowsHelloUnlocker(IUnitOfWorkFactory unitOfWorkFactory)
 {
     public Task<bool> IsSupportedAsync() => WindowsHelloTpmKeyProtector.IsSupportedAsync();
 
@@ -21,10 +22,16 @@ internal sealed class WindowsHelloUnlocker(WindowsHelloKeyStore keyStore)
             decryptedKey.Key,
             hwnd);
 
-        keyStore.Store(decryptedKey.UserId, protectedBytes);
+        using var unitOfWork = unitOfWorkFactory.Create();
+        unitOfWork.WindowsHelloKeyStoreRepository.Store(decryptedKey.UserId, protectedBytes);
+        unitOfWork.SaveChanges();
     }
 
-    public bool IsEnabled(UserId userId) => keyStore.Exists(userId);
+    public bool IsEnabled(UserId userId)
+    {
+        using var unitOfWork = unitOfWorkFactory.Create();
+        return unitOfWork.WindowsHelloKeyStoreRepository.Exists(userId);
+    }
 
     public void Disable(UserId userId) => RemoveWindowsHelloUnlock(userId);
 
@@ -35,7 +42,8 @@ internal sealed class WindowsHelloUnlocker(WindowsHelloKeyStore keyStore)
 
         try
         {
-            byte[]? protectedBytes = keyStore.Get(userId);
+            using var unitOfWork = unitOfWorkFactory.Create();
+            byte[]? protectedBytes = unitOfWork.WindowsHelloKeyStoreRepository.Get(userId);
 
             if (protectedBytes is null)
             {
@@ -76,6 +84,9 @@ internal sealed class WindowsHelloUnlocker(WindowsHelloKeyStore keyStore)
     private void RemoveWindowsHelloUnlock(UserId userId)
     {
         WindowsHelloTpmKeyProtector.TryDeleteWrappingKey(userId.ToString());
-        keyStore.Remove(userId);
+
+        using var unitOfWork = unitOfWorkFactory.Create();
+        unitOfWork.WindowsHelloKeyStoreRepository.Remove(userId);
+        unitOfWork.SaveChanges();
     }
 }

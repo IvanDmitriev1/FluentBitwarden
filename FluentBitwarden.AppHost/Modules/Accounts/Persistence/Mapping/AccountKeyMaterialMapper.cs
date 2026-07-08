@@ -1,3 +1,5 @@
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
 
 internal static class AccountKeyMaterialMapper

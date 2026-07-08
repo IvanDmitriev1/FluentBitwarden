@@ -1,5 +1,5 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
-using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Login;
 

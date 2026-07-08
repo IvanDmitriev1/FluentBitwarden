@@ -1,14 +1,14 @@
 using Dapper;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 
-internal sealed class WindowsHelloKeyStore(ISqliteConnectionFactory connectionFactory)
+internal sealed class WindowsHelloKeyStoreRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
     public void Store(UserId userId, byte[] protectedUserKey)
     {
-        using var connection = connectionFactory.OpenConnection();
-        connection.Execute(
+        Connection.Execute(
             """
             INSERT INTO account_tpm_cng_unlock_keys (user_id, protected_user_key)
             VALUES (@UserId, @ProtectedUserKey)
@@ -19,13 +19,13 @@ internal sealed class WindowsHelloKeyStore(ISqliteConnectionFactory connectionFa
             {
                 UserId = userId.ToString(),
                 ProtectedUserKey = protectedUserKey
-            });
+            },
+            Transaction);
     }
 
     public byte[]? Get(UserId userId)
     {
-        using var connection = connectionFactory.OpenConnection();
-        return connection.QuerySingleOrDefault<byte[]>(
+        return Connection.QuerySingleOrDefault<byte[]>(
             """
             SELECT protected_user_key
             FROM account_tpm_cng_unlock_keys
@@ -34,13 +34,13 @@ internal sealed class WindowsHelloKeyStore(ISqliteConnectionFactory connectionFa
             new
             {
                 UserId = userId.ToString()
-            });
+            },
+            Transaction);
     }
 
     public bool Exists(UserId userId)
     {
-        using var connection = connectionFactory.OpenConnection();
-        return connection.ExecuteScalar<bool>(
+        return Connection.ExecuteScalar<bool>(
             """
             SELECT EXISTS(
                 SELECT 1
@@ -51,13 +51,13 @@ internal sealed class WindowsHelloKeyStore(ISqliteConnectionFactory connectionFa
             new
             {
                 UserId = userId.ToString()
-            });
+            },
+            Transaction);
     }
 
     public void Remove(UserId userId)
     {
-        using var connection = connectionFactory.OpenConnection();
-        connection.Execute(
+        Connection.Execute(
             """
             DELETE FROM account_tpm_cng_unlock_keys
             WHERE user_id = @UserId COLLATE NOCASE;
@@ -65,6 +65,7 @@ internal sealed class WindowsHelloKeyStore(ISqliteConnectionFactory connectionFa
             new
             {
                 UserId = userId.ToString()
-            });
+            },
+            Transaction);
     }
 }

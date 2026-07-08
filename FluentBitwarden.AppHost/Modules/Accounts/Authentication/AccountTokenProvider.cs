@@ -1,5 +1,3 @@
-using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
-
 namespace FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 
 internal sealed class AccountTokenProvider(

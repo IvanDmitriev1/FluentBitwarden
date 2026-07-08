@@ -1,6 +1,6 @@
 using Dapper;
-using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
