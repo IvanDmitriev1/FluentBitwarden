@@ -34,14 +34,13 @@ internal sealed class VaultSynchronizer(
 
             using var unitOfWork = unitOfWorkFactory.Create();
             var repository = new VaultWriterRepository(unitOfWork.Transaction, decryptedUserKey.UserId);
-            var syncTime = DateTimeOffset.UtcNow;
 
-            repository.WriteOrganizations(response.Profile.Organizations ?? []);
+            repository.WriteOrganizations(response.Profile.Organizations);
             repository.WriteFolders(response.Folders);
             repository.WriteCollections(response.Collections);
             repository.WriteCiphers(response.VaultCiphers);
 
-            unitOfWork.AccountProfileRepository.UpdateSyncedProfile(decryptedUserKey.UserId, response.Profile, syncTime);
+            unitOfWork.AccountProfileRepository.UpdateSyncedProfile(decryptedUserKey.UserId, response.Profile);
             unitOfWork.SaveChanges();
 
             return VaultSyncResult.Synced;
@@ -61,9 +60,9 @@ internal sealed class VaultSynchronizer(
         CancellationToken cancellationToken)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var lastSync = unitOfWork.AccountProfileRepository.GetLastSyncTime(accountContext.UserId);
+        var lastSync = unitOfWork.VaultReaderRepository.GetLastSyncTime(accountContext.UserId);
 
         var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
-        return lastSync < revisionDate;
+        return lastSync is null || lastSync <= revisionDate;
     }
 }

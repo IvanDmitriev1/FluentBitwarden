@@ -137,6 +137,22 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         }
     }
 
+    public DateTimeOffset? GetLastSyncTime(UserId userId)
+    {
+        long? maxRevisionUnixMs = Connection.ExecuteScalar<long?>(
+            """
+            SELECT MAX(revision_date_unix_ms)
+            FROM vault_cipher
+            WHERE user_id = @UserId;
+            """,
+            new { UserId = userId.ToString() },
+            transaction: Transaction);
+
+        return maxRevisionUnixMs is { } unixMs
+            ? DateTimeOffset.FromUnixTimeMilliseconds(unixMs)
+            : null;
+    }
+
     public VaultCipherKeyMaterial? GetCipherKeyMaterial(UserId userId, CipherId cipherId)
     {
         userId.ThrowIfEmpty();

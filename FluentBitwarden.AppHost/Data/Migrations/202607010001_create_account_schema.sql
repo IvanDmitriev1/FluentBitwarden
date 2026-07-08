@@ -5,7 +5,6 @@ CREATE TABLE account_profiles (
     identity_base TEXT NOT NULL CHECK (length(identity_base) > 0),
     notifications_base TEXT NOT NULL CHECK (length(notifications_base) > 0),
     vault_base TEXT NOT NULL CHECK (length(vault_base) > 0),
-    last_sync_at_unix_ms INTEGER NOT NULL CHECK (last_sync_at_unix_ms >= 0),
     profile_name TEXT NULL CHECK (profile_name IS NULL OR length(profile_name) > 0),
     profile_culture TEXT NULL CHECK (profile_culture IS NULL OR length(profile_culture) > 0),
     profile_creation_date_unix_ms INTEGER NULL CHECK (profile_creation_date_unix_ms IS NULL OR profile_creation_date_unix_ms >= 0),
