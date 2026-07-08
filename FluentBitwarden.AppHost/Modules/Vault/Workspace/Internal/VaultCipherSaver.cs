@@ -37,8 +37,8 @@ internal sealed class VaultCipherSaver(
         Persist(userKey.UserId, in savedDto);
 
         // Personal-only scope: OrganizationId is always empty, so the user key itself is the
-        // correct decrypt key (same rule VaultKeyResolver.GetKeyForOrganization applies for
-        // empty org ids) — no key resolver needed here.
+        // correct decrypt key (same rule IAccountKeyService.GetOrganizationKey applies for
+        // empty org ids) — no organization key needed here.
         return VaultDataParser.ParseAndDecryptCipher(in savedDto, savedDto.Data, userKey);
     }
 

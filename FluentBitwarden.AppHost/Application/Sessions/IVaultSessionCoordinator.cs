@@ -1,6 +1,7 @@
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 
@@ -17,4 +18,5 @@ internal interface IVaultSessionCoordinator
     void RequestLock();
     ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken);
     ValueTask<VaultCipher?> SaveCipherAsync(VaultCipher cipher, CancellationToken cancellationToken);
+    ValueTask DownloadCipherAttachmentAsync(DownloadVaultCipherAttachmentRequest request, CancellationToken cancellationToken);
 }

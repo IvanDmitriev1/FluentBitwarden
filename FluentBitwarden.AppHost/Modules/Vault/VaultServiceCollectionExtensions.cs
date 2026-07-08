@@ -1,5 +1,4 @@
 using FluentBitwarden.AppHost.Modules.Vault.Attachments;
-using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
@@ -15,8 +14,6 @@ internal static class VaultServiceCollectionExtensions
 
         // Register VaultSynchronizer with Lazy<T> to break circular dependency
         services.AddSingleton<VaultSynchronizer>();
-
-        services.AddSingleton<IVaultKeyResolverFactory, VaultKeyResolverFactory>();
 
         services.AddSingleton<VaultCipherRequestFactory>();
         services.AddSingleton<VaultCipherSaver>();

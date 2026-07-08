@@ -1,5 +1,4 @@
 using FluentBitwarden.AppHost.Application.Sessions;
-using FluentBitwarden.AppHost.Modules.Vault.Attachments;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Vault;
@@ -10,8 +9,7 @@ namespace FluentBitwarden.AppHost.Infrastructure.Ipc.Handlers;
 
 internal sealed class VaultIpcHandler(
     IVaultSessionCoordinator vaultSessionCoordinator,
-    IUnlockedVaultReader unlockedVaultReader,
-    IVaultCipherAttachmentDownloadService attachmentDownloadService) : IVaultClient, IIpcRequestsHandler
+    IUnlockedVaultReader unlockedVaultReader) : IVaultClient, IIpcRequestsHandler
 {
     private bool HasUnlockedSession => vaultSessionCoordinator.TryGetUnlockedSession(out _);
 
@@ -40,10 +38,10 @@ internal sealed class VaultIpcHandler(
         CancellationToken cancellationToken = default) =>
         vaultSessionCoordinator.SaveCipherAsync(request.Cipher, cancellationToken);
 
-    public async ValueTask DownloadCipherAttachmentAsync(
+    public ValueTask DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default) =>
-        await attachmentDownloadService.DownloadAsync(request, cancellationToken);
+        vaultSessionCoordinator.DownloadCipherAttachmentAsync(request, cancellationToken);
 
     [IpcMessageHandler(IpcMessageTypes.Vault.GetFolders)]
     public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default)

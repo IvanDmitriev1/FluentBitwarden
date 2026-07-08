@@ -1,6 +1,7 @@
-﻿using BitwardenApi.Vault.Cryptography;
+using BitwardenApi.Infrastructure.Cryptography.Enc;
+using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Data.Abstractions;
-using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
+using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 
@@ -8,24 +9,25 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
 internal sealed class VaultLoader(
     IUnitOfWorkFactory unitOfWorkFactory,
-    IVaultKeyResolverFactory keyResolverFactory)
+    IAccountKeyService accountKeyService)
 {
     public LoadedVaultData Load(UserKey decryptedUserKey)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        using var keyResolver = keyResolverFactory.Create(unitOfWork, decryptedUserKey);
+        var organizationKeys = unitOfWork.VaultReaderRepository.GetAllOrganizations(decryptedUserKey.UserId)
+            .ToDictionary(static organization => organization.Id, static organization => organization.ProtectedOrganizationKey);
 
         var ciphersById = new Dictionary<CipherId, VaultCipher>();
         var cipherIdsByCollectionId = new Dictionary<CollectionId, HashSet<CipherId>>();
 
         unitOfWork.VaultReaderRepository.ReadAllCiphers(
             decryptedUserKey.UserId,
-            (ciphersById, cipherIdsByCollectionId, keyResolver),
+            (ciphersById, cipherIdsByCollectionId, accountKeyService, organizationKeys),
             static (state, ref readonly dto, payload) =>
             {
-                var (ciphers, collectionIndex, resolver) = state;
+                var (ciphers, collectionIndex, keyService, orgKeys) = state;
 
-                var key = resolver.GetKeyForOrganization(dto.OrganizationId);
+                var key = keyService.GetOrganizationKey(dto.OrganizationId, orgKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
                 var cipher = VaultDataParser.ParseAndDecryptCipher(in dto, payload, key);
                 ciphers.Add(cipher.Id, cipher);
                 AddCollectionMembership(collectionIndex, in dto);
@@ -41,7 +43,7 @@ internal sealed class VaultLoader(
         for (int i = 0; i < collectionDtos.Length; i++)
         {
             ref readonly var dto = ref collectionDtos[i];
-            var key = keyResolver.GetKeyForOrganization(dto.OrganizationId);
+            var key = accountKeyService.GetOrganizationKey(dto.OrganizationId, organizationKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
             collections.Add(VaultDataParser.ParseAndDecryptCollection(in dto, key));
         }
 

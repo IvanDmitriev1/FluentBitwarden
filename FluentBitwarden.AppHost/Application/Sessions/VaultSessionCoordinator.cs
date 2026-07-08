@@ -1,9 +1,12 @@
+using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
+using FluentBitwarden.AppHost.Modules.Vault.Attachments;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using System.Diagnostics.CodeAnalysis;
 
 namespace FluentBitwarden.AppHost.Application.Sessions;
@@ -13,6 +16,8 @@ internal sealed class VaultSessionCoordinator(
     IAccountUnlockService accountUnlockService,
     IVaultWorkspace vaultWorkspace,
     IAccountStore accountStore,
+    IAccountKeyService accountKeyService,
+    IVaultCipherAttachmentDownloadService attachmentDownloadService,
     IIpcEventPublisher eventPublisher)
     : IVaultSessionCoordinator
 {
@@ -45,6 +50,11 @@ internal sealed class VaultSessionCoordinator(
             var context = new BitwardenAccountContext(request.Account.UserId, request.Account.Environment);
             bool forceSync = accountStore.GetAccountProfileDetails(context.UserId) is null;
 
+            var keyMaterial = accountStore.GetKeyMaterial(context.UserId)
+                ?? throw new InvalidOperationException(
+                    $"Account key material not found for user '{context.UserId}'.");
+            accountKeyService.BeginSession(userKey, keyMaterial.ProtectedPrivateKey);
+
             await vaultWorkspace.OpenAsync(
                 context,
                 userKey,
@@ -53,6 +63,7 @@ internal sealed class VaultSessionCoordinator(
 
             if (accountStore.GetAccountProfileDetails(context.UserId) is null)
             {
+                accountKeyService.EndSession();
                 return new AccountUnlockOutcome.Failure(
                     "Account profile details are not available. Connect to Bitwarden and unlock again.");
             }
@@ -64,6 +75,17 @@ internal sealed class VaultSessionCoordinator(
         {
             _transitionGate.Release();
         }
+    }
+
+    public ValueTask DownloadCipherAttachmentAsync(
+        DownloadVaultCipherAttachmentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var session = GetUnlockedSession();
+        return new ValueTask(attachmentDownloadService.DownloadAsync(
+            session.Account.BitwardenAccountContext,
+            request,
+            cancellationToken));
     }
 
     public void RequestLock() => _ = RequestLockAsync();
@@ -117,6 +139,7 @@ internal sealed class VaultSessionCoordinator(
                 return;
 
             vaultWorkspace.Close();
+            accountKeyService.EndSession();
             PublishSessionChange(null);
 
             GC.Collect();

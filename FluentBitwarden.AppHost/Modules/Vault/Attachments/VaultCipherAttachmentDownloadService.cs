@@ -1,31 +1,28 @@
+using BitwardenApi.Infrastructure.Cryptography.Enc;
 using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Attachments.Contracts;
 using BitwardenApi.Vault.Cryptography;
-using FluentBitwarden.AppHost.Application.Sessions;
-using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
-using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
+using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Attachments;
 
 internal sealed class VaultCipherAttachmentDownloadService(
     IVaultCipherAttachmentApi attachmentApi,
-    IVaultSessionCoordinator vaultSessionCoordinator,
     IUnitOfWorkFactory unitOfWorkFactory,
-    IVaultKeyResolverFactory keyResolverFactory) : IVaultCipherAttachmentDownloadService
+    IAccountKeyService accountKeyService) : IVaultCipherAttachmentDownloadService
 {
     public Task DownloadAsync(
+        BitwardenAccountContext accountContext,
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {
-        var unlockedSession = vaultSessionCoordinator.GetUnlockedSession();
-
         return attachmentApi.DownloadToAsync(
-            unlockedSession.Account.BitwardenAccountContext,
+            accountContext,
             request.Attachment,
             async (encStream, protectedAttachmentKey) =>
             {
-                using var attachmentKey = ResolveAttachmentKey(unlockedSession, request.Attachment, protectedAttachmentKey);
+                using var attachmentKey = ResolveAttachmentKey(accountContext.UserId, request.Attachment, protectedAttachmentKey);
 
                 await using var plaintextStream = new FileStream(
                     request.DestinationPath,
@@ -43,15 +40,24 @@ internal sealed class VaultCipherAttachmentDownloadService(
     }
 
 
-    private AttachmentKey ResolveAttachmentKey(UnlockedSession unlockedSession, VaultCipherAttachment attachment, EncString protectedAttachmentKey)
+    private AttachmentKey ResolveAttachmentKey(UserId userId, VaultCipherAttachment attachment, EncString protectedAttachmentKey)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        var cipherKeyMaterial = unitOfWork.VaultReaderRepository.GetCipherKeyMaterial(unlockedSession.UserKey.UserId, attachment.CipherId) ??
-                                throw new InvalidOperationException($"Cipher key material is missing for cipher '{attachment.CipherId}'.");
+        var cipher = unitOfWork.VaultReaderRepository.GetCipherKeyMaterial(userId, attachment.CipherId) ??
+                     throw new InvalidOperationException($"Cipher key material is missing for cipher '{attachment.CipherId}'.");
 
-        using var keyResolver = keyResolverFactory.Create(unitOfWork, unlockedSession.UserKey);
+        cipher.CipherId.ThrowIfEmpty();
 
-        var attachmentKey = keyResolver.CreateAttachmentKey(cipherKeyMaterial, protectedAttachmentKey);
-        return attachmentKey;
+        var protectedOrganizationKey = cipher.OrganizationId.IsEmpty
+            ? AsymmetricEncString.Empty
+            : unitOfWork.VaultReaderRepository.GetAllOrganizations(userId)
+                .First(organization => organization.Id == cipher.OrganizationId)
+                .ProtectedOrganizationKey;
+
+        return accountKeyService.CreateAttachmentKey(
+            cipher.OrganizationId,
+            protectedOrganizationKey,
+            cipher.ProtectedCipherKey,
+            protectedAttachmentKey);
     }
 }
