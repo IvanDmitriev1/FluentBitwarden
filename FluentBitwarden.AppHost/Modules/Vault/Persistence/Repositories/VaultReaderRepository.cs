@@ -2,12 +2,14 @@ using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
 using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Data.Mapping;
 using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
-internal sealed partial class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction)
+internal sealed class VaultReaderRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
     public delegate void CipherVisitor<in TState>(
         TState state,
@@ -16,7 +18,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
 
     public VaultFolderResponse[] GetAllFolders(UserId userId)
     {
-        var rows = Connection.Query<FolderRow>(
+        var rows = Connection.Query<VaultFolderMapper.FolderRow>(
             """
             SELECT
                 folder_id,
@@ -29,12 +31,12 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userId.ToString() },
             transaction: Transaction);
 
-        return rows.Select(static row => ToDto(row)).ToArray();
+        return rows.Select(static row => VaultFolderMapper.ToDomain(row)).ToArray();
     }
 
     public VaultOrganizationResponse[] GetAllOrganizations(UserId userId)
     {
-        var rows = Connection.Query<OrganizationRow>(
+        var rows = Connection.Query<VaultOrganizationMapper.OrganizationRow>(
             """
             SELECT
                 user_id,
@@ -52,12 +54,12 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userId.ToString() },
             transaction: Transaction);
 
-        return rows.Select(static row => ToDto(row)).ToArray();
+        return rows.Select(static row => VaultOrganizationMapper.ToDomain(row)).ToArray();
     }
 
     public VaultCollectionResponse[] GetAllCollections(UserId userId)
     {
-        var rows = Connection.Query<CollectionRow>(
+        var rows = Connection.Query<VaultCollectionMapper.CollectionRow>(
             """
             SELECT
                 collection_id,
@@ -74,7 +76,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userId.ToString() },
             transaction: Transaction);
 
-        return rows.Select(static row => ToDto(row)).ToArray();
+        return rows.Select(static row => VaultCollectionMapper.ToDomain(row)).ToArray();
     }
 
     public void ReadAllCiphers<TState>(UserId userId, TState stateObj, CipherVisitor<TState> onCipher)
@@ -82,7 +84,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         var userIdString = userId.ToString();
         var collectionIdsByCipherId = GetCollectionIdsByCipherId(userIdString);
         var attachmentsByCipherId = GetAttachmentsByCipherId(userIdString);
-        var cipherRows = Connection.Query<CipherRow>(
+        var cipherRows = Connection.Query<VaultCipherMapper.CipherRow>(
             """
             SELECT
                 vc.row_id,
@@ -109,7 +111,6 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userIdString },
             transaction: Transaction);
 
-
         int? bufferLength = Connection.ExecuteScalar<int?>(
             """
             SELECT MAX(length(encrypted_payload))
@@ -132,7 +133,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
 
             collectionIdsByCipherId.TryGetValue(row.CipherId, out var collectionIds);
             attachmentsByCipherId.TryGetValue(row.CipherId, out var attachments);
-            var dto = ToDto(row, collectionIds ?? [], attachments ?? []);
+            var dto = VaultCipherMapper.ToDomain(row, collectionIds ?? [], attachments ?? []);
             onCipher.Invoke(stateObj, ref dto, bufferOwner.Span[..bytesWritten]);
         }
     }
@@ -148,9 +149,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             new { UserId = userId.ToString() },
             transaction: Transaction);
 
-        return maxRevisionUnixMs is { } unixMs
-            ? DateTimeOffset.FromUnixTimeMilliseconds(unixMs)
-            : null;
+        return maxRevisionUnixMs.ToDateTimeOffsetFromUnixMs();
     }
 
     public VaultCipherKeyMaterial? GetCipherKeyMaterial(UserId userId, CipherId cipherId)
@@ -158,7 +157,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
         userId.ThrowIfEmpty();
         cipherId.ThrowIfEmpty();
 
-        var row = Connection.QueryFirstOrDefault<CipherKeyMaterialRow>(
+        var row = Connection.QueryFirstOrDefault<VaultCipherMapper.CipherKeyMaterialRow>(
             """
             SELECT
                 cipher_id AS CipherId,
@@ -174,12 +173,12 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             },
             transaction: Transaction);
 
-        return row is null ? null : ToKeyMaterial(row);
+        return row is null ? null : VaultCipherMapper.ToKeyMaterial(row);
     }
 
     private Dictionary<string, CollectionId[]> GetCollectionIdsByCipherId(string userId)
     {
-        var rows = Connection.Query<CipherCollectionRow>(
+        var rows = Connection.Query<VaultCipherMapper.CipherCollectionRow>(
             """
             SELECT
                 cipher_id,
@@ -201,7 +200,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
 
     private Dictionary<string, VaultCipherAttachmentDownloadResponse[]> GetAttachmentsByCipherId(string userId)
     {
-        var rows = Connection.Query<CipherAttachmentRow>(
+        var rows = Connection.Query<VaultCipherMapper.CipherAttachmentRow>(
             """
             SELECT
                 cipher_id AS CipherId,
@@ -219,7 +218,7 @@ internal sealed partial class VaultReaderRepository(SqliteTransaction transactio
             .GroupBy(static row => row.CipherId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 static group => group.Key,
-                static group => group.Select(static row => ToDto(row)).ToArray(),
+                static group => group.Select(static row => VaultCipherMapper.ToDomain(row)).ToArray(),
                 StringComparer.OrdinalIgnoreCase);
     }
 }

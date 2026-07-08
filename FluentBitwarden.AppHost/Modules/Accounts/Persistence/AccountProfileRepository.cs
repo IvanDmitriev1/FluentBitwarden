@@ -1,5 +1,6 @@
 using Dapper;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using Microsoft.Data.Sqlite;
 
@@ -7,20 +8,6 @@ namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 
 internal sealed class AccountProfileRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    internal sealed record AccountProfileRow(
-        string UserId,
-        string Email,
-        string ApiBase,
-        string IdentityBase,
-        string NotificationsBase,
-        string VaultBase);
-
-    internal sealed record AccountProfileDetailsRow(
-        string? ProfileName,
-        string? ProfileCulture,
-        long? ProfileCreationDateUnixMs,
-        int ProfileSynced);
-
     public AccountProfile[] GetAccounts()
     {
         const string sql = """
@@ -35,11 +22,11 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                            ORDER BY email ASC;
                            """;
 
-        var rows = Connection.Query<AccountProfileRow>(
+        var rows = Connection.Query<AccountProfileMapper.AccountProfileRow>(
             sql,
             transaction: Transaction);
 
-        return rows.Select(static row => MapToDomain(row)).ToArray();
+        return rows.Select(static row => AccountProfileMapper.ToDomain(row)).ToArray();
     }
 
     public AccountProfile? GetById(UserId accountId)
@@ -56,7 +43,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                            WHERE user_id = @UserId COLLATE NOCASE;
                            """;
 
-        AccountProfileRow? row = Connection.QueryFirstOrDefault<AccountProfileRow>(
+        AccountProfileMapper.AccountProfileRow? row = Connection.QueryFirstOrDefault<AccountProfileMapper.AccountProfileRow>(
             sql,
             new
             {
@@ -64,7 +51,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             },
             transaction: Transaction);
 
-        return row is null ? null : MapToDomain(row);
+        return row is null ? null : AccountProfileMapper.ToDomain(row);
     }
 
     public AccountProfileDetails? GetProfileDetails(UserId accountId)
@@ -79,7 +66,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
                            WHERE user_id = @UserId COLLATE NOCASE;
                            """;
 
-        AccountProfileDetailsRow? row = Connection.QueryFirstOrDefault<AccountProfileDetailsRow>(
+        AccountProfileMapper.AccountProfileDetailsRow? row = Connection.QueryFirstOrDefault<AccountProfileMapper.AccountProfileDetailsRow>(
             sql,
             new
             {
@@ -87,7 +74,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             },
             transaction: Transaction);
 
-        return row is null ? null : MapProfileDetails(row);
+        return row is null ? null : AccountProfileMapper.ToProfileDetails(row);
     }
 
     public void UpdateSyncedProfile(
@@ -107,14 +94,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
 
         var affectedRows = Connection.Execute(
             sql,
-            new
-            {
-                UserId = accountId.ToString(),
-                Email = profile.Email,
-                ProfileName = NullIfWhiteSpace(profile.Name),
-                ProfileCulture = NullIfWhiteSpace(profile.Culture),
-                ProfileCreationDateUnixMs = profile.CreationDate.ToUnixTimeMilliseconds()
-            },
+            AccountProfileMapper.ToUpdateSyncedParameters(accountId, profile),
             transaction: Transaction);
 
         if (affectedRows == 0)
@@ -150,15 +130,7 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
 
         Connection.Execute(
             sql,
-            new
-            {
-                UserId = accountProfile.UserId.ToString(),
-                Email = accountProfile.Email,
-                ApiBase = accountProfile.Environment.ApiBase.ToString(),
-                IdentityBase = accountProfile.Environment.IdentityBase.ToString(),
-                NotificationsBase = accountProfile.Environment.NotificationsBase.ToString(),
-                VaultBase = accountProfile.Environment.VaultBase.ToString()
-            },
+            AccountProfileMapper.ToUpsertParameters(accountProfile),
             transaction: Transaction);
     }
 
@@ -177,29 +149,4 @@ internal sealed class AccountProfileRepository(SqliteTransaction transaction) : 
             },
             transaction: Transaction);
     }
-
-    private static AccountProfile MapToDomain(AccountProfileRow row) => new(
-        UserId: UserId.Parse(row.UserId),
-        Email: row.Email,
-        Environment: new BitwardenEnvironment(
-            ApiBase: new Uri(row.ApiBase, UriKind.Absolute),
-            IdentityBase: new Uri(row.IdentityBase, UriKind.Absolute),
-            NotificationsBase: new Uri(row.NotificationsBase, UriKind.Absolute),
-            VaultBase: new Uri(row.VaultBase, UriKind.Absolute)));
-
-    private static AccountProfileDetails? MapProfileDetails(AccountProfileDetailsRow row)
-    {
-        if (row.ProfileSynced == 0)
-            return null;
-
-        return new AccountProfileDetails(
-            Name: row.ProfileName ?? string.Empty,
-            Culture: row.ProfileCulture ?? string.Empty,
-            CreationDate: row.ProfileCreationDateUnixMs is { } creationDateUnixMs
-                ? DateTimeOffset.FromUnixTimeMilliseconds(creationDateUnixMs)
-                : DateTimeOffset.UnixEpoch);
-    }
-
-    private static string? NullIfWhiteSpace(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value;
 }

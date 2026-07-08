@@ -4,7 +4,6 @@ using BitwardenApi.Vault.Cryptography;
 using BitwardenApi.Vault.Items;
 using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
@@ -45,7 +44,7 @@ internal sealed class VaultCipherSaver(
     private void Persist(UserId userId, ref readonly VaultCipherResponse dto)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
-        new VaultWriterRepository(unitOfWork.Transaction, userId).UpsertCipher(in dto);
+        unitOfWork.VaultWriterRepository.UpsertCipher(userId, in dto);
         unitOfWork.SaveChanges();
     }
 

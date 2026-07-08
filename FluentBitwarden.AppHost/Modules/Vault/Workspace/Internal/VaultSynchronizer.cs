@@ -1,5 +1,4 @@
 using Windows.Networking.Connectivity;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Platform.Infrastructure;
 using FluentBitwarden.AppHost.Data.Abstractions;
@@ -33,12 +32,13 @@ internal sealed class VaultSynchronizer(
                 throw new InvalidDataException("Sync profile user id did not match the unlocked account.");
 
             using var unitOfWork = unitOfWorkFactory.Create();
-            var repository = new VaultWriterRepository(unitOfWork.Transaction, decryptedUserKey.UserId);
+            var userId = decryptedUserKey.UserId;
+            var repository = unitOfWork.VaultWriterRepository;
 
-            repository.WriteOrganizations(response.Profile.Organizations);
-            repository.WriteFolders(response.Folders);
-            repository.WriteCollections(response.Collections);
-            repository.WriteCiphers(response.VaultCiphers);
+            repository.WriteOrganizations(userId, response.Profile.Organizations);
+            repository.WriteFolders(userId, response.Folders);
+            repository.WriteCollections(userId, response.Collections);
+            repository.WriteCiphers(userId, response.VaultCiphers);
 
             unitOfWork.AccountProfileRepository.UpdateSyncedProfile(decryptedUserKey.UserId, response.Profile);
             unitOfWork.SaveChanges();

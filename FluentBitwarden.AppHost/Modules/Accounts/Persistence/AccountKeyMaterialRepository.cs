@@ -1,21 +1,12 @@
 using Dapper;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 
 internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    internal sealed record AccountKeyMaterialRow(
-        string UserId,
-        string Salt,
-        byte[] EncryptedUserKey,
-        byte[] EncryptedPrivateKey,
-        int KdfType,
-        int KdfIterations,
-        int? KdfMemoryMib,
-        int? KdfParallelism);
-
     public AccountKeyMaterial? GetById(UserId userId)
     {
         const string sql = """
@@ -32,7 +23,7 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
                            WHERE user_id = @UserId;
                            """;
 
-        var row = Connection.QueryFirstOrDefault<AccountKeyMaterialRow>(
+        var row = Connection.QueryFirstOrDefault<AccountKeyMaterialMapper.AccountKeyMaterialRow>(
             sql,
             new
             {
@@ -40,7 +31,7 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             },
             transaction: Transaction);
 
-        return row is null ? null : MapToDomain(row);
+        return row is null ? null : AccountKeyMaterialMapper.ToDomain(row);
     }
 
     public void Upsert(AccountKeyMaterial keyMaterial)
@@ -76,21 +67,9 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
                                kdf_parallelism       = excluded.kdf_parallelism;
                            """;
 
-        var kdf = FlattenKdf(keyMaterial.KdfConfig);
-
         Connection.Execute(
             sql,
-            new
-            {
-                UserId = keyMaterial.UserId.ToString(),
-                Salt = keyMaterial.Salt,
-                EncryptedUserKey = keyMaterial.ProtectedUserKey.Value.ToByteArray(),
-                EncryptedPrivateKey = keyMaterial.ProtectedPrivateKey.Value.ToByteArray(),
-                KdfType = (int)kdf.Type,
-                KdfIterations = kdf.Iterations,
-                KdfMemoryMib = kdf.MemoryMib,
-                KdfParallelism = kdf.Parallelism
-            },
+            AccountKeyMaterialMapper.ToUpsertParameters(keyMaterial),
             transaction: Transaction);
     }
 
@@ -107,44 +86,4 @@ internal sealed class AccountKeyMaterialRepository(SqliteTransaction transaction
             },
             Transaction);
     }
-
-    private static AccountKeyMaterial MapToDomain(in AccountKeyMaterialRow row) => new(
-        UserId: UserId.Parse(row.UserId),
-        Salt: row.Salt,
-        KdfConfig: BuildKdf(row),
-        ProtectedUserKey: ProtectedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),
-        ProtectedPrivateKey: ProtectedPrivateKey.Create(EncString.FromBytes(row.EncryptedPrivateKey)));
-
-    private static KdfConfig BuildKdf(in AccountKeyMaterialRow row) =>
-        (KdfType)row.KdfType switch
-        {
-            KdfType.Pbkdf2Sha256 => new KdfConfig.Pbkdf2(row.KdfIterations),
-
-            KdfType.Argon2Id => new KdfConfig.Argon2Id(
-                row.KdfIterations,
-                row.KdfMemoryMib ??
-                throw new InvalidOperationException("kdf_memory_mib is required for Argon2Id."),
-                row.KdfParallelism ??
-                throw new InvalidOperationException("kdf_parallelism is required for Argon2Id.")),
-
-            _ => throw new InvalidOperationException($"Unknown KdfType: {row.KdfType}.")
-        };
-
-    private static (KdfType Type, int Iterations, int? MemoryMib, int? Parallelism) FlattenKdf(KdfConfig kdf) =>
-        kdf switch
-        {
-            KdfConfig.Pbkdf2(var iterations) => (
-                KdfType.Pbkdf2Sha256,
-                iterations,
-                null,
-                null),
-
-            KdfConfig.Argon2Id(var iterations, var memoryMib, var parallelism) => (
-                KdfType.Argon2Id,
-                iterations,
-                memoryMib,
-                parallelism),
-
-            _ => throw new InvalidOperationException($"Unknown KdfConfig type: {kdf.GetType().Name}.")
-        };
 }

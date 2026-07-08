@@ -1,17 +1,17 @@
 using Dapper;
 using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
 using BitwardenApi.Vault.Attachments.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
-internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserId userId) : BaseRepository(transaction)
+internal sealed class VaultWriterRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    private readonly string _userIdStr = userId.ToString();
-
-    public void WriteOrganizations(ReadOnlySpan<VaultOrganizationResponse> organizations)
+    public void WriteOrganizations(UserId userId, ReadOnlySpan<VaultOrganizationResponse> organizations)
     {
-        Connection.Execute("DELETE FROM vault_organization WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+        var userIdStr = userId.ToString();
+        Connection.Execute("DELETE FROM vault_organization WHERE user_id = @UserId;", new { UserId = userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in organizations)
         {
@@ -36,28 +36,15 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @MemberStatus,
                     @ProtectedOrganizationKey)
                 """,
-                new
-                {
-                    UserId = _userIdStr,
-                    OrganizationId = dto.Id.ToString(),
-                    OrganizationUserId = dto.OrganizationUserId == Guid.Empty
-                        ? null
-                        : dto.OrganizationUserId.ToString(),
-                    OrganizationName = dto.Name,
-                    IsEnabled = dto.Enabled ? 1 : 0,
-                    AccessSecretsManager = dto.AccessSecretsManager ? 1 : 0,
-                    MemberStatus = dto.Status,
-                    ProtectedOrganizationKey = dto.ProtectedOrganizationKey.IsEmpty
-                        ? null
-                        : dto.ProtectedOrganizationKey.ToByteArray()
-                },
+                VaultOrganizationMapper.ToInsertParameters(userIdStr, in dto),
                 transaction: Transaction);
         }
     }
 
-    public void WriteFolders(ReadOnlySpan<VaultFolderResponse> folders)
+    public void WriteFolders(UserId userId, ReadOnlySpan<VaultFolderResponse> folders)
     {
-        Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+        var userIdStr = userId.ToString();
+        Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;", new { UserId = userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in folders)
         {
@@ -66,20 +53,15 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                 INSERT INTO vault_folder (user_id, folder_id, revision_date_unix_ms, encrypted_name)
                 VALUES (@UserId, @FolderId, @RevisionDateUnixMs, @EncryptedName)
                 """,
-                new
-                {
-                    UserId = _userIdStr,
-                    FolderId = dto.Id.ToString(),
-                    RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
-                    EncryptedName = dto.EncryptedName.ToByteArray()
-                },
+                VaultFolderMapper.ToInsertParameters(userIdStr, in dto),
                 transaction: Transaction);
         }
     }
 
-    public void WriteCollections(ReadOnlySpan<VaultCollectionResponse> collections)
+    public void WriteCollections(UserId userId, ReadOnlySpan<VaultCollectionResponse> collections)
     {
-        Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+        var userIdStr = userId.ToString();
+        Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;", new { UserId = userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in collections)
         {
@@ -104,30 +86,19 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @CollectionType,
                     @EncryptedName)
                 """,
-                new
-                {
-                    UserId = _userIdStr,
-                    CollectionId = dto.Id.ToString(),
-                    OrganizationId = dto.OrganizationId.IsEmpty
-                        ? null
-                        : dto.OrganizationId.ToString(),
-                    ReadOnly = dto.ReadOnly ? 1 : 0,
-                    Manage = dto.Manage ? 1 : 0,
-                    HidePasswords = dto.HidePasswords ? 1 : 0,
-                    CollectionType = dto.Type,
-                    EncryptedName = dto.EncryptedName.ToByteArray()
-                },
+                VaultCollectionMapper.ToInsertParameters(userIdStr, in dto),
                 transaction: Transaction);
         }
     }
 
-    public void WriteCiphers(ReadOnlySpan<VaultCipherResponse> ciphers)
+    public void WriteCiphers(UserId userId, ReadOnlySpan<VaultCipherResponse> ciphers)
     {
-        Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;", new { UserId = _userIdStr }, transaction: Transaction);
+        var userIdStr = userId.ToString();
+        Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;", new { UserId = userIdStr }, transaction: Transaction);
 
         foreach (ref readonly var dto in ciphers)
         {
-            InsertCipher(in dto);
+            InsertCipher(userIdStr, in dto);
         }
     }
 
@@ -138,17 +109,18 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
     /// enabled on the connection, so their old child rows are cleared before the insert re-adds
     /// them; other cached ciphers are untouched.
     /// </summary>
-    public void UpsertCipher(ref readonly VaultCipherResponse dto)
+    public void UpsertCipher(UserId userId, ref readonly VaultCipherResponse dto)
     {
+        var userIdStr = userId.ToString();
         Connection.Execute(
             "DELETE FROM vault_cipher WHERE user_id = @UserId AND cipher_id = @CipherId;",
-            new { UserId = _userIdStr, CipherId = dto.Id.ToString() },
+            new { UserId = userIdStr, CipherId = dto.Id.ToString() },
             transaction: Transaction);
 
-        InsertCipher(in dto);
+        InsertCipher(userIdStr, in dto);
     }
 
-    private void InsertCipher(ref readonly VaultCipherResponse dto)
+    private void InsertCipher(string userIdStr, ref readonly VaultCipherResponse dto)
     {
         var cipherId = dto.Id.ToString();
         var rowId = Connection.ExecuteScalar<long>(
@@ -185,35 +157,15 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                 zeroblob(@Size))
             RETURNING row_id
             """,
-            new
-            {
-                UserId = _userIdStr,
-                CipherId = cipherId,
-                OrganizationId = dto.OrganizationId.IsEmpty
-                    ? null
-                    : dto.OrganizationId.ToString(),
-                CipherType = (int)dto.VaultCipherType,
-                RevisionDateUnixMs = dto.RevisionDate.ToUnixTimeMilliseconds(),
-                CreationDateUnixMs = dto.CreationDate.ToUnixTimeMilliseconds(),
-                DeletedDateUnixMs = dto.DeletedDate?.ToUnixTimeMilliseconds(),
-                ArchivedDateUnixMs = dto.ArchivedDate?.ToUnixTimeMilliseconds(),
-                Favorite = dto.Favorite ? 1 : 0,
-                Reprompt = dto.Reprompt ? 1 : 0,
-                Edit = dto.Edit ? 1 : 0,
-                ViewPassword = dto.ViewPassword ? 1 : 0,
-                ProtectedCipherKey = dto.ProtectedCipherKey.IsEmpty
-                    ? null
-                    : dto.ProtectedCipherKey.ToByteArray(),
-                Size = dto.Data.Length
-            },
+            VaultCipherMapper.ToInsertParameters(userIdStr, cipherId, in dto),
             transaction: Transaction);
 
         WritePayloadBlob(rowId, dto.Data);
-        WriteCipherAssignments(cipherId, dto.FolderId, dto.CollectionIds);
-        WriteCipherAttachments(cipherId, dto.Attachments);
+        WriteCipherAssignments(userIdStr, cipherId, dto.FolderId, dto.CollectionIds);
+        WriteCipherAttachments(userIdStr, cipherId, dto.Attachments);
     }
 
-    private void WriteCipherAttachments(string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)
+    private void WriteCipherAttachments(string userIdStr, string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)
     {
         if (attachments.Length == 0)
             return;
@@ -239,27 +191,19 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                     @EncryptedFileName,
                     @Size)
                 """,
-                new
-                {
-                    UserId = _userIdStr,
-                    CipherId = cipherId,
-                    AttachmentId = attachment.Id.ToString(),
-                    SortOrder = i,
-                    EncryptedFileName = attachment.EncryptedFileName.ToByteArray(),
-                    Size = attachment.Size.Bytes
-                },
+                VaultCipherMapper.ToAttachmentInsertParameters(userIdStr, cipherId, i, in attachment),
                 transaction: Transaction);
         }
     }
 
-    private void WriteCipherAssignments(string cipherId, FolderId folderId, CollectionId[] collectionIds)
+    private void WriteCipherAssignments(string userIdStr, string cipherId, FolderId folderId, CollectionId[] collectionIds)
     {
         Connection.Execute(
             """
             DELETE FROM vault_cipher_collection WHERE user_id = @UserId AND cipher_id = @CipherId;
             DELETE FROM vault_cipher_folder WHERE user_id = @UserId AND cipher_id = @CipherId;
             """,
-            new { UserId = _userIdStr, CipherId = cipherId },
+            new { UserId = userIdStr, CipherId = cipherId },
             transaction: Transaction);
 
         if (!folderId.IsEmpty)
@@ -271,7 +215,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                 """,
                 new
                 {
-                    UserId = _userIdStr,
+                    UserId = userIdStr,
                     CipherId = cipherId,
                     FolderId = folderId.ToString()
                 },
@@ -293,7 +237,7 @@ internal sealed class VaultWriterRepository(SqliteTransaction transaction, UserI
                 """,
                 new
                 {
-                    UserId = _userIdStr,
+                    UserId = userIdStr,
                     CipherId = cipherId,
                     CollectionId = collectionId.ToString()
                 },
