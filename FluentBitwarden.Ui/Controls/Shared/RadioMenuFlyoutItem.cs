@@ -15,7 +15,10 @@ public sealed partial class RadioMenuFlyoutItem : ToggleMenuFlyoutItem
         Click += OnClick;
     }
 
-    partial void OnSelectedValueChanged()
+    partial void OnSelectedValueChanged() => UpdateIsChecked();
+    partial void OnValueChanged() => UpdateIsChecked();
+
+    private void UpdateIsChecked()
     {
         var shouldBeChecked = Equals(Value, SelectedValue);
 

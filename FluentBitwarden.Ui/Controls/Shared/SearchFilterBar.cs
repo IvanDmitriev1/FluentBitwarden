@@ -76,8 +76,10 @@ public sealed partial class SearchFilterBar : Control
         IsSearchOpen = false;
     }
 
-    private void OnSearchToggleButtonClick(object sender, RoutedEventArgs e) =>
+    private void OnSearchToggleButtonClick(object sender, RoutedEventArgs e)
+    {
         IsSearchOpen = !IsSearchOpen;
+    }
 
     private void UpdateSearchState(bool useTransitions = true)
     {

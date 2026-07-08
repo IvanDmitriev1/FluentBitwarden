@@ -42,12 +42,9 @@
 
                 <vaultCiphers:VaultCipherPagePaneView
                     Grid.Column="0"
-                    CipherSortDirection="{x:Bind ViewModel.CipherSortDirection, Mode=TwoWay}"
-                    CipherSortField="{x:Bind ViewModel.CipherSortField, Mode=TwoWay}"
-                    FilteredCiphers="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
-                    SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay}"
-                    SelectedCipher="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
-                    SelectedCipherType="{x:Bind ViewModel.SelectedCipherType, Mode=TwoWay}" />
+                    Query="{x:Bind ViewModel.CurrentQuery, Mode=TwoWay}"
+                    RequestedCipherId="{x:Bind ViewModel.RequestedCipherId, Mode=OneWay}"
+                    SelectedCipher="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}" />
 
                 <controls:PropertySizer
                     Grid.Column="1"

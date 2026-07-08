@@ -10,6 +10,7 @@
     xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
     xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
+    Unloaded="VaultCipherPagePaneView_OnUnloaded"
     mc:Ignorable="d">
 
     <UserControl.Resources>
