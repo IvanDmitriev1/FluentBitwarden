@@ -1,6 +1,4 @@
 using System.Buffers.Text;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
-using BitwardenApi.Vault.Items.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
@@ -10,9 +8,9 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 /// <c>VaultDataParser.ParseAndDecryptCipher</c>: every plaintext form here matches what the read path
 /// expects to decode.
 /// </summary>
-internal sealed class VaultCipherRequestFactory
+internal static class VaultCipherRequestFactory
 {
-    public VaultCipherRequest Build(
+    public static VaultCipherRequest Build(
         VaultCipher cipher,
         ReadOnlySpan<byte> cipherKey,
         EncString wrappedKey,

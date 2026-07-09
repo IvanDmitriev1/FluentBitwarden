@@ -8,13 +8,13 @@ namespace FluentBitwarden.AppHost.Infrastructure.Ipc.Handlers;
 
 internal sealed class WindowsHelloIpcHandler(
     WindowsHelloUnlocker windowsHelloUnlocker,
-    IVaultSessionCoordinator vaultSessionCoordinator) : IWindowsHelloUnlockClient, IIpcRequestsHandler
+    IVaultSession vaultSession) : IWindowsHelloUnlockClient, IIpcRequestsHandler
 {
     [IpcMessageHandler(IpcMessageTypes.WindowsHello.GetCurrentAccountStatus)]
     public async ValueTask<WindowsHelloStatus> GetStatusAsync(
         CancellationToken cancellationToken = default)
     {
-        var session = vaultSessionCoordinator.GetUnlockedSession();
+        var session = vaultSession.GetUnlockedSession();
         var isSupported = await windowsHelloUnlocker.IsSupportedAsync();
         var isEnabled = windowsHelloUnlocker.IsEnabled(session.Account.UserId);
 
@@ -35,7 +35,7 @@ internal sealed class WindowsHelloIpcHandler(
         EnableWindowsHelloRequest request,
         CancellationToken cancellationToken = default)
     {
-        var session = vaultSessionCoordinator.GetUnlockedSession();
+        var session = vaultSession.GetUnlockedSession();
         windowsHelloUnlocker.Enable(session.UserKey, request.OwnerWindowHandle);
         return ValueTask.CompletedTask;
     }
@@ -43,7 +43,7 @@ internal sealed class WindowsHelloIpcHandler(
     [IpcMessageHandler(IpcMessageTypes.WindowsHello.Disable)]
     public ValueTask DisableAsync(CancellationToken cancellationToken = default)
     {
-        var session = vaultSessionCoordinator.GetUnlockedSession();
+        var session = vaultSession.GetUnlockedSession();
         windowsHelloUnlocker.Disable(session.Account.UserId);
         return ValueTask.CompletedTask;
     }

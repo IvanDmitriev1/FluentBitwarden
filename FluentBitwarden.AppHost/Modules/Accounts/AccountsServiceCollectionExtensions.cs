@@ -1,5 +1,4 @@
 using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
-using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
 using FluentBitwarden.AppHost.Modules.Accounts.Login;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,8 +17,6 @@ internal static class AccountsServiceCollectionExtensions
 
         services.AddSingleton<IBitwardenAccessTokenProvider, AccountTokenProvider>();
         services.AddSingleton<IAccountUnlockService, AccountUnlockService>();
-
-        services.AddSingleton<IAccountKeyService, AccountKeyService>();
 
         return services;
     }

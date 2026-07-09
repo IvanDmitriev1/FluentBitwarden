@@ -17,9 +17,6 @@ public static class IpcMessageTypes
         public const ushort Sync = 100;
         public const ushort SearchCiphers = 101;
         public const ushort GetCipher = 102;
-        public const ushort GetFolders = 103;
-        public const ushort GetCollections = 104;
-        public const ushort GetStatus = 105;
         public const ushort SessionStatusChanged = 106;
         public const ushort DownloadCipherAttachment = 107;
         public const ushort SaveCipher = 108;
@@ -30,9 +27,13 @@ public static class IpcMessageTypes
         public const ushort LogIn = 201;
         public const ushort GetAccounts = 202;
         public const ushort Unlock = 203;
-        public const ushort Logout = 205;
-        public const ushort GetUnlocked = 206;
-        public const ushort GetUnlockedProfileDetails = 207;
+    }
+
+    public static class Session
+    {
+        public const ushort GetUnlockedAccount = 600;
+        public const ushort Lock = 601;
+        public const ushort GetStatus = 602;
     }
 
     public static class WindowsHello

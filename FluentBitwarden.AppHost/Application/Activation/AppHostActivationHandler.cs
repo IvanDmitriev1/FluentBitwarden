@@ -6,7 +6,7 @@ namespace FluentBitwarden.AppHost.Application.Activation;
 
 internal sealed class AppHostActivationHandler(
     IUiProcessLauncher uiProcessLauncher,
-    IVaultSessionCoordinator vaultSessionCoordinator)
+    IVaultSession vaultSession)
 {
     public void Handle(AppActivationArguments args)
     {
@@ -17,7 +17,7 @@ internal sealed class AppHostActivationHandler(
                 uiProcessLauncher.ActivateMainWindow();
                 break;
             case AppHostCliCommand.Lock:
-                vaultSessionCoordinator.RequestLock();
+                vaultSession.RequestLock();
                 break;
             case AppHostCliCommand.Headless:
                 break;

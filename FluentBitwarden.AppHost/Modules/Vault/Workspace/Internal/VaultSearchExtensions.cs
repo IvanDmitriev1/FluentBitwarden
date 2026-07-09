@@ -1,9 +1,45 @@
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
 internal static class VaultSearchExtensions
 {
+    public static VaultCipher[] FilterCiphers(this LoadedVaultData data, VaultCipherQuery query)
+    {
+        IEnumerable<VaultCipher> result = data.CiphersById.Values;
+
+        if (query.FavoritesOnly)
+            result = result.Where(static x => x.Favorite);
+
+        if (!query.IncludeDeleted)
+            result = result.Where(static x => x.DeletedDate is null);
+
+        if (!query.FolderId.IsEmpty)
+            result = result.Where(x => x.FolderId == query.FolderId);
+
+        if (!query.CollectionId.IsEmpty)
+        {
+            if (!data.CipherIdsByCollectionId.TryGetValue(query.CollectionId, out var cipherIds))
+                return [];
+
+            result = result.Where(x => cipherIds.Contains(x.Id));
+        }
+
+        if (query.CipherType is not null)
+            result = result.Where(x => x.Type == query.CipherType.Value);
+
+        if (!string.IsNullOrWhiteSpace(query.SearchText))
+            result = result.Where(x => x.MatchesSearchText(query.SearchText));
+
+        result = result.ApplySort(query.SortField, query.SortDirection);
+
+        if (query.Limit is not null)
+            result = result.Take(query.Limit.Value);
+
+        return result.ToArray();
+    }
+
     public static IEnumerable<VaultCipher> ApplySort(
         this IEnumerable<VaultCipher> source,
         VaultCipherSortField sortField,

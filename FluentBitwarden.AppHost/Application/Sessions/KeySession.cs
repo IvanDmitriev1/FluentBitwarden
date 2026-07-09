@@ -2,18 +2,19 @@ using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
 using CommunityToolkit.HighPerformance.Buffers;
 
-namespace FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
+namespace FluentBitwarden.AppHost.Application.Sessions;
 
 /// <summary>
 /// One unlocked session's key state. Borrows the user key (never disposed here); owns and
 /// disposes the lazily-derived private key and the lazily-decrypted organization keys.
+/// Thread-safe: key derivation and caching may be reached concurrently (e.g. an attachment
+/// download racing a vault reload).
 /// </summary>
 internal sealed class KeySession(UserKey userKey, ProtectedPrivateKey protectedPrivateKey) : IDisposable
 {
+    private readonly Lock _lock = new();
     private readonly Dictionary<OrganizationId, OrganizationKey> _organizationKeysById = [];
     private PrivateKey? _privateKey;
-
-    public SymmetricCryptoKey UserKey => userKey;
 
     private PrivateKey PrivateKey => _privateKey ??= CreatePrivateKey(userKey, protectedPrivateKey);
 
@@ -24,22 +25,25 @@ internal sealed class KeySession(UserKey userKey, ProtectedPrivateKey protectedP
         if (organizationId.IsEmpty)
             return userKey;
 
-        if (_organizationKeysById.TryGetValue(organizationId, out var cachedKey))
-            return cachedKey;
-
-        if (protectedOrganizationKey.IsEmpty)
+        lock (_lock)
         {
-            throw new InvalidOperationException(
-                $"Organization '{organizationId}' does not include an encrypted organization key.");
+            if (_organizationKeysById.TryGetValue(organizationId, out var cachedKey))
+                return cachedKey;
+
+            if (protectedOrganizationKey.IsEmpty)
+            {
+                throw new InvalidOperationException(
+                    $"Organization '{organizationId}' does not include an encrypted organization key.");
+            }
+
+            var organizationKey = OrganizationKey.Create(
+                organizationId,
+                protectedOrganizationKey,
+                PrivateKey);
+
+            _organizationKeysById.Add(organizationId, organizationKey);
+            return organizationKey;
         }
-
-        var organizationKey = OrganizationKey.Create(
-            organizationId,
-            protectedOrganizationKey,
-            PrivateKey);
-
-        _organizationKeysById.Add(organizationId, organizationKey);
-        return organizationKey;
     }
 
     public AttachmentKey CreateAttachmentKey(
@@ -55,12 +59,17 @@ internal sealed class KeySession(UserKey userKey, ProtectedPrivateKey protectedP
 
     public void Dispose()
     {
-        foreach (var key in _organizationKeysById.Values)
+        lock (_lock)
         {
-            key.Dispose();
-        }
+            foreach (var key in _organizationKeysById.Values)
+            {
+                key.Dispose();
+            }
 
-        _privateKey?.Dispose();
+            _organizationKeysById.Clear();
+            _privateKey?.Dispose();
+            _privateKey = null;
+        }
     }
 
     private static PrivateKey CreatePrivateKey(UserKey userKey, ProtectedPrivateKey protectedPrivateKey)

@@ -1,4 +1,4 @@
-﻿using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.Contracts.Modules.Vault;
@@ -13,7 +13,4 @@ public interface IVaultClient
     ValueTask DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default);
-
-    ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default);
-    ValueTask<VaultCollection[]> GetCollectionsAsync(CancellationToken cancellationToken = default);
 }

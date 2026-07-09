@@ -21,7 +21,10 @@ public static partial class VaultDataParser
         return reader;
     }
 
-    private static T ParseCipherObject<T>(T cipher, ref Utf8JsonReader reader, CipherKey decryptKey,
+    private static T ParseCipherObject<T>(
+        T cipher,
+        ref Utf8JsonReader reader,
+        CipherKey decryptKey,
         CipherPropertyReader<T> readProperty) where T : VaultCipher
     {
         while (reader.Read())

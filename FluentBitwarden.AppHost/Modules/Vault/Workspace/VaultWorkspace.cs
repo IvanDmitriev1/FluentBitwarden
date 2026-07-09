@@ -1,153 +1,159 @@
-﻿using BitwardenApi.Vault.Cryptography;
+using System.Security.Cryptography;
+using BitwardenApi.Vault.Cryptography;
+using Windows.Networking.Connectivity;
+using FluentBitwarden.AppHost.Infrastructure.Extensions;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
+using FluentBitwarden.AppHost.Application.Sessions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultWorkspace(
-    VaultSynchronizer vaultSynchronizer,
-    VaultLoader vaultLoader,
-    VaultCipherSaver vaultCipherSaver) : IVaultWorkspace, IUnlockedVaultReader
+    IUnitOfWorkFactory unitOfWorkFactory,
+    IVaultItemsApi vaultApiClient) : IVaultWorkspace
 {
-    private readonly System.Threading.Lock _stateLock = new();
-    private WorkspaceState _state = WorkspaceState.Empty;
-
-    public async ValueTask OpenAsync(
-        BitwardenAccountContext accountContext,
-        UserKey userKey,
-        bool forceSync,
-        CancellationToken cancellationToken)
+    public LoadedVaultData Load(UserKey decryptedUserKey, KeySession keys)
     {
-        Reload(userKey);
+        using var unitOfWork = unitOfWorkFactory.Create();
+        var organizationKeys = unitOfWork.VaultReaderRepository.GetAllOrganizations(decryptedUserKey.UserId)
+            .ToDictionary(static organization => organization.Id, static organization => organization.ProtectedOrganizationKey);
 
-        var data = Volatile.Read(ref _state).Data;
-        if (!forceSync && data.CiphersById.Count > 0)
-            return;
+        var ciphersById = new Dictionary<CipherId, VaultCipher>();
+        var cipherIdsByCollectionId = new Dictionary<CollectionId, HashSet<CipherId>>();
 
-        var result = await vaultSynchronizer.SyncAsync(
-            accountContext,
-            userKey,
-            force: true,
-            cancellationToken);
+        unitOfWork.VaultReaderRepository.ReadAllCiphers(
+            decryptedUserKey.UserId,
+            (ref readonly dto, payload) =>
+            {
+                var key = keys.GetOrganizationKey(dto.OrganizationId, organizationKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
+                var cipher = VaultDataParser.ParseAndDecryptCipher(in dto, payload, key);
+                ciphersById.Add(cipher.Id, cipher);
+                CipherCollectionIndex.Add(cipherIdsByCollectionId, dto.Id, dto.CollectionIds);
+            });
 
-        if (result == VaultSyncResult.Synced)
+
+        var folders = unitOfWork.VaultReaderRepository.GetAllFolders(decryptedUserKey.UserId)
+            .Select(dto => VaultDataParser.ParseAndDecryptFolder(ref dto, decryptedUserKey))
+            .ToList();
+
+        var collectionDtos = unitOfWork.VaultReaderRepository.GetAllCollections(decryptedUserKey.UserId);
+        var collections = new List<VaultCollection>(collectionDtos.Length);
+        foreach (ref readonly var dto in collectionDtos.AsSpan())
         {
-            Reload(userKey);
+            var key = keys.GetOrganizationKey(dto.OrganizationId, organizationKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
+            collections.Add(VaultDataParser.ParseAndDecryptCollection(in dto, key));
         }
+
+        return new LoadedVaultData(ciphersById, cipherIdsByCollectionId, folders, collections);
     }
 
     public async Task<VaultSyncResult> SyncAsync(
         BitwardenAccountContext accountContext,
+        UserKey decryptedUserKey,
         bool force = false,
         CancellationToken cancellationToken = default)
     {
-        var userKey = RequireUserKey();
-        var result = await vaultSynchronizer.SyncAsync(accountContext, userKey, force, cancellationToken);
+        if (!NetworkInformation.HasInternetAccess)
+            return VaultSyncResult.SkippedOffline;
 
-        if (result == VaultSyncResult.Synced)
-            Reload(userKey);
+        try
+        {
+            if (!force && !await HasRemoteChangesAsync(accountContext, cancellationToken))
+            {
+                return VaultSyncResult.NoChanges;
+            }
 
-        return result;
+            var response = await vaultApiClient.GetSyncAsync(accountContext, cancellationToken);
+            if (response.Profile.Id != decryptedUserKey.UserId)
+                throw new InvalidDataException("Sync profile user id did not match the unlocked account.");
+
+            using var unitOfWork = unitOfWorkFactory.Create();
+            var userId = decryptedUserKey.UserId;
+            var repository = unitOfWork.VaultWriterRepository;
+
+            repository.WriteOrganizations(userId, response.Profile.Organizations);
+            repository.WriteFolders(userId, response.Folders);
+            repository.WriteCollections(userId, response.Collections);
+            repository.WriteCiphers(userId, response.VaultCiphers);
+
+            unitOfWork.AccountProfileRepository.UpdateSyncedProfile(decryptedUserKey.UserId, response.Profile);
+            unitOfWork.SaveChanges();
+
+            return VaultSyncResult.Synced;
+        }
+        catch (OperationCanceledException)
+        {
+            return VaultSyncResult.SkippedOffline;
+        }
+        catch (Exception e)
+        {
+            UnhandledExceptionLogger.WriteException(e);
+            return VaultSyncResult.Failed;
+        }
     }
 
-    public async ValueTask<VaultCipher> SaveCipherAsync(
+    private async Task<bool> HasRemoteChangesAsync(
         BitwardenAccountContext accountContext,
+        CancellationToken cancellationToken)
+    {
+        var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
+
+        using var unitOfWork = unitOfWorkFactory.Create();
+        var lastSync = unitOfWork.VaultReaderRepository.GetLastSyncTime(accountContext.UserId);
+        if (lastSync is null)
+            return true;
+
+        var lastSyncTrunc = lastSync.Value.TruncateToSeconds();
+        var revisionTrunc = revisionDate.TruncateToSeconds();
+
+        return lastSyncTrunc < revisionTrunc;
+    }
+
+    /// <summary>
+    /// Encrypts a decrypted domain <see cref="VaultCipher"/> and pushes it to the server, creating it
+    /// when its id is empty and updating it otherwise. A fresh individual cipher key is generated on
+    /// every save and wrapped with the user key. The server's response is persisted to the local
+    /// cache and decrypted back into a domain <see cref="VaultCipher"/> — no follow-up sync needed.
+    /// </summary>
+    public async Task<VaultCipher> SaveCipherAsync(
+        BitwardenAccountContext accountContext,
+        UserKey userKey,
         VaultCipher cipher,
         CancellationToken cancellationToken = default)
     {
-        var userKey = RequireUserKey();
-        var savedCipher = await vaultCipherSaver.SaveAsync(accountContext, userKey, cipher, cancellationToken);
-        UpsertCipher(savedCipher);
-        return savedCipher;
-    }
+        var request = BuildRequest(userKey, cipher);
 
-    public void Close()
-    {
-        lock (_stateLock)
-            Volatile.Write(ref _state, WorkspaceState.Empty);
-    }
+        var savedDto = cipher.Id.IsEmpty
+            ? await vaultApiClient.CreateCipherAsync(accountContext, request, cancellationToken)
+            : await vaultApiClient.UpdateCipherAsync(accountContext, cipher.Id, request, cancellationToken);
 
-    public VaultCipher? GetCipher(CipherId id)
-    {
-        var data = Volatile.Read(ref _state).Data;
-        return data.CiphersById.GetValueOrDefault(id);
-    }
+        using var unitOfWork = unitOfWorkFactory.Create();
+        unitOfWork.VaultWriterRepository.UpsertCipher(userKey.UserId, ref savedDto);
+        unitOfWork.SaveChanges();
 
-    public VaultCipher[] GetCiphers(VaultCipherQuery query)
-    {
-        var data = Volatile.Read(ref _state).Data;
+        return VaultDataParser.ParseAndDecryptCipher(ref savedDto, savedDto.Data, userKey);
 
-        IEnumerable<VaultCipher> result = data.CiphersById.Values;
-
-        if (query.FavoritesOnly)
-            result = result.Where(static x => x.Favorite);
-
-        if (!query.IncludeDeleted)
-            result = result.Where(static x => x.DeletedDate is null);
-
-        if (!query.FolderId.IsEmpty)
-            result = result.Where(x => x.FolderId == query.FolderId);
-
-        if (!query.CollectionId.IsEmpty)
+        static VaultCipherRequest BuildRequest(UserKey userKey, VaultCipher cipher)
         {
-            if (!data.CipherIdsByCollectionId.TryGetValue(query.CollectionId, out var cipherIds))
-                return [];
+            const int cipherKeyByteLength = 64;
+            Span<byte> cipherKey = stackalloc byte[cipherKeyByteLength];
+            try
+            {
+                RandomNumberGenerator.Fill(cipherKey);
 
-            result = result.Where(x => cipherIds.Contains(x.Id));
-        }
+                var wrappedKey = EncString.Encrypt(cipherKey, userKey.Key);
+                DateTime? lastKnownRevisionDate = cipher.Id.IsEmpty ? null : cipher.RevisionDate.UtcDateTime;
 
-        if (query.CipherType is not null)
-            result = result.Where(x => x.Type == query.CipherType.Value);
-
-        if (!string.IsNullOrWhiteSpace(query.SearchText))
-            result = result.Where(x => x.MatchesSearchText(query.SearchText));
-
-        result = result.ApplySort(query.SortField, query.SortDirection);
-
-        if (query.Limit is not null)
-            result = result.Take(query.Limit.Value);
-
-        return result.ToArray();
-    }
-
-    public VaultFolder[] GetFolders()
-    {
-        var data = Volatile.Read(ref _state).Data;
-        return data.Folders
-            .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToArray();
-    }
-
-    public VaultCollection[] GetCollections()
-    {
-        var snapshot = Volatile.Read(ref _state).Data;
-
-        return snapshot.Collections
-            .OrderBy(static x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToArray();
-    }
-
-    private void Reload(UserKey userKey)
-    {
-        var loaded = new WorkspaceState(userKey, vaultLoader.Load(userKey));
-        lock (_stateLock)
-            Volatile.Write(ref _state, loaded);
-    }
-
-    private void UpsertCipher(VaultCipher cipher)
-    {
-        lock (_stateLock)
-        {
-            var state = Volatile.Read(ref _state);
-            var ciphersById = new Dictionary<CipherId, VaultCipher>(state.Data.CiphersById) { [cipher.Id] = cipher };
-            Volatile.Write(ref _state, state with { Data = state.Data with { CiphersById = ciphersById } });
+                return VaultCipherRequestFactory.Build(cipher, cipherKey, wrappedKey, userKey.UserId.Value, lastKnownRevisionDate);
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(cipherKey);
+            }
         }
     }
-
-    private UserKey RequireUserKey() =>
-        Volatile.Read(ref _state).UserKey ?? throw new InvalidOperationException("Vault workspace is not open.");
 }

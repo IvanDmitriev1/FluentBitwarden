@@ -6,18 +6,18 @@ namespace FluentBitwarden.AppHost.Infrastructure.Services;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultSessionUnlockDialog(
-    IVaultSessionCoordinator vaultSessionCoordinator,
+    IVaultSession vaultSession,
     IUiProcessLauncher uiProcessLauncher) : IVaultSessionUnlockDialog
 {
     public async Task WaitUntilUnlockAsync(CancellationToken cancellationToken)
     {
-        if (vaultSessionCoordinator.TryGetUnlockedSession(out var session))
+        if (vaultSession.TryGetUnlockedSession(out var session))
             return;
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         await using var _ = cancellationToken.Register(OnCancelled);
-        vaultSessionCoordinator.SessionStatusChanged += VaultSessionCoordinatorOnSessionStatusChanged;
+        vaultSession.SessionStatusChanged += VaultSessionOnSessionStatusChanged;
         uiProcessLauncher.ProcessExited += OnCancelled;
 
         try
@@ -27,7 +27,7 @@ internal sealed class VaultSessionUnlockDialog(
         }
         finally
         {
-            vaultSessionCoordinator.SessionStatusChanged -= VaultSessionCoordinatorOnSessionStatusChanged;
+            vaultSession.SessionStatusChanged -= VaultSessionOnSessionStatusChanged;
             uiProcessLauncher.ProcessExited -= OnCancelled;
         }
 
@@ -38,7 +38,7 @@ internal sealed class VaultSessionUnlockDialog(
             uiProcessLauncher.Exit();
         }
 
-        void VaultSessionCoordinatorOnSessionStatusChanged(VaultSessionStatus status)
+        void VaultSessionOnSessionStatusChanged(VaultSessionStatus status)
         {
             if (status == VaultSessionStatus.Unlocked)
             {

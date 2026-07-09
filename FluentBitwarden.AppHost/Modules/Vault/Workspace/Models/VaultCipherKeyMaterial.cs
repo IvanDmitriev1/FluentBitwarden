@@ -1,4 +1,4 @@
-namespace FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
+namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 
 internal readonly record struct VaultCipherKeyMaterial(
     CipherId CipherId,

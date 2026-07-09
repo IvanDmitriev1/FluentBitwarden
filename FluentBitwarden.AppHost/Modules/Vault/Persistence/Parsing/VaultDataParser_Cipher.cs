@@ -23,7 +23,7 @@ public static partial class VaultDataParser
         ref readonly VaultCipherResponse dto,
         VaultCipher cipher,
         ref Utf8JsonReader reader,
-        CipherKey decryptionKey)
+        scoped in CipherKey decryptionKey)
     {
         VaultCipher parsedCipher = dto.VaultCipherType switch
         {
@@ -42,7 +42,7 @@ public static partial class VaultDataParser
     private static VaultCipherAttachment[] ParseAttachments(
         CipherId cipherId,
         ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachmentDtos,
-        CipherKey decryptionKey)
+        scoped in CipherKey decryptionKey)
     {
         if (attachmentDtos is not { Length: > 0 })
             return [];
@@ -63,7 +63,9 @@ public static partial class VaultDataParser
         return attachments;
     }
 
-    private static LoginVaultCipher ParseLoginCipher(LoginVaultCipher vaultCipher, ref Utf8JsonReader reader,
+    private static LoginVaultCipher ParseLoginCipher(
+        LoginVaultCipher vaultCipher, 
+        ref Utf8JsonReader reader,
         CipherKey decryptKey)
         => ParseCipherObject(vaultCipher, ref reader, decryptKey,
             static (ref r, c, k) =>

@@ -24,6 +24,7 @@ internal static class IpcServiceCollectionExtensions
             IpcConstants.AppHostPipeName,
             handlers => handlers
                 .Add<AccountsIpcHandler>()
+                .Add<SessionIpcHandler>()
                 .Add<WindowsHelloIpcHandler>()
                 .Add<VaultIpcHandler>()
                 .Add<BrowserExtensionIpcHandler>()

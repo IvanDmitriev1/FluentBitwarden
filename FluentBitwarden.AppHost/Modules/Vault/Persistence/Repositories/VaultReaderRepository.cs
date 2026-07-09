@@ -3,9 +3,9 @@ using Dapper;
 using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Data.Mapping;
-using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 

@@ -1,5 +1,6 @@
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.Modules.Sessions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using System.Text.Json;
@@ -35,11 +36,16 @@ internal sealed partial class UnlockVaultPage : ContentPage
         private const string WindowsHelloUnlockAction = "WindowsHelloUnlock";
 
         private readonly IAccountsClient _accountsClient;
+        private readonly ISessionClient _sessionClient;
         private readonly IWindowsHelloUnlockClient _windowsHelloUnlockClient;
 
-        public UnlockFormContent(IAccountsClient accountsClient, IWindowsHelloUnlockClient windowsHelloUnlockClient)
+        public UnlockFormContent(
+            IAccountsClient accountsClient,
+            ISessionClient sessionClient,
+            IWindowsHelloUnlockClient windowsHelloUnlockClient)
         {
             _accountsClient = accountsClient;
+            _sessionClient = sessionClient;
             _windowsHelloUnlockClient = windowsHelloUnlockClient;
 
             TemplateJson = BuildCurrentTemplateJson();
@@ -240,7 +246,7 @@ internal sealed partial class UnlockVaultPage : ContentPage
 
         private ICommandResult UnlockVault(AccountUnlockRequest request)
         {
-            AccountUnlockOutcome outcome = _accountsClient
+            AccountUnlockOutcome outcome = _sessionClient
                 .UnlockAsync(request, CancellationToken.None)
                 .AsTask()
                 .GetAwaiter()

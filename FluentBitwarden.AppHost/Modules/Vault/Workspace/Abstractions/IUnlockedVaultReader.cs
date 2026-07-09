@@ -6,7 +6,4 @@ internal interface IUnlockedVaultReader
 {
     VaultCipher? GetCipher(CipherId id);
     VaultCipher[] GetCiphers(VaultCipherQuery query);
-    VaultFolder[] GetFolders();
-    VaultCollection[] GetCollections();
-
 }

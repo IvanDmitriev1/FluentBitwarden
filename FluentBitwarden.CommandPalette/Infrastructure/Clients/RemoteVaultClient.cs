@@ -34,10 +34,4 @@ internal sealed class RemoteVaultClient(IIpcClient ipcClient) : IVaultClient
     {
         _ = await ipcClient.SendAsync<DownloadVaultCipherAttachmentRequest, IpcVoid>(request, cancellationToken);
     }
-
-    public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<VaultFolder[]>(IpcMessageTypes.Vault.GetFolders, cancellationToken);
-
-    public ValueTask<VaultCollection[]> GetCollectionsAsync(CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<VaultCollection[]>(IpcMessageTypes.Vault.GetCollections, cancellationToken);
 }

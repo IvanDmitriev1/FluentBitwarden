@@ -44,16 +44,6 @@ internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCa
             cancellationToken);
     }
 
-    public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default)
-    {
-        return client.SendAsync<VaultFolder[]>(IpcMessageTypes.Vault.GetFolders, cancellationToken);
-    }
-
-    public ValueTask<VaultCollection[]> GetCollectionsAsync(CancellationToken cancellationToken = default)
-    {
-        return client.SendAsync<VaultCollection[]>(IpcMessageTypes.Vault.GetCollections, cancellationToken);
-    }
-
     private Task PreloadSiteIconsAsync(VaultCipher[] ciphers)
     {
         var urls = ciphers

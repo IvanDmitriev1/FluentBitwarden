@@ -1,5 +1,5 @@
 using FluentBitwarden.CommandPalette.VaultListItems;
-using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Sessions;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -13,7 +13,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(200);
     private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(2);
 
-    private readonly IAccountsClient _accountsClient;
+    private readonly ISessionClient _sessionClient;
     private readonly IVaultClient _vaultClient;
     private readonly UnlockVaultPage _unlockVaultPage;
     private readonly VaultCipherListItemFactory _vaultCipherListItemFactory;
@@ -24,13 +24,13 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     private uint _searchGeneration;
 
     public VaultSearchPage(
-        IAccountsClient accountsClient,
+        ISessionClient sessionClient,
         IVaultClient vaultClient,
         IIpcEventClient eventClient,
         UnlockVaultPage unlockVaultPage,
         VaultCipherListItemFactory vaultCipherListItemFactory)
     {
-        _accountsClient = accountsClient;
+        _sessionClient = sessionClient;
         _vaultClient = vaultClient;
         _unlockVaultPage = unlockVaultPage;
         _vaultCipherListItemFactory = vaultCipherListItemFactory;
@@ -92,7 +92,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         {
             await Task.Delay(SearchDebounce, cancellationToken);
 
-            if (await _accountsClient.GetUnlockedAccount(cancellationToken) is null)
+            if (await _sessionClient.GetUnlockedAccount(cancellationToken) is null)
             {
                 ListItem unlockListItem = new(_unlockVaultPage)
                 {

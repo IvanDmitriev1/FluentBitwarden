@@ -2,18 +2,18 @@ using BitwardenApi.Infrastructure.Cryptography.Enc;
 using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Attachments.Contracts;
 using BitwardenApi.Vault.Cryptography;
-using FluentBitwarden.AppHost.Modules.Accounts.KeyManagement;
+using FluentBitwarden.AppHost.Application.Sessions;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Attachments;
 
 internal sealed class VaultCipherAttachmentDownloadService(
     IVaultCipherAttachmentApi attachmentApi,
-    IUnitOfWorkFactory unitOfWorkFactory,
-    IAccountKeyService accountKeyService) : IVaultCipherAttachmentDownloadService
+    IUnitOfWorkFactory unitOfWorkFactory) : IVaultCipherAttachmentDownloadService
 {
     public Task DownloadAsync(
         BitwardenAccountContext accountContext,
+        KeySession keys,
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -22,7 +22,7 @@ internal sealed class VaultCipherAttachmentDownloadService(
             request.Attachment,
             async (encStream, protectedAttachmentKey) =>
             {
-                using var attachmentKey = ResolveAttachmentKey(accountContext.UserId, request.Attachment, protectedAttachmentKey);
+                using var attachmentKey = ResolveAttachmentKey(accountContext.UserId, keys, request.Attachment, protectedAttachmentKey);
 
                 await using var plaintextStream = new FileStream(
                     request.DestinationPath,
@@ -40,7 +40,11 @@ internal sealed class VaultCipherAttachmentDownloadService(
     }
 
 
-    private AttachmentKey ResolveAttachmentKey(UserId userId, VaultCipherAttachment attachment, EncString protectedAttachmentKey)
+    private AttachmentKey ResolveAttachmentKey(
+        UserId userId,
+        KeySession keys,
+        VaultCipherAttachment attachment,
+        EncString protectedAttachmentKey)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
         var cipher = unitOfWork.VaultReaderRepository.GetCipherKeyMaterial(userId, attachment.CipherId) ??
@@ -54,7 +58,7 @@ internal sealed class VaultCipherAttachmentDownloadService(
                 .First(organization => organization.Id == cipher.OrganizationId)
                 .ProtectedOrganizationKey;
 
-        return accountKeyService.CreateAttachmentKey(
+        return keys.CreateAttachmentKey(
             cipher.OrganizationId,
             protectedOrganizationKey,
             cipher.ProtectedCipherKey,

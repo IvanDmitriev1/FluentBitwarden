@@ -20,18 +20,18 @@ internal sealed class TrayHost : IDisposable
     private readonly NotificationIcon _trayIcon;
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IUiProcessLauncher _uiProcessLauncher;
-    private readonly IVaultSessionCoordinator _vaultSessionCoordinator;
+    private readonly IVaultSession _vaultSession;
     private bool _windowDestroyed;
     private bool _disposed;
 
     public TrayHost(
         IHostApplicationLifetime applicationLifetime,
         IUiProcessLauncher uiProcessLauncher,
-        IVaultSessionCoordinator vaultSessionCoordinator)
+        IVaultSession vaultSession)
     {
         _applicationLifetime = applicationLifetime;
         _uiProcessLauncher = uiProcessLauncher;
-        _vaultSessionCoordinator = vaultSessionCoordinator;
+        _vaultSession = vaultSession;
         _moduleHandle = PInvoke.GetModuleHandle(default(PCWSTR));
         RegisterWindowClass();
 
@@ -151,7 +151,7 @@ internal sealed class TrayHost : IDisposable
                 return;
 
             case TrayMenuCommand.Lock:
-                _vaultSessionCoordinator.RequestLock();
+                _vaultSession.RequestLock();
                 return;
 
             case TrayMenuCommand.Exit:

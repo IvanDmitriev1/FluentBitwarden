@@ -1,6 +1,6 @@
 using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Data.Mapping;
-using FluentBitwarden.AppHost.Modules.Vault.KeyResolution;
+using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 
