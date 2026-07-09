@@ -1,7 +1,5 @@
 using System.Collections.ObjectModel;
-using Windows.Networking.Connectivity;
 using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
@@ -95,6 +93,11 @@ public sealed partial class VaultCipherPagePaneView : UserControl
         CancelPendingQuery();
     }
 
+    partial void OnRequestedCipherIdChanged(CipherId newValue)
+    {
+        _ = RunQueryAsync(BuildQuery());
+    }
+
     partial void OnQueryChanged(VaultCipherQuery? newValue)
     {
         if (newValue is null || _isApplyingQuery)
@@ -162,7 +165,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
         {
             var ciphers = await _vaultClient.SearchCiphersAsync(query, cts.Token);
 
-            if (cts.Token.IsCancellationRequested || requestId != _queryRequestId)
+            if (requestId != _queryRequestId)
                 return;
 
             FilteredCiphers.ReplaceWith(ciphers);

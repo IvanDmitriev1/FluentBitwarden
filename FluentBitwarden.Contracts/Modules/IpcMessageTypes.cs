@@ -20,6 +20,7 @@ public static class IpcMessageTypes
         public const ushort SessionStatusChanged = 106;
         public const ushort DownloadCipherAttachment = 107;
         public const ushort SaveCipher = 108;
+        public const ushort GetFolders = 109;
     }
 
     public static class Account

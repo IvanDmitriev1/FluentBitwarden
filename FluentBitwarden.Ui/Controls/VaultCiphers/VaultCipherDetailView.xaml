@@ -35,19 +35,21 @@
                         PlaceholderText="Name"
                         Text="{x:Bind SelectedCipher.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <ComboBox
+                        <shared:ComboBoxEx
                             MinWidth="180"
                             Header="Folder"
                             ItemsSource="{x:Bind Folders, Mode=OneWay}"
-                            PlaceholderText="No Folder"
                             SelectedValue="{x:Bind SelectedCipher.FolderId, Mode=TwoWay, Converter={StaticResource FolderIdSelectedValueConverter}}"
                             SelectedValuePath="Id">
-                            <ComboBox.ItemTemplate>
+                            <shared:ComboBoxEx.NoneItem>
+                                <contracts:VaultFolder Name="No Folder" />
+                            </shared:ComboBoxEx.NoneItem>
+                            <shared:ComboBoxEx.ItemTemplate>
                                 <DataTemplate x:DataType="contracts:VaultFolder">
                                     <TextBlock Text="{x:Bind Name}" />
                                 </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                            </shared:ComboBoxEx.ItemTemplate>
+                        </shared:ComboBoxEx>
                         <ComboBox
                             MinWidth="180"
                             Header="Owner"

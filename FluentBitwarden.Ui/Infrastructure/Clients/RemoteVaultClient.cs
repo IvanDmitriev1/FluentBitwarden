@@ -16,6 +16,11 @@ internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCa
         return client.SendAsync<VaultSyncResult>(IpcMessageTypes.Vault.Sync, cancellationToken);
     }
 
+    public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default)
+    {
+        return client.SendAsync<VaultFolder[]>(IpcMessageTypes.Vault.GetFolders, cancellationToken);
+    }
+
     public async ValueTask<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
         var result = await client.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);

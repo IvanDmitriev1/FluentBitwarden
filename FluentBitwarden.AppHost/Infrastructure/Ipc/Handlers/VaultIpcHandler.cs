@@ -28,6 +28,10 @@ internal sealed class VaultIpcHandler(
         CancellationToken cancellationToken = default) =>
         ValueTask.FromResult(sessionStore.GetCipher(request.CipherId));
 
+    [IpcMessageHandler(IpcMessageTypes.Vault.GetFolders)]
+    public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default) =>
+        ValueTask.FromResult(sessionStore.GetFolders());
+
     [IpcMessageHandler(IpcMessageTypes.Vault.Sync)]
     public async ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default)
     {

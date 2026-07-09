@@ -19,6 +19,11 @@
 
             <toolkitConverters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
             <toolkitConverters:BoolToVisibilityConverter x:Key="BoolToVis" />
+            <toolkitConverters:BoolToObjectConverter
+                x:Key="InverseBoolToVis"
+                FalseValue="Visible"
+                TrueValue="Collapsed" />
+            <converters:FolderIdSelectedValueConverter x:Key="FolderIdSelectedValueConverter" />
             <toolkitConverters:EmptyObjectToObjectConverter
                 x:Key="NullToVisibilityConverter"
                 EmptyValue="Collapsed"

@@ -3,28 +3,14 @@
     x:Class="FluentBitwarden.Views.Vault.VaultPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:attachedProperties="using:FluentBitwarden.AttachedProperties"
+    xmlns:contracts="using:BitwardenApi.Vault.Items.Contracts"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:metadataTimeline="using:FluentBitwarden.Controls.Shared.MetadataTimeline"
-    xmlns:models="using:FluentBitwarden.ViewModels.Vault.Models"
     xmlns:navigation="using:FluentBitwarden.Infrastructure.Navigation"
-    xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
-    xmlns:siteIcon="using:FluentBitwarden.Controls.Shared.SiteIcon"
-    xmlns:vault="using:FluentBitwarden.Templates.Vault"
     xmlns:vaultCiphers="using:FluentBitwarden.Controls.VaultCiphers"
-    xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
-
-    <navigation:LifecyclePage.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <vault:VaultCipherDetailTemplates />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </navigation:LifecyclePage.Resources>
 
     <SplitView
         x:Name="MainSplitView"
@@ -64,53 +50,60 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ScrollViewer
+
+            <StackPanel
+                Grid.Row="0"
+                Padding="20,16,20,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.BeginEditCipherCommand}"
+                    Content="Edit"
+                    Visibility="{x:Bind ViewModel.IsEditing, Mode=OneWay, Converter={StaticResource InverseBoolToVis}}" />
+                <Button
+                    Command="{x:Bind ViewModel.SaveCipherCommand}"
+                    Content="Save"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Visibility="{x:Bind ViewModel.IsEditing, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                <Button
+                    Command="{x:Bind ViewModel.CancelEditCipherCommand}"
+                    Content="Cancel"
+                    Visibility="{x:Bind ViewModel.IsEditing, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                <Button Content="New item">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.BeginCreateCipherCommand}"
+                                CommandParameter="{x:Bind contracts:VaultCipherType.Login}"
+                                Text="Login" />
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.BeginCreateCipherCommand}"
+                                CommandParameter="{x:Bind contracts:VaultCipherType.Card}"
+                                Text="Card" />
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.BeginCreateCipherCommand}"
+                                CommandParameter="{x:Bind contracts:VaultCipherType.Identity}"
+                                Text="Identity" />
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.BeginCreateCipherCommand}"
+                                CommandParameter="{x:Bind contracts:VaultCipherType.SecureNote}"
+                                Text="Secure note" />
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.BeginCreateCipherCommand}"
+                                CommandParameter="{x:Bind contracts:VaultCipherType.SshKey}"
+                                Text="SSH key" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+
+            <vaultCiphers:VaultCipherDetailView
                 Grid.Row="1"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto"
-                Visibility="{x:Bind ViewModel.SelectedCipher, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
-                <StackPanel
-                    Padding="20"
-                    Spacing="20"
-                    Visibility="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
-                    <StackPanel
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="24">
-                        <siteIcon:SiteIcon
-                            FallbackGlyph="{x:Bind models:VaultCipherExtensions.GetDefaultGlyph(ViewModel.SelectedCipher), Mode=OneWay}"
-                            Size="36"
-                            Uri="{x:Bind models:VaultCipherExtensions.GetDefaultSiteIconUri(ViewModel.SelectedCipher), Mode=OneWay}" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            Style="{StaticResource TitleTextBlockStyle}"
-                            Text="{x:Bind ViewModel.SelectedCipher.Name, Mode=OneWay}"
-                            TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-
-                    <ContentControl
-                        HorizontalContentAlignment="Stretch"
-                        Content="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}"
-                        ContentTemplateSelector="{StaticResource VaultCipherTemplateSelector}" />
-
-                    <sharedControls:DividedCardItemsControl
-                        ItemsSource="{x:Bind ViewModel.SelectedCipher.Attachments, Mode=OneWay}"
-                        Label="Attachments"
-                        Visibility="{x:Bind ViewModel.SelectedCipher.Attachments, Mode=OneWay, Converter={StaticResource EmptyCollectionToVisibilityConverter}}">
-                        <sharedControls:DividedCardItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <vaultCiphers:VaultCipherAttachmentField Attachment="{Binding}" />
-                            </DataTemplate>
-                        </sharedControls:DividedCardItemsControl.ItemTemplate>
-                    </sharedControls:DividedCardItemsControl>
-
-                    <metadataTimeline:MetadataTimeline Header="{x:Bind models:VaultCipherExtensions.LastEditedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" ToggleAutomationName="Toggle item history">
-                        <metadataTimeline:MetadataTimelineItem Text="{x:Bind models:VaultCipherExtensions.AddedAtFormatted(ViewModel.SelectedCipher), Mode=OneWay}" />
-                        <metadataTimeline:MetadataTimelineButtonItem Glyph="&#xE81C;" Text="View previous versions" />
-                    </metadataTimeline:MetadataTimeline>
-                </StackPanel>
-            </ScrollViewer>
+                Folders="{x:Bind ViewModel.Folders, Mode=OneWay}"
+                IsEditing="{x:Bind ViewModel.IsEditing, Mode=OneWay}"
+                SelectedCipher="{x:Bind ViewModel.EditingCipher, Mode=TwoWay}"
+                Visibility="{x:Bind ViewModel.EditingCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
         </Grid>
     </SplitView>
 </navigation:LifecyclePage>

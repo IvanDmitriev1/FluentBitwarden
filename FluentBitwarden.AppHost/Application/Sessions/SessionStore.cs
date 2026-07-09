@@ -63,4 +63,7 @@ internal sealed class SessionStore : IUnlockedVaultReader
 
     public VaultCipher[] GetCiphers(VaultCipherQuery query) =>
         Volatile.Read(ref _session)?.Data.FilterCiphers(query) ?? [];
+
+    public VaultFolder[] GetFolders() =>
+        Volatile.Read(ref _session)?.Data.Folders.ToArray() ?? [];
 }

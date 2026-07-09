@@ -10,6 +10,7 @@
         <ResourceDictionary Source="ms-appx:///Styles/Shared/CountdownRingStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/PasswordBoxExStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/TextBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Styles/Shared/ComboBoxExStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/SearchFilterBarStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/SiteIconStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Styles/Shared/DividedCardItemsControlStyle.xaml" />

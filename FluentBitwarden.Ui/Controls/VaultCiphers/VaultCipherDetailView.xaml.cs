@@ -1,6 +1,5 @@
 using MemoryPack;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 

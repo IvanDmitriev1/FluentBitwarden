@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
@@ -21,6 +22,9 @@ public sealed partial class VaultPageViewModel(
 
     [ObservableProperty]
     public partial CipherId RequestedCipherId { get; set; } = CipherId.Empty;
+
+    [ObservableProperty]
+    public partial ObservableCollection<VaultFolder> Folders { get; set; } = [];
 
     private bool _hasInitialized;
 
@@ -84,6 +88,10 @@ public sealed partial class VaultPageViewModel(
             SelectedCipher = null;
             EditingCipher = null;
         }
+        else
+        {
+            EditingCipher = SelectedCipher;
+        }
     }
 
     [RelayCommand]
@@ -141,6 +149,8 @@ public sealed partial class VaultPageViewModel(
     private async Task SyncVault(CancellationToken cancellationToken)
     {
         var result = await vaultClient.SyncVaultAsync(cancellationToken);
+        Folders = new ObservableCollection<VaultFolder>(await vaultClient.GetFoldersAsync(cancellationToken));
+
         if (result != VaultSyncResult.Synced)
             return;
 
