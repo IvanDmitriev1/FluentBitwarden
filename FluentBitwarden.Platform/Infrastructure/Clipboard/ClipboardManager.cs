@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Settings.Models;
 using Windows.ApplicationModel.DataTransfer;
@@ -63,6 +64,8 @@ public static class ClipboardManager
             Timeout.InfiniteTimeSpan);
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; a timer-driven best-effort clipboard clear must not throw on the timer thread.")]
     private static void ClearIfUnchanged(int generation)
     {
         if (generation != _generation)

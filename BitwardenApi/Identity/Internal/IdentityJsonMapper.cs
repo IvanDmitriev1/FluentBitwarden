@@ -42,7 +42,7 @@ internal static class IdentityJsonMapper
             KdfType.Pbkdf2Sha256 => new KdfConfig.Pbkdf2(masterPasswordKdf.Iterations),
             KdfType.Argon2Id => new KdfConfig.Argon2Id(masterPasswordKdf.Iterations, masterPasswordKdf.Memory!.Value,
                 masterPasswordKdf.Parallelism!.Value),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), masterPasswordKdf.KdfType, "Unsupported KDF type.")
         };
 
         return new MasterPasswordUnlockModel(

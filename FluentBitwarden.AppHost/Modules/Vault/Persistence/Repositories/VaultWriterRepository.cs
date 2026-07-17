@@ -1,8 +1,8 @@
 using Dapper;
-using FluentBitwarden.AppHost.Data.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
 using BitwardenApi.Vault.Attachments.Contracts;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 

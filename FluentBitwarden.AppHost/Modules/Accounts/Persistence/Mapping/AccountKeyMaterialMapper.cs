@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
@@ -15,7 +16,7 @@ internal static class AccountKeyMaterialMapper
         int? KdfParallelism);
 
     public static AccountKeyMaterial ToDomain(AccountKeyMaterialRow row) => new(
-        UserId: UserId.Parse(row.UserId),
+        UserId: UserId.Parse(row.UserId, CultureInfo.InvariantCulture),
         Salt: row.Salt,
         KdfConfig: BuildKdf(row),
         ProtectedUserKey: ProtectedUserKey.Create(EncString.FromBytes(row.EncryptedUserKey)),

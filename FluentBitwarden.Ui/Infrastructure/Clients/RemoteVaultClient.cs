@@ -1,3 +1,4 @@
+using AsyncAwaitBestPractices;
 using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
@@ -25,7 +26,7 @@ internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCa
     {
         var result = await client.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
         if (NetworkInformation.HasInternetAccess)
-            _ = PreloadSiteIconsAsync(result);
+            PreloadSiteIconsAsync(result).SafeFireAndForget();
 
         return result;
     }

@@ -1,13 +1,16 @@
+using System.Diagnostics.CodeAnalysis;
+using AsyncAwaitBestPractices;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Platform.Infrastructure;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.IO.Pipes;
 using PipeOptions = System.IO.Pipes.PipeOptions;
 
 namespace FluentBitwarden.Platform.Ipc.Services;
 
-internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, IIpcEventClient
+internal sealed class PipeIpcEventClient(string pipeName, ILogger<PipeIpcEventClient> logger)
+    : BackgroundService, IIpcEventClient
 {
     private static readonly TimeSpan ReconnectDelay = TimeSpan.FromMilliseconds(250);
 
@@ -64,6 +67,8 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
         }
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; narrowing would break resilience against unanticipated transport failures.")]
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -93,11 +98,11 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
             }
             catch (IOException)
             {
-                Debug.WriteLine("IPC event connection closed; reconnecting.");
+                logger.EventConnectionClosed();
             }
             catch (Exception exception)
             {
-                UnhandledExceptionLogger.WriteException(exception);
+                logger.EventClientLoopFailed(exception);
             }
 
             await Task.Delay(ReconnectDelay, stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
@@ -126,7 +131,7 @@ internal sealed class PipeIpcEventClient(string pipeName) : BackgroundService, I
 
         foreach (var subscription in subscriptions)
         {
-            _ = subscription.InvokeAsync(data, cancellationToken);
+            subscription.InvokeAsync(data, cancellationToken).SafeFireAndForget();
         }
     }
 

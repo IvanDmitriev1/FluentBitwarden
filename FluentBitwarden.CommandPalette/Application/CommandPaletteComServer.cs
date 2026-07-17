@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 using Microsoft.Extensions.Hosting;
 using Shmuelie.WinRTServer;
@@ -9,6 +10,8 @@ internal sealed partial class CommandPaletteComServer(
     FluentBitwardenCommandPaletteExtension extension,
     IAppHostProcessManager processManager) : IHostedService, IDisposable
 {
+    [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed",
+        Justification = "Disposed via ComServer.UnsafeDispose() in Dispose(), not the standard Dispose() method the analyzer looks for.")]
     private ComServer? _server;
 
     public Task StartAsync(CancellationToken cancellationToken)

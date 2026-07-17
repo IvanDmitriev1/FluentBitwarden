@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
+using AsyncAwaitBestPractices;
 using FluentBitwarden.Contracts.Modules.Vault;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
@@ -95,7 +98,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
 
     partial void OnRequestedCipherIdChanged(CipherId newValue)
     {
-        _ = RunQueryAsync(BuildQuery());
+        RunQueryAsync(BuildQuery()).SafeFireAndForget();
     }
 
     partial void OnQueryChanged(VaultCipherQuery? newValue)
@@ -114,7 +117,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
             _isApplyingQuery = false;
         }
 
-        _ = RunQueryAsync(BuildQuery());
+        RunQueryAsync(BuildQuery()).SafeFireAndForget();
     }
 
     partial void OnSearchTextChanged(string? newValue)
@@ -142,7 +145,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
             _isApplyingQuery = false;
         }
 
-        _ = RunQueryAsync(query);
+        RunQueryAsync(query).SafeFireAndForget();
     }
 
     private VaultCipherQuery BuildQuery() => new()
@@ -153,6 +156,8 @@ public sealed partial class VaultCipherPagePaneView : UserControl
         SortDirection = CipherSortDirection
     };
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Fire-and-forget query triggered from UI events; a failed query must not crash the page.")]
     private async Task RunQueryAsync(VaultCipherQuery query)
     {
         CancelPendingQuery();
@@ -180,7 +185,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
         }
         catch (Exception e)
         {
-            UnhandledExceptionLogger.WriteException(e);
+            App.Current.GetRequiredService<ILogger<VaultCipherPagePaneView>>().CipherSearchFailed(e);
         }
         finally
         {

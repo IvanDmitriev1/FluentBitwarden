@@ -1,9 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 
 namespace FluentBitwarden.Platform.Infrastructure.Clipboard;
 
-internal sealed class ClipboardStaExecutor
+internal sealed class ClipboardStaExecutor : IDisposable
 {
     private readonly BlockingCollection<WorkItem> _workItems = new();
     private readonly Thread _thread;
@@ -38,6 +39,14 @@ internal sealed class ClipboardStaExecutor
 
     public void Post(Action action) => _workItems.Add(new WorkItem(action, null));
 
+    public void Dispose()
+    {
+        _workItems.CompleteAdding();
+        _workItems.Dispose();
+    }
+
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Runs arbitrary caller delegates on a dedicated STA thread; any failure must be captured and rethrown on the caller's thread, not crash the STA loop.")]
     private void Run()
     {
         foreach (var item in _workItems.GetConsumingEnumerable())

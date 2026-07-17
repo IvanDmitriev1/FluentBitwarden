@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 using BitwardenApi.Primitives;
 
@@ -19,7 +20,7 @@ internal sealed class OptionalOrganizationIdJsonConverter : JsonConverter<Organi
         string? value = reader.GetString();
         return string.IsNullOrEmpty(value)
             ? OrganizationId.Empty
-            : OrganizationId.Parse(value);
+            : OrganizationId.Parse(value, CultureInfo.InvariantCulture);
     }
 
     public override void Write(
@@ -50,7 +51,7 @@ internal sealed class OptionalFolderIdJsonConverter : JsonConverter<FolderId>
         string? value = reader.GetString();
         return string.IsNullOrEmpty(value)
             ? FolderId.Empty
-            : FolderId.Parse(value);
+            : FolderId.Parse(value, CultureInfo.InvariantCulture);
     }
 
     public override void Write(
@@ -96,7 +97,7 @@ internal sealed class CollectionIdsJsonConverter : JsonConverter<CollectionId[]>
             string? value = reader.GetString();
             collectionIds.Add(string.IsNullOrEmpty(value)
                 ? CollectionId.Empty
-                : CollectionId.Parse(value));
+                : CollectionId.Parse(value, CultureInfo.InvariantCulture));
         }
 
         throw new JsonException("Expected end of collectionIds array.");

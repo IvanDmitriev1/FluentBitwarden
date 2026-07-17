@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.Globalization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 
@@ -75,7 +76,7 @@ internal static class VaultCipherRequestFactory
             UserHandle = Encrypt(Base64Url.EncodeToString(credential.UserHandle), key),
             UserName = Encrypt(credential.UserName, key),
             UserDisplayName = Encrypt(credential.UserDisplayName, key),
-            Counter = Encrypt(credential.Counter.ToString(), key),
+            Counter = Encrypt(credential.Counter.ToString(CultureInfo.InvariantCulture), key),
             Discoverable = Encrypt(credential.Discoverable ? "true" : "false", key),
             CreationDate = credential.CreationDate.UtcDateTime
         };

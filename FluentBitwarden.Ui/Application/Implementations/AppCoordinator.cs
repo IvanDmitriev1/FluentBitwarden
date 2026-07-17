@@ -1,3 +1,4 @@
+using AsyncAwaitBestPractices;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
@@ -12,7 +13,7 @@ using FluentBitwarden.Views.Startup;
 
 namespace FluentBitwarden.Application.Implementations;
 
-internal sealed class AppCoordinator : IAppCoordinator
+internal sealed class AppCoordinator : IAppCoordinator, IDisposable
 {
     private readonly record struct FlowVersion(uint Id, AppCoordinator Coordinator)
     {
@@ -158,6 +159,8 @@ internal sealed class AppCoordinator : IAppCoordinator
         if (SessionState != AppSessionState.LoggedOut)
             return;
 
-        _ = RefreshSessionAsync();
+        RefreshSessionAsync().SafeFireAndForget();
     }
+
+    public void Dispose() => _flowGate.Dispose();
 }

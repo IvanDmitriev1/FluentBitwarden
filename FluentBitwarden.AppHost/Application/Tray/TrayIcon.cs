@@ -4,12 +4,12 @@ internal sealed class NotificationIcon : IDisposable
 {
     private const uint IconId = 1;
 
-    public static NotificationIcon Create(HWND windowHandle, uint callbackMessage)
+    public static unsafe NotificationIcon Create(HWND windowHandle, uint callbackMessage)
     {
         var icon = CreateIconImage();
         var data = new NOTIFYICONDATAW
         {
-            cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATAW>(),
+            cbSize = (uint)sizeof(NOTIFYICONDATAW),
             hWnd = windowHandle,
             uID = IconId,
             uFlags = NOTIFY_ICON_DATA_FLAGS.NIF_MESSAGE |
@@ -34,7 +34,7 @@ internal sealed class NotificationIcon : IDisposable
     private readonly HWND _windowHandle;
     private bool _disposed;
 
-    public void Dispose()
+    public unsafe void Dispose()
     {
         if (_disposed)
             return;
@@ -43,7 +43,7 @@ internal sealed class NotificationIcon : IDisposable
 
         var data = new NOTIFYICONDATAW
         {
-            cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATAW>(),
+            cbSize = (uint)sizeof(NOTIFYICONDATAW),
             hWnd = _windowHandle,
             uID = IconId
         };

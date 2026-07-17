@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace BitwardenApi.Infrastructure.Transport;
 
 internal static class HubConnectionExtensions
 {
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Infinite retry-with-backoff loop by design; must catch any transient connection failure to keep retrying.")]
     public static async Task StartWithRetryAsync(
         this HubConnection connection,
         CancellationToken cancellationToken)

@@ -1,0 +1,88 @@
+# EditorConfig — repo-root code-quality + module-boundary severities.
+# Central config (preferred over per-project). Consistent with Nullable=enable, ImplicitUsings,
+# LangVersion=preview and ConfigureAwait.Fody already set in Directory.Build.props.
+root = true
+
+# ---------------------------------------------------------------------------------------------
+# Base whitespace / encoding
+# ---------------------------------------------------------------------------------------------
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.{cs,csx}]
+indent_size = 4
+
+[*.{xml,csproj,props,targets,nsdepcop,editorconfig,json,xaml}]
+indent_size = 2
+
+# ---------------------------------------------------------------------------------------------
+# NsDepCop — module-boundary enforcement severity (centralized here; configs hold the rules).
+# Enforced: a boundary breach fails the build.
+# ---------------------------------------------------------------------------------------------
+[*.cs]
+dotnet_diagnostic.NSDEPCOP01.severity = error      # Illegal namespace reference (boundary breach) — fails the build
+dotnet_diagnostic.NSDEPCOP05.severity = error      # Malformed config.nsdepcop must fail loudly
+
+# ---------------------------------------------------------------------------------------------
+# using directives: outside namespace, System first, sorted.
+# ---------------------------------------------------------------------------------------------
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+dotnet_diagnostic.IDE0005.severity = warning       # Remove unnecessary usings
+
+# ---------------------------------------------------------------------------------------------
+# Language / style preferences
+# ---------------------------------------------------------------------------------------------
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_prefer_braces = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_readonly_field = true:suggestion
+dotnet_style_prefer_conditional_expression_over_return = true:silent
+
+# Nullable / async correctness (consistent with Nullable=enable + ConfigureAwait.Fody)
+dotnet_diagnostic.CS8618.severity = warning        # Non-nullable field uninitialized
+dotnet_diagnostic.CA2007.severity = none           # ConfigureAwait handled globally by Fody
+
+# ---------------------------------------------------------------------------------------------
+# Naming: interfaces I-prefixed, PascalCase types/members, _camelCase private fields.
+# ---------------------------------------------------------------------------------------------
+dotnet_naming_rule.interfaces_start_with_i.symbols = interface_symbols
+dotnet_naming_rule.interfaces_start_with_i.style = i_prefix_pascal
+dotnet_naming_rule.interfaces_start_with_i.severity = warning
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_symbols.interface_symbols.applicable_accessibilities = *
+dotnet_naming_style.i_prefix_pascal.required_prefix = I
+dotnet_naming_style.i_prefix_pascal.capitalization = pascal_case
+
+dotnet_naming_rule.types_pascal.symbols = type_symbols
+dotnet_naming_rule.types_pascal.style = pascal
+dotnet_naming_rule.types_pascal.severity = warning
+dotnet_naming_symbols.type_symbols.applicable_kinds = class,struct,enum,delegate
+dotnet_naming_style.pascal.capitalization = pascal_case
+
+dotnet_naming_rule.private_const_fields_pascal.symbols = private_const_field_symbols
+dotnet_naming_rule.private_const_fields_pascal.style = pascal
+dotnet_naming_rule.private_const_fields_pascal.severity = suggestion
+dotnet_naming_symbols.private_const_field_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_const_field_symbols.applicable_accessibilities = private
+dotnet_naming_symbols.private_const_field_symbols.required_modifiers = const
+
+dotnet_naming_rule.private_fields_camel.symbols = private_field_symbols
+dotnet_naming_rule.private_fields_camel.style = underscore_camel
+dotnet_naming_rule.private_fields_camel.severity = suggestion
+dotnet_naming_symbols.private_field_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_field_symbols.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+# Generated code: do not enforce style/boundaries.
+[*.{g,g.i,Designer,generated}.cs]
+generated_code = true
+dotnet_diagnostic.NSDEPCOP01.severity = none

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<NsDepCopConfig IsEnabled="true" ChildCanDependOnParentImplicitly="true" MaxIssueCount="1000">
+
+  <!-- Framework and shared libraries: available everywhere. -->
+  <Allowed From="*" To="System.*" />
+  <Allowed From="*" To="Microsoft.*" />
+  <Allowed From="*" To="Windows.*" />
+  <Allowed From="*" To="WinRT.*" />
+  <Allowed From="*" To="BitwardenApi.*" />
+  <Allowed From="*" To="CommunityToolkit.*" />
+  <Allowed From="*" To="AsyncAwaitBestPractices.*" />
+  <Allowed From="*" To="Org.BouncyCastle.*" />
+  <Allowed From="*" To="Dapper.*" />
+  <Allowed From="*" To="Fody" />
+  <Allowed From="*" To="FluentBitwarden.Contracts.*" />
+  <Allowed From="*" To="FluentBitwarden.Platform.*" />
+
+  <!-- Composition root: wires everything, so it may see everything. -->
+  <Allowed From="FluentBitwarden.AppHost" To="FluentBitwarden.AppHost.Application.*" />
+  <Allowed From="FluentBitwarden.AppHost" To="FluentBitwarden.AppHost.Modules.*" />
+  <Allowed From="FluentBitwarden.AppHost" To="FluentBitwarden.AppHost.Infrastructure.*" />
+
+  <!-- Application: host concerns. Drives modules through their public surface only. -->
+  <Allowed From="FluentBitwarden.AppHost.Application.*" To="FluentBitwarden.AppHost.Application.*" />
+  <Allowed From="FluentBitwarden.AppHost.Application.*" To="FluentBitwarden.AppHost.Modules.*.Abstractions.*" />
+  <Allowed From="FluentBitwarden.AppHost.Application.*" To="FluentBitwarden.AppHost.Modules.*.Models.*" />
+  <Allowed From="FluentBitwarden.AppHost.Application.*" To="FluentBitwarden.AppHost.Infrastructure.*" />
+
+  <!-- Modules: own their internals freely. -->
+  <Allowed From="FluentBitwarden.AppHost.Modules.Accounts.*"         To="FluentBitwarden.AppHost.Modules.Accounts.*" />
+  <Allowed From="FluentBitwarden.AppHost.Modules.BrowserExtension.*" To="FluentBitwarden.AppHost.Modules.BrowserExtension.*" />
+  <Allowed From="FluentBitwarden.AppHost.Modules.Passkey.*"          To="FluentBitwarden.AppHost.Modules.Passkey.*" />
+  <Allowed From="FluentBitwarden.AppHost.Modules.Sessions.*"         To="FluentBitwarden.AppHost.Modules.Sessions.*" />
+  <Allowed From="FluentBitwarden.AppHost.Modules.SshAgent.*"         To="FluentBitwarden.AppHost.Modules.SshAgent.*" />
+  <Allowed From="FluentBitwarden.AppHost.Modules.Vault.*"            To="FluentBitwarden.AppHost.Modules.Vault.*" />
+
+  <!-- ...and see each other ONLY through Abstractions and Models. These two lines are the module contract. -->
+  <Allowed From="FluentBitwarden.AppHost.Modules.*" To="FluentBitwarden.AppHost.Modules.*.Abstractions.*" />
+  <Allowed From="FluentBitwarden.AppHost.Modules.*" To="FluentBitwarden.AppHost.Modules.*.Models.*" />
+
+  <!-- Modules build on Infrastructure: Data.Abstractions (IUnitOfWorkFactory), Data.Mapping,
+       Services, Security, Extensions. Data.Implementations stays off limits (tripwire below).
+       `Infrastructure.Data` is NOT excluded, and should be: modules only name it because
+       IUnitOfWorkFactory.Create() returns the concrete UnitOfWork instead of an interface. Give
+       UnitOfWork an abstraction and the exclusion below can be turned on. -->
+  <Allowed From="FluentBitwarden.AppHost.Modules.*" To="FluentBitwarden.AppHost.Infrastructure.*" />
+
+  <!-- Infrastructure: leaf. Nothing above it, nothing beside it. -->
+  <Allowed From="FluentBitwarden.AppHost.Infrastructure.*"      To="FluentBitwarden.AppHost.Infrastructure.*" />
+  <Allowed From="FluentBitwarden.AppHost.Infrastructure.Data.*" To="DbUp.*" />
+  <Allowed From="FluentBitwarden.AppHost.Infrastructure.Data.*" To="Microsoft.Data.*" />
+
+  <!-- SEAM 1 (accepted debt) — UnitOfWork composes every module's repositories into one
+       transaction. Its public surface exposes abstractions; only its CONSTRUCTION touches the
+       concrete repositories. Granted to the EXACT `Infrastructure.Data` namespace, so
+       Data.Abstractions / .Implementations / .Mapping get no such access. This is the only
+       upward edge left in the project. -->
+  <Allowed From="FluentBitwarden.AppHost.Infrastructure.Data" To="FluentBitwarden.AppHost.Modules.Accounts.Abstractions.*" />
+  <Allowed From="FluentBitwarden.AppHost.Infrastructure.Data" To="FluentBitwarden.AppHost.Modules.Accounts.Persistence" />
+  <Allowed From="FluentBitwarden.AppHost.Infrastructure.Data" To="FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories" />
+
+  <!-- Tripwires: keep the invariants true even if an Allowed rule above is widened later.
+       Disallowed always beats Allowed. -->
+  <Disallowed From="FluentBitwarden.AppHost.Modules.*"        To="FluentBitwarden.AppHost.Application.*" />
+  <Disallowed From="FluentBitwarden.AppHost.Infrastructure.*" To="FluentBitwarden.AppHost.Application.*" />
+  <Disallowed From="FluentBitwarden.AppHost.Modules.*"        To="FluentBitwarden.AppHost.Infrastructure.Data.Implementations.*" />
+
+</NsDepCopConfig>

@@ -259,7 +259,7 @@ public static partial class VaultDataParser
             CreationDate = dto.CreationDate,
             DeletedDate = dto.DeletedDate
         },
-        _ => throw new ArgumentOutOfRangeException()
+        _ => throw new ArgumentOutOfRangeException(nameof(dto), dto.VaultCipherType, "Unsupported vault cipher type.")
     };
 
     private static LoginUri ReadUri(ref Utf8JsonReader reader, CipherKey decryptKey)
@@ -425,7 +425,7 @@ public static partial class VaultDataParser
             decryptKey,
             static value =>
             {
-                TotpValue.TryParse(value, out var totpValue);
+                _ = TotpValue.TryParse(value, out var totpValue);
                 return totpValue;
             });
     }

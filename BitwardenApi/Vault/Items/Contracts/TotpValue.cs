@@ -136,9 +136,15 @@ public sealed partial class TotpValue(TotpValue.State state)
             else if (Ascii.EqualsIgnoreCase(key, "algorithm"u8))
                 Enum.TryParse(Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
             else if (Ascii.EqualsIgnoreCase(key, "digits"u8))
-                Utf8Parser.TryParse(value, out digits, out _);
+            {
+                if (Utf8Parser.TryParse(value, out int parsedDigits, out _))
+                    digits = parsedDigits;
+            }
             else if (Ascii.EqualsIgnoreCase(key, "period"u8))
-                Utf8Parser.TryParse(value, out period, out _);
+            {
+                if (Utf8Parser.TryParse(value, out int parsedPeriod, out _))
+                    period = parsedPeriod;
+            }
         }
 
         if (secret is null)

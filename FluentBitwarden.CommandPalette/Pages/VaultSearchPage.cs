@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using AsyncAwaitBestPractices;
 using FluentBitwarden.CommandPalette.VaultListItems;
 using FluentBitwarden.Contracts.Modules.Sessions;
 using FluentBitwarden.Contracts.Modules.Vault;
@@ -80,9 +82,11 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         previousCancellation?.Dispose();
 
         IsLoading = true;
-        _ = SearchAsync(searchText, generation, cancellation.Token);
+        SearchAsync(searchText, generation, cancellation.Token).SafeFireAndForget();
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Fire-and-forget search triggered by keystrokes; a failed search must not crash the command palette.")]
     private async Task SearchAsync(
         string searchText,
         uint generation,

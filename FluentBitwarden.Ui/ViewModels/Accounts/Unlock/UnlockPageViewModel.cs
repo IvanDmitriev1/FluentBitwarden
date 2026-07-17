@@ -2,13 +2,10 @@ using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
-using FluentBitwarden.Application.Abstractions;
-using FluentBitwarden.Infrastructure.Navigation;
 
 namespace FluentBitwarden.ViewModels.Accounts.Unlock;
 
-public sealed partial class UnlockPageViewModel(
-    IAppCoordinator appCoordinator) : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
+public sealed partial class UnlockPageViewModel : ObservableObject, IPageLifecycleAware<UnlockPageParameter>
 {
     [ObservableProperty]
     public partial AccountProfile? SelectedAccount { get; private set; }

@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Data.Mapping;
+using System.Globalization;
+using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 
@@ -11,7 +12,7 @@ internal static class VaultFolderMapper
 
     public static VaultFolderResponse ToDomain(in FolderRow row) => new()
     {
-        Id = FolderId.Parse(row.FolderId),
+        Id = FolderId.Parse(row.FolderId, CultureInfo.InvariantCulture),
         RevisionDate = row.RevisionDateUnixMs.ToDateTimeOffsetFromUnixMs(),
         EncryptedName = EncString.FromBytes(row.EncryptedName)
     };

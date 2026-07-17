@@ -21,7 +21,7 @@ global using Windows.Win32;
 global using Windows.Win32.Foundation;
 global using Windows.Win32.UI.Shell;
 global using Windows.Win32.UI.WindowsAndMessaging;
-global using FluentBitwarden.AppHost.Data.Abstractions;
+global using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 global using FluentBitwarden.Platform.Infrastructure.Extensions;
 global using FluentBitwarden.Platform.Infrastructure;
 global using FluentBitwarden.Platform.Ipc.Abstractions;

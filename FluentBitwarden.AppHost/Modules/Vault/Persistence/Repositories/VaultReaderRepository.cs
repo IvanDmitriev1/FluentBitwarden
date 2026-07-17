@@ -1,11 +1,12 @@
+using System.Globalization;
 using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
 using BitwardenApi.Vault.Attachments.Contracts;
-using FluentBitwarden.AppHost.Data.Abstractions;
-using FluentBitwarden.AppHost.Data.Mapping;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;
 
@@ -191,7 +192,7 @@ internal sealed class VaultReaderRepository(SqliteTransaction transaction) : Bas
             .GroupBy(static row => row.CipherId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 static group => group.Key,
-                static group => group.Select(static row => CollectionId.Parse(row.CollectionId)).ToArray(),
+                static group => group.Select(static row => CollectionId.Parse(row.CollectionId, CultureInfo.InvariantCulture)).ToArray(),
                 StringComparer.OrdinalIgnoreCase);
     }
 

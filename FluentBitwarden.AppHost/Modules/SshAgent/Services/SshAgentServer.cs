@@ -1,19 +1,24 @@
-﻿using System.IO.Pipes;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO.Pipes;
 using System.Text;
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Services;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : BackgroundService
+internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider, ILogger<SshAgentServer> logger)
+    : BackgroundService
 {
     private const string PipeName = "openssh-ssh-agent";
     private static readonly TimeSpan ClientIdleTimeout = TimeSpan.FromMinutes(1);
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; narrowing would break resilience against unanticipated transport failures.")]
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -45,7 +50,7 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider) : Backgroun
             }
             catch (Exception e)
             {
-                UnhandledExceptionLogger.WriteException(e);
+                logger.AgentLoopFailed(e);
             }
         }
     }

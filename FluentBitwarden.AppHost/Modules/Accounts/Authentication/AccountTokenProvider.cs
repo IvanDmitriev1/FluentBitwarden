@@ -1,8 +1,10 @@
+using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
+
 namespace FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 
 internal sealed class AccountTokenProvider(
     IAccountStore accountStore,
-    IIdentityApi identityApiClient) : IBitwardenAccessTokenProvider
+    IIdentityApi identityApiClient) : IBitwardenAccessTokenProvider, IDisposable
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private AccountTokens? _currentTokens;
@@ -61,4 +63,6 @@ internal sealed class AccountTokenProvider(
             ExpiresAt = response.ExpiresAt
         };
     }
+
+    public void Dispose() => _gate.Dispose();
 }

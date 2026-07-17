@@ -1,14 +1,15 @@
+using AsyncAwaitBestPractices;
 using FluentBitwarden.Views;
+using FluentBitwarden.Platform.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Windows.AppLifecycle;
-using System.Diagnostics;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Application;
 using FluentBitwarden.Application.Abstractions;
 using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using FluentBitwarden.Infrastructure.UiCommand;
-using FluentBitwarden.Application.Implementations;
 
 namespace FluentBitwarden;
 
@@ -31,18 +32,11 @@ public partial class App : IXamlMetadataServiceProvider
         InitializeComponent();
         TrimmingConfiguration.Preserve();
 
-        UnhandledException += static (_, args) => UnhandledExceptionLogger.WriteException(args.Exception);
-        TaskScheduler.UnobservedTaskException += static (_, args) =>
-        {
-            Debug.WriteLine(args.Exception.Message);
-            UnhandledExceptionLogger.WriteException(args.Exception);
-            args.SetObserved();
-        };
-
         DispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _initialActivation = initialActivation;
 
         var services = new ServiceCollection()
+            .AddAppLogging("ui")
             .AddViews()
             .AddUiServices()
             .AddApplicationServices();
@@ -51,6 +45,20 @@ public partial class App : IXamlMetadataServiceProvider
 #else
         _services = services.BuildServiceProvider();
 #endif
+
+        WireExceptionLogging(_services.GetRequiredService<ILoggerFactory>().CreateLogger("FluentBitwarden.Ui"));
+    }
+
+    private void WireExceptionLogging(ILogger logger)
+    {
+        SafeFireAndForgetExtensions.SetDefaultExceptionHandling(logger.UnhandledException);
+
+        UnhandledException += (_, args) => logger.UnhandledException(args.Exception);
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            logger.UnobservedTaskException(args.Exception);
+            args.SetObserved();
+        };
     }
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

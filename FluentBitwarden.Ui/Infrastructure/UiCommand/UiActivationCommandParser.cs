@@ -1,3 +1,4 @@
+using System.Globalization;
 using Windows.ApplicationModel.Activation;
 using Microsoft.Windows.AppLifecycle;
 
@@ -21,13 +22,13 @@ internal static class UiActivationCommandParser
             "--open-item" => args.Length == 3
                 ? ParseOpenItemCommand(args[2])
                 : throw new ArgumentException("--open-item requires an <itemId>"),
-            _ => throw new ArgumentException()
+            _ => throw new ArgumentException($"Unknown UI activation command: {args[1]}")
         };
     }
 
     private static UiCliCommand.OpenItemCommand ParseOpenItemCommand(ReadOnlySpan<char> data)
     {
-        var cipherId = CipherId.Parse(data);
+        var cipherId = CipherId.Parse(data, CultureInfo.InvariantCulture);
         return new UiCliCommand.OpenItemCommand(cipherId);
     }
 }

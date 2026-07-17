@@ -45,6 +45,7 @@
   </ItemGroup>
 
 	<ItemGroup>
+	<PackageReference Include="AsyncAwaitBestPractices" />
 	<PackageReference Include="CommunityToolkit.Mvvm" />
 	<PackageReference Include="CommunityToolkit.WinUI.Animations" />
 	<PackageReference Include="CommunityToolkit.WinUI.Behaviors" />

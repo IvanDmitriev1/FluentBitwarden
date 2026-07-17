@@ -63,4 +63,10 @@ public static class AppSettingKeys
         public static readonly SettingKey<SensitiveActionPolicy> UserVerificationPolicyKey =
             new("sshAgent.userVerificationPolicy", SensitiveActionPolicy.RequireUserAction);
     }
+
+    public static class Diagnostics
+    {
+        public static readonly SettingKey<LogLevels> LogLevelsKey =
+            new("diagnostics.logLevels", LogLevels.Error);
+    }
 }

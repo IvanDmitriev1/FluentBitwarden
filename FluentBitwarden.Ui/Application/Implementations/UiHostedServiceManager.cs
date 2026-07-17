@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.Application.Implementations;
 
-internal sealed class UiHostedServiceManager : IUiHostedServiceManager
+internal sealed class UiHostedServiceManager : IUiHostedServiceManager, IDisposable
 {
     private readonly IHostedService _processService;
     private readonly IHostedService[] _vaultServices;
@@ -90,5 +90,11 @@ internal sealed class UiHostedServiceManager : IUiHostedServiceManager
         {
             _vaultServiceSemaphoreSlim.Release();
         }
+    }
+
+    public void Dispose()
+    {
+        _vaultServiceSemaphoreSlim.Dispose();
+        _processServiceStartLock.Dispose();
     }
 }

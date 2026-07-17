@@ -56,14 +56,14 @@ internal sealed class IdentityTwoFactorProviders2JsonConverter : JsonConverter<I
         Span<byte> buffer = stackalloc byte[4];
         reader.CopyString(buffer);
 
-        int.TryParse(buffer, out var providerValue);
-        if (Enum.IsDefined(typeof(IdentityTwoFactorProviderType), providerValue))
+        if (!int.TryParse(buffer, out var providerValue) ||
+            !Enum.IsDefined(typeof(IdentityTwoFactorProviderType), providerValue))
         {
-            provider = (IdentityTwoFactorProviderType)providerValue;
-            return true;
+            provider = null;
+            return false;
         }
 
-        provider = null;
-        return false;
+        provider = (IdentityTwoFactorProviderType)providerValue;
+        return true;
     }
 }

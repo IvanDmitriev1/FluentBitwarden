@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using AsyncAwaitBestPractices;
 using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
@@ -43,9 +45,11 @@ public abstract partial class IntegrationSetupSettingValue : ObservableObject
             return;
         }
 
-        _ = ApplyEnabledAsync(enabled);
+        ApplyEnabledAsync(enabled).SafeFireAndForget();
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Fire-and-forget toggle handler; a failed apply must not crash the settings page.")]
     private async Task ApplyEnabledAsync(bool enabled)
     {
         IsApplying = true;

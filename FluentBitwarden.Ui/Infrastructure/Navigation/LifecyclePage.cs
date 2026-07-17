@@ -1,9 +1,13 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace FluentBitwarden.Infrastructure.Navigation;
 
+[SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",
+    Justification = "_cts is disposed via CancelLoading(), invoked from OnNavigatedFrom/Unloaded; Page has no IDisposable contract WinUI ever calls.")]
 public abstract class LifecyclePage : Page, ILifeCycleAwarePage
 {
     private CancellationTokenSource? _cts;
@@ -63,6 +67,8 @@ public abstract class LifecyclePage : Page, ILifeCycleAwarePage
             aware.OnUnloading();
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "async void navigation entry point; unhandled exceptions here would crash the process instead of being logged.")]
     private async void LoadViewModel(IPageNavigationParameter? navParameter)
     {
         CancelLoading();
@@ -83,13 +89,13 @@ public abstract class LifecyclePage : Page, ILifeCycleAwarePage
         {
             //
         }
-        catch (ArgumentOutOfRangeException e)
+        catch (ArgumentOutOfRangeException)
         {
-            Debug.Fail($"Encountered unexpected navigation parameter!");
+            Debug.Fail("Encountered unexpected navigation parameter!");
         }
         catch (Exception e)
         {
-            UnhandledExceptionLogger.WriteException(e);
+            App.Current.GetRequiredService<ILogger<LifecyclePage>>().PageLoadFailed(e);
         }
     }
 

@@ -11,6 +11,10 @@ internal static class VaultServiceCollectionExtensions
     {
         services.AddSingleton<IVaultWorkspace, VaultWorkspace>();
 
+        // Reads for sibling modules, served off whatever session is currently installed. The vault
+        // itself lives in the session, so there is no store to register here.
+        services.AddSingleton<IUnlockedVaultReader, UnlockedVaultReader>();
+
         services.AddSingleton<IVaultCipherAttachmentDownloadService, VaultCipherAttachmentDownloadService>();
 
         return services;

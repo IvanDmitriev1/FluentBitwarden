@@ -1,14 +1,15 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.Application.Tray;
 using FluentBitwarden.AppHost.Infrastructure.Services;
 using Microsoft.Extensions.Hosting;
-using FluentBitwarden.AppHost.Application.Sessions;
+using FluentBitwarden.AppHost.Modules.Sessions.Abstractions;
 
 namespace FluentBitwarden.AppHost.Application;
 
 internal sealed class AppHostHostedService(
     IHostApplicationLifetime applicationLifetime,
     IUiProcessLauncher uiProcessLauncher,
-    IVaultSession vaultSession) : IHostedService
+    IVaultSessionManager sessionManager) : IHostedService, IDisposable
 {
     private readonly ManualResetEventSlim _messageLoopStarted = new();
     private readonly ManualResetEventSlim _messageLoopStopped = new();
@@ -62,11 +63,19 @@ internal sealed class AppHostHostedService(
         }
     }
 
+    public void Dispose()
+    {
+        _messageLoopStarted.Dispose();
+        _messageLoopStopped.Dispose();
+    }
+
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Captures any startup failure on the message-loop thread to surface it back through StartAsync.")]
     private void RunMessageLoop()
     {
         try
         {
-            _trayHost = new TrayHost(applicationLifetime, uiProcessLauncher, vaultSession);
+            _trayHost = new TrayHost(applicationLifetime, uiProcessLauncher, sessionManager);
             _messageLoopStarted.Set();
 
             while (PInvoke.GetMessage(out var message, default, 0, 0).Value > 0)

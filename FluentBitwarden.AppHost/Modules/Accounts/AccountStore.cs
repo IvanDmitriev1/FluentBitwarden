@@ -1,3 +1,5 @@
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts;

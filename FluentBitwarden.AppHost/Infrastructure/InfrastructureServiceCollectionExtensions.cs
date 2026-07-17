@@ -1,5 +1,5 @@
+using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Infrastructure.Services;
-using FluentBitwarden.Contracts.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Infrastructure;
@@ -9,6 +9,8 @@ internal static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddApplicationInfrastructureServices(
         this IServiceCollection services)
     {
+        services.AddDatabaseServices();
+
         services.AddHttpClient("SharedHttpClient", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(8);
@@ -21,8 +23,6 @@ internal static class InfrastructureServiceCollectionExtensions
 
         services.AddTransient<IAppSetupService, AppSetupService>();
         services.AddSingleton<IUiProcessLauncher, AppHostUiProcessManager>();
-
-        services.AddSingleton<IVaultSessionUnlockDialog, VaultSessionUnlockDialog>();
 
         return services;
     }

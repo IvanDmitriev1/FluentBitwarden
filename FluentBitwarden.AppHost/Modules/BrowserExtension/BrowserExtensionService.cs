@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Application.Sessions;
+using FluentBitwarden.AppHost.Modules.Sessions.Abstractions;
 using FluentBitwarden.AppHost.Modules.BrowserExtension.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.Contracts.Modules.BrowserExtension.Models;
@@ -8,14 +8,14 @@ namespace FluentBitwarden.AppHost.Modules.BrowserExtension;
 
 internal sealed class BrowserExtensionService(
     IUnlockedVaultReader unlockedVaultReader,
-    IVaultSession vaultSession)
+    IVaultSessionManager sessionManager)
 {
     private static readonly VaultCipherQuery LoginCipherQuery = new()
     {
         CipherType = VaultCipherType.Login
     };
 
-    private bool HasUnlockedSession => vaultSession.TryGetUnlockedSession(out _);
+    private bool HasUnlockedSession => sessionManager.TryGetUnlockedSession(out _);
 
     public ValueTask<BrowserVaultStatusResponse> GetStatusAsync(
         BrowserVaultStatusRequest request,

@@ -1,5 +1,6 @@
+using System.Globalization;
 using BitwardenApi.Vault.Attachments.Contracts;
-using FluentBitwarden.AppHost.Data.Mapping;
+using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
@@ -44,7 +45,7 @@ internal static class VaultCipherMapper
         CollectionId[] collectionIds,
         VaultCipherAttachmentDownloadResponse[] attachments) => new()
     {
-        Id = CipherId.Parse(row.CipherId),
+        Id = CipherId.Parse(row.CipherId, CultureInfo.InvariantCulture),
         OrganizationId = SqliteConversions.ParseOrEmpty(row.OrganizationId, OrganizationId.Parse, OrganizationId.Empty),
         FolderId = SqliteConversions.ParseOrEmpty(row.FolderId, FolderId.Parse, FolderId.Empty),
         CollectionIds = collectionIds,
@@ -64,7 +65,7 @@ internal static class VaultCipherMapper
 
     public static VaultCipherAttachmentDownloadResponse ToDomain(in CipherAttachmentRow row) => new()
     {
-        Id = AttachmentId.Parse(row.AttachmentId),
+        Id = AttachmentId.Parse(row.AttachmentId, CultureInfo.InvariantCulture),
         Url = string.Empty,
         EncryptedFileName = EncString.FromBytes(row.EncryptedFileName),
         ProtectedAttachmentKey = EncString.Empty,
@@ -72,7 +73,7 @@ internal static class VaultCipherMapper
     };
 
     public static VaultCipherKeyMaterial ToKeyMaterial(CipherKeyMaterialRow row) => new(
-        CipherId: CipherId.Parse(row.CipherId),
+        CipherId: CipherId.Parse(row.CipherId, CultureInfo.InvariantCulture),
         OrganizationId: SqliteConversions.ParseOrEmpty(row.OrganizationId, OrganizationId.Parse, OrganizationId.Empty),
         ProtectedCipherKey: row.ProtectedCipherKey is null
             ? EncString.Empty

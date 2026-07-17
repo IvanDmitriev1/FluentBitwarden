@@ -1,11 +1,15 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
-using FluentBitwarden.Platform.Infrastructure;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace FluentBitwarden.Platform.Ipc.Services;
 
-internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcClientsVerifier)
+internal sealed class PipeIpcEventHub(
+    string pipeName,
+    IIpcClientsVerifier ipcClientsVerifier,
+    ILogger<PipeIpcEventHub> logger)
     : BackgroundService, IIpcEventPublisher
 {
     private sealed record Subscriber(NamedPipeServerStream Pipe) : IDisposable
@@ -51,6 +55,8 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
         }
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; narrowing would break resilience against unanticipated transport failures.")]
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -63,7 +69,7 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
 
                 if (ipcClientsVerifier.IsExpectedClient(pipe) != IpcAuthenticationLevel.SamePackage)
                 {
-                    Debug.WriteLine("Rejected unauthorized IPC event subscriber.");
+                    logger.UnauthorizedSubscriberRejected();
                     continue;
                 }
 
@@ -73,7 +79,7 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
                     pipe = null;
                 }
 
-                Debug.WriteLine("IPC event subscriber registered.");
+                logger.SubscriberRegistered();
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -81,13 +87,20 @@ internal sealed class PipeIpcEventHub(string pipeName, IIpcClientsVerifier ipcCl
             }
             catch (Exception exception)
             {
-                UnhandledExceptionLogger.WriteException(exception);
+                logger.ServerLoopFailed(exception);
             }
             finally
             {
-                pipe?.Dispose();
+                if (pipe is not null)
+                    await pipe.DisposeAsync();
             }
         }
+    }
+
+    public override void Dispose()
+    {
+        _publishLock.Dispose();
+        base.Dispose();
     }
 
     private async Task TryWriteAsync<

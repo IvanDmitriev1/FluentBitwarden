@@ -1,17 +1,19 @@
+using AsyncAwaitBestPractices;
 using BitwardenApi;
 using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Application.Activation;
-using FluentBitwarden.AppHost.Data;
 using FluentBitwarden.AppHost.Infrastructure;
-using FluentBitwarden.AppHost.Infrastructure.Ipc;
 using FluentBitwarden.AppHost.Infrastructure.Services;
 using FluentBitwarden.AppHost.Modules.Accounts;
 using FluentBitwarden.AppHost.Modules.BrowserExtension;
 using FluentBitwarden.AppHost.Modules.Passkey;
+using FluentBitwarden.AppHost.Modules.Sessions;
 using FluentBitwarden.AppHost.Modules.SshAgent;
 using FluentBitwarden.AppHost.Modules.Vault;
+using FluentBitwarden.Platform.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32.SafeHandles;
 using Microsoft.Windows.AppLifecycle;
 
@@ -28,7 +30,7 @@ internal static class Program
         WinRT.ComWrappersSupport.InitializeComWrappers();
 
         AppActivationArguments initialActivation = AppInstance.GetCurrent().GetActivatedEventArgs();
-        AppInstance keyInstance = AppInstance.FindOrRegisterForKey(InstanceKey);
+        var keyInstance = AppInstance.FindOrRegisterForKey(InstanceKey);
 
         if (!keyInstance.IsCurrent)
         {
@@ -47,14 +49,15 @@ internal static class Program
             }));
 #endif
 
-        builder.Services.AddApplicationServices();
+        builder.Services.AddAppLogging("apphost");
 
-        builder.Services.AddDatabaseServices();
+        builder.Services.AddApplicationServices();
         builder.Services.AddApplicationInfrastructureServices();
 
         builder.Services.AddBitwardenApi();
         builder.Services.AddAccountServices();
         builder.Services.AddVaultServices();
+        builder.Services.AddSessionServices();
         builder.Services.AddBrowserExtensionServices();
         builder.Services.AddPasskeyServices();
         builder.Services.AddSshAgent();
@@ -62,6 +65,12 @@ internal static class Program
         builder.Services.AddAppHostIpc();
 
         var host = builder.Build();
+
+        var logger = host.Services
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("FluentBitwarden.AppHost");
+
+        SafeFireAndForgetExtensions.SetDefaultExceptionHandling(logger.UnhandledException);
 
         keyInstance.Activated += (_, arguments) =>
             host.Services.GetRequiredService<AppHostActivationHandler>().Handle(arguments);

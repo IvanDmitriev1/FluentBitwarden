@@ -1,7 +1,9 @@
-using FluentBitwarden.Platform.Infrastructure;
+using System.Diagnostics.CodeAnalysis;
+using AsyncAwaitBestPractices;
 using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.IO.Pipes;
 
 namespace FluentBitwarden.Platform.Ipc.Services;
@@ -9,9 +11,12 @@ namespace FluentBitwarden.Platform.Ipc.Services;
 internal sealed class PipeIpcServer(
     string pipeName,
     IReadOnlyDictionary<ushort, IpcRpcEndpoint> endpoints,
-    IIpcClientsVerifier ipcClientsVerifier)
+    IIpcClientsVerifier ipcClientsVerifier,
+    ILogger<PipeIpcServer> logger)
     : BackgroundService
 {
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; narrowing would break resilience against unanticipated transport failures.")]
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -25,11 +30,11 @@ internal sealed class PipeIpcServer(
                 var requestPipe = pipe;
                 pipe = null;
 
-                _ = ProcessRequestAsync(requestPipe, stoppingToken);
+                ProcessRequestAsync(requestPipe, stoppingToken).SafeFireAndForget();
             }
             catch (IOException)
             {
-                Debug.WriteLine("IPC client disconnected before the server response was delivered.");
+                logger.ClientDisconnected();
             }
             catch (OperationCanceledException)
             {
@@ -37,11 +42,12 @@ internal sealed class PipeIpcServer(
             }
             catch (Exception e)
             {
-                UnhandledExceptionLogger.WriteException(e);
+                logger.ServerLoopFailed(e);
             }
             finally
             {
-                pipe?.Dispose();
+                if (pipe is not null)
+                    await pipe.DisposeAsync();
             }
         }
     }
@@ -55,6 +61,8 @@ internal sealed class PipeIpcServer(
         inBufferSize: 4 * 1024,
         outBufferSize: 8 * 1024);
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; narrowing would break resilience against unanticipated transport failures.")]
     private async Task ProcessRequestAsync(
         NamedPipeServerStream pipe,
         CancellationToken stoppingToken)
@@ -64,14 +72,14 @@ internal sealed class PipeIpcServer(
             var authenticationLevel = ipcClientsVerifier.IsExpectedClient(pipe);
             if (authenticationLevel == IpcAuthenticationLevel.Rejected)
             {
-                Debug.WriteLine("Rejected unauthorized IPC pipe client.");
+                logger.UnauthorizedClientRejected();
                 return;
             }
 
             var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
             if (!endpoints.TryGetValue(header.MessageType, out var endpoint))
             {
-                Debug.WriteLine($"Rejected unknown IPC message type: {header.MessageType}.");
+                logger.UnknownMessageTypeRejected(header.MessageType);
                 return;
             }
 
@@ -86,7 +94,7 @@ internal sealed class PipeIpcServer(
         }
         catch (IOException)
         {
-            Debug.WriteLine("IPC client disconnected before the server response was delivered.");
+            logger.ClientDisconnected();
         }
         catch (OperationCanceledException)
         {
@@ -94,11 +102,11 @@ internal sealed class PipeIpcServer(
         }
         catch (Exception e)
         {
-            UnhandledExceptionLogger.WriteException(e);
+            logger.RequestFailed(e);
         }
         finally
         {
-            pipe.Dispose();
+            await pipe.DisposeAsync();
         }
     }
 }

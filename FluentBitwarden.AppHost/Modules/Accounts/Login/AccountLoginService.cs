@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Infrastructure.Security.WebAuthn;
+using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
@@ -125,10 +127,10 @@ internal sealed class AccountLoginService(
         string accountId = jwt.Claims.First(c => c.Type == "sub").Value;
         string email = jwt.Claims.First(c => c.Type == "email").Value;
 
-        var userId = UserId.Parse(accountId);
+        var userId = UserId.Parse(accountId, CultureInfo.InvariantCulture);
 
         return new AuthenticatedAccount(
-            UserId.Parse(accountId),
+            UserId.Parse(accountId, CultureInfo.InvariantCulture),
             email,
             new AccountTokens(userId,
                 new BitwardenClientContext(environment, DeviceIdentity.DeviceInfo),

@@ -1,7 +1,8 @@
 using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
-using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
+using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 
@@ -47,7 +48,7 @@ internal sealed class WindowsHelloUnlocker(IUnitOfWorkFactory unitOfWorkFactory)
 
             if (protectedBytes is null)
             {
-                AccountUnlockResult.WithoutUserKey(
+                return AccountUnlockResult.WithoutUserKey(
                     new AccountUnlockOutcome.Failure(
                         "Windows Hello unlock is not enabled for this account. Unlock with your master password and enable Windows Hello again."));
             }

@@ -1,6 +1,10 @@
+using AsyncAwaitBestPractices;
 using FluentBitwarden.CommandPalette.Application;
+using FluentBitwarden.Platform.Diagnostics;
 using FluentBitwarden.Platform.SiteIcons;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace FluentBitwarden.CommandPalette;
 
@@ -16,11 +20,19 @@ public static class Program
 
         var builder = Host.CreateApplicationBuilder();
         builder.Services
+            .AddAppLogging("commandpalette")
             .AddInfrastructureServices()
             .AddSiteIconCache()
             .AddCommandPaletteApplicationServices();
 
         using var host = builder.Build();
+
+        var logger = host.Services
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("FluentBitwarden.CommandPalette");
+
+        SafeFireAndForgetExtensions.SetDefaultExceptionHandling(logger.UnhandledException);
+
         host.Run();
     }
 }

@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.Infrastructure.Services;
+using FluentBitwarden.AppHost.Modules.Sessions.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models.OpenSsh;
@@ -45,6 +46,14 @@ internal sealed class SshKeyProvider(
             var userAction = await sshUserActionDialogClient.ShowSshDialogAsync(requestDialog, token);
             if (userAction == UserActionDialogOutcome.Denied)
                 return SshSignatureResult.Failed;
+
+            // The dialog stays open for as long as the user takes to answer, and a lock or a sync
+            // in that window can retire the key they were shown. Re-resolve so a signature can only
+            // ever come from a key that is still in the vault.
+            if (GetShhCipher(request.PublicKeyBlob) is not { } approvedCipher)
+                return SshSignatureResult.Failed;
+
+            cipher = approvedCipher;
         }
 
         var privateKey = OpenSshEd25519Key.Parse(cipher.PrivateKey.AsMemory());

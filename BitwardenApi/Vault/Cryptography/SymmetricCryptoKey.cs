@@ -22,11 +22,21 @@ public abstract class SymmetricCryptoKey(byte[] key) : IDisposable
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
         if (_disposed)
             return;
 
         _disposed = true;
-        CryptographicOperations.ZeroMemory(key);
+
+        if (disposing)
+        {
+            CryptographicOperations.ZeroMemory(key);
+        }
     }
 }
 

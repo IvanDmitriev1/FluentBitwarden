@@ -1,13 +1,15 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Platform.Infrastructure;
+using Microsoft.Extensions.Logging;
 using Windows.Storage;
 
 namespace FluentBitwarden.Platform.SiteIcons;
 
-internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISiteIconCache
+internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory, ILogger<SiteIconCache> logger)
+    : ISiteIconCache
 {
     private static readonly string CacheDirectoryPath =
         Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "SiteIcons");
@@ -32,6 +34,8 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
         return cachedFilePath;
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; preload is best-effort and must not fail the caller.")]
     public async Task PreloadAsync(IEnumerable<Uri> siteUris)
     {
         Directory.CreateDirectory(CacheDirectoryPath);
@@ -49,14 +53,16 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
         }
         catch (OperationCanceledException e)
         {
-            Debug.WriteLine($"Site icon cache preload was canceled: {e.Message}");
+            logger.PreloadCanceled(e);
         }
         catch (Exception e)
         {
-            UnhandledExceptionLogger.WriteException(e);
+            logger.PreloadFailed(e);
         }
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; a single icon fetch failure must not fail the whole preload batch.")]
     private async ValueTask CacheIconAsync(Uri siteUri, CancellationToken cancellationToken)
     {
         try
@@ -73,7 +79,7 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory) : ISit
             using var httpClient = httpClientFactory.CreateSiteIconClient();
 
             using var response = await httpClient.GetAsync(
-                $"https://icons.bitwarden.net/{siteUri.Host}/icon.png",
+                new Uri($"https://icons.bitwarden.net/{siteUri.Host}/icon.png"),
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
 

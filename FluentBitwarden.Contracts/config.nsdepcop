@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  NsDepCop namespace-dependency rules for FluentBitwarden.Contracts.
+
+  Contracts is the cross-module boundary surface. Dependencies flow TOWARD it, never out of it.
+
+  Note this file is allow-all + Disallowed, the opposite of FluentBitwarden.AppHost/config.nsdepcop
+  (deny-all + Allowed). That is deliberate: Contracts is a leaf with nothing to lay out internally,
+  so the only interesting rules are the ways out of it. AppHost has a layered structure worth
+  stating positively. Disallowed always beats Allowed in NsDepCop.
+
+  Severity of NSDEPCOP01 is centralized in the repo-root .editorconfig (error).
+-->
+<NsDepCopConfig MaxIssueCount="1000">
+
+  <!-- Baseline: permit all dependencies; only the boundaries below are forbidden. -->
+  <Allowed From="*" To="*" />
+
+  <!-- RULE 4: Contracts must never depend on any product project's internals.
+       It is the shared boundary; coupling back out of it would invert the layering. -->
+  <Disallowed From="FluentBitwarden.Contracts.*" To="FluentBitwarden.AppHost.*" />
+  <Disallowed From="FluentBitwarden.Contracts.*" To="FluentBitwarden.Platform.*" />
+  <Disallowed From="FluentBitwarden.Contracts.*" To="FluentBitwarden.Ui.*" />
+
+</NsDepCopConfig>

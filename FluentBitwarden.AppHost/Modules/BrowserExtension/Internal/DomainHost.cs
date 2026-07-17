@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace FluentBitwarden.AppHost.Modules.BrowserExtension.Internal;
 
 internal readonly record struct DomainHost(string Value)
@@ -5,6 +7,8 @@ internal readonly record struct DomainHost(string Value)
     public static bool TryCreate(Uri uri, out DomainHost host) =>
         TryCreate(uri.IdnHost, out host);
 
+    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase",
+        Justification = "Canonicalizing a hostname; lowercase is the correct normalized form (RFC 3986 6.2.2.1), not a security-sensitive case-fold.")]
     public static bool TryCreate(string value, out DomainHost host)
     {
         var canonicalValue = value.Trim().TrimEnd('.').ToLowerInvariant();

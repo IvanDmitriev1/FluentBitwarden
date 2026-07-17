@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Data.Abstractions;
+using AsyncAwaitBestPractices;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Platform.Infrastructure.Integrations;
 
@@ -26,7 +27,7 @@ internal sealed class AppSetupService(IDataInitializationService dataInitializat
     {
         if (PasskeyPluginSetupService.IsSupported())
         {
-            _ = Task.Run(PasskeyPluginSetupService.EnsureRegisteredAsync);
+            Task.Run(PasskeyPluginSetupService.EnsureRegisteredAsync).SafeFireAndForget();
             SettingsStore.Instance.Set(AppSettingKeys.Passkeys.PluginEnabledKey, true);
         }
 

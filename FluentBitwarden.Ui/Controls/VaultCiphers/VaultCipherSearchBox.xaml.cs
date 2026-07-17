@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using FluentBitwarden.Contracts.Modules.Vault;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
@@ -27,6 +29,8 @@ public sealed partial class VaultCipherSearchBox : UserControl
         CancelPendingSearch();
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "async void UI event handler; unhandled exceptions here would crash the process instead of being logged.")]
     private async void AutoSuggestBox_OnTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
         if (args.Reason is not AutoSuggestionBoxTextChangeReason.UserInput)
@@ -68,7 +72,7 @@ public sealed partial class VaultCipherSearchBox : UserControl
         }
         catch (Exception e)
         {
-            UnhandledExceptionLogger.WriteException(e);
+            App.Current.GetRequiredService<ILogger<VaultCipherSearchBox>>().CipherSearchFailed(e);
         }
         finally
         {

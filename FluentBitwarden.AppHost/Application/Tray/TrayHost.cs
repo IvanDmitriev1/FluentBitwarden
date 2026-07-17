@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Application.Sessions;
+using AsyncAwaitBestPractices;
+using FluentBitwarden.AppHost.Modules.Sessions.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Services;
 using Microsoft.Extensions.Hosting;
 
@@ -20,18 +21,18 @@ internal sealed class TrayHost : IDisposable
     private readonly NotificationIcon _trayIcon;
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IUiProcessLauncher _uiProcessLauncher;
-    private readonly IVaultSession _vaultSession;
+    private readonly IVaultSessionManager _sessionManager;
     private bool _windowDestroyed;
     private bool _disposed;
 
     public TrayHost(
         IHostApplicationLifetime applicationLifetime,
         IUiProcessLauncher uiProcessLauncher,
-        IVaultSession vaultSession)
+        IVaultSessionManager sessionManager)
     {
         _applicationLifetime = applicationLifetime;
         _uiProcessLauncher = uiProcessLauncher;
-        _vaultSession = vaultSession;
+        _sessionManager = sessionManager;
         _moduleHandle = PInvoke.GetModuleHandle(default(PCWSTR));
         RegisterWindowClass();
 
@@ -151,7 +152,7 @@ internal sealed class TrayHost : IDisposable
                 return;
 
             case TrayMenuCommand.Lock:
-                _vaultSession.RequestLock();
+                _sessionManager.LockAsync().SafeFireAndForget();
                 return;
 
             case TrayMenuCommand.Exit:

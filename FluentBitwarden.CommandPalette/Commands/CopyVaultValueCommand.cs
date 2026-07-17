@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Platform.Infrastructure.Clipboard;
 
 namespace FluentBitwarden.CommandPalette.Commands;
@@ -9,6 +10,8 @@ internal sealed partial class CopyVaultValueCommand : InvokableCommand
     {
     }
 
+    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase",
+        Justification = "Cosmetic UI label casing (e.g. \"Copy password\"), not a security-sensitive identifier.")]
     public CopyVaultValueCommand(Func<string> valueFactory, string valueName)
     {
         _valueFactory = valueFactory;

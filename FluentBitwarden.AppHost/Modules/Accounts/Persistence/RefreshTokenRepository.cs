@@ -1,7 +1,8 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Dapper;
-using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
@@ -77,7 +78,7 @@ internal sealed class RefreshTokenRepository(SqliteTransaction transaction) : Ba
             if (string.IsNullOrWhiteSpace(tokenValue))
                 return RefreshToken.Empty;
 
-            return RefreshToken.Parse(tokenValue);
+            return RefreshToken.Parse(tokenValue, CultureInfo.InvariantCulture);
         }
         finally
         {

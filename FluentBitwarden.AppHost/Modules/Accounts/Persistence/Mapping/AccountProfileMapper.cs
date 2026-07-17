@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Data.Mapping;
+using System.Globalization;
+using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
@@ -20,7 +21,7 @@ internal static class AccountProfileMapper
         int ProfileSynced);
 
     public static AccountProfile ToDomain(AccountProfileRow row) => new(
-        UserId: UserId.Parse(row.UserId),
+        UserId: UserId.Parse(row.UserId, CultureInfo.InvariantCulture),
         Email: row.Email,
         Environment: new BitwardenEnvironment(
             ApiBase: new Uri(row.ApiBase, UriKind.Absolute),

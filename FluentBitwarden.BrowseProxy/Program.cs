@@ -39,7 +39,7 @@ try
         }
         catch (JsonException e)
         {
-            Console.Error.WriteLine($"Rejected malformed native message: {e}");
+            await Console.Error.WriteLineAsync($"Rejected malformed native message: {e}");
             continue;
         }
 
@@ -60,12 +60,14 @@ try
         }
         catch (OperationCanceledException) when (requestCts.IsCancellationRequested)
         {
-            Console.Error.WriteLine($"Native request '{request.RequestId}' timed out after {requestTimeout.TotalSeconds} seconds.");
+            await Console.Error.WriteLineAsync($"Native request '{request.RequestId}' timed out after {requestTimeout.TotalSeconds} seconds.");
         }
+#pragma warning disable CA1031 // Intentional log-and-continue boundary; a single malformed native request must not crash the proxy process.
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Native request '{request.RequestId}' failed: {e}");
+            await Console.Error.WriteLineAsync($"Native request '{request.RequestId}' failed: {e}");
         }
+#pragma warning restore CA1031
     }
 
 }
@@ -73,10 +75,12 @@ catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
 {
     return 0;
 }
+#pragma warning disable CA1031 // Top-level catch-all; any unhandled failure must be logged and result in a non-zero exit code, not crash silently.
 catch (Exception e)
 {
-    Console.Error.WriteLine(e);
+    await Console.Error.WriteLineAsync(e.ToString());
     return -1;
+#pragma warning restore CA1031
 }
 
 static void ValidateRequest(BrowserNativeRequestEnvelope request)

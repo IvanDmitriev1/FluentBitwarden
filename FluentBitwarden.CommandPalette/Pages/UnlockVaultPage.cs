@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Sessions;
@@ -51,6 +52,8 @@ internal sealed partial class UnlockVaultPage : ContentPage
             TemplateJson = BuildCurrentTemplateJson();
         }
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "Form-submit handler for the command palette host; unhandled exceptions must not crash the extension.")]
         public override ICommandResult SubmitForm(string inputs, string data)
         {
             try

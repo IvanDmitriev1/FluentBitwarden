@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Data.Mapping;
+using System.Globalization;
+using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 
@@ -15,7 +16,7 @@ internal static class VaultCollectionMapper
 
     public static VaultCollectionResponse ToDomain(in CollectionRow row) => new()
     {
-        Id = CollectionId.Parse(row.CollectionId),
+        Id = CollectionId.Parse(row.CollectionId, CultureInfo.InvariantCulture),
         OrganizationId = SqliteConversions.ParseOrEmpty(row.OrganizationId, OrganizationId.Parse, OrganizationId.Empty),
         ReadOnly = row.IsReadOnly.ToBool(),
         Manage = row.CanManage.ToBool(),

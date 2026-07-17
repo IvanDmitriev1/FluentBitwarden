@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Application.Sessions;
+using AsyncAwaitBestPractices;
+using FluentBitwarden.AppHost.Modules.Sessions.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Services;
 using Microsoft.Windows.AppLifecycle;
 
@@ -6,7 +7,7 @@ namespace FluentBitwarden.AppHost.Application.Activation;
 
 internal sealed class AppHostActivationHandler(
     IUiProcessLauncher uiProcessLauncher,
-    IVaultSession vaultSession)
+    IVaultSessionManager sessionManager)
 {
     public void Handle(AppActivationArguments args)
     {
@@ -17,12 +18,12 @@ internal sealed class AppHostActivationHandler(
                 uiProcessLauncher.ActivateMainWindow();
                 break;
             case AppHostCliCommand.Lock:
-                vaultSession.RequestLock();
+                sessionManager.LockAsync().SafeFireAndForget();
                 break;
             case AppHostCliCommand.Headless:
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(command), command, null);
+                throw new ArgumentOutOfRangeException(nameof(args), command, "Unsupported app-host CLI command.");
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
 using Windows.Networking.Connectivity;
@@ -7,16 +8,49 @@ using FluentBitwarden.AppHost.Modules.Vault.Workspace.Abstractions;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.AppHost.Application.Sessions;
+using FluentBitwarden.AppHost.Modules.Sessions.Models;
+using Microsoft.Extensions.Logging;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class VaultWorkspace(
     IUnitOfWorkFactory unitOfWorkFactory,
-    IVaultItemsApi vaultApiClient) : IVaultWorkspace
+    IVaultItemsApi vaultApiClient,
+    ILogger<VaultWorkspace> logger) : IVaultWorkspace
 {
-    public LoadedVaultData Load(UserKey decryptedUserKey, KeySession keys)
+    public async Task<IUnlockedVault> LoadAsync(
+        BitwardenAccountContext accountContext,
+        UserKey userKey,
+        KeySession keys,
+        bool forceSync,
+        CancellationToken cancellationToken)
+    {
+        var vault = Load(userKey, keys);
+        if (!forceSync && !vault.IsEmpty)
+            return vault;
+
+        var syncResult = await SyncCoreAsync(accountContext, userKey, force: true, cancellationToken);
+
+        return syncResult == VaultSyncResult.Synced ? Load(userKey, keys) : vault;
+    }
+
+    public async Task<VaultSyncOutcome> SyncAsync(
+        BitwardenAccountContext accountContext,
+        UserKey userKey,
+        KeySession keys,
+        IUnlockedVault current,
+        CancellationToken cancellationToken)
+    {
+        var result = await SyncCoreAsync(accountContext, userKey, force: false, cancellationToken);
+
+        return new VaultSyncOutcome(
+            result,
+            result == VaultSyncResult.Synced ? Load(userKey, keys) : current);
+    }
+
+    private UnlockedVault Load(UserKey decryptedUserKey, KeySession keys)
     {
         using var unitOfWork = unitOfWorkFactory.Create();
         var organizationKeys = unitOfWork.VaultReaderRepository.GetAllOrganizations(decryptedUserKey.UserId)
@@ -48,14 +82,18 @@ internal sealed class VaultWorkspace(
             collections.Add(VaultDataParser.ParseAndDecryptCollection(in dto, key));
         }
 
-        return new LoadedVaultData(ciphersById, cipherIdsByCollectionId, folders, collections);
+        return new UnlockedVault(
+            decryptedUserKey.UserId,
+            new LoadedVaultData(ciphersById, cipherIdsByCollectionId, folders, collections));
     }
 
-    public async Task<VaultSyncResult> SyncAsync(
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "Intentional log-and-continue boundary; sync failures are reported as a VaultSyncResult, not thrown.")]
+    private async Task<VaultSyncResult> SyncCoreAsync(
         BitwardenAccountContext accountContext,
         UserKey decryptedUserKey,
-        bool force = false,
-        CancellationToken cancellationToken = default)
+        bool force,
+        CancellationToken cancellationToken)
     {
         if (!NetworkInformation.HasInternetAccess)
             return VaultSyncResult.SkippedOffline;
@@ -91,7 +129,7 @@ internal sealed class VaultWorkspace(
         }
         catch (Exception e)
         {
-            UnhandledExceptionLogger.WriteException(e);
+            logger.SyncFailed(e);
             return VaultSyncResult.Failed;
         }
     }
@@ -117,13 +155,15 @@ internal sealed class VaultWorkspace(
     /// Encrypts a decrypted domain <see cref="VaultCipher"/> and pushes it to the server, creating it
     /// when its id is empty and updating it otherwise. A fresh individual cipher key is generated on
     /// every save and wrapped with the user key. The server's response is persisted to the local
-    /// cache and decrypted back into a domain <see cref="VaultCipher"/> — no follow-up sync needed.
+    /// cache, decrypted back into a domain <see cref="VaultCipher"/> and folded into the vault — no
+    /// follow-up sync needed.
     /// </summary>
-    public async Task<VaultCipher> SaveCipherAsync(
+    public async Task<VaultCipherSaveOutcome> SaveCipherAsync(
         BitwardenAccountContext accountContext,
         UserKey userKey,
+        IUnlockedVault current,
         VaultCipher cipher,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var request = BuildRequest(userKey, cipher);
 
@@ -135,7 +175,10 @@ internal sealed class VaultWorkspace(
         unitOfWork.VaultWriterRepository.UpsertCipher(userKey.UserId, ref savedDto);
         unitOfWork.SaveChanges();
 
-        return VaultDataParser.ParseAndDecryptCipher(ref savedDto, savedDto.Data, userKey);
+        var savedCipher = VaultDataParser.ParseAndDecryptCipher(ref savedDto, savedDto.Data, userKey);
+
+        // Total by construction: this class is the only place IUnlockedVault handles are made.
+        return new VaultCipherSaveOutcome(savedCipher, ((UnlockedVault)current).With(savedCipher));
 
         static VaultCipherRequest BuildRequest(UserKey userKey, VaultCipher cipher)
         {

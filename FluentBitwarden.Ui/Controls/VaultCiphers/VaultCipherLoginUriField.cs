@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
@@ -107,6 +108,8 @@ public sealed partial class VaultCipherLoginUriField : Control
     partial void OnDomainForegroundChanged() => UpdateVisualState();
     partial void OnSecondaryForegroundChanged() => UpdateVisualState();
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "async void UI event handler; unhandled exceptions here would crash the process instead of being logged.")]
     private async void OnChromeClick(SplitButton sender, SplitButtonClickEventArgs args)
     {
         if (Uri is null || !Uri.TryGetWebUri(out var launchUri))

@@ -1,3 +1,4 @@
+using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 using FluentBitwarden.AppHost.Modules.Accounts.Login;
 using FluentBitwarden.AppHost.Modules.Accounts.Unlock;

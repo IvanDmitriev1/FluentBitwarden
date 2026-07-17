@@ -1,6 +1,7 @@
 using FluentBitwarden.Platform.Ipc.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace FluentBitwarden.Platform.Ipc;
 
@@ -19,7 +20,8 @@ public static class IpcServiceCollectionExtensions
                 new PipeIpcServer(
                     pipeName,
                     handlers.Build(sp),
-                    sp.GetRequiredService<IIpcClientsVerifier>()));
+                    sp.GetRequiredService<IIpcClientsVerifier>(),
+                    sp.GetRequiredService<ILogger<PipeIpcServer>>()));
 
             services.TryAddSingleton<IIpcClientsVerifier, PipeClientsVerifier>();
 
@@ -31,7 +33,8 @@ public static class IpcServiceCollectionExtensions
             services.AddSingleton(sp =>
                 new PipeIpcEventHub(
                     pipeName,
-                    sp.GetRequiredService<IIpcClientsVerifier>()));
+                    sp.GetRequiredService<IIpcClientsVerifier>(),
+                    sp.GetRequiredService<ILogger<PipeIpcEventHub>>()));
             services.AddHostedService(static sp => sp.GetRequiredService<PipeIpcEventHub>());
             services.AddSingleton<IIpcEventPublisher>(static sp => sp.GetRequiredService<PipeIpcEventHub>());
 
@@ -42,7 +45,8 @@ public static class IpcServiceCollectionExtensions
 
         public IServiceCollection AddIpcEventClient(string pipeName)
         {
-            services.AddSingleton(_ => new PipeIpcEventClient(pipeName));
+            services.AddSingleton(sp =>
+                new PipeIpcEventClient(pipeName, sp.GetRequiredService<ILogger<PipeIpcEventClient>>()));
             services.AddHostedService(static sp => sp.GetRequiredService<PipeIpcEventClient>());
             services.AddSingleton<IIpcEventClient>(static sp => sp.GetRequiredService<PipeIpcEventClient>());
 

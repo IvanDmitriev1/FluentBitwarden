@@ -1,12 +1,14 @@
 using Dapper;
-using FluentBitwarden.AppHost.Data.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Persistence.Mapping;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 
-internal sealed class AccountProfileRepository(SqliteTransaction transaction) : BaseRepository(transaction)
+internal sealed class AccountProfileRepository(SqliteTransaction transaction)
+    : BaseRepository(transaction), IAccountProfileRepository
 {
     public AccountProfile[] GetAccounts()
     {

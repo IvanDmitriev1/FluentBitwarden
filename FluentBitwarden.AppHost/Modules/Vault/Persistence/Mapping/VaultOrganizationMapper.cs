@@ -1,4 +1,5 @@
-using FluentBitwarden.AppHost.Data.Mapping;
+using System.Globalization;
+using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 
@@ -16,8 +17,8 @@ internal static class VaultOrganizationMapper
 
     public static VaultOrganizationResponse ToDomain(in OrganizationRow row) => new()
     {
-        Id = OrganizationId.Parse(row.OrganizationId),
-        UserId = UserId.Parse(row.UserId),
+        Id = OrganizationId.Parse(row.OrganizationId, CultureInfo.InvariantCulture),
+        UserId = UserId.Parse(row.UserId, CultureInfo.InvariantCulture),
         OrganizationUserId = row.OrganizationUserId is null
             ? Guid.Empty
             : Guid.Parse(row.OrganizationUserId),
