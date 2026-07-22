@@ -1,6 +1,4 @@
 using System.Data;
-using FluentBitwarden.AppHost.Infrastructure.Data;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
 

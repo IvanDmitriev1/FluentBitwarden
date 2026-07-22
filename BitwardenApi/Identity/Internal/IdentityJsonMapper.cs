@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace BitwardenApi.Identity.Internal;
 
 internal static class IdentityJsonMapper

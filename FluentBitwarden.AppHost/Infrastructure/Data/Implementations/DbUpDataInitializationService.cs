@@ -1,7 +1,6 @@
 using System.Reflection;
 using DbUp;
 using DbUp.Engine;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
 

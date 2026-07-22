@@ -1,13 +1,12 @@
-using FluentBitwarden.Infrastructure.Navigation;
 
 namespace FluentBitwarden.Views.Settings;
 
 public sealed partial class SettingsPage : LifecyclePage
 {
-    public SettingsPage(SettingsPageViewModel viewModel)
+    public SettingsPage()
     {
-        ViewModel = viewModel;
-        DataContext = viewModel;
+        ViewModel = App.Current.GetRequiredService<SettingsPageViewModel>();
+        DataContext = ViewModel;
         InitializeComponent();
     }
 

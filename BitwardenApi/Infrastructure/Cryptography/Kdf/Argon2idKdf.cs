@@ -1,6 +1,5 @@
 using Org.BouncyCastle.Crypto.Generators;
 using System.Security.Cryptography;
-using System.Text;
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace BitwardenApi.Infrastructure.Cryptography.Kdf;

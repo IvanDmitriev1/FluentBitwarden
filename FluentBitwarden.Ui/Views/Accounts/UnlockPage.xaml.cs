@@ -1,12 +1,11 @@
-using FluentBitwarden.Infrastructure.Navigation;
 
 namespace FluentBitwarden.Views.Accounts;
 
 public sealed partial class UnlockPage : LifecyclePage
 {
-    public UnlockPage(UnlockPageViewModel viewModel)
+    public UnlockPage()
     {
-        ViewModel = viewModel;
+        ViewModel = App.Current.GetRequiredService<UnlockPageViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
     }

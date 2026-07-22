@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Specialized;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Controls.Shared;
 

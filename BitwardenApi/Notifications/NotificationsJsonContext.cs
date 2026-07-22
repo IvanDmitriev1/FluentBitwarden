@@ -1,7 +1,4 @@
 using System.Text.Json.Serialization;
-using BitwardenApi.Primitives;
-using BitwardenApi.Notifications;
-using BitwardenApi.Notifications.Contracts;
 
 namespace BitwardenApi.Notifications;
 

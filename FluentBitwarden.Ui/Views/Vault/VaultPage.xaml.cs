@@ -2,10 +2,10 @@ namespace FluentBitwarden.Views.Vault;
 
 public sealed partial class VaultPage : LifecyclePage
 {
-    public VaultPage(VaultPageViewModel viewModel)
+    public VaultPage()
     {
-        ViewModel = viewModel;
-        DataContext = viewModel;
+        ViewModel = App.Current.GetRequiredService<VaultPageViewModel>();
+        DataContext = ViewModel;
         InitializeComponent();
     }
 

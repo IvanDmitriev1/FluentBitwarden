@@ -1,15 +1,15 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
-using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Infrastructure.Security.WebAuthn;
 using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.AppHost.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using AccountLoginOperationResult = FluentBitwarden.AppHost.Infrastructure.OperationResult<
+    FluentBitwarden.Contracts.Modules.Accounts.Login.AccountLoginOutcome,
+    FluentBitwarden.AppHost.Modules.Accounts.Login.AuthenticatedAccount>;
 
 namespace FluentBitwarden.AppHost.Modules.Accounts.Login;
-
-using AccountLoginOperationResult = OperationResult<AccountLoginOutcome, AuthenticatedAccount>;
 
 [Fody.ConfigureAwait(false)]
 internal sealed class AccountLoginService(

@@ -7,23 +7,18 @@ using Microsoft.Windows.AppLifecycle;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Application;
 using FluentBitwarden.Application.Abstractions;
-using WinUI.DependencyInjection;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using FluentBitwarden.Infrastructure.UiCommand;
 
 namespace FluentBitwarden;
 
-[XamlMetadataServiceProvider]
-public partial class App : IXamlMetadataServiceProvider
+public partial class App
 {
     public new static App Current => (App)Microsoft.UI.Xaml.Application.Current;
     public DispatcherQueue DispatcherQueue { get; }
 
     private readonly IServiceProvider _services;
     private readonly AppActivationArguments _initialActivation;
-
-    public object GetRequiredService(Type type)
-        => _services.GetRequiredService(type);
 
     public T GetRequiredService<T>() where T : notnull => _services.GetRequiredService<T>();
 

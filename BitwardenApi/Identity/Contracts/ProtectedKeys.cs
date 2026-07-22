@@ -1,7 +1,4 @@
-using BitwardenApi.Infrastructure.Cryptography;
 using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json.Serialization;
 
 namespace BitwardenApi.Identity.Contracts;
 

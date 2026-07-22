@@ -1,5 +1,3 @@
-using FluentBitwarden.Contracts.Settings;
-using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
 

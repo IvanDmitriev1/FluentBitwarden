@@ -1,10 +1,8 @@
-using BitwardenApi.Infrastructure.Cryptography.Enc;
 using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Attachments.Contracts;
 using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Sessions.Abstractions;
 using FluentBitwarden.AppHost.Modules.Sessions.Models;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Attachments;

@@ -1,7 +1,6 @@
 using FluentBitwarden.Platform.Infrastructure.Clipboard;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using OtpNet;
 using FluentBitwarden.Controls.Shared;
 
 namespace FluentBitwarden.Controls.VaultCiphers;

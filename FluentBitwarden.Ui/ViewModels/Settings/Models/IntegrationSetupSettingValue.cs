@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using AsyncAwaitBestPractices;
-using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
 

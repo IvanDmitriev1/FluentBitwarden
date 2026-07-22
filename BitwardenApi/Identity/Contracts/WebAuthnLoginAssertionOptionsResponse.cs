@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using BitwardenApi.Primitives;
 
 namespace BitwardenApi.Identity.Contracts;
 

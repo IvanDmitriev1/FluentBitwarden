@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using System.Linq;
 using Windows.Foundation;
 using Microsoft.UI.Xaml.Shapes;
 

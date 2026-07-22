@@ -7,8 +7,8 @@
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<UseWinUI>true</UseWinUI>
 	<WinUISDKReferences>false</WinUISDKReferences>
+        <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
 	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
-	<DisableEmbeddedXbf>false</DisableEmbeddedXbf>
 	<NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
   </PropertyGroup>
 
@@ -16,9 +16,10 @@
 	<PropertyGroup>
 		<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>
 		<UserSecretsId>edb536ff-1bce-4891-af57-fe1708de56cf</UserSecretsId>
+    <SelfContained>true</SelfContained>
+    <PublishReadyToRun>true</PublishReadyToRun>
 	</PropertyGroup>
 
-	<!-- Partial trimming still needs these roots for WinUI/XAML activation paths such as XamlControlsResources. -->
 	<ItemGroup Condition="'$(PublishTrimmed)' == 'true'">
 		<TrimmerRootAssembly Include="Microsoft.WinUI" />
 		<TrimmerRootAssembly Include="WinUIEx" />
@@ -74,7 +75,6 @@
 		<IncludeAssets>build</IncludeAssets>
 	</PackageReference>
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
-	<PackageReference Include="WinUI.DependencyInjection" />
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
 

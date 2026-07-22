@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
-using BitwardenApi.Primitives;
 
 namespace BitwardenApi.Infrastructure.Serialization;
 

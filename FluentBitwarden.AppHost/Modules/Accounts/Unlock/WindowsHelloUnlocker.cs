@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Security.WindowsHello;
 using FluentBitwarden.AppHost.Modules.Accounts.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;

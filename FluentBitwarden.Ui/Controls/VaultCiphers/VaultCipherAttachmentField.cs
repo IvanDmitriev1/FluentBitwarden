@@ -1,6 +1,5 @@
 using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using Humanizer;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.Storage.Pickers;

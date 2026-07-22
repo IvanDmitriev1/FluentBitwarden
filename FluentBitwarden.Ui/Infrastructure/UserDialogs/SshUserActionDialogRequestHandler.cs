@@ -3,7 +3,6 @@ using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using Microsoft.UI.Xaml;
 using System.Diagnostics.CodeAnalysis;
-using WinUIEx;
 
 namespace FluentBitwarden.Infrastructure.UserDialogs;
 

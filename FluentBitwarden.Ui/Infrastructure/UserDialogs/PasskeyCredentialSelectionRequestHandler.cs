@@ -4,7 +4,6 @@ using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Controls.Passkeys;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
-using WinUIEx;
 
 namespace FluentBitwarden.Infrastructure.UserDialogs;
 

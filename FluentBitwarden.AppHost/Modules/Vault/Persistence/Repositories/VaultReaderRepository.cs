@@ -5,7 +5,6 @@ using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
 using Microsoft.Data.Sqlite;
 using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Data.Mapping;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Repositories;

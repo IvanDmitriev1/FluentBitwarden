@@ -1,5 +1,3 @@
-using BitwardenApi.Infrastructure.Serialization;
-
 namespace FluentBitwarden.Contracts.Modules.BrowserExtension.Models;
 
 [MemoryPackable]

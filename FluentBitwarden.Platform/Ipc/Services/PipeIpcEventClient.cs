@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.Platform.Ipc.Transport;

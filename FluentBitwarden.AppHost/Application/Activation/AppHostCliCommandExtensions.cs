@@ -1,4 +1,3 @@
-using System.Linq;
 using Windows.ApplicationModel.Activation;
 using Microsoft.Windows.AppLifecycle;
 

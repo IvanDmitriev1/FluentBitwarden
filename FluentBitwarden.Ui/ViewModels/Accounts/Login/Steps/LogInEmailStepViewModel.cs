@@ -1,10 +1,8 @@
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.ViewModels.Accounts.Login.Models;
 using FluentBitwarden.ViewModels.Accounts.Login.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
-using WinUIEx;
 using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login.Steps;

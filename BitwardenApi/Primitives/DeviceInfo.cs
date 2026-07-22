@@ -1,5 +1,3 @@
-using BitwardenApi.Infrastructure.Serialization;
-using BitwardenApi.Primitives.Ids;
 using MemoryPack;
 
 namespace BitwardenApi.Primitives;

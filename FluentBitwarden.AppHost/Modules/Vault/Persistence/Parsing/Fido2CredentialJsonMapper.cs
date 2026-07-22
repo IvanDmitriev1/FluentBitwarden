@@ -1,5 +1,4 @@
 using BitwardenApi.Vault.Cryptography;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using System.Text.Json;
 

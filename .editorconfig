@@ -49,6 +49,7 @@ dotnet_style_prefer_conditional_expression_over_return = true:silent
 # Nullable / async correctness (consistent with Nullable=enable + ConfigureAwait.Fody)
 dotnet_diagnostic.CS8618.severity = warning        # Non-nullable field uninitialized
 dotnet_diagnostic.CA2007.severity = none           # ConfigureAwait handled globally by Fody
+dotnet_diagnostic.CS1591.severity = none           # Missing XML doc comment on public member
 
 # ---------------------------------------------------------------------------------------------
 # Naming: interfaces I-prefixed, PascalCase types/members, _camelCase private fields.
@@ -74,6 +75,13 @@ dotnet_naming_symbols.private_const_field_symbols.applicable_kinds = field
 dotnet_naming_symbols.private_const_field_symbols.applicable_accessibilities = private
 dotnet_naming_symbols.private_const_field_symbols.required_modifiers = const
 
+dotnet_naming_rule.static_readonly_fields_pascal.symbols = static_readonly_field_symbols
+dotnet_naming_rule.static_readonly_fields_pascal.style = pascal
+dotnet_naming_rule.static_readonly_fields_pascal.severity = suggestion
+dotnet_naming_symbols.static_readonly_field_symbols.applicable_kinds = field
+dotnet_naming_symbols.static_readonly_field_symbols.applicable_accessibilities = private
+dotnet_naming_symbols.static_readonly_field_symbols.required_modifiers = static,readonly
+
 dotnet_naming_rule.private_fields_camel.symbols = private_field_symbols
 dotnet_naming_rule.private_fields_camel.style = underscore_camel
 dotnet_naming_rule.private_fields_camel.severity = suggestion
@@ -86,3 +94,7 @@ dotnet_naming_style.underscore_camel.capitalization = camel_case
 [*.{g,g.i,Designer,generated}.cs]
 generated_code = true
 dotnet_diagnostic.NSDEPCOP01.severity = none
+
+dotnet_diagnostic.CA1873.severity = none
+dotnet_diagnostic.CS1570.severity = none   # generic type names in generator-emitted summaries break XML doc parsing
+dotnet_diagnostic.CS0618.severity = none   # XamlTypeInfo.g.cs enumerates every property, obsolete ones included

@@ -8,7 +8,6 @@ using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Infrastructure.Window;
 using Microsoft.UI.Xaml;
-using WinUIEx;
 
 namespace FluentBitwarden.Controls.Accounts;
 

@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.Controls.Shared;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -8,9 +7,9 @@ namespace FluentBitwarden.AttachedProperties;
 
 /// <summary>
 /// Adds/removes rows in a <see cref="DividedCardItemsControl"/> bound to a plain <see cref="List{T}"/>
-/// of <see cref="LoginUri"/>. The list itself raises no change notification, so <see cref="Source"/>
+/// of <see cref="LoginUri"/>. The list itself raises no change notification, so <c>Source</c>
 /// wraps it in an <see cref="ObservableCollection{T}"/> for the card's ItemsSource and mirrors every
-/// change back into the original list. <see cref="Target"/> attaches to an add/remove button pointed at
+/// change back into the original list. <c>Target</c> attaches to an add/remove button pointed at
 /// the card: clicking adds a blank row, or removes the button's own row when its DataContext is a
 /// <see cref="LoginUri"/>.
 /// </summary>

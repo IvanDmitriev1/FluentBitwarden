@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
 

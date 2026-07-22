@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Contracts.Settings.Models;
 using Windows.ApplicationModel.DataTransfer;

@@ -10,7 +10,6 @@ using FluentBitwarden.AppHost.Modules.Vault.Workspace.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.AppHost.Modules.Sessions.Models;
 using Microsoft.Extensions.Logging;
-using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Workspace;
 

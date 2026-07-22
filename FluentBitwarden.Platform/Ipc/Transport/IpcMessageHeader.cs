@@ -1,5 +1,4 @@
 using CommunityToolkit.HighPerformance.Buffers;
-using FluentBitwarden.Platform.Ipc;
 using System.Buffers.Binary;
 
 namespace FluentBitwarden.Platform.Ipc.Transport;

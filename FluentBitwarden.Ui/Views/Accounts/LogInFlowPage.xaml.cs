@@ -2,9 +2,9 @@ namespace FluentBitwarden.Views.Accounts;
 
 public sealed partial class LogInFlowPage : Page
 {
-    public LogInFlowPage(LogInFlowPageViewModel viewModel)
+    public LogInFlowPage()
     {
-        ViewModel = viewModel;
+        ViewModel = App.Current.GetRequiredService<LogInFlowPageViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
     }

@@ -1,4 +1,3 @@
-using BitwardenApi.Primitives;
 using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;

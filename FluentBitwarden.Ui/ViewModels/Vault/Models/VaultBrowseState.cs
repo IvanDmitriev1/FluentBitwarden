@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using BitwardenApi.Primitives;
 using FluentBitwarden.Platform.Settings.Composition;
 using Windows.Storage;
 

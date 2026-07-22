@@ -1,7 +1,5 @@
 using System.Text;
-using BitwardenApi.Vault.Items.Contracts;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.AttachedProperties;
 

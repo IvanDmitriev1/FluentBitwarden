@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 
 namespace FluentBitwarden.Platform.Infrastructure.Clipboard;

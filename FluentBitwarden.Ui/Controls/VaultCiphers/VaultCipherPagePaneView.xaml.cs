@@ -9,7 +9,7 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 
 [DependencyProperty<string>("SearchText")]
 [DependencyProperty<VaultCipher>("SelectedCipher")]
-[DependencyProperty<ObservableCollection<VaultCipher>>("FilteredCiphers", DefaultValueExpression = "new System.Collections.ObjectModel.ObservableCollection<VaultCipher>()")]
+[DependencyProperty<ObservableCollection<VaultCipher>>("FilteredCiphers", DefaultValueExpression = "CreateCipherCollection()")]
 [DependencyProperty<bool>("IsSearchFieldOpen")]
 [DependencyProperty<VaultCipherQuery>("Query")]
 [DependencyProperty<CipherId>("RequestedCipherId")]
@@ -84,8 +84,12 @@ public sealed partial class VaultCipherPagePaneView : UserControl
     private CancellationTokenSource? _queryCancellationTokenSource;
     private int _queryRequestId;
 
+    private static ObservableCollection<VaultCipher> CreateCipherCollection() => [];
+
     public VaultCipherPagePaneView()
     {
+        FilteredCiphers = CreateCipherCollection();
+
         InitializeComponent();
 
         _vaultClient = App.Current.GetRequiredService<IVaultClient>();

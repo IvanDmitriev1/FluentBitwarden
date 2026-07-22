@@ -1,5 +1,4 @@
 using FluentBitwarden.Contracts.Modules.AppState;
-using FluentBitwarden.Contracts.Modules.BrowserExtension;
 using FluentBitwarden.Platform.Infrastructure.Integrations;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
