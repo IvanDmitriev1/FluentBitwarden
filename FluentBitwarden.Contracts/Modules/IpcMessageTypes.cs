@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Modules;
+namespace FluentBitwarden.Contracts.Modules;
 
 public static class IpcMessageTypes
 {
@@ -10,6 +10,7 @@ public static class IpcMessageTypes
     public static class Passkey
     {
         public const ushort GetAssertion = 50;
+        public const ushort MakeCredential = 51;
     }
 
     public static class Vault
@@ -49,6 +50,7 @@ public static class IpcMessageTypes
     {
         public const ushort ShowUnlockDialog = 400;
         public const ushort ShowSshDialog = 401;
+        public const ushort ShowPasskeySelectionDialog = 402;
     }
 
     public static class Browser

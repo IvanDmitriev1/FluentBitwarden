@@ -168,18 +168,20 @@ public static partial class VaultDataParser
                 }
                 else if (r.ValueTextEquals("publicKey"u8) || r.ValueTextEquals("PublicKey"u8))
                 {
+                    // TODO: remove once all keys parse
                     var rawKey = ReadRequiredDecryptField(ref r, k, "publicKey");
-                    if (!OpenSshPublicKey.TryParse(rawKey, out var key))
-                        c.PublicKey = OpenSshPublicKey.CreateUnparsed(rawKey); // TODO: remove once all keys parse
-                    else
-                        c.PublicKey = key;
+                    c.PublicKey = !OpenSshPublicKey.TryParse(rawKey, out var key)
+                        ? OpenSshPublicKey.CreateUnparsed(rawKey)
+                        : key;
                 }
                 else if (r.ValueTextEquals("keyFingerprint"u8) || r.ValueTextEquals("KeyFingerprint"u8))
                 {
                     c.KeyFingerprint = ReadRequiredDecryptField(ref r, k, "KeyFingerprint");
                 }
                 else
+                {
                     return false;
+                }
 
                 return true;
             });

@@ -37,7 +37,7 @@ internal static class AppHostIpcServiceCollectionExtensions
         services.AddIpcClient(IpcConstants.UiPipeName);
 
         services.AddSingleton<ISshUserActionDialogClient, SshUserActionDialogClient>();
-        services.AddSingleton<IPasskeyCredentialSelectionClient, PasskeyCredentialSelectionClient>();
+        services.AddSingleton<IPasskeyDialogClient, PasskeyDialogClient>();
 
         return services;
     }

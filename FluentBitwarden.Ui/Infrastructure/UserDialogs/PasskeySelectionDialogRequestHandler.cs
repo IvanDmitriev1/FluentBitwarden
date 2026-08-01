@@ -7,22 +7,22 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.Infrastructure.UserDialogs;
 
-internal sealed class PasskeyCredentialSelectionRequestHandler(
+internal sealed class PasskeySelectionDialogRequestHandler(
     IVaultClient vaultClient,
     UiDialogDispatcher dialogDispatcher,
-    IWindowManager windowManager) : IPasskeyCredentialSelectionClient, IIpcRequestsHandler
+    IWindowManager windowManager) : IPasskeyDialogClient, IIpcRequestsHandler
 {
-    public async ValueTask<Fido2Credential> SelectPasskeyCredentialAsync(
-        PasskeyGetAssertionRequest request,
-        CancellationToken cancellationToken)
+    public async ValueTask<Fido2Credential> ShowPasskeySelectionDialogAsync(
+        PasskeySelectCredentialRequest request,
+        CancellationToken cancellationToken = default)
     {
         var credentials = await GetCredentialsAsync(request, cancellationToken);
         return await dialogDispatcher.EnqueueAsync(
-            () => ShowPasskeySelectionDialogAsync(credentials, cancellationToken));
+            () => ShowDialogOnUiThreadAsync(credentials, cancellationToken));
     }
 
     private async Task<Fido2Credential[]> GetCredentialsAsync(
-        PasskeyGetAssertionRequest request,
+        PasskeySelectCredentialRequest request,
         CancellationToken cancellationToken)
     {
         VaultCipherQuery loginCipherQuery = new() { CipherType = VaultCipherType.Login };
@@ -36,7 +36,7 @@ internal sealed class PasskeyCredentialSelectionRequestHandler(
             .ToArray();
     }
 
-    private async Task<Fido2Credential> ShowPasskeySelectionDialogAsync(
+    private async Task<Fido2Credential> ShowDialogOnUiThreadAsync(
         IReadOnlyList<Fido2Credential> credentials,
         CancellationToken cancellationToken)
     {

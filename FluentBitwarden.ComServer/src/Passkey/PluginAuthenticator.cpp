@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "Modules/Passkey/Authenticator/PluginAuthenticator.h"
+#include "Passkey/PluginAuthenticator.h"
 #include "Application/Activation/AppActivationLauncher.h"
 #include "Infrastructure/Ipc/AppNamedPipeClient.h"
 
-#include "Modules/Passkey/WebAuthn/OperationRequestVerifier.h"
-#include "Modules/Passkey/WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
-#include "Modules/Passkey/WebAuthn/AssertionResponseBuilder.h"
+#include "Passkey/WebAuthn/OperationRequestVerifier.h"
+#include "Passkey/WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
+#include "Passkey/WebAuthn/AssertionResponseBuilder.h"
 
 namespace FluentBitwarden::ComServer
 {
@@ -39,7 +39,6 @@ namespace FluentBitwarden::ComServer
 		{
 			RETURN_HR_IF(E_POINTER, request == nullptr || response == nullptr);
 			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
-
 			*response = {};
 
 			WebAuthn::DecodedGetAssertionRequest decodedRequest = WebAuthn::DecodedGetAssertionRequest::Decode(request);

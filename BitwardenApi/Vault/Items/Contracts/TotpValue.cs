@@ -132,9 +132,13 @@ public sealed partial class TotpValue(TotpValue.State state)
             var value = pair[(eq + 1)..];
 
             if (Ascii.EqualsIgnoreCase(key, "secret"u8))
+            {
                 secret = Encoding.ASCII.GetString(value);
+            }
             else if (Ascii.EqualsIgnoreCase(key, "algorithm"u8))
+            {
                 Enum.TryParse(Encoding.ASCII.GetString(value), ignoreCase: true, out algorithm);
+            }
             else if (Ascii.EqualsIgnoreCase(key, "digits"u8))
             {
                 if (Utf8Parser.TryParse(value, out int parsedDigits, out _))

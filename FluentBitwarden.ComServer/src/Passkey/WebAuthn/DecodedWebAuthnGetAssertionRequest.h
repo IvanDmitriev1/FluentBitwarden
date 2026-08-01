@@ -1,6 +1,6 @@
 #pragma once
 #include <pch.h>
-#include "Modules/Passkey/Models/PasskeyAssertionMessage.h"
+#include "Passkey/Models/PasskeyAssertionMessage.h"
 
 namespace FluentBitwarden::ComServer::WebAuthn
 {

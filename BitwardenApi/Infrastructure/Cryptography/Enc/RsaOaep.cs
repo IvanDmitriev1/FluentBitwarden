@@ -28,8 +28,10 @@ internal static class RsaOaep
         if (!privateKey.TryDecrypt(parts.Data, destination, padding, out int bytesWritten))
         {
             if (destination.Length < privateKey.KeySize / 8)
+            {
                 throw new ArgumentException(
                     "Destination span was too small for the decrypted plaintext.", nameof(destination));
+            }
 
             throw new CryptographicException("EncString RSA-OAEP decryption failed.");
         }

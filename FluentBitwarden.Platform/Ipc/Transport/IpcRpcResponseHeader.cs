@@ -18,14 +18,16 @@ internal readonly record struct IpcRpcResponseHeader(int PayloadLength)
         await stream.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
-            headerOwner.Span.Slice(VersionOffset, sizeof(ushort)));
+            headerOwner.Span[VersionOffset..sizeof(ushort)]);
 
         int payloadLength = BinaryPrimitives.ReadInt32LittleEndian(
             headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)));
 
         if (version != IpcConstants.ProtocolVersion)
+        {
             throw new InvalidOperationException(
                 $"Incompatible IPC version. Expected {IpcConstants.ProtocolVersion}, got {version}.");
+        }
 
         if (payloadLength < 0)
             throw new InvalidDataException($"IPC payload length cannot be negative: {payloadLength}.");
@@ -38,7 +40,7 @@ internal readonly record struct IpcRpcResponseHeader(int PayloadLength)
         using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
 
         BinaryPrimitives.WriteUInt16LittleEndian(
-            headerOwner.Span.Slice(VersionOffset, sizeof(ushort)),
+            headerOwner.Span[VersionOffset..sizeof(ushort)],
             IpcConstants.ProtocolVersion);
 
         BinaryPrimitives.WriteInt32LittleEndian(

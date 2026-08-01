@@ -10,10 +10,7 @@ public static class SpanExtensions
         {
             byte b = buffer[read];
 
-            if (b != (byte)' ' &&
-                b != (byte)'\t' &&
-                b != (byte)'\r' &&
-                b != (byte)'\n')
+            if (b is not ((byte)' ' or (byte)'\t' or (byte)'\r' or (byte)'\n'))
             {
                 buffer[write++] = b;
             }

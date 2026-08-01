@@ -4,14 +4,14 @@ using FluentBitwarden.Contracts.Modules.Passkey.Models;
 namespace FluentBitwarden.AppHost.Modules.Passkey;
 
 internal sealed class PasskeyAssertionService(
-    IPasskeyCredentialSelectionClient passkeyCredentialSelectionClient)
+    IPasskeyDialogClient passkeyDialogClient)
 {
     public async ValueTask<PasskeyAssertionResponse> SelectCredentialAsync(
         PasskeyGetAssertionRequest request,
         CancellationToken cancellationToken)
     {
-        var credential = await passkeyCredentialSelectionClient.SelectPasskeyCredentialAsync(
-            request,
+        var credential = await passkeyDialogClient.ShowPasskeySelectionDialogAsync(
+            new PasskeySelectCredentialRequest(request.RpId),
             cancellationToken);
 
         var authenticatorData = WebAuthnAssertion.BuildAuthenticatorData(

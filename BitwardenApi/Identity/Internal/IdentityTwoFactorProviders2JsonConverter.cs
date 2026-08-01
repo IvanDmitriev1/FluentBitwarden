@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace BitwardenApi.Identity.Internal;
@@ -11,8 +11,10 @@ internal sealed class IdentityTwoFactorProviders2JsonConverter : JsonConverter<I
             throw new JsonException("Two-factor providers list is null.");
 
         if (reader.TokenType != JsonTokenType.StartObject)
+        {
             throw new JsonException(
                 $"Expected JSON object for TwoFactorProviders2, but got {reader.TokenType}.");
+        }
 
         var providers = new List<IdentityTwoFactorProviderOption>();
         while (reader.Read())

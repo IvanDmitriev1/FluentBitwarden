@@ -20,20 +20,12 @@ internal static class WindowsHelloNcryptStatus
         if (status == ErrorSuccess || status == ignoredStatus)
             return;
 
-        switch (status)
+        throw status switch
         {
-            case NteUserCancelled:
-            case ErrorCancelled:
-                throw new WindowsHelloAuthenticationCanceledException();
-
-            case NteNoKey:
-            case NteBadKeyset:
-                throw new WindowsHelloKeyUnavailableException();
-
-            default:
-                throw new CryptographicException(
-                    $"{operation} failed with security status 0x{unchecked((uint)status):X8}.");
-        }
+            NteUserCancelled or ErrorCancelled => new WindowsHelloAuthenticationCanceledException(),
+            NteNoKey or NteBadKeyset => new WindowsHelloKeyUnavailableException(),
+            _ => new CryptographicException($"{operation} failed with security status 0x{unchecked((uint)status):X8}.")
+        };
     }
 
     /// <summary>

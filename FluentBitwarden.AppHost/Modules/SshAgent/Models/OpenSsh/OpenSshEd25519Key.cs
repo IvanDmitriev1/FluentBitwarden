@@ -95,7 +95,7 @@ internal readonly ref struct OpenSshEd25519Key
         if (end < 0 || end <= begin)
             return false;
 
-        body = pem.Slice(begin, end - begin);
+        body = pem[begin..end];
         return true;
     }
 

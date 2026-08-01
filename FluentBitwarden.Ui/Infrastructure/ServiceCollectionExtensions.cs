@@ -31,7 +31,7 @@ internal static class ServiceCollectionExtensions
             IpcConstants.UiPipeName,
             handlers => handlers
                 .Add<SshUserActionDialogRequestHandler>()
-                .Add<PasskeyCredentialSelectionRequestHandler>());
+                .Add<PasskeySelectionDialogRequestHandler>());
 
         services.AddSingleton<UiDialogDispatcher>();
 

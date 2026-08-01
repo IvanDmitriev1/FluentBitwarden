@@ -1,6 +1,6 @@
-﻿#include "pch.h"
-#include "Modules/Passkey/Authenticator/PluginAuthenticator.h"
-#include "Modules/Passkey/Registration/PluginRegistrationManager.h"
+#include "pch.h"
+#include "Passkey/PluginAuthenticator.h"
+#include "Passkey/Registration/PluginRegistrationManager.h"
 
 static void AttachDebugger()
 {

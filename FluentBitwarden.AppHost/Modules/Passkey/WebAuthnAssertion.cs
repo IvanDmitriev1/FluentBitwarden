@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 
 namespace FluentBitwarden.AppHost.Modules.Passkey;
@@ -72,8 +72,10 @@ internal static class WebAuthnAssertion
         using var ecdsa = ECDsa.Create();
 
         if (!TryImportEcPrivateKey(ecdsa, privateKey))
+        {
             throw new CryptographicException(
                 "Unsupported passkey private key format. Expected PKCS#8 or SEC1 EC private key.");
+        }
 
         return ecdsa.SignData(
             payload,

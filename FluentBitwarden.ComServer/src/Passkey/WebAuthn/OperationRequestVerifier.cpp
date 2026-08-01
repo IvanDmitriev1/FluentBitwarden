@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "Modules/Passkey/WebAuthn/OperationRequestVerifier.h"
-#include "Modules/Passkey/Registration/PluginRegistrationManager.h"
+#include "Passkey/WebAuthn/OperationRequestVerifier.h"
+#include "Passkey/Registration/PluginRegistrationManager.h"
 #include "Infrastructure/Cryptography/HashingFunctions.h"
 
 #include <ncrypt.h>

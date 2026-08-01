@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "Modules/Passkey/Registration/PluginRegistrationManager.h"
-#include "Modules/Passkey/Authenticator/PluginAuthenticator.h"
-#include "Modules/Passkey/Registration/AuthenticatorInfoBuilder.h"
+#include "Passkey/PluginAuthenticator.h"
+#include "Passkey/Registration/PluginRegistrationManager.h"
+#include "Passkey/Registration/AuthenticatorInfoBuilder.h"
 
 namespace FluentBitwarden::ComServer
 {

@@ -18,7 +18,7 @@ internal readonly record struct IpcMessageHeader(
         using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
 
         BinaryPrimitives.WriteUInt16LittleEndian(
-            headerOwner.Span.Slice(VersionOffset, sizeof(ushort)),
+            headerOwner.Span[VersionOffset..sizeof(ushort)],
             IpcConstants.ProtocolVersion);
 
         BinaryPrimitives.WriteUInt16LittleEndian(
@@ -40,7 +40,7 @@ internal readonly record struct IpcMessageHeader(
         await stream.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
-            headerOwner.Span.Slice(VersionOffset, sizeof(ushort)));
+            headerOwner.Span[VersionOffset..sizeof(ushort)]);
 
         var messageType = BinaryPrimitives.ReadUInt16LittleEndian(
             headerOwner.Span.Slice(MessageTypeOffset, sizeof(ushort)));
@@ -49,8 +49,10 @@ internal readonly record struct IpcMessageHeader(
             headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)));
 
         if (version != IpcConstants.ProtocolVersion)
+        {
             throw new InvalidOperationException(
                 $"Incompatible IPC version. Expected {IpcConstants.ProtocolVersion}, got {version}.");
+        }
 
         if (payloadLength < 0)
             throw new InvalidDataException($"IPC payload length cannot be negative: {payloadLength}.");
