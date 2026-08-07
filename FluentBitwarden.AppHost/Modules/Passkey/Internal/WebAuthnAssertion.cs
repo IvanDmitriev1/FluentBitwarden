@@ -1,12 +1,12 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 
-namespace FluentBitwarden.AppHost.Modules.Passkey;
+namespace FluentBitwarden.AppHost.Modules.Passkey.Internal;
 
 internal static class WebAuthnAssertion
 {
     [Flags]
-    enum WebAuthnAssertionFlags : byte
+    private enum Flags : byte
     {
         UserPresent = 0x01,
         UserVerified = 0x04,
@@ -24,17 +24,17 @@ internal static class WebAuthnAssertion
         var authenticatorData = new byte[37];
         Buffer.BlockCopy(rpIdHash, 0, authenticatorData, 0, 32);
 
-        WebAuthnAssertionFlags flags = WebAuthnAssertionFlags.UserPresent;
+        Flags flags = Flags.UserPresent;
 
         if (userVerified)
         {
-            flags |= WebAuthnAssertionFlags.UserVerified;
+            flags |= Flags.UserVerified;
         }
 
         if (backedUpPasskey)
         {
-            flags |= WebAuthnAssertionFlags.BackupEligible;
-            flags |= WebAuthnAssertionFlags.BackupState;
+            flags |= Flags.BackupEligible;
+            flags |= Flags.BackupState;
         }
 
         authenticatorData[32] = (byte)flags;
@@ -47,27 +47,22 @@ internal static class WebAuthnAssertion
         return authenticatorData;
     }
 
-    public static byte[] BuildSignedPayload(byte[] authenticatorData, byte[] clientDataHash)
+    public static byte[] BuildSignedPayload(ReadOnlySpan<byte> authenticatorData, ReadOnlySpan<byte> clientDataHash)
     {
         if (authenticatorData.Length < 37)
-        {
             throw new ArgumentException("Authenticator data is too short.", nameof(authenticatorData));
-        }
 
         if (clientDataHash.Length != 32)
-        {
             throw new ArgumentException("Client data hash must be exactly 32 bytes.", nameof(clientDataHash));
-        }
 
         var payload = new byte[authenticatorData.Length + clientDataHash.Length];
-
-        Buffer.BlockCopy(authenticatorData, 0, payload, 0, authenticatorData.Length);
-        Buffer.BlockCopy(clientDataHash, 0, payload, authenticatorData.Length, clientDataHash.Length);
+        authenticatorData.CopyTo(payload);
+        clientDataHash.CopyTo(payload.AsSpan(authenticatorData.Length));
 
         return payload;
     }
 
-    public static byte[] SignEs256(byte[] privateKey, byte[] payload)
+    public static byte[] SignEs256(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> payload)
     {
         using var ecdsa = ECDsa.Create();
 
@@ -81,28 +76,28 @@ internal static class WebAuthnAssertion
             payload,
             HashAlgorithmName.SHA256,
             DSASignatureFormat.Rfc3279DerSequence);
-    }
 
-    private static bool TryImportEcPrivateKey(ECDsa ecdsa, byte[] privateKey)
-    {
-        try
+        static bool TryImportEcPrivateKey(ECDsa ecdsa, ReadOnlySpan<byte> privateKey)
         {
-            ecdsa.ImportPkcs8PrivateKey(privateKey, out var bytesRead);
-            return bytesRead == privateKey.Length;
-        }
-        catch (CryptographicException)
-        {
-            // Try SEC1 below.
-        }
+            try
+            {
+                ecdsa.ImportPkcs8PrivateKey(privateKey, out var bytesRead);
+                return bytesRead == privateKey.Length;
+            }
+            catch (CryptographicException)
+            {
+                // Try SEC1 below.
+            }
 
-        try
-        {
-            ecdsa.ImportECPrivateKey(privateKey, out var bytesRead);
-            return bytesRead == privateKey.Length;
-        }
-        catch (CryptographicException)
-        {
-            return false;
+            try
+            {
+                ecdsa.ImportECPrivateKey(privateKey, out var bytesRead);
+                return bytesRead == privateKey.Length;
+            }
+            catch (CryptographicException)
+            {
+                return false;
+            }
         }
     }
 }

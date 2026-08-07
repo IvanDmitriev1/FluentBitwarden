@@ -6,7 +6,7 @@ internal static class PasskeyServiceCollectionExtensions
 {
     public static IServiceCollection AddPasskeyServices(this IServiceCollection services)
     {
-        services.AddSingleton<PasskeyAssertionService>();
+        
         return services;
     }
 }

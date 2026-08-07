@@ -60,7 +60,7 @@ namespace FluentBitwarden::ComServer::Utils
 			reinterpret_cast<PUCHAR>(hash.data()),
 			hashLength,
 			0));
-
+       
 		return hash;
 	}
 }

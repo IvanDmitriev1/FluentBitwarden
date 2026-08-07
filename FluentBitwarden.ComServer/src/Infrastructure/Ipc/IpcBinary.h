@@ -63,6 +63,11 @@ namespace FluentBitwarden::ComServer::Ipc::Binary
 			AppendBytes(std::as_bytes(std::span{ value.data(), value.size() }));
 		}
 
+        void WriteBool(bool value)
+        {
+            m_buffer.push_back(value ? std::byte{ 1 } : std::byte{ 0 });
+        }
+
 		[[nodiscard]] std::vector<std::byte> Take() &&
 		{
 			return std::move(m_buffer);

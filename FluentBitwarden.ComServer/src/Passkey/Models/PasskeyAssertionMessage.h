@@ -1,25 +1,10 @@
 #pragma once
-#include <pch.h>
+#include "Passkey/WebAuthn/WebAuthnPayload.h"
 #include "Infrastructure/Ipc/IpcBinary.h"
 #include "Infrastructure/Ipc/IpcProtocol.h"
 
 namespace FluentBitwarden::ComServer::WebAuthn
 {
-	namespace PasskeyPayload
-	{
-		inline constexpr std::uint8_t RequestMemberCount = 3;
-		inline constexpr std::uint8_t ResponseMemberCount = 6;
-		inline constexpr std::size_t Sha256HashLength = 32;
-
-		inline void ValidateHashLength(std::span<const std::uint8_t> value, std::string_view fieldName)
-		{
-			if (value.size() != Sha256HashLength)
-			{
-				throw std::runtime_error(std::string{ fieldName } + " must be 32 bytes.");
-			}
-		}
-	}
-
 	struct PasskeyGetAssertionRequest
 	{
 		std::string RpId;
@@ -33,16 +18,19 @@ namespace FluentBitwarden::ComServer::WebAuthn
 			const auto rpIdHash = std::span<const std::uint8_t>{ RpIdHash.data(), RpIdHash.size() };
 			const auto clientDataHash = std::span<const std::uint8_t>{ ClientDataHash.data(), ClientDataHash.size() };
 
-			PasskeyPayload::ValidateHashLength(rpIdHash, "RpIdHash");
-			PasskeyPayload::ValidateHashLength(clientDataHash, "ClientDataHash");
+            Payload::ValidateSha256Hash(rpIdHash, "RpIdHash");
+            Payload::ValidateSha256Hash(clientDataHash, "ClientDataHash");
 
 			Ipc::Binary::PayloadWriter writer;
-			writer.WriteObjectHeader(PasskeyPayload::RequestMemberCount);
+			writer.WriteObjectHeader(MemberCount);
 			writer.WriteString(RpId);
 			writer.WriteBytes(rpIdHash);
 			writer.WriteBytes(clientDataHash);
 			return std::move(writer).Take();
 		}
+
+    private:
+        static constexpr std::uint8_t MemberCount = 3;
 	};
 
 	struct PasskeyAssertionResponse
@@ -58,7 +46,7 @@ namespace FluentBitwarden::ComServer::WebAuthn
 		{
 			Ipc::Binary::PayloadReader reader{ payload };
 			reader.ReadObjectHeader(1);
-			reader.ReadObjectHeader(PasskeyPayload::ResponseMemberCount);
+			reader.ReadObjectHeader(MemberCount);
 
 			auto credentialId = reader.ReadBytes();
 			auto userId = reader.ReadBytes();
@@ -78,6 +66,9 @@ namespace FluentBitwarden::ComServer::WebAuthn
 				.UserDisplayName = std::move(userDisplayName)
 			};
 		}
+
+    private:
+        static constexpr std::uint8_t MemberCount = 6;
 	};
 
 	static_assert(Ipc::IpcBinaryRequest<PasskeyGetAssertionRequest>);

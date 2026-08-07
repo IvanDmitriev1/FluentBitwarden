@@ -1,13 +1,43 @@
+using FluentBitwarden.AppHost.Modules.Passkey.Internal;
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Passkey.Ipc;
 
-internal sealed class PasskeyIpcHandler(PasskeyAssertionService passkeyAssertionService)
+internal sealed class PasskeyIpcHandler(IPasskeyDialogClient passkeyDialogClient)
     : IPasskeyClient, IIpcRequestsHandler
 {
-    public ValueTask<PasskeyAssertionResponse> SelectCredentialAsync(
-        PasskeyGetAssertionRequest request,
-        CancellationToken cancellationToken) =>
-        passkeyAssertionService.SelectCredentialAsync(request, cancellationToken);
+    public async ValueTask<PasskeyAssertionResponse> SelectCredentialAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
+    {
+        var credential = await passkeyDialogClient.ShowPasskeySelectionDialogAsync(
+            new PasskeySelectCredentialRequest(request.RpId),
+            cancellationToken);
+
+        var authenticatorData = WebAuthnAssertion.BuildAuthenticatorData(
+            request.RpIdHash,
+            credential.Counter,
+            true,
+            true);
+
+        var signedPayload = WebAuthnAssertion.BuildSignedPayload(
+            authenticatorData,
+            request.ClientDataHash);
+
+        var signature = WebAuthnAssertion.SignEs256(credential.KeyValue, signedPayload);
+
+        return new PasskeyAssertionResponse
+        {
+            CredentialId = credential.CredentialId,
+            UserId = credential.UserHandle,
+            AuthenticatorData = authenticatorData,
+            Signature = signature,
+            UserName = credential.UserName,
+            UserDisplayName = credential.UserDisplayName
+        };
+    }
+
+    public ValueTask<PasskeyMakeCredentialResponse> MakeCredentialAsync(PasskeyMakeCredentialRequest request, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -7,7 +7,7 @@
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<UseWinUI>true</UseWinUI>
 	<WinUISDKReferences>false</WinUISDKReferences>
-        <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
+  <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
 	<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 	<NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
   </PropertyGroup>

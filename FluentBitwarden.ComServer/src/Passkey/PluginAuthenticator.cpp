@@ -4,8 +4,8 @@
 #include "Infrastructure/Ipc/AppNamedPipeClient.h"
 
 #include "Passkey/WebAuthn/OperationRequestVerifier.h"
-#include "Passkey/WebAuthn/DecodedWebAuthnGetAssertionRequest.h"
-#include "Passkey/WebAuthn/AssertionResponseBuilder.h"
+#include "Passkey/WebAuthn/RequestDecoder.h"
+#include "Passkey/WebAuthn/ResponseEncoder.h"
 
 namespace FluentBitwarden::ComServer
 {
@@ -28,7 +28,13 @@ namespace FluentBitwarden::ComServer
 			RETURN_HR_IF(E_POINTER, request == nullptr || response == nullptr);
 			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
 
-			RETURN_HR(E_NOTIMPL);
+            auto ipcRequest = WebAuthn::RequestDecoder::DecodeMakeCredential(request);
+
+            Ipc::AppNamedPipeClient m_pipeClient;
+            auto credential = m_pipeClient.SendAsync<WebAuthn::PasskeyMakeCredentialRequest, WebAuthn::PasskeyMakeCredentialResponse>(std::move(ipcRequest)).get();
+            WebAuthn::ResponseEncoder::EncodeMakeCredential(credential, response);
+
+			RETURN_HR(S_OK);
 		}
 		CATCH_RETURN();
 	}
@@ -41,13 +47,11 @@ namespace FluentBitwarden::ComServer
 			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
 			*response = {};
 
-			WebAuthn::DecodedGetAssertionRequest decodedRequest = WebAuthn::DecodedGetAssertionRequest::Decode(request);
-			WebAuthn::PasskeyGetAssertionRequest ipcRequest = decodedRequest.ToIpcRequest();
+            auto ipcRequest = WebAuthn::RequestDecoder::DecodeGetAssertion(request);
 
-			Ipc::AppNamedPipeClient m_pipeClient;
-
+            Ipc::AppNamedPipeClient m_pipeClient;
 			auto assertion = m_pipeClient.SendAsync<WebAuthn::PasskeyGetAssertionRequest, WebAuthn::PasskeyAssertionResponse>(std::move(ipcRequest)).get();
-			WebAuthn::AssertionResponseBuilder::BuildResponse(assertion, response);
+			WebAuthn::ResponseEncoder::EncodeGetAssertion(assertion, response);
 
 			return S_OK;
 		}

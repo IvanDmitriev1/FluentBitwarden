@@ -118,6 +118,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Passkey\WebAuthn\RequestDecoder.h" />
+    <ClInclude Include="src\Passkey\WebAuthn\ResponseEncoder.h" />
     <ClInclude Include="src\Application\Activation\AppActivationLauncher.h" />
     <ClInclude Include="src\Infrastructure\Cbor\CborWriter.h" />
     <ClInclude Include="src\Infrastructure\Cryptography\HashingFunctions.h" />
@@ -130,11 +132,12 @@
     <ClInclude Include="src\Passkey\Models\PasskeyMakeCredentialMessage.h" />
     <ClInclude Include="src\Passkey\Registration\AuthenticatorInfoBuilder.h" />
     <ClInclude Include="src\Passkey\Registration\PluginRegistrationManager.h" />
-    <ClInclude Include="src\Passkey\WebAuthn\AssertionResponseBuilder.h" />
-    <ClInclude Include="src\Passkey\WebAuthn\DecodedWebAuthnGetAssertionRequest.h" />
     <ClInclude Include="src\Passkey\WebAuthn\OperationRequestVerifier.h" />
+    <ClInclude Include="src\Passkey\WebAuthn\WebAuthnPayload.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
+    <ClCompile Include="src\Passkey\WebAuthn\RequestDecoder.cpp" />
+    <ClCompile Include="src\Passkey\WebAuthn\ResponseEncoder.cpp" />
     <ClCompile Include="src\Application\Activation\AppActivationLauncher.cpp" />
     <ClCompile Include="src\Infrastructure\Cbor\CborWriter.cpp" />
     <ClCompile Include="src\Infrastructure\Cryptography\HashingFunctions.cpp" />
@@ -144,8 +147,6 @@
     <ClCompile Include="src\Passkey\PluginAuthenticator.cpp" />
     <ClCompile Include="src\Passkey\Registration\AuthenticatorInfoBuilder.cpp" />
     <ClCompile Include="src\Passkey\Registration\PluginRegistrationManager.cpp" />
-    <ClCompile Include="src\Passkey\WebAuthn\AssertionResponseBuilder.cpp" />
-    <ClCompile Include="src\Passkey\WebAuthn\DecodedWebAuthnGetAssertionRequest.cpp" />
     <ClCompile Include="src\Passkey\WebAuthn\OperationRequestVerifier.cpp" />
     <ClCompile Include="src\WinMain.cpp" />
     <ClCompile Include="src\pch.cpp">
@@ -157,9 +158,6 @@
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
     <None Include="webauthnplugin.def" />
-    <Text Include="readme.txt">
-      <DeploymentContent>false</DeploymentContent>
-    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

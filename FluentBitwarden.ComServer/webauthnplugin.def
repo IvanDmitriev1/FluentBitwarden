@@ -10,3 +10,7 @@ EXPORTS
     WebAuthNDecodeGetAssertionRequest
     WebAuthNFreeDecodedGetAssertionRequest
     WebAuthNEncodeGetAssertionResponse
+    WebAuthNFreeDecodedMakeCredentialRequest
+    WebAuthNFreeDecodedMakeCredentialRequest
+    WebAuthNDecodeMakeCredentialRequest
+    WebAuthNEncodeMakeCredentialResponse
