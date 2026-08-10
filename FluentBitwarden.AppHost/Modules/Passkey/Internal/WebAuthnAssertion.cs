@@ -6,7 +6,7 @@ namespace FluentBitwarden.AppHost.Modules.Passkey.Internal;
 internal static class WebAuthnAssertion
 {
     [Flags]
-    private enum Flags : byte
+    private enum AuthenticatorFlags : byte
     {
         UserPresent = 0x01,
         UserVerified = 0x04,
@@ -14,90 +14,44 @@ internal static class WebAuthnAssertion
         BackupState = 0x10
     }
 
-    public static byte[] BuildAuthenticatorData(
-        byte[] rpIdHash,
-        int counter,
-        bool userVerified,
-        bool backedUpPasskey)
+    private const int HashLength = 32;
+    private const int AuthenticatorDataLength = 37;
+
+    public static (byte[] AuthenticatorData, byte[] Signature) Create(
+        ReadOnlySpan<byte> rpIdHash,
+        ReadOnlySpan<byte> clientDataHash,
+        ReadOnlySpan<byte> privateKey,
+        uint signCount)
     {
-        // 32-byte rpIdHash + 1-byte flags + 4-byte signCount.
-        var authenticatorData = new byte[37];
-        Buffer.BlockCopy(rpIdHash, 0, authenticatorData, 0, 32);
+        ArgumentOutOfRangeException.ThrowIfNotEqual(rpIdHash.Length, HashLength);
+        ArgumentOutOfRangeException.ThrowIfNotEqual(clientDataHash.Length, HashLength);
 
-        Flags flags = Flags.UserPresent;
+        var authenticatorData = new byte[AuthenticatorDataLength];
 
-        if (userVerified)
-        {
-            flags |= Flags.UserVerified;
-        }
+        rpIdHash.CopyTo(authenticatorData);
 
-        if (backedUpPasskey)
-        {
-            flags |= Flags.BackupEligible;
-            flags |= Flags.BackupState;
-        }
+        AuthenticatorFlags flags = AuthenticatorFlags.UserPresent;
+        flags |= AuthenticatorFlags.UserVerified;
+        flags |= AuthenticatorFlags.BackupEligible;
+        flags |= AuthenticatorFlags.BackupState;
 
         authenticatorData[32] = (byte)flags;
+        BinaryPrimitives.WriteUInt32BigEndian(authenticatorData.AsSpan(33), signCount);
 
-        // WebAuthn signCount is big-endian.
-        BinaryPrimitives.WriteUInt32BigEndian(
-            authenticatorData.AsSpan(33, 4),
-            checked((uint)Math.Max(counter, 0)));
+        Span<byte> signedData = stackalloc byte[AuthenticatorDataLength + HashLength];
+        authenticatorData.CopyTo(signedData);
+        clientDataHash.CopyTo(signedData[AuthenticatorDataLength..]);
 
-        return authenticatorData;
-    }
+        Span<byte> hash = stackalloc byte[HashLength];
+        SHA256.HashData(signedData, hash);
 
-    public static byte[] BuildSignedPayload(ReadOnlySpan<byte> authenticatorData, ReadOnlySpan<byte> clientDataHash)
-    {
-        if (authenticatorData.Length < 37)
-            throw new ArgumentException("Authenticator data is too short.", nameof(authenticatorData));
-
-        if (clientDataHash.Length != 32)
-            throw new ArgumentException("Client data hash must be exactly 32 bytes.", nameof(clientDataHash));
-
-        var payload = new byte[authenticatorData.Length + clientDataHash.Length];
-        authenticatorData.CopyTo(payload);
-        clientDataHash.CopyTo(payload.AsSpan(authenticatorData.Length));
-
-        return payload;
-    }
-
-    public static byte[] SignEs256(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> payload)
-    {
         using var ecdsa = ECDsa.Create();
+        ecdsa.ImportPkcs8PrivateKey(privateKey, out var bytesRead);
 
-        if (!TryImportEcPrivateKey(ecdsa, privateKey))
-        {
-            throw new CryptographicException(
-                "Unsupported passkey private key format. Expected PKCS#8 or SEC1 EC private key.");
-        }
+        if (bytesRead != privateKey.Length)
+            throw new CryptographicException("Invalid passkey private key.");
 
-        return ecdsa.SignData(
-            payload,
-            HashAlgorithmName.SHA256,
-            DSASignatureFormat.Rfc3279DerSequence);
-
-        static bool TryImportEcPrivateKey(ECDsa ecdsa, ReadOnlySpan<byte> privateKey)
-        {
-            try
-            {
-                ecdsa.ImportPkcs8PrivateKey(privateKey, out var bytesRead);
-                return bytesRead == privateKey.Length;
-            }
-            catch (CryptographicException)
-            {
-                // Try SEC1 below.
-            }
-
-            try
-            {
-                ecdsa.ImportECPrivateKey(privateKey, out var bytesRead);
-                return bytesRead == privateKey.Length;
-            }
-            catch (CryptographicException)
-            {
-                return false;
-            }
-        }
+        var signature = ecdsa.SignHash(hash, DSASignatureFormat.Rfc3279DerSequence);
+        return (authenticatorData, signature);
     }
 }

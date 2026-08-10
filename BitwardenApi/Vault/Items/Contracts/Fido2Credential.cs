@@ -31,7 +31,7 @@ public sealed partial class Fido2Credential
     public required byte[] UserHandle { get; init; }
     public required string UserName { get; init; }
     public required string UserDisplayName { get; init; }
-    public required int Counter { get; init; }
+    public required uint Counter { get; init; }
     public required bool Discoverable { get; init; }
     public required DateTimeOffset CreationDate { get; init; }
 }

@@ -16,11 +16,11 @@
     <Deploy />
   </Project>
   <Project Path="FluentBitwarden.Platform/FluentBitwarden.Platform.csproj" />
+  <Project Path="BrowserExtension/FluentBitwarden.BrowseProxy/FluentBitwarden.BrowseProxy.csproj" />
   <Project Path="FluentBitwarden.AppHost/FluentBitwarden.AppHost.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
   </Project>
-  <Project Path="FluentBitwarden.BrowseProxy/FluentBitwarden.BrowseProxy.csproj" />
   <Project Path="FluentBitwarden.Ui/FluentBitwarden.Ui.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />

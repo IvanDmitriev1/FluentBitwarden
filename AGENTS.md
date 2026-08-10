@@ -1,319 +1,59 @@
-# AGENTS.md — FluentBitwarden
+# FluentBitwarden agent guide
 
-Guidebook for anyone (human or agent) writing code in this repository: how it is laid out, why, and
-what the house patterns are.
+## Scope and precedence
 
-Per-project guides live next to the code and go deeper:
-[AppHost](FluentBitwarden.AppHost/AGENTS.md) ·
-[Ui](FluentBitwarden.Ui/AGENTS.md) ·
-[Contracts](FluentBitwarden.Contracts/AGENTS.md) ·
-[Platform](FluentBitwarden.Platform/AGENTS.md) ·
-[BitwardenApi](BitwardenApi/AGENTS.md)
+This file governs the repository. A nested AGENTS.md supplements it; the closest applicable file takes priority. Read the local guide before planning or modifying a project. For cross-project work, read every affected guide. Explicit user instructions override these defaults except confirmed safety constraints and invariants.
 
-## What this is
+## Portable system overview
 
-A native Windows Bitwarden client: WinUI 3 on .NET 10, split across several cooperating processes,
-written to stay AOT- and trim-friendly. Vault data is cached locally in SQLite and decrypted only in
-memory in the host process.
+FluentBitwarden is a work-in-progress native Windows Bitwarden client built with .NET 10 and WinUI 3. It keeps encrypted account data and a SQLite vault cache locally; decrypted vault data exists only in the long-running AppHost. The MSIX deploys an AppHost, WinUI UI, C++/WinRT WebAuthn COM server, browser Native Messaging bridge, and Command Palette extension. A Manifest V3 TypeScript browser extension connects through the bridge. The app is not production-ready; see [README.md](README.md).
 
-## Repo map
+## Repository map and instruction router
 
-| Path | What lives there | Go here when… |
+| Path | Responsibility | Read when |
 | --- | --- | --- |
-| `BitwardenApi/` | Bitwarden server calls (HTTP + SignalR) and crypto primitives. No dependency on any FluentBitwarden project. | You need to talk to the Bitwarden server, or touch KDF / `EncString` / DTOs. |
-| `FluentBitwarden.Contracts/` | The cross-process vocabulary: client interfaces, IPC message ids, request/response records. | You are adding or changing anything that crosses a process boundary. |
-| `FluentBitwarden.Platform/` | Shared Windows infrastructure: named-pipe IPC, settings, site icons, clipboard, process helpers, diagnostics. | You need reusable Windows plumbing, not a feature. |
-| `FluentBitwarden.AppHost/` | The headless long-running host. Owns local data, sessions, and every business module. | You are implementing behaviour: vault, accounts, unlock, SSH agent, passkeys, browser fill. |
-| `FluentBitwarden.Ui/` | The WinUI 3 presentation process: pages, view models, controls, styles. | You are changing what the user sees. |
-| `FluentBitwarden.CommandPalette/` | PowerToys Command Palette extension. | Palette commands and pages. |
-| `FluentBitwarden.BrowseProxy/` | Browser Native Messaging bridge (stdio helper launched by the browser). | Browser extension ↔ AppHost transport. |
-| `FluentBitwarden.ComServer/` | C++/WinRT WebAuthn plugin COM server. | Windows passkey plugin surface. |
-| `FluentBitwarden.Package/` | MSIX packaging project. | Manifest, app entries, packaging. |
-| `BrowserExtension/` | Manifest V3 extension, TypeScript + Vite + pnpm. | Extension UI and content scripts. |
-
-Note: `FluentBitwarden.Ui` uses root namespace `FluentBitwarden`, **not** `FluentBitwarden.Ui`.
-A file in `FluentBitwarden.Ui/Infrastructure/Clients/` is in namespace
-`FluentBitwarden.Infrastructure.Clients`.
-
-## Why it is split into processes
-
-`FluentBitwarden.AppHost.exe` holds the decrypted vault and the account keys, and it must outlive any
-window: the tray icon, the SSH agent, the passkey plugin, and the browser bridge all keep working
-after the user closes the UI. `FluentBitwarden.Ui.exe` is therefore disposable — it can be closed,
-killed, and relaunched without losing the unlocked session.
-
-That split is the reason `FluentBitwarden.Contracts` exists. Every crossing between processes is an
-explicit message with a fixed id and a serializable payload, so no accidental coupling can sneak in.
-
-| Pipe | Server | Clients | Purpose |
-| --- | --- | --- | --- |
-| `LOCAL\FluentBitwarden.v2` | AppHost | UI, COM server, BrowseProxy | Account, vault, Windows Hello, passkey, lifecycle. |
-| `LOCAL\FluentBitwarden.Ui.v2` | UI | AppHost | User-facing prompts: SSH approval, passkey selection. |
-
-The AppHost also serves the OpenSSH-compatible `openssh-ssh-agent` pipe, which speaks the OpenSSH
-agent protocol, not ours.
-
-## Dependency direction
-
-```
-BitwardenApi  <-  Contracts  <-  Platform  <-  { AppHost, Ui, BrowseProxy, CommandPalette }
-```
-
-Arrows never reverse. In particular **AppHost and Ui never reference each other** — they only meet in
-`Contracts` and talk over IPC. Inside AppHost the layering is enforced by NsDepCop and a breach fails
-the build; see [FluentBitwarden.AppHost/AGENTS.md](FluentBitwarden.AppHost/AGENTS.md).
-
-## Build and quality gates
-
-Build the way CI does ([build.yml](.github/workflows/build.yml)):
-
-```powershell
-msbuild FluentBitwarden.slnx /restore /m /p:Configuration=Debug /p:Platform=x64
-```
-
-The gates that will bite you, all set centrally in [Directory.Build.props](Directory.Build.props) and
-[.editorconfig](.editorconfig):
-
-- `TreatWarningsAsErrors=true` and `EnforceCodeStyleInBuild=true` — a style warning is a broken build.
-- `Nullable=enable`, `ImplicitUsings=enable`, `LangVersion=preview`, `IsAotCompatible=true`.
-- `NSDEPCOP01` (namespace boundary breach) is an **error**.
-- Package versions live only in [Directory.Packages.props](Directory.Packages.props) (Central Package
-  Management). Never write `Version=` on a `PackageReference`.
-- Style: file-scoped namespaces, `using` directives outside the namespace with `System` first,
-  `_camelCase` private fields, `I`-prefixed interfaces, `PascalCase` constants.
-
-`ConfigureAwait.Fody` rewrites awaits at build time, which is why CA2007 is switched off. Do **not**
-write `.ConfigureAwait(false)` by hand — annotate the type instead:
-
-```csharp
-[Fody.ConfigureAwait(false)]
-internal sealed class FooService(IBarClient bar) { /* ... */ }
-```
-
-## Cross-cutting conventions
-
-**Dependency injection.** Primary constructors, constructor injection only. Implementations are
-`internal sealed` unless something outside the assembly genuinely needs them. Every area exposes one
-registration extension and the composition root is a flat list of those calls:
-
-```csharp
-internal static class FooServiceCollectionExtensions
-{
-    public static IServiceCollection AddFooServices(this IServiceCollection services)
-    {
-        services.AddSingleton<IFooStore, FooStore>();
-        return services;
-    }
-}
-```
-
-See [Program.cs](FluentBitwarden.AppHost/Program.cs) for the host and
-[App.xaml.cs](FluentBitwarden.Ui/App.xaml.cs) for the UI. Both build the provider with validation in
-`DEBUG`, so a missing or captive dependency fails at startup rather than at first use.
-
-**Logging.** Source-generated `LoggerMessage` methods in a `partial static class` named `<Area>Log`,
-one per area — for example [VaultWorkspaceLog.cs](FluentBitwarden.AppHost/Modules/Vault/Workspace/VaultWorkspaceLog.cs):
-
-```csharp
-internal static partial class FooLog
-{
-    [LoggerMessage(EventId = 1300, Level = LogLevel.Error, Message = "Foo failed.")]
-    public static partial void FooFailed(this ILogger logger, Exception exception);
-}
-```
-
-No interpolated strings in log calls, and never log secrets, keys, or decrypted vault content.
-
-**AOT and trimming.** No reflection-based serialization anywhere: MemoryPack for IPC, source-generated
-`JsonSerializerContext` for HTTP, Dapper.AOT for SQL. `JsonSerializerIsReflectionEnabledByDefault=false`
-is set repo-wide, so a reflection-based `JsonSerializer` call throws at runtime in Debug exactly as it
-would in a trimmed publish — always pass a `JsonTypeInfo`. Where reflection is unavoidable it is annotated
-(`RequiresDynamicCode` / `RequiresUnreferencedCode`) and suppressed at the call site with a written
-`Justification`. Keep those annotations when you edit such code.
-
-**Strongly-typed ids.** `CipherId`, `FolderId`, `UserId`, … are `readonly partial struct`s generated by
-StronglyTypedId. Never pass a bare `string` or `Guid` id across a method or process boundary.
-
-**Comments.** Sparse, and about *why* — especially where a trade-off was accepted deliberately. See the
-comment in `DownloadCipherAttachmentAsync` in
-[VaultIpcHandler.cs](FluentBitwarden.AppHost/Modules/Vault/Ipc/VaultIpcHandler.cs) explaining why the
-download deliberately runs outside the session gate. Match that density; do not narrate code that
-already reads clearly.
-
----
-
-## Recipe A — add an IPC message end-to-end
-
-Worked example: a `GetFoo` request from the UI to the AppHost. (The real `GetCipher` message follows
-exactly these steps: id `102` → `GetVaultCipherRequest` → `VaultIpcHandler.GetCipherAsync` →
-`RemoteVaultClient.GetCipherAsync`.)
-
-**1. Reserve the message id** in [IpcMessageTypes.cs](FluentBitwarden.Contracts/Modules/IpcMessageTypes.cs),
-inside the block that owns it. Take the next free number in that block; never reuse a retired one.
-
-```csharp
-public static class Foo
-{
-    public const ushort GetFoo = 700;
-}
-```
-
-**2. Add the request record** under `FluentBitwarden.Contracts/Modules/Foo/`:
-
-```csharp
-[MemoryPackable]
-public readonly partial record struct GetFooRequest(
-    [property: StronglyTypedIdFormatter<FooId>] FooId FooId) : IIpcRequestMessage
-{
-    public static ushort MessageType => IpcMessageTypes.Foo.GetFoo;
-}
-```
-
-The response type just has to be MemoryPack-serializable. Use `IpcVoid` when there is no result.
-
-**3. Add the method to the client interface** (`Contracts/Modules/Foo/IFooClient.cs`). One interface per
-module; `ValueTask`-returning; trailing `CancellationToken cancellationToken = default`.
-
-```csharp
-public interface IFooClient
-{
-    ValueTask<Foo?> GetFooAsync(GetFooRequest request, CancellationToken cancellationToken = default);
-}
-```
-
-**4. Implement the server side** in the AppHost module at `Modules/Foo/Ipc/FooIpcHandler.cs`. The handler
-implements the client interface *and* the marker `IIpcRequestsHandler`; the message id is discovered
-from the request type's `MessageType`. Methods that take no request need an explicit attribute:
-
-```csharp
-[Fody.ConfigureAwait(false)]
-internal sealed class FooIpcHandler(IFooStore store) : IFooClient, IIpcRequestsHandler
-{
-    public ValueTask<Foo?> GetFooAsync(GetFooRequest request, CancellationToken cancellationToken = default) =>
-        ValueTask.FromResult(store.Find(request.FooId));
-
-    [IpcMessageHandler(IpcMessageTypes.Foo.ListFoos)]
-    public ValueTask<Foo[]> ListFoosAsync(CancellationToken cancellationToken = default) =>
-        ValueTask.FromResult(store.List());
-}
-```
-
-**5. Register the handler** once in
-[AppHostIpcServiceCollectionExtensions.cs](FluentBitwarden.AppHost/AppHostIpcServiceCollectionExtensions.cs)
-(`.Add<FooIpcHandler>()`). Registering the same message id twice throws at startup, on purpose.
-
-**6. Implement the client side** at `FluentBitwarden.Ui/Infrastructure/Clients/RemoteFooClient.cs`. These
-stay thin — a single `SendAsync` call, no business logic:
-
-```csharp
-[Fody.ConfigureAwait(false)]
-internal sealed class RemoteFooClient(IIpcClient client) : IFooClient
-{
-    public ValueTask<Foo?> GetFooAsync(GetFooRequest request, CancellationToken cancellationToken = default) =>
-        client.SendAsync<GetFooRequest, Foo?>(request, cancellationToken);
-}
-```
-
-**7. Register it** in [Ui/Infrastructure/ServiceCollectionExtensions.cs](FluentBitwarden.Ui/Infrastructure/ServiceCollectionExtensions.cs):
-`services.AddSingleton<IFooClient, RemoteFooClient>();`
-
-**8. For push instead of request/response**, implement `IIpcEventMessage` on the record, publish from the
-AppHost with `IIpcEventPublisher.PublishAsync`, and subscribe in the UI with `IIpcEventClient.Subscribe`
-(or await one with `WaitAsync`). See `VaultSessionStatusChangedEvent` for the shape.
-
-## Recipe B — add an AppHost module
-
-Modules are the unit of business behaviour in the host. Create
-`FluentBitwarden.AppHost/Modules/Foo/` with this skeleton:
-
-```
-Modules/Foo/
-  Abstractions/                    <- the only thing sibling modules may reference
-    IFooService.cs
-  Models/                          <- value types siblings are allowed to see
-    FooSnapshot.cs
-  Internal/                        <- helpers nobody outside the module may touch
-  Ipc/FooIpcHandler.cs             <- Recipe A, step 4
-  Persistence/                     <- only if the module owns tables
-    Repositories/FooRepository.cs
-    Mapping/FooMapper.cs
-  FooService.cs                    <- implementation, internal sealed
-  FooServiceCollectionExtensions.cs
-```
-
-Then:
-
-1. Register the module: `AddFooServices()` inside its extension, and one `builder.Services.AddFooServices();`
-   line in [Program.cs](FluentBitwarden.AppHost/Program.cs).
-2. If other modules need it, expose it **only** through `Abstractions/` and `Models/` — those two
-   namespaces are the module contract, and NsDepCop enforces it. Nothing else is reachable from outside.
-3. Add a rule pair for the new module namespace in
-   [config.nsdepcop](FluentBitwarden.AppHost/config.nsdepcop) so it may see its own internals.
-4. Never reference `FluentBitwarden.AppHost.Application.*` from a module; the dependency runs the other way.
-
-Details and the reasoning: [FluentBitwarden.AppHost/AGENTS.md](FluentBitwarden.AppHost/AGENTS.md).
-
-## Recipe C — add a UI page
-
-1. **View model** in `FluentBitwarden.Ui/ViewModels/Foo/FooPageViewModel.cs`:
-
-```csharp
-public sealed partial class FooPageViewModel(IFooClient fooClient) : ObservableObject, IPageLifecycleAware
-{
-    [ObservableProperty]
-    public partial Foo? SelectedFoo { get; set; }
-
-    public async Task OnLoadingAsync(CancellationToken cancellationToken) =>
-        SelectedFoo = await fooClient.GetFooAsync(new GetFooRequest(FooId.Empty), cancellationToken);
-
-    public void OnUnloading() { }
-
-    [RelayCommand]
-    private void ClearFoo() => SelectedFoo = null;
-}
-```
-
-Use `IPageLifecycleAware<TIntent>` instead when the page is navigated to with a payload.
-
-2. **Page** in `Views/Foo/FooPage.xaml` (root element `navigation:LifecyclePage`) with code-behind that
-   only wires the view model. WinUI constructs pages itself during `Frame.Navigate(pageType)`, so the
-   constructor takes no parameters and pulls the view model out of the container:
-
-```csharp
-public sealed partial class FooPage : LifecyclePage
-{
-    public FooPage()
-    {
-        ViewModel = App.Current.GetRequiredService<FooPageViewModel>();
-        DataContext = ViewModel;
-        InitializeComponent();
-    }
-
-    public FooPageViewModel ViewModel { get; }
-}
-```
-
-3. **Register the view model only** — pages are not in the container:
-   `services.AddTransient<FooPageViewModel>();` in
-   [ViewRegistration.cs](FluentBitwarden.Ui/Views/ViewRegistration.cs).
-
-Details: [FluentBitwarden.Ui/AGENTS.md](FluentBitwarden.Ui/AGENTS.md).
-
----
-
-## Where to find things
-
-| Looking for… | Look in |
-| --- | --- |
-| Vault decrypt, sync, search, save | `FluentBitwarden.AppHost/Modules/Vault/Workspace/` |
-| Unlock / lock / session lifetime | `FluentBitwarden.AppHost/Modules/Sessions/` |
-| Sign-in, 2FA, token refresh, Windows Hello | `FluentBitwarden.AppHost/Modules/Accounts/` |
-| SQL schema and migrations | `FluentBitwarden.AppHost/Infrastructure/Data/Migrations/` |
-| Transactions and repositories | `FluentBitwarden.AppHost/Infrastructure/Data/` |
-| Message ids and payload records | `FluentBitwarden.Contracts/Modules/` |
-| Pipe framing, headers, dispatch | `FluentBitwarden.Platform/Ipc/` |
-| Settings storage | `FluentBitwarden.Platform/Settings/`, `FluentBitwarden.Contracts/Settings/` |
-| Server HTTP calls | `BitwardenApi/Identity/`, `BitwardenApi/Vault/` |
-| KDF, `EncString`, key derivation | `BitwardenApi/Infrastructure/Cryptography/` |
-| Pages and view models | `FluentBitwarden.Ui/Views/`, `FluentBitwarden.Ui/ViewModels/` |
-| Reusable controls and styles | `FluentBitwarden.Ui/Controls/`, `FluentBitwarden.Ui/Styles/` |
+| [BitwardenApi/](BitwardenApi/AGENTS.md) | Bitwarden HTTP, SignalR, crypto, IDs, DTOs | Server calls, KDFs, encryption, JSON, shared primitives |
+| [FluentBitwarden.Contracts/](FluentBitwarden.Contracts/AGENTS.md) | IPC interfaces, IDs, payloads | Any cross-process or settings contract |
+| [FluentBitwarden.Platform/](FluentBitwarden.Platform/AGENTS.md) | Windows IPC, settings, diagnostics, helpers | Shared Windows infrastructure |
+| [FluentBitwarden.AppHost/](FluentBitwarden.AppHost/AGENTS.md) | Sessions, data, and feature modules | Vault, account, unlock, passkey, SSH, browser behavior |
+| [FluentBitwarden.Ui/](FluentBitwarden.Ui/AGENTS.md) | WinUI presentation | Pages, view models, controls, styles |
+| [BrowserExtension/](BrowserExtension/AGENTS.md) | Manifest V3 extension | Browser background, content scripts, bundles |
+| [FluentBitwarden.Package/](FluentBitwarden.Package/AGENTS.md) | MSIX manifest and composition | App entries, capabilities, packaging |
+
+## System boundaries
+
+Managed dependencies flow BitwardenApi <- Contracts <- Platform <- { AppHost, Ui, BrowseProxy, CommandPalette }. AppHost and Ui never reference each other; requests cross through Contracts and IPC. Contracts owns managed IPC vocabulary. The COM server mirrors the binary passkey subset; the browser extension mirrors its browser-native protocol.
+
+Use strongly typed IDs at method and process boundaries. IPC uses MemoryPack; JSON uses source-generated JsonSerializerContext/JsonTypeInfo; SQL uses Dapper.AOT. Reflection-based JSON is disabled by [Directory.Build.props](Directory.Build.props). Keep trimming annotations and written suppressions on the documented reflection boundary. Package versions belong only in [Directory.Packages.props](Directory.Packages.props); do not put Version= on a PackageReference. Build and analyzer rules are enforced by [Directory.Build.props](Directory.Build.props) and [.editorconfig](.editorconfig); use ConfigureAwait.Fody annotations instead of .ConfigureAwait(false).
+
+## Repository-wide commands
+
+Run from the repository root in a Visual Studio Developer PowerShell or equivalent environment:
+
+`powershell
+nuget restore FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
+msbuild FluentBitwarden.slnx /restore /m /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false /p:GenerateAppxPackageOnBuild=false /v:minimal
+`
+
+This is the CI build in [.github/workflows/build.yml](.github/workflows/build.yml); it restores native packages and builds the complete solution without creating a signed MSIX. No test projects or test scripts are currently present, so no verified repository-wide test command exists.
+
+## Global workflow and cross-project changes
+
+Inspect nearby code and configuration, identify all affected projects/contracts, make the smallest coherent change, run narrow checks first, run the CI build for shared or cross-project work, review the diff, and report checks run or skipped.
+
+For an IPC feature, reserve the ID and define the payload/interface in Contracts, implement/register the AppHost handler, and implement/register each consuming remote client. Do not reuse a retired ID. A pipe-framing, protocol-version, or passkey-encoding change must update and verify the matching ComServer code. Browser integration changes usually span BrowserExtension, BrowseProxy, Contracts, and AppHost; keep message types, version, validation, and dispatch aligned. Shipped AppHost migration scripts are immutable. State upgrade, deployment, and rollback implications for compatibility-sensitive work.
+
+## Safety and completion
+
+Never log, commit, serialize for diagnostics, or persist decrypted vault values, account keys, tokens, or other secrets. Keep encrypted data encrypted at rest. Do not add dependencies, change authentication/authorization behavior, alter package capabilities, publish/release, or make destructive migrations without explicit user approval. Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
+
+Completion requires affected checks to pass or be reported as unrun, shared contracts validated in all consumers, no untracked generated output, behavior/command documentation updated when needed, and no unrelated diff.
+
+## Planning and documentation
+
+Separate verified facts, assumptions, and open questions. Do not invent files, APIs, schemas, or commands. Identify all affected projects; consider contracts, migrations, compatibility, deployment order, and rollback when relevant; pair implementation steps with verification. A plan is not implementation-ready while material facts are unknown.
+
+- [README.md](README.md): product scope, prerequisites, and process roles.
+- [.github/workflows/build.yml](.github/workflows/build.yml): authoritative CI build.
+- [Directory.Build.props](Directory.Build.props), [.editorconfig](.editorconfig), and [Directory.Packages.props](Directory.Packages.props): shared .NET build, analyzer, and dependency rules.
+- [SECURITY.md](SECURITY.md): vulnerability reporting.
