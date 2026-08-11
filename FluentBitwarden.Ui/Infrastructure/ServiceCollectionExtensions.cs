@@ -1,13 +1,13 @@
-using FluentBitwarden.Platform.Ipc;
-using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Sessions;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.Clients;
-using Microsoft.Extensions.DependencyInjection;
-using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Infrastructure.Notifications;
 using FluentBitwarden.Infrastructure.UserDialogs;
+using FluentBitwarden.Infrastructure.Window;
+using FluentBitwarden.Platform.Ipc;
+using FluentBitwarden.Platform.SiteIcons;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Infrastructure;
 
@@ -33,7 +33,7 @@ internal static class ServiceCollectionExtensions
                 .Add<SshUserActionDialogRequestHandler>()
                 .Add<PasskeySelectionDialogRequestHandler>());
 
-        services.AddSingleton<UiDialogDispatcher>();
+        services.AddSingleton<IUiDialogCoordinator, UiDialogCoordinator>();
 
         return services;
     }

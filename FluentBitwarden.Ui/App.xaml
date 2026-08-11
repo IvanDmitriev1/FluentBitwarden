@@ -5,7 +5,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:FluentBitwarden.Infrastructure.Converters"
     xmlns:sharedTemplates="using:FluentBitwarden.Templates.Shared"
-    xmlns:templates="using:FluentBitwarden.Templates"
     xmlns:toolkitConverters="using:CommunityToolkit.WinUI.Converters">
     <Application.Resources>
         <ResourceDictionary>
@@ -14,7 +13,6 @@
                 <ResourceDictionary Source="ms-appx:///Styles/UIStyles.xaml" />
 
                 <sharedTemplates:OptionItemTemplates />
-                <templates:SshUserActionRequestViewModelTemplate />
             </ResourceDictionary.MergedDictionaries>
 
             <toolkitConverters:StringVisibilityConverter x:Key="StringVisibilityConverter" />

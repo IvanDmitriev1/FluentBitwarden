@@ -23,6 +23,10 @@ Use only IXxxClient interfaces from Contracts; Infrastructure/Clients/Remote* im
 
 Use x:Bind for new XAML where possible. Use {ThemeResource} rather than hard-coded page colors, put reusable styles/templates/controls in their matching folders, and put XAML-only behavior in AttachedProperties/. Custom controls use DependencyPropertyGenerator and PART_ constants.
 
+## Dialog hosting
+
+Feature dialogs are fresh XAML-backed ContentDialog types under Views/UserDialogs/. Construct them on the UI thread and present them only through IUiDialogCoordinator, which serializes presentation, assigns the active window XamlRoot, handles cancellation, and closes the overlay after completion. Dialogs implementing IUserDialog<TResult> own their typed result; ordinary ContentDialog instances return ContentDialogResult. Both window modes use popup placement.
+
 ## Verification and completion
 
 Run the repository CI build for UI or contract changes. There are no UI test projects in the repository. Verify lifecycle cancellation, correct view-model registration, and the relevant theme/accessibility behavior.

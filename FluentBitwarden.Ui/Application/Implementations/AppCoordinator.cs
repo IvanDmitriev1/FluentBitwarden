@@ -8,8 +8,8 @@ using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Views.Accounts;
 using FluentBitwarden.Views.Shell;
-using Windows.Networking.Connectivity;
 using FluentBitwarden.Views.Startup;
+using Windows.Networking.Connectivity;
 
 namespace FluentBitwarden.Application.Implementations;
 
@@ -19,7 +19,6 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
     {
         public bool IsCurrent => Volatile.Read(ref Coordinator._flowId) == Id;
     };
-
 
     public AppCoordinator(
         IAppSessionResolver sessionResolver,
@@ -59,7 +58,6 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
                 $"Application session transition '{SessionState}' to '{value}' must pass through Unknown.");
                 */
 
-
             field = value;
         }
     } = AppSessionState.Unknown;
@@ -70,7 +68,7 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         {
             case UiCliCommand.ExitCommand:
                 App.Current.Exit();
-                break;
+                return;
             case UiCliCommand.OverlayCommand:
                 _windowManager.ShowOrCreateWindow(WindowMode.Overlay);
                 break;
@@ -104,7 +102,9 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         try
         {
             if (!version.IsCurrent)
+            {
                 return;
+            }
 
             SessionState = AppSessionState.Unknown;
             var resolution = await _sessionResolver.ResolveAsync();
@@ -154,10 +154,14 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
     private void OnNetworkStatusChanged(object? sender)
     {
         if (!NetworkInformation.HasInternetAccess)
+        {
             return;
+        }
 
         if (SessionState != AppSessionState.LoggedOut)
+        {
             return;
+        }
 
         RefreshSessionAsync().SafeFireAndForget();
     }

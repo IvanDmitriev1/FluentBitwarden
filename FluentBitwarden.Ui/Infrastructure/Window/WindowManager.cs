@@ -1,7 +1,7 @@
 using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Startup;
 using Microsoft.UI.Xaml;
 using System.Diagnostics;
-using FluentBitwarden.Views.Startup;
 using WinUIEx;
 
 namespace FluentBitwarden.Infrastructure.Window;
@@ -9,41 +9,42 @@ namespace FluentBitwarden.Infrastructure.Window;
 internal sealed class WindowManager : IWindowManager
 {
     private WindowEx? _activeWindow;
-    private bool HasWindow => _activeWindow is not null;
-
-    private XamlRoot ActiveXamlRoot => _activeWindow switch
-    {
-        MainWindow mainWindow => mainWindow.XamlRoot,
-        OverlayWindow overlayWindow => overlayWindow.XamlRoot,
-        { Content: FrameworkElement content } => content.XamlRoot,
-        _ => throw new InvalidOperationException("The active FluentBitwarden window does not expose a XamlRoot.")
-    };
 
     private Frame ActiveFrame => _activeWindow switch
     {
         MainWindow mainWindow => mainWindow.NavigationFrame,
         OverlayWindow overlayWindow => overlayWindow.NavigationFrame,
-        _ => throw new ArgumentOutOfRangeException(nameof(_activeWindow), "The active window is not a supported window type.")
+        _ => throw new InvalidOperationException("The active window is not a supported window type.")
     };
-
-
-    public event EventHandler<IWindowManager, WindowMode>? WindowClosed;
 
     public WindowMode ActiveMode => _activeWindow switch
     {
         MainWindow => WindowMode.Main,
         OverlayWindow => WindowMode.Overlay,
-        _ => throw new ArgumentOutOfRangeException(nameof(_activeWindow), "Cannot determine window mode for the active window.")
+        _ => throw new InvalidOperationException("There is no active window.")
     };
 
-    public IntPtr WindowHandle => (_activeWindow ?? throw new InvalidOperationException()).GetWindowHandle();
+    public IntPtr WindowHandle => (_activeWindow
+        ?? throw new InvalidOperationException("There is no active window."))
+        .GetWindowHandle();
+
+    public XamlRoot XamlRoot => _activeWindow switch
+    {
+        MainWindow mainWindow => mainWindow.XamlRoot,
+        OverlayWindow overlayWindow => overlayWindow.XamlRoot,
+        { Content: FrameworkElement content } => content.XamlRoot,
+        _ => throw new InvalidOperationException("The active window does not expose a XamlRoot.")
+    };
 
     public void ShowOrCreateWindow(WindowMode mode)
     {
-        if (!HasWindow || ActiveMode != mode)
+        if (_activeWindow is null || ActiveMode != mode)
+        {
             ReplaceWindow(mode);
-        else
-            ActivateWindow();
+            return;
+        }
+
+        ActivateWindow();
     }
 
     public void ReplaceWindow(WindowMode mode)
@@ -63,35 +64,31 @@ internal sealed class WindowManager : IWindowManager
 
     public void ActivateWindow()
     {
-        if (_activeWindow is null)
-        {
-            throw new InvalidOperationException("Cannot activate window because there is no active window.");
-        }
-
-        _activeWindow.ShowAndActivate();
+        WindowEx window = _activeWindow ?? throw new InvalidOperationException("Cannot activate window because there is no active window.");
+        window.ShowAndActivate();
     }
 
     public void CloseWindow()
     {
-        if (_activeWindow is null)
-        {
-            throw new InvalidOperationException("Cannot close window because there is no active window.");
-        }
-
-        _activeWindow.Close();
+        WindowEx window = _activeWindow ?? throw new InvalidOperationException("Cannot close window because there is no active window.");
+        window.Close();
     }
 
     public void ReplacePage<TPage>(IPageNavigationParameter? parameter = null) where TPage : Page
     {
         Frame frame = ActiveFrame;
         if (frame.Content is TPage && parameter is null)
+        {
             return;
+        }
 
         var pageType = typeof(TPage);
         if (frame.CurrentSourcePageType == pageType)
         {
             if (parameter is not null && frame.Content is ILifeCycleAwarePage page)
+            {
                 page.Reload(parameter);
+            }
 
             return;
         }
@@ -101,12 +98,6 @@ internal sealed class WindowManager : IWindowManager
 
         frame.BackStack.Clear();
         frame.ForwardStack.Clear();
-    }
-
-    public async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken = default)
-    {
-        dialog.XamlRoot = ActiveXamlRoot;
-        return await dialog.ShowAsync().AsTask(cancellationToken);
     }
 
     public void ApplyTheme(ElementTheme themeMode)
@@ -136,9 +127,10 @@ internal sealed class WindowManager : IWindowManager
 
     private void OnWindowClosed(object sender, WindowEventArgs args)
     {
-        ArgumentNullException.ThrowIfNull(_activeWindow);
-
-        WindowClosed?.Invoke(this, ActiveMode);
+        if (!ReferenceEquals(_activeWindow, sender))
+        {
+            return;
+        }
 
         _activeWindow.Closed -= OnWindowClosed;
         _activeWindow = null;

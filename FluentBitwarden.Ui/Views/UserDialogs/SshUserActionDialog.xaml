@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="FluentBitwarden.Views.UserDialogs.SshUserActionDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentBitwarden.Views.UserDialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Approve SSH request?"
+    PrimaryButtonText="Approve"
+    PrimaryButtonClick="ApproveButton_Click"
+    CloseButtonText="Deny"
+    CloseButtonClick="DenyButton_Click"
+    DefaultButton="Close"
+    mc:Ignorable="d">
+
+    <ContentDialog.Resources>
+        <Style BasedOn="{StaticResource DefaultContentDialogStyle}" TargetType="local:SshUserActionDialog" />
+
+        <Style x:Key="MutedTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="LabelTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+    </ContentDialog.Resources>
+
+    <Grid
+        Width="440"
+        MaxWidth="440"
+        RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            Style="{StaticResource MutedTextBlockStyle}"
+            Text="An SSH client wants to use one of your keys to sign an authentication request." />
+
+        <Border
+            Grid.Row="1"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+            <StackPanel Spacing="14">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Width="48"
+                        Height="48"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="12">
+                        <FontIcon
+                            FontSize="24"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            Glyph="&#xE8D7;" />
+                    </Border>
+
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource BodyLargeStrongTextBlockStyle}"
+                        Text="{x:Bind Request.KeyName}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+
+                <StackPanel Spacing="6">
+                    <TextBlock Style="{StaticResource LabelTextBlockStyle}" Text="Fingerprint:" />
+                    <TextBlock
+                        Padding="10,8"
+                        FontFamily="Cascadia Mono, Consolas"
+                        FontSize="12"
+                        IsTextSelectionEnabled="True"
+                        Text="{x:Bind Request.KeyFingerprint}"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock
+            Grid.Row="2"
+            FontSize="12"
+            Style="{StaticResource MutedTextBlockStyle}"
+            Text="This approval is valid for this request only." />
+    </Grid>
+</ContentDialog>

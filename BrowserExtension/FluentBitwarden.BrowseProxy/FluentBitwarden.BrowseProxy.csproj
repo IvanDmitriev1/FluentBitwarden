@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="..\FluentBitwarden.WindowsApp.props" />
+	<Import Project="..\..\FluentBitwarden.WindowsApp.props" />
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -7,8 +7,8 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
-		<ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
+		<ProjectReference Include="..\..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
+		<ProjectReference Include="..\..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

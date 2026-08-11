@@ -24,7 +24,6 @@ public sealed partial class OverlayWindow : WinUIEx.WindowEx, IThemeChangeable
         IsTitleBarVisible = false;
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(DragArea);
-
     }
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;

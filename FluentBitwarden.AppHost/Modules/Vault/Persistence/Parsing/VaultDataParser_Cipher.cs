@@ -356,7 +356,7 @@ public static partial class VaultDataParser
         byte[]? userHandle = null;
         string? userName = null;
         string? userDisplayName = null;
-        int? counter = null;
+        uint? counter = null;
         bool? discoverable = null;
         DateTimeOffset? creationDate = null;
 
@@ -389,7 +389,7 @@ public static partial class VaultDataParser
             else if (reader.ValueTextEquals("userDisplayName"u8) || reader.ValueTextEquals("UserDisplayName"u8))
                 userDisplayName = ReadRequiredDecryptField(ref reader, decryptKey, "UserDisplayName");
             else if (reader.ValueTextEquals("counter"u8) || reader.ValueTextEquals("Counter"u8))
-                counter = ReadRequiredEncryptedInt32(ref reader, decryptKey);
+                counter = ReadRequiredEncryptedNumber<uint>(ref reader, decryptKey);
             else if (reader.ValueTextEquals("discoverable"u8) || reader.ValueTextEquals("Discoverable"u8))
                 discoverable = ReadRequiredEncryptedBoolean(ref reader, decryptKey);
             else if (reader.ValueTextEquals("creationDate"u8) || reader.ValueTextEquals("CreationDate"u8))

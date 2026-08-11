@@ -12,15 +12,17 @@ public static partial class VaultDataParser
         string propertyName) => ReadDecryptField(ref reader, decryptKey) ??
                                 throw new JsonException($"{propertyName} must not be null.");
 
-    private static int ReadRequiredEncryptedInt32(ref Utf8JsonReader reader, CipherKey decryptKey)
+    private static T ReadRequiredEncryptedNumber<T>(ref Utf8JsonReader reader, CipherKey decryptKey)
+        where T : IUtf8SpanParsable<T>
         => EncryptedJsonValueReader.ReadRequired(ref reader, decryptKey, static (scoped value) =>
         {
-            if (Utf8Parser.TryParse(value, out int parsed, out int bytesConsumed) && bytesConsumed == value.Length)
+            if (T.TryParse(value, provider: null, out var parsed))
             {
                 return parsed;
             }
 
-            throw new JsonException($"Property must be a valid Int32 value.");
+            throw new JsonException(
+                $"Property must be a valid {typeof(T).Name} value.");
         });
 
     private static bool ReadRequiredEncryptedBoolean(ref Utf8JsonReader reader, CipherKey decryptKey)

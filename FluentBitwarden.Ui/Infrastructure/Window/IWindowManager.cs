@@ -1,10 +1,12 @@
+using Microsoft.UI.Xaml;
+
 namespace FluentBitwarden.Infrastructure.Window;
 
 public interface IWindowManager : IThemeChangeable
 {
-    event EventHandler<IWindowManager, WindowMode>? WindowClosed;
     WindowMode ActiveMode { get; }
     IntPtr WindowHandle { get; }
+    XamlRoot XamlRoot { get; }
 
     void ShowOrCreateWindow(WindowMode mode);
     void ReplaceWindow(WindowMode mode);
@@ -12,5 +14,4 @@ public interface IWindowManager : IThemeChangeable
     void CloseWindow();
 
     void ReplacePage<TPage>(IPageNavigationParameter? parameter = null) where TPage : Page;
-    Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken = default);
 }
