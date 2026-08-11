@@ -11,6 +11,7 @@ public interface IWindowManager : IThemeChangeable
     void ShowOrCreateWindow(WindowMode mode);
     void ReplaceWindow(WindowMode mode);
     void ActivateWindow();
+    void MinimizeWindow();
     void CloseWindow();
 
     void ReplacePage<TPage>(IPageNavigationParameter? parameter = null) where TPage : Page;

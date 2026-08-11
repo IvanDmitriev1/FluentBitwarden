@@ -1,6 +1,7 @@
 using FluentBitwarden.Contracts.Modules.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Views.UserDialogs;
 
@@ -13,7 +14,7 @@ internal sealed class PasskeySelectionDialogRequestHandler(
     public async ValueTask<Fido2Credential> ShowPasskeySelectionDialogAsync(PasskeySelectCredentialRequest request, CancellationToken cancellationToken = default)
     {
         var credentials = await GetCredentialsAsync(request, cancellationToken);
-        return await dialogCoordinator.ShowAsync<Fido2Credential>(new PasskeySelectionDialog(credentials), cancellationToken);
+        return await dialogCoordinator.ShowAsync<Fido2Credential>(() => new PasskeySelectionDialog(credentials), cancellationToken);
     }
 
     private async Task<Fido2Credential[]> GetCredentialsAsync(PasskeySelectCredentialRequest request, CancellationToken cancellationToken)

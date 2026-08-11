@@ -1,4 +1,5 @@
 using CommunityToolkit.WinUI;
+using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.Infrastructure.UserDialogs;
@@ -8,14 +9,14 @@ internal sealed class UiDialogCoordinator(IWindowManager windowManager) : IUiDia
     private readonly SemaphoreSlim _presentationGate = new(1, 1);
 
     public Task<ContentDialogResult> ShowAsync(
-        ContentDialog dialog,
+        Func<ContentDialog> dialogFactory,
         CancellationToken cancellationToken = default) =>
-        App.Current.DispatcherQueue.EnqueueAsync(() => ShowCoreAsync(dialog, cancellationToken));
+        App.Current.DispatcherQueue.EnqueueAsync(() => ShowCoreAsync(dialogFactory(), cancellationToken));
 
     public Task<TResult> ShowAsync<TResult>(
-        IUserDialog<TResult> dialog,
+        Func<IUserDialog<TResult>> dialogFactory,
         CancellationToken cancellationToken = default) =>
-        App.Current.DispatcherQueue.EnqueueAsync(() => ShowTypedAsync(dialog, cancellationToken));
+        App.Current.DispatcherQueue.EnqueueAsync(() => ShowTypedAsync(dialogFactory(), cancellationToken));
 
     private async Task<TResult> ShowTypedAsync<TResult>(IUserDialog<TResult> dialog, CancellationToken cancellationToken)
     {
@@ -23,26 +24,33 @@ internal sealed class UiDialogCoordinator(IWindowManager windowManager) : IUiDia
             throw new ArgumentException($"A user dialog must derive from {nameof(ContentDialog)}.",nameof(dialog));
 
         await ShowCoreAsync(contentDialog, cancellationToken);
-        return dialog.Result;
+        return dialog.TryGetResult(out var result)
+            ? result
+            : throw new OperationCanceledException();
     }
 
     private async Task<ContentDialogResult> ShowCoreAsync(ContentDialog contentDialog, CancellationToken cancellationToken)
     {
         await _presentationGate.WaitAsync(cancellationToken);
+
         WindowMode host = windowManager.ActiveMode;
+        ContentDialogPlacement dialogPlacement = host == WindowMode.Main
+            ? ContentDialogPlacement.Popup
+            : ContentDialogPlacement.InPlace;
+
         try
         {
             contentDialog.XamlRoot = windowManager.XamlRoot;
             using var cancellationRegistration = cancellationToken.Register(static state => HideDialog((ContentDialog)state!), contentDialog);
 
-            return await contentDialog.ShowAsync().AsTask();
+            return await contentDialog.ShowAsync(dialogPlacement).AsTask(cancellationToken);
         }
         finally
         {
-            if (host == WindowMode.Overlay)
-            {
+            if (host == WindowMode.Main)
+                windowManager.MinimizeWindow();
+            else
                 windowManager.CloseWindow();
-            }
 
             _presentationGate.Release();
         }

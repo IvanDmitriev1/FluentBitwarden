@@ -4,6 +4,7 @@ using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.Clients;
 using FluentBitwarden.Infrastructure.Notifications;
 using FluentBitwarden.Infrastructure.UserDialogs;
+using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Platform.SiteIcons;

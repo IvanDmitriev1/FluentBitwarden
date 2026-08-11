@@ -1,12 +1,12 @@
-namespace FluentBitwarden.Infrastructure.UserDialogs;
+namespace FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 
 internal interface IUiDialogCoordinator
 {
     Task<ContentDialogResult> ShowAsync(
-        ContentDialog dialog,
+        Func<ContentDialog> dialogFactory,
         CancellationToken cancellationToken = default);
 
     Task<TResult> ShowAsync<TResult>(
-        IUserDialog<TResult> dialog,
+        Func<IUserDialog<TResult>> dialogFactory,
         CancellationToken cancellationToken = default);
 }

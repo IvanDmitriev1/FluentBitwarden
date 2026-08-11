@@ -10,6 +10,7 @@
     Title="FluentBitwarden"
     MinWidth="900"
     MinHeight="600"
+    PersistenceId="MainWindow"
     mc:Ignorable="d">
 
     <winUiEx:WindowEx.SystemBackdrop>

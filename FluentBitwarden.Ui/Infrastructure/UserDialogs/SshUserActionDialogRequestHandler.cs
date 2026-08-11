@@ -1,4 +1,5 @@
 using FluentBitwarden.Contracts.Modules.Ssh;
+using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Views.UserDialogs;
 
@@ -11,7 +12,7 @@ internal sealed class SshUserActionDialogRequestHandler(
     {
         try
         {
-            return await dialogCoordinator.ShowAsync<UserActionDialogOutcome>(new SshUserActionDialog(request), cancellationToken);
+            return await dialogCoordinator.ShowAsync<UserActionDialogOutcome>(() => new SshUserActionDialog(request), cancellationToken);
         }
         catch (OperationCanceledException)
         {

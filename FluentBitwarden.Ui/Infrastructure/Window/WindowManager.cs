@@ -10,6 +10,8 @@ internal sealed class WindowManager : IWindowManager
 {
     private WindowEx? _activeWindow;
 
+    private WindowEx Window => _activeWindow ?? throw new InvalidOperationException("There is no active window.");
+
     private Frame ActiveFrame => _activeWindow switch
     {
         MainWindow mainWindow => mainWindow.NavigationFrame,
@@ -64,14 +66,17 @@ internal sealed class WindowManager : IWindowManager
 
     public void ActivateWindow()
     {
-        WindowEx window = _activeWindow ?? throw new InvalidOperationException("Cannot activate window because there is no active window.");
-        window.ShowAndActivate();
+        Window.ShowAndActivate();
+    }
+
+    public void MinimizeWindow()
+    {
+        Window.Minimize();
     }
 
     public void CloseWindow()
     {
-        WindowEx window = _activeWindow ?? throw new InvalidOperationException("Cannot close window because there is no active window.");
-        window.Close();
+        Window.Close();
     }
 
     public void ReplacePage<TPage>(IPageNavigationParameter? parameter = null) where TPage : Page
