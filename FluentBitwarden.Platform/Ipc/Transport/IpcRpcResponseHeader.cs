@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using CommunityToolkit.HighPerformance.Buffers;
 
 namespace FluentBitwarden.Platform.Ipc.Transport;
 
@@ -14,14 +13,14 @@ internal readonly record struct IpcRpcResponseHeader(int PayloadLength)
         Stream stream,
         CancellationToken cancellationToken = default)
     {
-        using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
-        await stream.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
+        byte[] header = new byte[HeaderSize];
+        await stream.ReadExactlyAsync(header, cancellationToken);
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
-            headerOwner.Span[VersionOffset..sizeof(ushort)]);
+            header.AsSpan(VersionOffset, sizeof(ushort)));
 
         int payloadLength = BinaryPrimitives.ReadInt32LittleEndian(
-            headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)));
+            header.AsSpan(PayloadLengthOffset, sizeof(int)));
 
         if (version != IpcConstants.ProtocolVersion)
         {
@@ -35,18 +34,18 @@ internal readonly record struct IpcRpcResponseHeader(int PayloadLength)
         return new IpcRpcResponseHeader(payloadLength);
     }
 
-    public ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
+        byte[] header = new byte[HeaderSize];
 
         BinaryPrimitives.WriteUInt16LittleEndian(
-            headerOwner.Span[VersionOffset..sizeof(ushort)],
+            header.AsSpan(VersionOffset, sizeof(ushort)),
             IpcConstants.ProtocolVersion);
 
         BinaryPrimitives.WriteInt32LittleEndian(
-            headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)),
+            header.AsSpan(PayloadLengthOffset, sizeof(int)),
             PayloadLength);
 
-        return stream.WriteAsync(headerOwner.Memory, cancellationToken);
+        await stream.WriteAsync(header, cancellationToken);
     }
-}
+}

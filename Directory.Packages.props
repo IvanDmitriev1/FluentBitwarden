@@ -12,7 +12,6 @@
     <PackageVersion Include="NsDepCop" Version="3.0.0" />
     <PackageVersion Include="AsyncAwaitBestPractices" Version="10.0.0" />
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0-beta.98" />
-    <PackageVersion Include="CommunityToolkit.HighPerformance" Version="$(CommunityToolkitVersion)" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="$(CommunityToolkitVersion)" />
     <PackageVersion Include="ConfigureAwait.Fody" Version="3.4.1" />
     <PackageVersion Include="Humanizer.Core" Version="3.0.10" />

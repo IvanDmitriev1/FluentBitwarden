@@ -8,7 +8,7 @@ namespace FluentBitwarden.AppHost.Modules.Accounts.Persistence;
 
 internal sealed class RefreshTokenRepository(SqliteTransaction transaction) : BaseRepository(transaction)
 {
-    private static byte[] Entropy => "fbw_session_v1"u8.ToArray();
+    private static readonly byte[] Entropy = [.. "fbw_session_v1"u8];
 
     public void Store(UserId userId, RefreshToken token)
     {

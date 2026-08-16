@@ -1,5 +1,3 @@
-using CommunityToolkit.HighPerformance.Buffers;
-
 namespace BitwardenApi.Infrastructure.Cryptography.Enc;
 
 public static class EncStringExtensions
@@ -20,14 +18,19 @@ public static class EncStringExtensions
             EncStringParts parts = value.CreateParts();
             return AesCbcHmac.DecryptTo(in parts, key, destination);
         }
+
+        internal byte[] DecodeToArray(ReadOnlySpan<byte> key)
+        {
+            EncStringParts parts = value.CreateParts();
+            return AesCbcHmac.DecryptToArray(in parts, key);
+        }
     }
 
     public static string DecodeEncString(this ReadOnlySpan<byte> encodedUtf8, ReadOnlySpan<byte> key)
     {
         var layout = EncString.ParseEncodedLayoutOrThrow(encodedUtf8);
-        using var dataOwner = SpanOwner<byte>.Allocate(layout.DataLength);
+        Span<byte> dataBuffer = new byte[layout.DataLength];
 
-        Span<byte> dataBuffer = dataOwner.Span;
         Span<byte> ivBuffer = layout.HasIv
             ? stackalloc byte[layout.IvLength]
             : default;

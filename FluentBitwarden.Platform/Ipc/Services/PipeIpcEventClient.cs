@@ -1,5 +1,4 @@
 using AsyncAwaitBestPractices;
-using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -85,10 +84,10 @@ internal sealed class PipeIpcEventClient(string pipeName, ILogger<PipeIpcEventCl
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
-                    using var bufferOwner = MemoryOwner<byte>.Allocate(header.PayloadLength);
-                    await pipe.ReadExactlyAsync(bufferOwner.Memory, stoppingToken);
+                    byte[] buffer = new byte[header.PayloadLength];
+                    await pipe.ReadExactlyAsync(buffer, stoppingToken);
 
-                    DispatchEvent(header.MessageType, bufferOwner.Memory, stoppingToken);
+                    DispatchEvent(header.MessageType, buffer, stoppingToken);
                 }
             }
             catch (OperationCanceledException)
@@ -139,4 +138,4 @@ internal sealed class PipeIpcEventClient(string pipeName, ILogger<PipeIpcEventCl
         using var _ = _subscriptionsLock.EnterScope();
         _subscriptions.Remove(eventSubscription);
     }
-}
+}

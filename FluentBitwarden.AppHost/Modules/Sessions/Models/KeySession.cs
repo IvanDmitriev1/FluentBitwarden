@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
-using CommunityToolkit.HighPerformance.Buffers;
 
 namespace FluentBitwarden.AppHost.Modules.Sessions.Models;
 
@@ -69,8 +68,7 @@ internal sealed class KeySession(UserKey userKey, ProtectedPrivateKey protectedP
     private static PrivateKey CreatePrivateKey(UserKey userKey, ProtectedPrivateKey protectedPrivateKey)
     {
         var protectedPrivateKeyValue = protectedPrivateKey.Value;
-        using var privateKeyBufferOwner = SpanOwner<byte>.Allocate(protectedPrivateKeyValue.MaxPlaintextByteCount);
-        Span<byte> privateKeyBuffer = privateKeyBufferOwner.Span;
+        Span<byte> privateKeyBuffer = new byte[protectedPrivateKeyValue.MaxPlaintextByteCount];
 
         try
         {
@@ -82,4 +80,4 @@ internal sealed class KeySession(UserKey userKey, ProtectedPrivateKey protectedP
             CryptographicOperations.ZeroMemory(privateKeyBuffer);
         }
     }
-}
+}

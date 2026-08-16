@@ -3,7 +3,6 @@ using System.Buffers.Binary;
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
-using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwardenApi.Infrastructure.Cryptography.Enc;
 
@@ -87,13 +86,9 @@ public readonly struct EncString : IEquatable<EncString>
         int macEncodedLength = parts.Mac.Length > 0 ? Base64.GetMaxEncodedToUtf8Length(parts.Mac.Length) : 0;
         int totalLength = 2 + ivEncodedLength + 1 + dataEncodedLength + (macEncodedLength > 0 ? 1 + macEncodedLength : 0);
 
-        using var bufferOwner = totalLength <= MaxStackByteCount
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(totalLength);
-
         Span<byte> buffer = totalLength <= MaxStackByteCount
             ? stackalloc byte[totalLength]
-            : bufferOwner.Span;
+            : new byte[totalLength];
 
         int offset = 0;
         buffer[offset++] = (byte)('0' + (byte)parts.Type); // both supported types are single-digit (0, 2)
@@ -130,21 +125,16 @@ public readonly struct EncString : IEquatable<EncString>
         int length = reader.ValueSpan.Length;
         bool useStackAlloc = length <= MaxStackByteCount;
 
-        using var bufferOwner = useStackAlloc
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(length);
-
         Span<byte> buffer = useStackAlloc
             ? stackalloc byte[length]
-            : bufferOwner.Span;
+            : new byte[length];
 
         int bytesWritten = reader.CopyString(buffer);
         var encodedUtf8 = buffer[..bytesWritten];
 
         SegmentLayout layout = ParseEncodedLayoutOrThrow(encodedUtf8);
-        using var dataOwner = SpanOwner<byte>.Allocate(layout.DataLength);
+        Span<byte> dataBuffer = new byte[layout.DataLength];
 
-        Span<byte> dataBuffer = dataOwner.Span;
         Span<byte> ivBuffer = layout.HasIv
             ? stackalloc byte[layout.IvLength]
             : default;
@@ -164,13 +154,9 @@ public readonly struct EncString : IEquatable<EncString>
         int maxByteCount = System.Text.Encoding.UTF8.GetMaxByteCount(plaintext.Length);
         bool useStack = maxByteCount <= MaxStackByteCount;
 
-        using var bufferOwner = useStack
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(maxByteCount);
-
         Span<byte> buffer = useStack
             ? stackalloc byte[maxByteCount]
-            : bufferOwner.Span;
+            : new byte[maxByteCount];
 
         try
         {
@@ -188,13 +174,9 @@ public readonly struct EncString : IEquatable<EncString>
         int ciphertextCapacity = plaintext.Length + BlockByteLength;
         bool useStack = ciphertextCapacity <= MaxStackByteCount;
 
-        using var ciphertextOwner = useStack
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(ciphertextCapacity);
-
         Span<byte> ciphertext = useStack
             ? stackalloc byte[ciphertextCapacity]
-            : ciphertextOwner.Span;
+            : new byte[ciphertextCapacity];
 
         Span<byte> iv = stackalloc byte[IvByteLength];
         Span<byte> mac = stackalloc byte[MacByteLength];
@@ -401,4 +383,4 @@ public readonly struct EncString : IEquatable<EncString>
             bytes.Slice(IvOffset, IvLength),
             bytes.Slice(MacOffset, MacLength));
     }
-}
+}

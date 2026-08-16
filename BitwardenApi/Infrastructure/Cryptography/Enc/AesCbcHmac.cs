@@ -1,7 +1,5 @@
 using System.Security.Cryptography;
 
-using CommunityToolkit.HighPerformance.Buffers;
-
 namespace BitwardenApi.Infrastructure.Cryptography.Enc;
 
 internal static class AesCbcHmac
@@ -77,13 +75,9 @@ internal static class AesCbcHmac
         int maxPlaintextLength = parts.Data.Length;
         bool useStack = maxPlaintextLength <= MaxStackByteCount;
 
-        using var plaintextOwner = useStack
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(maxPlaintextLength);
-
         Span<byte> plaintext = useStack
             ? stackalloc byte[maxPlaintextLength]
-            : plaintextOwner.Span;
+            : new byte[maxPlaintextLength];
 
         try
         {
@@ -107,17 +101,31 @@ internal static class AesCbcHmac
             _ => throw new CryptographicException($"Unsupported symmetric EncString type: {parts.Type}.")
         };
 
+    public static byte[] DecryptToArray(
+        in EncStringParts parts,
+        ReadOnlySpan<byte> key) =>
+        parts.Type switch
+        {
+            EncryptionType.AesCbc256_B64 => DecryptAesCbcOnlyToArray(in parts, key),
+            EncryptionType.AesCbc256_HmacSha256_B64 => DecryptAesCbcWithHmacToArray(in parts, key),
+            _ => throw new CryptographicException($"Unsupported symmetric EncString type: {parts.Type}.")
+        };
+
     private static int DecryptToAesCbcOnly(
         in EncStringParts parts,
         ReadOnlySpan<byte> key,
         Span<byte> destination)
     {
-        ValidateIv(parts.Iv);
-
-        if (key.Length < EncryptionKeyByteLength)
-            throw new CryptographicException("A 32-byte AES key is required.");
-
+        ValidateAesCbcOnly(in parts, key);
         return DecryptAesCbcPkcs7(parts.Data, key[..EncryptionKeyByteLength], parts.Iv, destination);
+    }
+
+    private static byte[] DecryptAesCbcOnlyToArray(
+        in EncStringParts parts,
+        ReadOnlySpan<byte> key)
+    {
+        ValidateAesCbcOnly(in parts, key);
+        return DecryptAesCbcPkcs7ToArray(parts.Data, key[..EncryptionKeyByteLength], parts.Iv);
     }
 
     private static int DecryptToAesCbcWithHmac(
@@ -125,14 +133,38 @@ internal static class AesCbcHmac
         ReadOnlySpan<byte> key,
         Span<byte> destination)
     {
+        ValidateAesCbcWithHmac(in parts, key);
+        return DecryptAesCbcPkcs7(parts.Data, key[..EncryptionKeyByteLength], parts.Iv, destination);
+    }
+
+    private static byte[] DecryptAesCbcWithHmacToArray(
+        in EncStringParts parts,
+        ReadOnlySpan<byte> key)
+    {
+        ValidateAesCbcWithHmac(in parts, key);
+        return DecryptAesCbcPkcs7ToArray(parts.Data, key[..EncryptionKeyByteLength], parts.Iv);
+    }
+
+    private static void ValidateAesCbcOnly(
+        in EncStringParts parts,
+        ReadOnlySpan<byte> key)
+    {
+        ValidateIv(parts.Iv);
+
+        if (key.Length < EncryptionKeyByteLength)
+            throw new CryptographicException("A 32-byte AES key is required.");
+    }
+
+    private static void ValidateAesCbcWithHmac(
+        in EncStringParts parts,
+        ReadOnlySpan<byte> key)
+    {
         ValidateIvAndMac(parts.Iv, parts.Mac);
 
         if (key.Length < CombinedKeyByteLength)
             throw new CryptographicException("A 64-byte key is required for HMAC-protected EncStrings.");
 
         VerifyMac(in parts, key.Slice(EncryptionKeyByteLength, MacByteLength));
-
-        return DecryptAesCbcPkcs7(parts.Data, key[..EncryptionKeyByteLength], parts.Iv, destination);
     }
 
     private static void VerifyMac(
@@ -175,6 +207,16 @@ internal static class AesCbcHmac
 
         destination[written..].Clear();
         return written;
+    }
+
+    private static byte[] DecryptAesCbcPkcs7ToArray(
+        ReadOnlySpan<byte> ciphertext,
+        ReadOnlySpan<byte> key,
+        ReadOnlySpan<byte> iv)
+    {
+        using var aes = Aes.Create();
+        aes.SetKey(key);
+        return aes.DecryptCbc(ciphertext, iv, PaddingMode.PKCS7);
     }
 
     private static void ValidateIv(ReadOnlySpan<byte> iv)

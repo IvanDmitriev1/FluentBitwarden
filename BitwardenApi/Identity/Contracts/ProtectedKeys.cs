@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-
 namespace BitwardenApi.Identity.Contracts;
 
 public readonly record struct ProtectedUserKey(EncString Value)
@@ -11,19 +9,7 @@ public readonly record struct ProtectedUserKey(EncString Value)
         using var masterKey = MasterKey.Derive(masterPassword, salt, kdfConfig);
         using var stretchedMasterKey = masterKey.Stretch();
 
-        byte[] userKey = new byte[Value.MaxPlaintextByteCount];
-        int bytesWritten = Value.DecodeTo(stretchedMasterKey.Span, userKey);
-        if (bytesWritten == userKey.Length)
-            return userKey;
-
-        try
-        {
-            return userKey[..bytesWritten].ToArray();
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(userKey);
-        }
+        return Value.DecodeToArray(stretchedMasterKey.Span);
     }
 }
 

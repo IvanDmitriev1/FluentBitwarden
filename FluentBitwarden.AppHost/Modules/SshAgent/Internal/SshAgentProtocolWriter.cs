@@ -1,48 +1,39 @@
 ﻿using System.Buffers.Binary;
 using System.Text;
-using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class SshAgentProtocolWriter : IDisposable
+internal sealed class SshAgentProtocolWriter
 {
     public SshAgentProtocolWriter(int payloadLength, SshAgentMessageReplies message)
     {
         int packetLength = 4 + payloadLength;
-        _owner = MemoryOwner<byte>.Allocate(packetLength);
+        _buffer = new byte[packetLength];
 
         WriteUInt32(payloadLength);
         WriteByte((byte)message);
     }
 
-    private readonly MemoryOwner<byte> _owner;
+    private readonly byte[] _buffer;
     private int _offset;
-    private bool _isDisposed;
 
-    public Span<byte> Remaining => _owner.Span[_offset..];
+    public Span<byte> Remaining => _buffer.AsSpan(_offset..);
 
     public static async Task WriteFailureAsync(Stream stream, CancellationToken ct)
     {
-        using var writer = new SshAgentProtocolWriter(
+        var writer = new SshAgentProtocolWriter(
             payloadLength: 1,
             message: SshAgentMessageReplies.Failure);
 
         await writer.WriteToAsync(stream, ct);
     }
 
-    public void Dispose()
+    public async ValueTask WriteToAsync(Stream stream, CancellationToken ct)
     {
-        if (_isDisposed)
-            return;
-
-        _owner.Dispose();
-        _isDisposed = true;
+        await stream.WriteAsync(_buffer, ct);
     }
-
-    public ValueTask WriteToAsync(Stream stream, CancellationToken ct) =>
-        stream.WriteAsync(_owner.Memory, ct);
 
     public void WriteUInt32(int value)
     {
@@ -58,7 +49,7 @@ internal sealed class SshAgentProtocolWriter : IDisposable
     {
         EnsureRemaining(1);
 
-        _owner.Span[_offset] = value;
+        _buffer[_offset] = value;
         _offset++;
     }
 
@@ -83,10 +74,7 @@ internal sealed class SshAgentProtocolWriter : IDisposable
 
     private void EnsureRemaining(int length)
     {
-        if (_isDisposed)
-            throw new ObjectDisposedException(nameof(SshAgentProtocolWriter));
-
-        if (_owner.Length - _offset < length)
+        if (_buffer.Length - _offset < length)
             throw new InvalidOperationException("SSH agent response buffer is too small.");
     }
 }

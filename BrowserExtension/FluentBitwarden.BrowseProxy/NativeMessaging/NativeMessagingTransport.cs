@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance.Buffers;
+﻿using System.Buffers;
 using System.Buffers.Binary;
 using System.Text.Json;
 
@@ -24,11 +24,11 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
             throw new InvalidDataException($"Invalid native message length: {length}.");
         }
 
-        using var messageBuffer = MemoryOwner<byte>.Allocate((int)length);
-        await input.ReadExactlyAsync(messageBuffer.Memory, cancellationToken);
+        var messageBuffer = new byte[(int)length];
+        await input.ReadExactlyAsync(messageBuffer, cancellationToken);
 
         return JsonSerializer.Deserialize<BrowserNativeRequestEnvelope>(
-                   messageBuffer.Span,
+                   messageBuffer,
                    BrowseProxyJsonContext.ConfiguredDefault.BrowserNativeRequestEnvelope) ??
                throw new JsonException("The native message envelope cannot be null.");
     }
@@ -39,9 +39,9 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
         CancellationToken cancellationToken)
     {
         var jsonTypeInfo = BrowseProxyJsonContext.ConfiguredDefault.GetRequiredTypeInfo<T>();
-        using var bufferWriter = new ArrayPoolBufferWriter<byte>();
+        var bufferWriter = new ArrayBufferWriter<byte>();
 
-        await using (var writer = new Utf8JsonWriter(bufferWriter))
+        using (var writer = new Utf8JsonWriter(bufferWriter))
         {
             writer.WriteStartObject();
             writer.WriteString("requestId", requestId);
@@ -65,4 +65,4 @@ internal sealed class NativeMessagingTransport(Stream input, Stream output) : IN
         await output.WriteAsync(bufferWriter.WrittenMemory, cancellationToken);
         await output.FlushAsync(cancellationToken);
     }
-}
+}

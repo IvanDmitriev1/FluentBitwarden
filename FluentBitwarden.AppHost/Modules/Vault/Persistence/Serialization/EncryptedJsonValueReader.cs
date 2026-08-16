@@ -1,5 +1,4 @@
 using BitwardenApi.Vault.Cryptography;
-using CommunityToolkit.HighPerformance.Buffers;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -19,13 +18,9 @@ internal static class EncryptedJsonValueReader
         int length = reader.ValueSpan.Length;
         bool useStackAlloc = length <= MaxStackByteCount;
 
-        using var bufferOwner = useStackAlloc
-            ? SpanOwner<byte>.Empty
-            : SpanOwner<byte>.Allocate(length);
-
         Span<byte> buffer = useStackAlloc
             ? stackalloc byte[length]
-            : bufferOwner.Span;
+            : new byte[length];
 
         int bytesWritten = reader.CopyString(buffer);
 
@@ -55,4 +50,4 @@ internal static class EncryptedJsonValueReader
 
         return reader.ParseEncryptedValue(key, parser);
     }
-}
+}

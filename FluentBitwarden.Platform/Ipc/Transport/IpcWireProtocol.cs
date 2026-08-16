@@ -1,5 +1,3 @@
-using CommunityToolkit.HighPerformance.Buffers;
-
 namespace FluentBitwarden.Platform.Ipc.Transport;
 
 internal static class IpcWireProtocol
@@ -11,12 +9,11 @@ internal static class IpcWireProtocol
         CancellationToken cancellationToken)
         where TMessage : notnull
     {
-        using ArrayPoolBufferWriter<byte> payloadWriter = new();
-        MemoryPackSerializer.Serialize(payloadWriter, message);
+        byte[] payload = MemoryPackSerializer.Serialize(message);
 
-        IpcMessageHeader header = new(messageType, payloadWriter.WrittenCount);
+        IpcMessageHeader header = new(messageType, payload.Length);
         await header.WriteAsync(stream, cancellationToken);
-        await stream.WriteAsync(payloadWriter.WrittenMemory, cancellationToken);
+        await stream.WriteAsync(payload, cancellationToken);
     }
 
     public static ValueTask WriteRpcRequestAsync(
@@ -34,12 +31,11 @@ internal static class IpcWireProtocol
         CancellationToken cancellationToken)
         where TMessage : notnull
     {
-        using ArrayPoolBufferWriter<byte> payloadWriter = new();
-        MemoryPackSerializer.Serialize(payloadWriter, new IpcOptional<TMessage>(message));
+        byte[] payload = MemoryPackSerializer.Serialize(new IpcOptional<TMessage>(message));
 
-        IpcRpcResponseHeader header = new(payloadWriter.WrittenCount);
+        IpcRpcResponseHeader header = new(payload.Length);
         await header.WriteAsync(stream, cancellationToken);
-        await stream.WriteAsync(payloadWriter.WrittenMemory, cancellationToken);
+        await stream.WriteAsync(payload, cancellationToken);
     }
 
     public static async ValueTask WriteEventAsync<
@@ -49,12 +45,11 @@ internal static class IpcWireProtocol
         CancellationToken cancellationToken)
         where TEvent : IIpcEventMessage
     {
-        using ArrayPoolBufferWriter<byte> payloadWriter = new();
-        MemoryPackSerializer.Serialize(payloadWriter, message);
+        byte[] payload = MemoryPackSerializer.Serialize(message);
 
-        IpcMessageHeader header = new(TEvent.MessageType, payloadWriter.WrittenCount);
+        IpcMessageHeader header = new(TEvent.MessageType, payload.Length);
         await header.WriteAsync(stream, cancellationToken);
-        await stream.WriteAsync(payloadWriter.WrittenMemory, cancellationToken);
+        await stream.WriteAsync(payload, cancellationToken);
     }
 
     public static async ValueTask<TMessage> ReadMessagePayloadAsync<
@@ -64,10 +59,10 @@ internal static class IpcWireProtocol
         CancellationToken cancellationToken)
         where TMessage : notnull
     {
-        using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
-        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+        byte[] buffer = new byte[payloadLength];
+        await stream.ReadExactlyAsync(buffer, cancellationToken);
 
-        var message = MemoryPackSerializer.Deserialize<TMessage>(bufferOwner.Memory.Span);
+        var message = MemoryPackSerializer.Deserialize<TMessage>(buffer);
         return message ?? throw new InvalidDataException("IPC message payload was null.");
     }
 
@@ -77,19 +72,10 @@ internal static class IpcWireProtocol
         int payloadLength,
         CancellationToken cancellationToken)
     {
-        using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
-        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+        byte[] buffer = new byte[payloadLength];
+        await stream.ReadExactlyAsync(buffer, cancellationToken);
 
-        var result = MemoryPackSerializer.Deserialize<IpcOptional<TResponse>>(bufferOwner.Memory.Span);
+        var result = MemoryPackSerializer.Deserialize<IpcOptional<TResponse>>(buffer);
         return result.Value;
     }
-
-    public static async ValueTask DiscardPayloadAsync(
-        Stream stream,
-        int payloadLength,
-        CancellationToken cancellationToken)
-    {
-        using var bufferOwner = MemoryOwner<byte>.Allocate(payloadLength);
-        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
-    }
-}
+}

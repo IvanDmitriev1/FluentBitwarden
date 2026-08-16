@@ -1,4 +1,3 @@
-using CommunityToolkit.HighPerformance.Buffers;
 using System.Buffers.Binary;
 
 namespace FluentBitwarden.Platform.Ipc.Transport;
@@ -13,40 +12,40 @@ internal readonly record struct IpcMessageHeader(
     private const int MessageTypeOffset = sizeof(ushort);
     private const int PayloadLengthOffset = sizeof(ushort) * 2;
 
-    public ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
+        byte[] header = new byte[HeaderSize];
 
         BinaryPrimitives.WriteUInt16LittleEndian(
-            headerOwner.Span[VersionOffset..sizeof(ushort)],
+            header.AsSpan(VersionOffset, sizeof(ushort)),
             IpcConstants.ProtocolVersion);
 
         BinaryPrimitives.WriteUInt16LittleEndian(
-            headerOwner.Span.Slice(MessageTypeOffset, sizeof(ushort)),
+            header.AsSpan(MessageTypeOffset, sizeof(ushort)),
             MessageType);
 
         BinaryPrimitives.WriteInt32LittleEndian(
-            headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)),
+            header.AsSpan(PayloadLengthOffset, sizeof(int)),
             PayloadLength);
 
-        return stream.WriteAsync(headerOwner.Memory, cancellationToken);
+        await stream.WriteAsync(header, cancellationToken);
     }
 
     public static async ValueTask<IpcMessageHeader> ReadAsync(
         Stream stream,
         CancellationToken cancellationToken = default)
     {
-        using var headerOwner = MemoryOwner<byte>.Allocate(HeaderSize);
-        await stream.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
+        byte[] header = new byte[HeaderSize];
+        await stream.ReadExactlyAsync(header, cancellationToken);
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
-            headerOwner.Span[VersionOffset..sizeof(ushort)]);
+            header.AsSpan(VersionOffset, sizeof(ushort)));
 
         var messageType = BinaryPrimitives.ReadUInt16LittleEndian(
-            headerOwner.Span.Slice(MessageTypeOffset, sizeof(ushort)));
+            header.AsSpan(MessageTypeOffset, sizeof(ushort)));
 
         int payloadLength = BinaryPrimitives.ReadInt32LittleEndian(
-            headerOwner.Span.Slice(PayloadLengthOffset, sizeof(int)));
+            header.AsSpan(PayloadLengthOffset, sizeof(int)));
 
         if (version != IpcConstants.ProtocolVersion)
         {
@@ -59,4 +58,4 @@ internal readonly record struct IpcMessageHeader(
 
         return new IpcMessageHeader(messageType, payloadLength);
     }
-}
+}

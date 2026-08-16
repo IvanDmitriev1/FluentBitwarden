@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwardenApi.Vault.Cryptography;
 
@@ -15,16 +14,15 @@ public sealed class OrganizationKey : SymmetricCryptoKey
         in AsymmetricEncString encryptedOrganizationKey,
         PrivateKey privateKey)
     {
-        using var bufferOwner = SpanOwner<byte>.Allocate(encryptedOrganizationKey.MaxPlaintextByteCount);
-        Span<byte> buffer = bufferOwner.Span;
+        byte[] key = privateKey.Decrypt(in encryptedOrganizationKey);
         try
         {
-            int bytesWritten = privateKey.Decrypt(encryptedOrganizationKey, buffer);
-            return new OrganizationKey(organizationId, buffer[..bytesWritten].ToArray());
+            return new OrganizationKey(organizationId, key);
         }
-        finally
+        catch
         {
-            CryptographicOperations.ZeroMemory(buffer);
+            CryptographicOperations.ZeroMemory(key);
+            throw;
         }
     }
 }

@@ -31,6 +31,12 @@ public readonly struct AsymmetricEncString : IEquatable<AsymmetricEncString>
         return RsaOaep.DecryptTo(in parts, privateKey, destination);
     }
 
+    internal byte[] DecodeRsa(RSA privateKey)
+    {
+        EncStringParts parts = _inner.CreateParts();
+        return RsaOaep.Decrypt(in parts, privateKey);
+    }
+
     public bool Equals(AsymmetricEncString other) => _inner.Equals(other._inner);
     public override bool Equals(object? obj) => obj is AsymmetricEncString other && Equals(other);
     public override int GetHashCode() => _inner.GetHashCode();

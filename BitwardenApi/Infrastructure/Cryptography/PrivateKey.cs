@@ -47,6 +47,12 @@ public sealed class PrivateKey : IDisposable
         return value.DecodeRsaTo(_rsa, destination);
     }
 
+    public byte[] Decrypt(in AsymmetricEncString value)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return value.DecodeRsa(_rsa);
+    }
+
     public void Dispose()
     {
         if (_disposed)

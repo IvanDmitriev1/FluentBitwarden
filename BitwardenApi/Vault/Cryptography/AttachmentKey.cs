@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwardenApi.Vault.Cryptography;
 
@@ -13,17 +12,17 @@ public sealed class AttachmentKey : IDisposable
     private const int EncryptionKeyByteLength = 32;
     private const int KeyByteLength = 64;
 
-    private readonly MemoryOwner<byte> _owner;
+    private readonly byte[] _key;
     private bool _disposed;
 
-    private AttachmentKey(MemoryOwner<byte> owner) => _owner = owner;
+    private AttachmentKey(byte[] key) => _key = key;
 
     internal ReadOnlySpan<byte> Key
     {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            return _owner.Span;
+            return _key.AsSpan();
         }
     }
 
@@ -33,7 +32,7 @@ public sealed class AttachmentKey : IDisposable
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            return _owner.Span[..EncryptionKeyByteLength];
+            return _key.AsSpan(..EncryptionKeyByteLength);
         }
     }
 
@@ -43,25 +42,23 @@ public sealed class AttachmentKey : IDisposable
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            return _owner.Span.Slice(EncryptionKeyByteLength, MacByteLength);
+            return _key.AsSpan(EncryptionKeyByteLength, MacByteLength);
         }
     }
-
 
     public static AttachmentKey Create(
         in EncString encryptedKey,
         CipherKey cipherKey)
     {
-        var owner = MemoryOwner<byte>.Allocate(KeyByteLength);
+        var key = new byte[KeyByteLength];
         try
         {
-            encryptedKey.DecodeTo(cipherKey.Key, owner.Span);
-            return new AttachmentKey(owner);
+            encryptedKey.DecodeTo(cipherKey.Key, key);
+            return new AttachmentKey(key);
         }
         catch
         {
-            CryptographicOperations.ZeroMemory(owner.Span);
-            owner.Dispose();
+            CryptographicOperations.ZeroMemory(key);
             throw;
         }
     }
@@ -72,7 +69,6 @@ public sealed class AttachmentKey : IDisposable
             return;
 
         _disposed = true;
-        CryptographicOperations.ZeroMemory(_owner.Span);
-        _owner.Dispose();
+        CryptographicOperations.ZeroMemory(_key.AsSpan());
     }
-}
+}

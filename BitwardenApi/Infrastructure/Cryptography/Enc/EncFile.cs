@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
-using CommunityToolkit.HighPerformance.Buffers;
 
 namespace BitwardenApi.Infrastructure.Cryptography.Enc;
 
@@ -26,20 +25,20 @@ public static class EncFile
     public static async Task DecryptToAsync(AttachmentKey key, Stream source, Stream plaintextStream, CancellationToken cancellationToken = default)
     {
         var iv = new byte[IvByteLength]; // IV is public; kept as a plain array for CreateDecryptor.
-        using var headerOwner = MemoryOwner<byte>.Allocate(HeaderByteLength);
-        using var copyBuffer = MemoryOwner<byte>.Allocate(CopyBufferByteLength);
+        var header = new byte[HeaderByteLength];
+        var copyBuffer = new byte[CopyBufferByteLength];
 
         try
         {
-            await source.ReadExactlyAsync(headerOwner.Memory, cancellationToken);
+            await source.ReadExactlyAsync(header, cancellationToken);
 
-            if (headerOwner.Span[0] != (byte)EncryptionType.AesCbc256_HmacSha256_B64)
+            if (header[0] != (byte)EncryptionType.AesCbc256_HmacSha256_B64)
             {
                 throw new CryptographicException(
-                    $"Unsupported attachment encryption type: {headerOwner.Span[0]}.");
+                    $"Unsupported attachment encryption type: {header[0]}.");
             }
 
-            headerOwner.Span.Slice(TypeByteLength, IvByteLength).CopyTo(iv);
+            header.AsSpan(TypeByteLength, IvByteLength).CopyTo(iv);
 
             using var hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, key.MacKey);
             hmac.AppendData(iv);
@@ -55,17 +54,17 @@ public static class EncFile
                 });
 
             int read;
-            while ((read = await source.ReadAsync(copyBuffer.Memory, cancellationToken)) > 0)
+            while ((read = await source.ReadAsync(copyBuffer, cancellationToken)) > 0)
             {
-                hmac.AppendData(copyBuffer.Span[..read]);
-                await tmpFileStream.WriteAsync(copyBuffer.Memory[..read], cancellationToken);
+                hmac.AppendData(copyBuffer.AsSpan(0, read));
+                await tmpFileStream.WriteAsync(copyBuffer.AsMemory(0, read), cancellationToken);
             }
 
             Span<byte> computedMac = stackalloc byte[MacByteLength];
             hmac.GetHashAndReset(computedMac);
             if (!CryptographicOperations.FixedTimeEquals(
                     computedMac,
-                    headerOwner.Span.Slice(TypeByteLength + IvByteLength, MacByteLength)))
+                    header.AsSpan(TypeByteLength + IvByteLength, MacByteLength)))
             {
                 throw new CryptographicException("Attachment MAC validation failed.");
             }
@@ -81,7 +80,7 @@ public static class EncFile
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(copyBuffer.Span);
+            CryptographicOperations.ZeroMemory(copyBuffer);
         }
     }
-}
+}

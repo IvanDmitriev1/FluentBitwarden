@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
 using System.Text;
-using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Modules.SshAgent.Internal;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
@@ -60,10 +59,10 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider, ILogger<Ssh
         while (!ct.IsCancellationRequested)
         {
             int length = await SshAgentProtocolReader.ReadLengthAsync(stream, ct);
-            using var bufferOwner = MemoryOwner<byte>.Allocate(length);
-            await stream.ReadExactlyAsync(bufferOwner.Memory, ct);
+            byte[] buffer = new byte[length];
+            await stream.ReadExactlyAsync(buffer, ct);
 
-            if (!SshAgentProtocolReader.TryReadPacket(bufferOwner.Memory, out var packet))
+            if (!SshAgentProtocolReader.TryReadPacket(buffer, out var packet))
                 return;
 
             Task task = packet.Message switch
@@ -92,7 +91,7 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider, ILogger<Ssh
             4 + // number of keys
             identitiesLength;
 
-        using var writer = new SshAgentProtocolWriter(payloadLength, SshAgentMessageReplies.IdentitiesAnswer);
+        var writer = new SshAgentProtocolWriter(payloadLength, SshAgentMessageReplies.IdentitiesAnswer);
         writer.WriteUInt32(identities.Count);
 
         foreach (var identity in identities)
@@ -120,7 +119,7 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider, ILogger<Ssh
             4 + queryLength + // string "query"
             4;              // uint32 extension count = 0
 
-        using var writer = new SshAgentProtocolWriter(
+        var writer = new SshAgentProtocolWriter(
             payloadLength,
             SshAgentMessageReplies.ExtensionResponse);
 
@@ -158,7 +157,7 @@ internal sealed class SshAgentServer(ISshKeyProvider sshKeyProvider, ILogger<Ssh
             4 + // outer string length
             signatureBlobLength;
 
-        using var writer = new SshAgentProtocolWriter(
+        var writer = new SshAgentProtocolWriter(
             payloadLength,
             SshAgentMessageReplies.SignResponse);
 

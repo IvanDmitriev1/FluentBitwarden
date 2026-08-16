@@ -1,5 +1,4 @@
 ﻿using System.Buffers.Binary;
-using CommunityToolkit.HighPerformance.Buffers;
 using FluentBitwarden.AppHost.Modules.SshAgent.Models;
 
 namespace FluentBitwarden.AppHost.Modules.SshAgent.Internal;
@@ -8,10 +7,10 @@ internal static class SshAgentProtocolReader
 {
     public static async Task<int> ReadLengthAsync(Stream stream, CancellationToken cancellationToken)
     {
-        using var bufferOwner = MemoryOwner<byte>.Allocate(4);
-        await stream.ReadExactlyAsync(bufferOwner.Memory, cancellationToken);
+        byte[] buffer = new byte[4];
+        await stream.ReadExactlyAsync(buffer, cancellationToken);
 
-        uint contentLength = BinaryPrimitives.ReadUInt32BigEndian(bufferOwner.Span);
+        uint contentLength = BinaryPrimitives.ReadUInt32BigEndian(buffer);
         return (int)contentLength;
     }
 

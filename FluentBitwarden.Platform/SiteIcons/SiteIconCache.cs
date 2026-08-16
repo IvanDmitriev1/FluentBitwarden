@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using CommunityToolkit.HighPerformance.Buffers;
 using Microsoft.Extensions.Logging;
 using Windows.Storage;
 
@@ -121,13 +120,9 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory, ILogge
             int length = Encoding.UTF8.GetByteCount(text);
             bool useStackAlloc = length <= 512;
 
-            using var bufferOwner = useStackAlloc
-                ? SpanOwner<byte>.Empty
-                : SpanOwner<byte>.Allocate(length);
-
             Span<byte> buffer = useStackAlloc
                 ? stackalloc byte[length]
-                : bufferOwner.Span;
+                : new byte[length];
 
             int written = Encoding.UTF8.GetBytes(text, buffer);
 
@@ -141,4 +136,4 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory, ILogge
             extension.AsSpan().CopyTo(destination[charsWritten..]);
         });
     }
-}
+}

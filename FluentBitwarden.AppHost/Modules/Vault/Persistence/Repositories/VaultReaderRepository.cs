@@ -1,5 +1,4 @@
 using System.Globalization;
-using CommunityToolkit.HighPerformance.Buffers;
 using Dapper;
 using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mapping;
@@ -120,18 +119,18 @@ internal sealed class VaultReaderRepository(SqliteTransaction transaction) : Bas
         if (bufferLength is null)
             return;
 
-        using var bufferOwner = SpanOwner<byte>.Allocate(bufferLength.Value);
+        var buffer = new byte[bufferLength.Value];
 
         foreach (var row in cipherRows)
         {
             using var blob = new SqliteBlob(Connection, "vault_cipher", "encrypted_payload", row.RowId, readOnly: true);
-            bufferOwner.Span.Clear();
-            int bytesWritten = blob.Read(bufferOwner.Span);
+            buffer.AsSpan().Clear();
+            int bytesWritten = blob.Read(buffer);
 
             collectionIdsByCipherId.TryGetValue(row.CipherId, out var collectionIds);
             attachmentsByCipherId.TryGetValue(row.CipherId, out var attachments);
             var dto = VaultCipherMapper.ToDomain(row, collectionIds ?? [], attachments ?? []);
-            onCipher.Invoke(ref dto, bufferOwner.Span[..bytesWritten]);
+            onCipher.Invoke(ref dto, buffer.AsSpan(0, bytesWritten));
         }
     }
 
