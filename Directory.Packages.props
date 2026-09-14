@@ -5,25 +5,26 @@
   <PropertyGroup Label="Shared Package Versions">
     <CommunityToolkitVersion>8.4.2</CommunityToolkitVersion>
     <CommunityToolkitWinUIVersion>8.2.251219</CommunityToolkitWinUIVersion>
-    <NetPackageVersion>10.0.9</NetPackageVersion>
-    <WindowsAppSdkVersion>2.2.0</WindowsAppSdkVersion>
+    <NetPackageVersion>10.0.12</NetPackageVersion>
+    <WindowsAppSdkVersion>2.4.0</WindowsAppSdkVersion>
   </PropertyGroup>
   <ItemGroup Label="Shared Dependencies">
     <PackageVersion Include="NsDepCop" Version="3.0.0" />
     <PackageVersion Include="AsyncAwaitBestPractices" Version="10.0.0" />
-    <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0-beta.98" />
+    <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="$(CommunityToolkitVersion)" />
     <PackageVersion Include="ConfigureAwait.Fody" Version="3.4.1" />
     <PackageVersion Include="Humanizer.Core" Version="3.0.10" />
     <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.298" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.333" />
     <PackageVersion Include="SourceGear.sqlite3" Version="3.50.4.5" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="$(NetPackageVersion)" />
     <PackageVersion Include="UnitsNet" Version="5.75.0" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="$(WindowsAppSdkVersion)" />
   </ItemGroup>
   <ItemGroup Label="API Dependencies">
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="$(NetPackageVersion)" />
@@ -40,8 +41,6 @@
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MemoryPack" Version="1.21.4" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK.Foundation" Version="2.1.0" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK.Runtime" Version="$(WindowsAppSdkVersion)" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
   <ItemGroup Label="WinUI Dependencies">
@@ -54,11 +53,10 @@
     <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="$(CommunityToolkitWinUIVersion)" />
     <PackageVersion Include="CommunityToolkit.WinUI.Extensions" Version="$(CommunityToolkitWinUIVersion)" />
     <PackageVersion Include="CommunityToolkit.WinUI.Helpers" Version="$(CommunityToolkitWinUIVersion)" />
-    <PackageVersion Include="DependencyPropertyGenerator" Version="1.5.0" />
-    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="$(WindowsAppSdkVersion)" />
+    <PackageVersion Include="DependencyPropertyGenerator" Version="1.5.1" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
-    <PackageVersion Include="WinUIEx" Version="2.9.1" />
+    <PackageVersion Include="WinUIEx" Version="2.9.3" />
+    <PackageVersion Include="Navis.WinUI" Version="0.9.0" />
   </ItemGroup>
   <ItemGroup Label="Command Palette Dependencies">
     <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.11.260520004" />

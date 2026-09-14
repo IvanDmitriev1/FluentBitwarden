@@ -30,8 +30,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" />
+    <PackageReference Include="Microsoft.WindowsAppSDK"/>
     <PackageReference Include="NsDepCop" PrivateAssets="all" />
     <PackageReference Include="SourceGear.sqlite3" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />

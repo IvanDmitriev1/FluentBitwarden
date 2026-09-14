@@ -14,5 +14,4 @@ public interface IWindowManager : IThemeChangeable
     void MinimizeWindow();
     void CloseWindow();
 
-    void ReplacePage<TPage>(IPageNavigationParameter? parameter = null) where TPage : Page;
 }

@@ -6,9 +6,6 @@ using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.UiCommand;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
-using FluentBitwarden.Views.Accounts;
-using FluentBitwarden.Views.Shell;
-using FluentBitwarden.Views.Startup;
 using Windows.Networking.Connectivity;
 
 namespace FluentBitwarden.Application.Implementations;
@@ -44,7 +41,9 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
     private uint _flowId;
 
     private bool _firstStart;
-    private IPageNavigationParameter? _currentIntent;
+    private OpenVaultCipherIntent? _currentIntent;
+
+    public event Action<AppSessionState, UnlockPageParameter?, OpenVaultCipherIntent?>? SessionStateApplied;
 
     private FlowVersion BeginNewFlow => new(Interlocked.Increment(ref _flowId), this);
 
@@ -79,8 +78,8 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
 
         _currentIntent = command switch
         {
-            UiCliCommand.OpenItemCommand openItemCommand => PageNavigationParameter.From(
-                new OpenVaultCipherIntent(openItemCommand.Id)),
+            UiCliCommand.OpenItemCommand openItemCommand =>
+                new OpenVaultCipherIntent(openItemCommand.Id),
             _ => _currentIntent
         };
 
@@ -125,30 +124,26 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
 
     private void ApplySessionResolution(AppSessionResolution resolution)
     {
+        UnlockPageParameter? unlockParameter = null;
+
         switch (resolution)
         {
             case AppSessionResolution.LoggedOutResolution:
                 SessionState = AppSessionState.LoggedOut;
-                _windowManager.ReplacePage<LogInFlowPage>();
                 break;
-            case AppSessionResolution.LockedResolution lockedResolution:
+            case AppSessionResolution.LockedResolution:
                 SessionState = AppSessionState.Locked;
-                _windowManager.ReplacePage<UnlockPage>(
-                    PageNavigationParameter.From(new UnlockPageParameter(lockedResolution.Accounts,
-                        lockedResolution.SelectedAccount)));
+                var lockedResolution = (AppSessionResolution.LockedResolution)resolution;
+                unlockParameter = new UnlockPageParameter(
+                    lockedResolution.Accounts,
+                    lockedResolution.SelectedAccount);
                 break;
             case AppSessionResolution.UnlockedResolution:
                 SessionState = AppSessionState.Unlocked;
-                if (_windowManager.ActiveMode == WindowMode.Main)
-                {
-                    _windowManager.ReplacePage<ShellPage>(_currentIntent);
-                }
-                else
-                {
-                    _windowManager.ReplacePage<LoadingPage>();
-                }
                 break;
         }
+
+        SessionStateApplied?.Invoke(SessionState, unlockParameter, _currentIntent);
     }
 
     private void OnNetworkStatusChanged(object? sender)

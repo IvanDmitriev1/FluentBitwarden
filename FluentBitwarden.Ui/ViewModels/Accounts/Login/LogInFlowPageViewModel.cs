@@ -4,6 +4,10 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Infrastructure.Window;
+using FluentBitwarden.Application.Models;
+using FluentBitwarden.Views.Accounts;
+using FluentBitwarden.Views.Shell;
+using FluentBitwarden.Views.Startup;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login;
 
@@ -12,16 +16,19 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
     public LogInFlowPageViewModel(
         IAccountsClient accountsClient,
         IWindowManager windowManager,
-        IAppCoordinator appCoordinator)
+        IAppCoordinator appCoordinator,
+        INavigation navigation)
     {
         _windowManager = windowManager;
         _appCoordinator = appCoordinator;
+        _navigation = navigation;
         AccountsClient = accountsClient;
         CurrentStep = new LogInEmailStepViewModel(this, _windowManager);
     }
 
     private readonly IWindowManager _windowManager;
     private readonly IAppCoordinator _appCoordinator;
+    private readonly INavigation _navigation;
 
     internal IAccountsClient AccountsClient { get; }
     internal LogInFlowContext Context { get; } = new();
@@ -49,6 +56,49 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
     }
 
     internal Task OnSuccessLogIn(AccountProfile account) => _appCoordinator.RefreshSessionAsync();
+
+    public ValueTask OnNavigatedToAsync(CancellationToken cancellationToken)
+    {
+        _appCoordinator.SessionStateApplied += OnSessionStateApplied;
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask OnNavigatedFromAsync(CancellationToken cancellationToken)
+    {
+        _appCoordinator.SessionStateApplied -= OnSessionStateApplied;
+        return ValueTask.CompletedTask;
+    }
+
+    private void OnSessionStateApplied(
+        AppSessionState state,
+        UnlockPageParameter? unlockParameter,
+        OpenVaultCipherIntent? openIntent)
+    {
+        switch (state)
+        {
+            case AppSessionState.Locked when unlockParameter is not null:
+                _navigation.Root.Navigate<UnlockPage, UnlockPageParameter>(
+                    unlockParameter,
+                    NavigationKind.Reset);
+                break;
+            case AppSessionState.Unlocked when _windowManager.ActiveMode == WindowMode.Main:
+                if (openIntent is null)
+                {
+                    _navigation.Root.Navigate<ShellPage>(NavigationKind.Reset);
+                }
+                else
+                {
+                    _navigation.Root.Navigate<ShellPage, OpenVaultCipherIntent>(
+                        openIntent,
+                        NavigationKind.Reset);
+                }
+
+                break;
+            case AppSessionState.Unlocked:
+                _navigation.Root.Navigate<LoadingPage>(NavigationKind.Reset);
+                break;
+        }
+    }
 
     [RelayCommand]
     private void GoBack()

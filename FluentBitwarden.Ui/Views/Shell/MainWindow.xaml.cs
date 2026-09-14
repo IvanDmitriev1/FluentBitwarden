@@ -1,4 +1,3 @@
-using FluentBitwarden.AttachedProperties;
 using FluentBitwarden.Infrastructure.Window;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -11,13 +10,11 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeChangeable
     {
         InitializeComponent();
 
-        TitlebarProperties.SetTargetTitleBar(AppTitleBar);
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
     }
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;
-    public Frame NavigationFrame => RootFrame;
 
     public void ApplyTheme(ElementTheme themeMode)
     {

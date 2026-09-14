@@ -6,7 +6,7 @@ using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 namespace FluentBitwarden.ViewModels.Vault;
 
 public sealed partial class VaultPageViewModel(
-    IVaultClient vaultClient) : ObservableObject, IPageLifecycleAware, IPageLifecycleAware<ShowVaultCipherIntent>, IPageLifecycleAware<OpenVaultCipherIntent>
+    IVaultClient vaultClient) : ObservableObject, INavigationAware, INavigationAware<VaultCipherNavigationIntent>
 {
     [ObservableProperty]
     public partial VaultCipher? SelectedCipher { get; set; }
@@ -40,26 +40,46 @@ public sealed partial class VaultPageViewModel(
         CancelEditCipher();
     }
 
-    public Task OnLoadingAsync(CancellationToken cancellationToken) =>
-        EnsureLoadedAsync(cancellationToken);
+    public ValueTask OnNavigatedToAsync(CancellationToken cancellationToken) =>
+        new(EnsureLoadedAsync(cancellationToken));
 
-    public Task OnLoadingAsync(ShowVaultCipherIntent param, CancellationToken cancellationToken) =>
-        LoadOrApplyNavigationAsync(param, cancellationToken);
-
-    public async Task OnLoadingAsync(OpenVaultCipherIntent param, CancellationToken cancellationToken)
+    public async ValueTask OnNavigatedToAsync(
+        VaultCipherNavigationIntent param,
+        CancellationToken cancellationToken)
     {
-        var cipher = await vaultClient.GetCipherAsync(new GetVaultCipherRequest(param.CipherId), cancellationToken);
-
-        if (cipher is null)
+        switch (param)
         {
-            await EnsureLoadedAsync(cancellationToken);
-            return;
-        }
+            case ShowVaultCipherIntent show:
+                await LoadOrApplyNavigationAsync(show, cancellationToken);
+                break;
+            case OpenVaultCipherIntent open:
+                var cipher = await vaultClient.GetCipherAsync(
+                    new GetVaultCipherRequest(open.CipherId),
+                    cancellationToken);
 
-        await LoadOrApplyNavigationAsync(new ShowVaultCipherIntent(string.Empty, cipher), cancellationToken);
+                if (cipher is null)
+                {
+                    await EnsureLoadedAsync(cancellationToken);
+                    break;
+                }
+
+                await LoadOrApplyNavigationAsync(
+                    new ShowVaultCipherIntent(string.Empty, cipher),
+                    cancellationToken);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(param), param, null);
+        }
     }
 
-    public void OnUnloading() { }
+    public ValueTask OnNavigatedFromAsync(CancellationToken cancellationToken) =>
+        ValueTask.CompletedTask;
+
+    internal void ApplyNavigationIntent(ShowVaultCipherIntent intent)
+    {
+        CurrentQuery = new VaultCipherQuery { SearchText = intent.SearchText, CipherType = null };
+        RequestedCipherId = intent.SelectedCipher.Id;
+    }
 
     [RelayCommand]
     private void BeginEditCipher()
@@ -117,8 +137,7 @@ public sealed partial class VaultPageViewModel(
 
     private Task ApplyNavigationAsync(ShowVaultCipherIntent message, CancellationToken cancellationToken)
     {
-        CurrentQuery = new VaultCipherQuery { SearchText = message.SearchText, CipherType = null };
-        RequestedCipherId = message.SelectedCipher.Id;
+        ApplyNavigationIntent(message);
         return Task.CompletedTask;
     }
 

@@ -9,6 +9,7 @@ using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.Extensions.DependencyInjection;
+using Navis.WinUI.Extensions;
 
 namespace FluentBitwarden.Infrastructure;
 
@@ -16,6 +17,7 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddUiServices(this IServiceCollection services)
     {
+        services.AddNavisNavigation();
         services.AddSingleton<WindowManager>();
         services.AddSingleton<IWindowManager>(static sp => sp.GetRequiredService<WindowManager>());
         services.AddSingleton<INotificationService, NotificationService>();

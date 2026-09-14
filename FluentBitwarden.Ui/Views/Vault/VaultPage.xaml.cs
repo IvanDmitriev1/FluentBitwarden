@@ -1,6 +1,6 @@
 namespace FluentBitwarden.Views.Vault;
 
-public sealed partial class VaultPage : LifecyclePage
+public sealed partial class VaultPage : Page
 {
     public VaultPage()
     {

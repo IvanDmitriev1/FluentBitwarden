@@ -5,6 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:nav="using:Navis.WinUI"
+    xmlns:startup="using:FluentBitwarden.Views.Startup"
     xmlns:winex="using:WinUIEx"
     Title="FluentBitwarden"
     Width="560"
@@ -34,6 +36,8 @@
         <Frame
             x:Name="Frame"
             Grid.Row="0"
-            Grid.RowSpan="2" />
+            Grid.RowSpan="2"
+            nav:NavigationHost.IsEnabled="True"
+            nav:NavigationHost.InitialPage="{nav:XamlType TypeName=startup:LoadingPage}" />
     </Grid>
 </winex:WindowEx>

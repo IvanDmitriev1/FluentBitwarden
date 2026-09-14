@@ -1,32 +1,19 @@
-using CommunityToolkit.Mvvm.Input;
-using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Views.Accounts;
 using FluentBitwarden.Views.Shell;
-using FluentBitwarden.Views.Startup;
 
-namespace FluentBitwarden.ViewModels.Accounts.Unlock;
+namespace FluentBitwarden.ViewModels.Startup;
 
-public sealed partial class UnlockPageViewModel(
+public sealed class LoadingPageViewModel(
     INavigation navigation,
     IAppCoordinator appCoordinator,
-    IWindowManager windowManager) : ObservableObject, INavigationAware<UnlockPageParameter>
+    IWindowManager windowManager) : ObservableObject, INavigationAware
 {
-    [ObservableProperty]
-    public partial AccountProfile? SelectedAccount { get; private set; }
-
-    [MemberNotNull(nameof(SelectedAccount))]
-    public ValueTask OnNavigatedToAsync(
-        UnlockPageParameter param,
-        CancellationToken cancellationToken)
+    public ValueTask OnNavigatedToAsync(CancellationToken cancellationToken)
     {
-        SelectedAccount = param.FavoriteAccountProfile;
         appCoordinator.SessionStateApplied += OnSessionStateApplied;
-
         return ValueTask.CompletedTask;
     }
 
@@ -63,26 +50,6 @@ public sealed partial class UnlockPageViewModel(
                         NavigationKind.Reset);
                 }
 
-                break;
-            case AppSessionState.Unlocked:
-                navigation.Root.Navigate<LoadingPage>(NavigationKind.Reset);
-                break;
-        }
-    }
-
-    [RelayCommand]
-    private void VaultUnlockResult(AccountUnlockOutcome result)
-    {
-        ArgumentNullException.ThrowIfNull(SelectedAccount);
-
-        switch (result)
-        {
-            case AccountUnlockOutcome.Failure:
-                //TODO
-                break;
-            case AccountUnlockOutcome.RequiresOnlineReauth:
-                //appCoordinator.RequireSignIn(SelectedAccount);
-                //TODO
                 break;
         }
     }
