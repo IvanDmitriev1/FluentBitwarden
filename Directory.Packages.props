@@ -9,7 +9,6 @@
     <WindowsAppSdkVersion>2.4.0</WindowsAppSdkVersion>
   </PropertyGroup>
   <ItemGroup Label="Shared Dependencies">
-    <PackageVersion Include="NsDepCop" Version="3.0.0" />
     <PackageVersion Include="AsyncAwaitBestPractices" Version="10.0.0" />
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="$(CommunityToolkitVersion)" />

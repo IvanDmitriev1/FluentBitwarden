@@ -31,7 +31,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.WindowsAppSDK"/>
-    <PackageReference Include="NsDepCop" PrivateAssets="all" />
     <PackageReference Include="SourceGear.sqlite3" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
