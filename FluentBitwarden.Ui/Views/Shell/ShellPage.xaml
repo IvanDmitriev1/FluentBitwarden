@@ -8,10 +8,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:nav="using:Navis.WinUI"
+    xmlns:settings="using:FluentBitwarden.Views.Settings"
     xmlns:templates1="using:FluentBitwarden.Templates"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers"
-    attachedProperties:TitlebarProperties.NavigationFrame="{x:Bind ContentFrame}"
-    attachedProperties:TitlebarProperties.PaneToggleCommand="{x:Bind PaneToggleCommand}"
+    xmlns:views="using:FluentBitwarden.Views.Vault"
     KeyboardAcceleratorPlacementMode="Hidden"
     mc:Ignorable="d">
 
@@ -38,40 +39,53 @@
             Target="{x:Bind VaultCipherSearchBox}" />
     </Page.KeyboardAccelerators>
 
-    <attachedProperties:TitlebarProperties.Content>
-        <vault:VaultCipherSearchBox
-            x:Name="VaultCipherSearchBox"
-            AutomationProperties.AutomationId="ShellVaultCipherSearchBox"
-            AutomationProperties.Name="{StaticResource ShellVaultSearchAutomationName}"
-            VaultCipherSelectedCommand="{x:Bind VaultCipherSelectedCommand}" />
-    </attachedProperties:TitlebarProperties.Content>
-
     <NavigationView
         x:Name="Nav"
+        nav:NavigationViewProperties.Frame="{x:Bind ContentFrame}"
+        nav:TitleBarNavigation.IsPaneTarget="True"
         AutomationProperties.AutomationId="ShellNavigationView"
         AutomationProperties.Name="{StaticResource ShellNavigationAutomationName}"
         IsBackButtonVisible="Collapsed"
         IsPaneToggleButtonVisible="False"
-        IsSettingsVisible="True"
-        ItemInvoked="Nav_OnItemInvoked"
+        IsSettingsVisible="False"
         OpenPaneLength="200"
         PaneDisplayMode="Auto">
 
         <NavigationView.MenuItems>
             <NavigationViewItem
+                nav:Navigate.To="{nav:XamlType TypeName=views:VaultPage}"
                 Content="Vault"
-                Icon="Library"
-                Tag="vault" />
+                Icon="Library" />
             <NavigationViewItem
                 Content="Generator"
                 Icon="Shuffle"
-                Tag="generator" />
+                IsEnabled="False" />
             <NavigationViewItem
                 Content="Send"
                 Icon="Send"
-                Tag="send" />
+                IsEnabled="False" />
         </NavigationView.MenuItems>
 
-        <Frame x:Name="ContentFrame" Navigated="ContentFrame_OnNavigated" />
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem
+                nav:Navigate.To="{nav:XamlType TypeName=settings:SettingsPage}"
+                Content="Settings"
+                Icon="Setting" />
+        </NavigationView.FooterMenuItems>
+
+        <Frame
+            x:Name="ContentFrame"
+            nav:NavigationHost.InitialPage="{nav:XamlType TypeName=views:VaultPage}"
+            nav:NavigationHost.IsEnabled="True"
+            nav:TitleBarNavigation.IsBackTarget="True">
+
+            <nav:TitleBarNavigation.PersistentContent>
+                <vault:VaultCipherSearchBox
+                    x:Name="VaultCipherSearchBox"
+                    AutomationProperties.AutomationId="ShellVaultCipherSearchBox"
+                    AutomationProperties.Name="{StaticResource ShellVaultSearchAutomationName}"
+                    VaultCipherSelectedCommand="{x:Bind ViewModel.VaultCipherSelectedCommand}" />
+            </nav:TitleBarNavigation.PersistentContent>
+        </Frame>
     </NavigationView>
 </Page>

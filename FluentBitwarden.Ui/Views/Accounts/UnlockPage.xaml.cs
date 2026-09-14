@@ -1,7 +1,7 @@
 
 namespace FluentBitwarden.Views.Accounts;
 
-public sealed partial class UnlockPage : LifecyclePage
+public sealed partial class UnlockPage : Page
 {
     public UnlockPage()
     {

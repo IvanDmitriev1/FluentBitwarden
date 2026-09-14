@@ -70,11 +70,11 @@
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
-	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
 	<PackageReference Include="Microsoft.WindowsAppSDK">
 		<IncludeAssets>build</IncludeAssets>
 	</PackageReference>
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
+	<PackageReference Include="Navis.WinUI" />
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
 

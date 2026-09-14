@@ -27,8 +27,6 @@ public sealed partial class OverlayWindow : WinUIEx.WindowEx, IThemeChangeable
     }
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;
-    public Frame NavigationFrame => Frame;
-
     public void ApplyTheme(ElementTheme themeMode)
     {
         RootElement.RequestedTheme = themeMode;

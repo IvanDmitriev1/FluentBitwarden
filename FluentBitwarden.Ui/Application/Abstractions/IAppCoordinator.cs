@@ -7,6 +7,8 @@ public interface IAppCoordinator
 {
     AppSessionState SessionState { get; }
 
+    event Action<AppSessionState, UnlockPageParameter?, OpenVaultCipherIntent?> SessionStateApplied;
+
     Task HandleActivation(UiCliCommand command);
     Task RefreshSessionAsync();
 

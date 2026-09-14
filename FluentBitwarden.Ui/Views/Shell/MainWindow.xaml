@@ -6,6 +6,8 @@
     xmlns:controls="using:FluentBitwarden.Controls.Shared"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:nav="using:Navis.WinUI"
+    xmlns:startup="using:FluentBitwarden.Views.Startup"
     xmlns:winUiEx="using:WinUIEx"
     Title="FluentBitwarden"
     MinWidth="900"
@@ -27,13 +29,18 @@
             x:Name="AppTitleBar"
             Title="FluentBitwarden"
             Grid.Row="0"
-            Height="48">
+            Height="48"
+            nav:TitleBarNavigation.IsHost="True">
             <controls:MyTitleBar.IconSource>
                 <ImageIconSource ImageSource="/Assets/icon.svg" />
             </controls:MyTitleBar.IconSource>
         </controls:MyTitleBar>
 
-        <Frame x:Name="RootFrame" Grid.Row="1" />
+        <Frame
+            x:Name="RootFrame"
+            Grid.Row="1"
+            nav:NavigationHost.IsEnabled="True"
+            nav:NavigationHost.InitialPage="{nav:XamlType TypeName=startup:LoadingPage}" />
     </Grid>
 
 </winUiEx:WindowEx>

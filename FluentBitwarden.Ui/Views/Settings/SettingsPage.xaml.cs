@@ -1,7 +1,7 @@
 
 namespace FluentBitwarden.Views.Settings;
 
-public sealed partial class SettingsPage : LifecyclePage
+public sealed partial class SettingsPage : Page
 {
     public SettingsPage()
     {

@@ -13,7 +13,7 @@ namespace FluentBitwarden.ViewModels.Settings;
 public sealed partial class SettingsPageViewModel(
     IWindowsHelloUnlockClient windowsHelloUnlockClient,
     IWindowManager windowManager)
-    : ObservableObject, IPageLifecycleAware
+    : ObservableObject, INavigationAware
 {
     public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(windowManager.ApplyTheme);
     public SettingValue<string> Language { get; } = UiSettingKeys.Appearance.LanguageKey.CreateSettingValue();
@@ -37,14 +37,15 @@ public sealed partial class SettingsPageViewModel(
 
     public string AppVersion { get; } = ResolveAppVersion();
 
-    public async Task OnLoadingAsync(CancellationToken cancellationToken)
+    public async ValueTask OnNavigatedToAsync(CancellationToken cancellationToken)
     {
         BrowserExtension.Load();
         PasskeyPlugin.Load();
         await WindowsHello.LoadAsync();
     }
 
-    public void OnUnloading() { }
+    public ValueTask OnNavigatedFromAsync(CancellationToken cancellationToken) =>
+        ValueTask.CompletedTask;
 
     [RelayCommand]
     private void OpenAppDataFolder()
