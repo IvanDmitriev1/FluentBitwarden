@@ -38,13 +38,13 @@ public sealed partial class ShellPageViewModel(
     [RelayCommand]
     private void VaultCipherSelected(VaultCipherSearchBox.Selection selection)
     {
-        navigation.Navigate<VaultPage, VaultCipherNavigationIntent>(
+        navigation.Child!.Navigate<VaultPage, VaultCipherNavigationIntent>(
             new ShowVaultCipherIntent(selection.QueryText, selection.SelectedItem));
     }
 
     private void OpenVaultCipher(OpenVaultCipherIntent intent)
     {
-        navigation.Navigate<VaultPage, VaultCipherNavigationIntent>(intent);
+        navigation.Child!.Navigate<VaultPage, VaultCipherNavigationIntent>(intent);
     }
 
     private void OnSessionStateApplied(
