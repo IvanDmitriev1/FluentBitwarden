@@ -12,13 +12,13 @@ FluentBitwarden is a work-in-progress native Windows Bitwarden client built with
 
 | Path | Responsibility | Read when |
 | --- | --- | --- |
-| [BitwardenApi/](BitwardenApi/AGENTS.md) | Bitwarden HTTP, SignalR, crypto, IDs, DTOs | Server calls, KDFs, encryption, JSON, shared primitives |
-| [FluentBitwarden.Contracts/](FluentBitwarden.Contracts/AGENTS.md) | IPC interfaces, IDs, payloads | Any cross-process or settings contract |
-| [FluentBitwarden.Platform/](FluentBitwarden.Platform/AGENTS.md) | Windows IPC, settings, diagnostics, helpers | Shared Windows infrastructure |
-| [FluentBitwarden.AppHost/](FluentBitwarden.AppHost/AGENTS.md) | Sessions, data, and feature modules | Vault, account, unlock, passkey, SSH, browser behavior |
-| [FluentBitwarden.Ui/](FluentBitwarden.Ui/AGENTS.md) | WinUI presentation | Pages, view models, controls, styles |
-| [BrowserExtension/](BrowserExtension/AGENTS.md) | Manifest V3 extension | Browser background, content scripts, bundles |
-| [FluentBitwarden.Package/](FluentBitwarden.Package/AGENTS.md) | MSIX manifest and composition | App entries, capabilities, packaging |
+| [src/BitwardenApi/](src/BitwardenApi/AGENTS.md) | Bitwarden HTTP, SignalR, crypto, IDs, DTOs | Server calls, KDFs, encryption, JSON, shared primitives |
+| [src/FluentBitwarden.Contracts/](src/FluentBitwarden.Contracts/AGENTS.md) | IPC interfaces, IDs, payloads | Any cross-process or settings contract |
+| [src/FluentBitwarden.Platform/](src/FluentBitwarden.Platform/AGENTS.md) | Windows IPC, settings, diagnostics, helpers | Shared Windows infrastructure |
+| [src/FluentBitwarden.AppHost/](src/FluentBitwarden.AppHost/AGENTS.md) | Sessions, data, and feature modules | Vault, account, unlock, passkey, SSH, browser behavior |
+| [src/FluentBitwarden.Ui/](src/FluentBitwarden.Ui/AGENTS.md) | WinUI presentation | Pages, view models, controls, styles |
+| [src/BrowserExtension/](src/BrowserExtension/) | Manifest V3 extension | Browser background, content scripts, bundles |
+| [src/FluentBitwarden.Package/](src/FluentBitwarden.Package/) | MSIX manifest and composition | App entries, capabilities, packaging |
 
 ## System boundaries
 
@@ -31,7 +31,7 @@ Use strongly typed IDs at method and process boundaries. IPC uses MemoryPack; JS
 Run from the repository root in a Visual Studio Developer PowerShell or equivalent environment:
 
 `powershell
-nuget restore FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
+nuget restore src\FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
 msbuild FluentBitwarden.slnx /restore /m /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false /p:GenerateAppxPackageOnBuild=false /v:minimal
 `
 

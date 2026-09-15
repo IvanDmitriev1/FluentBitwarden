@@ -39,7 +39,7 @@ jobs:
           vs-version: '[18.0,19.0)'
 
       - name: Restore native packages
-        run: nuget restore FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
+        run: nuget restore src\FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
 
       - name: Restore and build
         run: >

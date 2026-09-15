@@ -62,7 +62,8 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
-BrowserExtension/dist/
+src/BrowserExtension/Extension/dist/
+src/BrowserExtension/dist/
 
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt

@@ -21,7 +21,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: BrowserExtension
+        working-directory: src/BrowserExtension/Extension
 
     steps:
       - name: Checkout
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: BrowserExtension/pnpm-lock.yaml
+          cache-dependency-path: src/BrowserExtension/Extension/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: fluent-bitwarden-browser-extension-chrome
-          path: BrowserExtension/dist/chrome
+          path: src/BrowserExtension/Extension/dist/chrome
           if-no-files-found: error
           retention-days: 14
 
@@ -75,6 +75,6 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: fluent-bitwarden-browser-extension-firefox
-          path: BrowserExtension/dist/firefox
+          path: src/BrowserExtension/Extension/dist/firefox
           if-no-files-found: error
           retention-days: 14

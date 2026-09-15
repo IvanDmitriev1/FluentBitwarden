@@ -23,7 +23,7 @@
   </ItemGroup>
   <PropertyGroup>
     <WapProjPath Condition="'$(WapProjPath)'==''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
-    <PathToXAMLWinRTImplementations>FluentBitwarden.Ui\</PathToXAMLWinRTImplementations>
+    <PathToXAMLWinRTImplementations>..\FluentBitwarden.Ui\</PathToXAMLWinRTImplementations>
     <WinUISDKReferences>false</WinUISDKReferences>
   </PropertyGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
@@ -63,7 +63,7 @@
     <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
     <ProjectReference Include="..\BrowserExtension\FluentBitwarden.BrowseProxy\FluentBitwarden.BrowseProxy.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.BrowseProxy\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\BrowserExtension\FluentBitwarden.BrowseProxy\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.Ui\FluentBitwarden.Ui.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
