@@ -53,21 +53,17 @@ internal static class IpcWireProtocol
     }
 
     public static async ValueTask<TMessage> ReadMessagePayloadAsync<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TMessage>(
-        Stream stream,
-        int payloadLength,
-        CancellationToken cancellationToken)
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+        TMessage>(byte[] payload, CancellationToken cancellationToken)
         where TMessage : notnull
     {
-        byte[] buffer = new byte[payloadLength];
-        await stream.ReadExactlyAsync(buffer, cancellationToken);
-
-        var message = MemoryPackSerializer.Deserialize<TMessage>(buffer);
+        var message = MemoryPackSerializer.Deserialize<TMessage>(payload);
         return message ?? throw new InvalidDataException("IPC message payload was null.");
     }
 
     public static async ValueTask<TResponse?> ReadRpcResponsePayloadAsync<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+        TResponse>(
         Stream stream,
         int payloadLength,
         CancellationToken cancellationToken)
@@ -78,4 +74,14 @@ internal static class IpcWireProtocol
         var result = MemoryPackSerializer.Deserialize<IpcOptional<TResponse>>(buffer);
         return result.Value;
     }
-}
+
+    public static void ThrowIfCommandHasPayload(ushort messageType, int payloadLength)
+    {
+        if (payloadLength != 0)
+        {
+            throw new InvalidOperationException(
+                $"IPC message '{messageType}' does not accept a request payload, " +
+                $"but received '{payloadLength}' bytes.");
+        }
+    }
+}

@@ -71,4 +71,24 @@ internal static class IpcPipeExtensions
         var processImagePath = buffer[..(int)bufferLength].ToString();
         return processImagePath;
     }
+
+    public static async Task MonitorDisconnectAsync(this Stream pipe, CancellationTokenSource requestCancellation)
+    {
+        byte[] probe = new byte[1];
+
+        try
+        {
+            // Protocol permits one request per connection.
+            // EOF means disconnect; extra data is a protocol violation.
+            _ = await pipe.ReadAsync(probe, requestCancellation.Token);
+            requestCancellation.Cancel();
+        }
+        catch (IOException)
+        {
+            requestCancellation.Cancel();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
 }

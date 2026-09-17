@@ -62,9 +62,7 @@ internal sealed class PipeIpcServer(
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types",
         Justification = "Intentional log-and-continue boundary; narrowing would break resilience against unanticipated transport failures.")]
-    private async Task ProcessRequestAsync(
-        NamedPipeServerStream pipe,
-        CancellationToken stoppingToken)
+    private async Task ProcessRequestAsync(NamedPipeServerStream pipe, CancellationToken stoppingToken)
     {
         try
         {
@@ -88,8 +86,10 @@ internal sealed class PipeIpcServer(
                 return;
             }*/
 
-            await endpoint.Delegate.Invoke(pipe, header.PayloadLength, stoppingToken);
-            await pipe.FlushAsync(stoppingToken);
+            byte[] payload = new byte[header.PayloadLength];
+            await pipe.ReadExactlyAsync(payload, 0, payload.Length, stoppingToken);
+
+            await endpoint.InvokeAsync(pipe, payload, stoppingToken);
         }
         catch (IOException)
         {

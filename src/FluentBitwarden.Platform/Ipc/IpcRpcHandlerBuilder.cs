@@ -22,8 +22,7 @@ public sealed class IpcRpcHandlerBuilder(IServiceCollection services)
                 HandlerType: typeof(THandler),
                 Create: (Func<IServiceProvider, IpcRpcEndpoint>)(serviceProvider =>
                     IpcRpcEndpointFactory.Create(
-                        serviceProvider.GetRequiredService<THandler>(),
-                        descriptor)));
+                        serviceProvider.GetRequiredService<THandler>(), descriptor)));
 
             if (!_endpoints.TryAdd(descriptor.MessageType, registration))
             {
