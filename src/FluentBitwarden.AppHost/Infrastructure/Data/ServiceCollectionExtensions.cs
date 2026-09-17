@@ -10,10 +10,11 @@ internal static class ServiceCollectionExtensions
 
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services)
     {
-        services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory(Path.Combine(ApplicationData.Current.LocalFolder.Path, DatabaseFileName)));
-        services.AddSingleton<IDataInitializationService, DbUpDataInitializationService>();
-        services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
+        var dbFilePath = Path.Combine(ApplicationData.Current.LocalFolder.Path, DatabaseFileName);
 
+        services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory(dbFilePath));
+        services.AddSingleton<IDatabaseInitializationService, DbUpDatabaseInitializationService>();
+        
         return services;
     }
 }

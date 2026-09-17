@@ -1,5 +1,4 @@
 using FluentBitwarden.AppHost.Infrastructure.Data;
-using FluentBitwarden.AppHost.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Infrastructure;
@@ -20,9 +19,6 @@ internal static class InfrastructureServiceCollectionExtensions
             client.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
         });
-
-        services.AddTransient<IAppSetupService, AppSetupService>();
-        services.AddSingleton<IUiProcessLauncher, AppHostUiProcessManager>();
 
         return services;
     }

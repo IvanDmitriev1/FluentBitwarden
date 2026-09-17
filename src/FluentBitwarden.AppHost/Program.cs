@@ -1,19 +1,10 @@
-using AsyncAwaitBestPractices;
 using BitwardenApi;
-using FluentBitwarden.AppHost.Application;
-using FluentBitwarden.AppHost.Application.Activation;
+using FluentBitwarden.AppHost.Hosting;
 using FluentBitwarden.AppHost.Infrastructure;
-using FluentBitwarden.AppHost.Infrastructure.Services;
-using FluentBitwarden.AppHost.Modules.Accounts;
-using FluentBitwarden.AppHost.Modules.BrowserExtension;
-using FluentBitwarden.AppHost.Modules.Passkey;
-using FluentBitwarden.AppHost.Modules.Sessions;
-using FluentBitwarden.AppHost.Modules.SshAgent;
-using FluentBitwarden.AppHost.Modules.Vault;
 using FluentBitwarden.Platform.Diagnostics;
+using FluentBitwarden.Platform.Ipc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Win32.SafeHandles;
 using Microsoft.Windows.AppLifecycle;
 
@@ -49,38 +40,24 @@ internal static class Program
             }));
 #endif
 
+        builder.Services.AddHostedService<TrayHostService>();
         builder.Services.AddAppLogging("apphost");
 
-        builder.Services.AddApplicationServices();
         builder.Services.AddApplicationInfrastructureServices();
-
         builder.Services.AddBitwardenApi();
-        builder.Services.AddAccountServices();
-        builder.Services.AddVaultServices();
-        builder.Services.AddSessionServices();
-        builder.Services.AddBrowserExtensionServices();
-        builder.Services.AddPasskeyServices();
-        builder.Services.AddSshAgent();
 
-        builder.Services.AddAppHostIpc();
+        builder.Services.AddIpcServer(
+            IpcConstants.AppHostPipeName,
+            handlers =>
+            {
+
+            });
+
+        builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
+        builder.Services.AddIpcClient(IpcConstants.UiPipeName);
 
         var host = builder.Build();
 
-        var logger = host.Services
-            .GetRequiredService<ILoggerFactory>()
-            .CreateLogger("FluentBitwarden.AppHost");
-
-        SafeFireAndForgetExtensions.SetDefaultExceptionHandling(logger.UnhandledException);
-
-        keyInstance.Activated += (_, arguments) =>
-            host.Services.GetRequiredService<AppHostActivationHandler>().Handle(arguments);
-
-        host.Services
-            .GetRequiredService<IHostApplicationLifetime>()
-            .ApplicationStarted
-            .Register(() => host.Services.GetRequiredService<AppHostActivationHandler>().Handle(initialActivation));
-
-        host.Services.GetRequiredService<IAppSetupService>().Initialize();
         host.Run();
         return 0;
     }
