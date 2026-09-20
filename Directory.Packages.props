@@ -19,6 +19,7 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.333" />
+    <PackageVersion Include="NsDepCop" Version="3.1.0" />
     <PackageVersion Include="SourceGear.sqlite3" Version="3.50.4.5" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="$(NetPackageVersion)" />
@@ -34,8 +35,8 @@
     <PackageVersion Include="Utf8JsonStreamReader" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup Label="AppHost Dependencies">
-    <PackageVersion Include="Dapper" Version="2.1.79" />
-    <PackageVersion Include="Dapper.AOT" Version="1.0.52" />
+    <PackageVersion Include="Dapper" Version="2.1.86" />
+    <PackageVersion Include="Dapper.AOT" Version="1.1.0" />
     <PackageVersion Include="dbup-sqlite" Version="6.0.4" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MemoryPack" Version="1.21.4" />

@@ -30,6 +30,7 @@ internal static class Program
         }
 
         var builder = Host.CreateApplicationBuilder(args);
+        builder.Services.AddSingleton(initialActivation);
 
 #if DEBUG
         builder.ConfigureContainer(new DefaultServiceProviderFactory(
@@ -40,7 +41,7 @@ internal static class Program
             }));
 #endif
 
-        builder.Services.AddHostedService<TrayHostService>();
+        builder.Services.AddHostedService<AppHostLifecycleService>();
         builder.Services.AddAppLogging("apphost");
 
         builder.Services.AddApplicationInfrastructureServices();
@@ -56,7 +57,12 @@ internal static class Program
         builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
 
+        builder.Services.AddHostedService<AppHostLifecycleService>();
+
         var host = builder.Build();
+
+        keyInstance.Activated += (_, arguments) =>
+            host.Services.GetRequiredService<AppHostLifecycleService>().HandleAppActivation(arguments);
 
         host.Run();
         return 0;

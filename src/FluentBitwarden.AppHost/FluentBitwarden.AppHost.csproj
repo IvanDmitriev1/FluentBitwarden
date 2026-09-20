@@ -31,6 +31,10 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="NsDepCop">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="SourceGear.sqlite3" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
@@ -41,8 +45,4 @@
     <ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
     <ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
   </ItemGroup>
-
-  <Target Name="FailSqlMigrationsMarkedAsContent" BeforeTargets="BeforeBuild">
-    <Error Condition="'%(Content.Extension)' == '.sql'" Text="SQL migration file '%(Content.Identity)' is marked as Content. Add it as EmbeddedResource instead." />
-  </Target>
 </Project>

@@ -13,16 +13,14 @@ internal sealed class TrayWindow : IDisposable
     private readonly HWND _windowHandle;
     private readonly NotificationIcon _trayIcon;
     private readonly string _windowName;
-    private readonly Action _leftButtonHandler;
-    private readonly Action<TrayMenuCommand> _rightButtonHandler;
+    private readonly ITrayCommandsHandler _commandsHandler;
     private bool _windowDestroyed;
     private bool _disposed;
 
-    public TrayWindow(string windowName, Action leftButtonHandler, Action<TrayMenuCommand> rightButtonhandler)
+    public TrayWindow(string windowName, ITrayCommandsHandler commandsHandler)
     {
         _windowName = windowName;
-        _leftButtonHandler = leftButtonHandler;
-        _rightButtonHandler = rightButtonhandler;
+        _commandsHandler = commandsHandler;
         _moduleHandle = PInvoke.GetModuleHandle(default(PCWSTR));
         RegisterWindowClass();
 
@@ -138,12 +136,12 @@ internal sealed class TrayWindow : IDisposable
             case TrayIconMessage.LeftButtonDoubleClick:
             case TrayIconMessage.Select:
             case TrayIconMessage.KeySelect:
-                _leftButtonHandler.Invoke();
+                _commandsHandler.HandleLeftClick();
                 return;
 
             case TrayIconMessage.ContextMenu:
             case TrayIconMessage.RightButtonUp:
-                _rightButtonHandler.Invoke(TrayMenu.Show(_windowHandle));
+                _commandsHandler.HandleRightClick(TrayMenu.Show(_windowHandle));
                 return;
         }
     }
