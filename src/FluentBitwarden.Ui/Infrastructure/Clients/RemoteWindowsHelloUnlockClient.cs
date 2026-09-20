@@ -1,8 +1,9 @@
 using FluentBitwarden.Platform.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Platform.Ipc.Transport;
+using FluentBitwarden.Contracts;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
 
 namespace FluentBitwarden.Infrastructure.Clients;
 

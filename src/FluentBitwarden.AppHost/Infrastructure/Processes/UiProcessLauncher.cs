@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.ProcessManager;
 using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.Hosting;

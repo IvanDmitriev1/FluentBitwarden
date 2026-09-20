@@ -1,8 +1,8 @@
 using FluentBitwarden.Platform.Ipc.Abstractions;
-using FluentBitwarden.Contracts.Modules;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts;
 
 namespace FluentBitwarden.Infrastructure.Clients;
 

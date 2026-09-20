@@ -1,5 +1,5 @@
 using AsyncAwaitBestPractices;
-using FluentBitwarden.Contracts.Modules;
+using FluentBitwarden.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Platform.Ipc.Abstractions;

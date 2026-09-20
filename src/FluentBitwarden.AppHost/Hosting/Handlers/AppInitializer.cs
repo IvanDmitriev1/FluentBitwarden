@@ -1,5 +1,5 @@
 using AsyncAwaitBestPractices;
-using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.Integrations;
 using FluentBitwarden.Platform.Settings;
 

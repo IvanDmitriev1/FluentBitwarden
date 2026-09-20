@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Modules;
+using FluentBitwarden.Contracts;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;

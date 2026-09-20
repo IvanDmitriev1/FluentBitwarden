@@ -1,8 +1,9 @@
 using FluentBitwarden.BrowseProxy.NativeMessaging;
 using FluentBitwarden.Platform.Ipc;
-using FluentBitwarden.Contracts.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
+using FluentBitwarden.Contracts.Integrations.BrowserExtension;
+using FluentBitwarden.Contracts;
 
 const int nativeProtocolVersion = 1;
 TimeSpan requestTimeout = TimeSpan.FromSeconds(9);

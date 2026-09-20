@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using AsyncAwaitBestPractices;
 using FluentBitwarden.CommandPalette.VaultListItems;
-using FluentBitwarden.Contracts.Modules.Sessions;
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -15,7 +15,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(200);
     private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(2);
 
-    private readonly ISessionClient _sessionClient;
+    private readonly IAppSessionClient _appSessionClient;
     private readonly IVaultClient _vaultClient;
     private readonly UnlockVaultPage _unlockVaultPage;
     private readonly VaultCipherListItemFactory _vaultCipherListItemFactory;
@@ -26,13 +26,13 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     private uint _searchGeneration;
 
     public VaultSearchPage(
-        ISessionClient sessionClient,
+        IAppSessionClient appSessionClient,
         IVaultClient vaultClient,
         IIpcEventClient eventClient,
         UnlockVaultPage unlockVaultPage,
         VaultCipherListItemFactory vaultCipherListItemFactory)
     {
-        _sessionClient = sessionClient;
+        _appSessionClient = appSessionClient;
         _vaultClient = vaultClient;
         _unlockVaultPage = unlockVaultPage;
         _vaultCipherListItemFactory = vaultCipherListItemFactory;
@@ -96,7 +96,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         {
             await Task.Delay(SearchDebounce, cancellationToken);
 
-            if (await _sessionClient.GetUnlockedAccount(cancellationToken) is null)
+            if (await _appSessionClient.GetUnlockedAccount(cancellationToken) is null)
             {
                 ListItem unlockListItem = new(_unlockVaultPage)
                 {

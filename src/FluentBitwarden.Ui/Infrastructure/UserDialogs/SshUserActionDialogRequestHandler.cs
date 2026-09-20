@@ -1,3 +1,4 @@
+using FluentBitwarden.Contracts.Integrations.Ssh;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Platform.Ipc.Abstractions;

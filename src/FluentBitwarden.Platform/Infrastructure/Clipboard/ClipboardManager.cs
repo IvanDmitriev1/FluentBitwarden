@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Modules.AppState;
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
 using Windows.ApplicationModel.DataTransfer;
 using WindowsClipboard = Windows.ApplicationModel.DataTransfer.Clipboard;

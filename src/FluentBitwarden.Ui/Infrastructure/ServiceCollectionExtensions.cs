@@ -1,5 +1,5 @@
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.Sessions;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.Clients;
 using FluentBitwarden.Infrastructure.Notifications;
@@ -26,7 +26,7 @@ internal static class ServiceCollectionExtensions
         services.AddIpcClient(IpcConstants.AppHostPipeName);
         services.AddIpcEventClient(IpcConstants.AppHostEventsPipeName);
         services.AddSingleton<IAccountsClient, RemoteAccountsClient>();
-        services.AddSingleton<ISessionClient, RemoteSessionClient>();
+        services.AddSingleton<IAppSessionClient, RemoteAppSessionClient>();
         services.AddSingleton<IWindowsHelloUnlockClient, RemoteWindowsHelloUnlockClient>();
         services.AddSingleton<IVaultClient, RemoteVaultClient>();
 

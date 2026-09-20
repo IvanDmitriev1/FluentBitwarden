@@ -5,8 +5,8 @@ using System.Reflection;
 using Windows.ApplicationModel;
 using Windows.Storage;
 using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.AppState;
 using FluentBitwarden.Infrastructure.Window;
+using FluentBitwarden.Contracts.Settings;
 
 namespace FluentBitwarden.ViewModels.Settings;
 

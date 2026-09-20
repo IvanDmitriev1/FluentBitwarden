@@ -1,9 +1,10 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
 using FluentBitwarden.Controls.Shared;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Sessions;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Infrastructure.Window;
@@ -22,7 +23,7 @@ public sealed partial class AccountUnlockView : UserControl
     {
         InitializeComponent();
 
-        _sessionClient = App.Current.GetRequiredService<ISessionClient>();
+        _appSessionClient = App.Current.GetRequiredService<IAppSessionClient>();
         _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<IWindowsHelloUnlockClient>();
         _windowManager = App.Current.GetRequiredService<IWindowManager>();
 
@@ -30,7 +31,7 @@ public sealed partial class AccountUnlockView : UserControl
         Unloaded += OnUnloaded;
     }
 
-    private readonly ISessionClient _sessionClient;
+    private readonly IAppSessionClient _appSessionClient;
     private readonly IWindowsHelloUnlockClient _windowsHelloAccountUnlockMethod;
     private readonly IWindowManager _windowManager;
 
@@ -96,7 +97,7 @@ public sealed partial class AccountUnlockView : UserControl
 
         try
         {
-            result = await _sessionClient.UnlockAsync(request);
+            result = await _appSessionClient.UnlockAsync(request);
         }
         finally
         {

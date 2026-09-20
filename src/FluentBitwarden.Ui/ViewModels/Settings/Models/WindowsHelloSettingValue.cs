@@ -1,3 +1,4 @@
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Infrastructure.Window;

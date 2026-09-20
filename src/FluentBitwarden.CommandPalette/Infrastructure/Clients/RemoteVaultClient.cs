@@ -1,5 +1,5 @@
 using BitwardenApi.Vault.Items.Contracts;
-using FluentBitwarden.Contracts.Modules;
+using FluentBitwarden.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;

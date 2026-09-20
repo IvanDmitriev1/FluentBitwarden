@@ -1,18 +1,18 @@
-﻿using FluentBitwarden.Application.Abstractions;
+using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.Sessions;
 
 namespace FluentBitwarden.Application.Implementations;
 
 internal sealed class AppSessionResolver(
     IAccountsClient accountsClient,
-    ISessionClient sessionClient) : IAppSessionResolver
+    IAppSessionClient appSessionClient) : IAppSessionResolver
 {
     public async Task<AppSessionResolution> ResolveAsync()
     {
         var accounts = await accountsClient.GetAccountsAsync();
-        var unlockedAccount = await sessionClient.GetUnlockedAccount();
+        var unlockedAccount = await appSessionClient.GetUnlockedAccount();
 
         if (unlockedAccount is not null)
         {

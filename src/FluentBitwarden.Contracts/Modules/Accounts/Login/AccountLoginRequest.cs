@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Modules.Accounts.Login;
+namespace FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 [MemoryPackable]
 [MemoryPackUnion(0, typeof(PasswordRequest))]
