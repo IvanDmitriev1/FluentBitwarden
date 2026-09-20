@@ -1,34 +1,43 @@
 using FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.Platform.Tests.Ipc;
 
 public class IpcPayloadValidationTests
 {
-    public static TheoryData<string, byte[], bool> MalformedRequests => new()
+    public static TheoryData<string, byte[]> ServerRejectedRequests => new()
     {
-        {
-            "truncated header",
-            RawIpcClient.RequestHeader(
-                IpcConstants.ProtocolVersion,
-                TestMessageTypes.Echo,
-                payloadLength: 0)[..5],
-            true
-        },
         {
             "unsupported protocol version",
             RawIpcClient.RequestHeader(
                 (ushort)(IpcConstants.ProtocolVersion + 1),
                 TestMessageTypes.Echo,
-                payloadLength: 0),
-            false
+                payloadLength: 0)
         },
         {
             "negative payload length",
             RawIpcClient.RequestHeader(
                 IpcConstants.ProtocolVersion,
                 TestMessageTypes.Echo,
-                payloadLength: -1),
-            false
+                payloadLength: -1)
+        },
+        {
+            "unknown message id",
+            RawIpcClient.RequestHeader(
+                IpcConstants.ProtocolVersion,
+                ushort.MaxValue,
+                payloadLength: 0)
+        },
+    };
+
+    public static TheoryData<string, byte[]> IncompleteRequests => new()
+    {
+        {
+            "truncated header",
+            RawIpcClient.RequestHeader(
+                IpcConstants.ProtocolVersion,
+                TestMessageTypes.Echo,
+                payloadLength: 0)[..5]
         },
         {
             "declared payload ends early",
@@ -38,45 +47,65 @@ public class IpcPayloadValidationTests
                     TestMessageTypes.Echo,
                     payloadLength: 4),
                 (byte)0xA5,
-            ],
-            true
-        },
-        {
-            "unknown message id",
-            RawIpcClient.RequestHeader(
-                IpcConstants.ProtocolVersion,
-                ushort.MaxValue,
-                payloadLength: 0),
-            false
+            ]
         },
     };
 
-    [Theory(Timeout = 1000)]
-    [MemberData(nameof(MalformedRequests))]
-    public async Task Malformed_requests_fail_closed_and_the_same_listener_accepts_a_valid_request(
+    [Theory(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    [MemberData(nameof(ServerRejectedRequests))]
+    public async Task Invalid_headers_are_rejected_before_dispatch_and_the_listener_accepts_a_valid_request(
         string caseName,
-        byte[] request,
-        bool closeAfterWrite)
+        byte[] request)
     {
-        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>();
-        var handler = host.Handler<ImmediateEchoHandler>();
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var state = new ImmediateEchoHandlerState();
+        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+            configureServices: services => services.AddSingleton(state),
+            cancellationToken: testCancellation);
 
-        Exception failure = await RawIpcClient.SendMalformedRequestAsync(
+        await RawIpcClient.SendRequestExpectingServerDisconnectAsync(
             host.PipeName,
             request,
-            closeAfterWrite);
+            testCancellation);
 
         Assert.True(
-            failure is IOException or ObjectDisposedException,
-            $"{caseName} produced an unexpected client-visible failure: {failure.GetType().FullName}");
-        Assert.Equal(0, handler.InvocationCount);
+            state.InvocationCount == 0,
+            $"{caseName} unexpectedly dispatched a handler.");
 
         EchoResponse response = await host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(23, "after-malformed"),
             testCancellation);
 
         Assert.Equal(new EchoResponse(23, "after-malformed", 23), response);
-        Assert.Equal(1, handler.InvocationCount);
+        Assert.Equal(1, state.InvocationCount);
+    }
+
+    [Theory(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    [MemberData(nameof(IncompleteRequests))]
+    public async Task Client_disconnect_mid_frame_does_not_dispatch_and_the_listener_accepts_a_valid_request(
+        string caseName,
+        byte[] request)
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var state = new ImmediateEchoHandlerState();
+        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+            configureServices: services => services.AddSingleton(state),
+            cancellationToken: testCancellation);
+
+        await RawIpcClient.SendPartialRequestAndDisconnectAsync(
+            host.PipeName,
+            request,
+            testCancellation);
+
+        Assert.True(
+            state.InvocationCount == 0,
+            $"{caseName} unexpectedly dispatched a handler.");
+
+        EchoResponse response = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(24, "after-disconnect"),
+            testCancellation);
+
+        Assert.Equal(new EchoResponse(24, "after-disconnect", 24), response);
+        Assert.Equal(1, state.InvocationCount);
     }
 }

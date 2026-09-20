@@ -1,21 +1,22 @@
 using System.Reflection;
+using Dapper;
 using DbUp;
-using DbUp.Engine;
+using DbUp.Sqlite.Helpers;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
 
-internal sealed class DbUpDatabaseInitializationService(ISqliteConnectionFactory connectionFactory) : IDatabaseInitializationService
+internal sealed class SqliteInitializationService(ISqliteConnectionFactory sqliteConnectionFactory)
+    : IDatabaseInitializationService
 {
     public void Initialize()
     {
-        var upgradeEngine = BuildUpgradeEngine();
-        var result = upgradeEngine.PerformUpgrade();
-        ThrowIfFailed(result, "SQLite database migration failed");
-    }
+        using var connection = sqliteConnectionFactory.OpenConnection();
+        var sharedConnection = new SharedConnection(connection);
 
-    private UpgradeEngine BuildUpgradeEngine() =>
-        DeployChanges.To
-            .SqliteDatabase(connectionFactory.ConnectionString)
+        connection.Execute("PRAGMA journal_mode = WAL;");
+
+        var upgradeEngine = DeployChanges.To
+            .SqliteDatabase(sharedConnection)
             .WithScriptsEmbeddedInAssembly(
                 Assembly.GetExecutingAssembly(),
                 static resourceName =>
@@ -26,14 +27,11 @@ internal sealed class DbUpDatabaseInitializationService(ISqliteConnectionFactory
             .LogToTrace()
             .Build();
 
-    private static void ThrowIfFailed(DatabaseUpgradeResult result, string message)
-    {
+        var result = upgradeEngine.PerformUpgrade();
         if (result.Successful)
-        {
             return;
-        }
 
         string scriptName = result.ErrorScript?.Name ?? "unknown script";
-        throw new InvalidOperationException($"{message}. Script: {scriptName}.", result.Error);
+        throw new InvalidOperationException($"SQLite database migration failed. Script: {scriptName}.", result.Error);
     }
 }

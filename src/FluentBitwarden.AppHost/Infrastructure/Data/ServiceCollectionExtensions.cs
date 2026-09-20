@@ -13,8 +13,12 @@ internal static class ServiceCollectionExtensions
         var dbFilePath = Path.Combine(ApplicationData.Current.LocalFolder.Path, DatabaseFileName);
 
         services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory(dbFilePath));
-        services.AddSingleton<IDatabaseInitializationService, DbUpDatabaseInitializationService>();
-        
+        services.AddSingleton<IDatabaseInitializationService, SqliteInitializationService>();
+
+        services.AddScoped<UnitOfWork>();
+        services.AddScoped<IUnitOfWork>(static sp => sp.GetRequiredService<UnitOfWork>());
+        services.AddScoped<IDbSession>(static sp => sp.GetRequiredService<UnitOfWork>());
+
         return services;
     }
 }

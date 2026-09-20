@@ -1,6 +1,7 @@
 using AsyncAwaitBestPractices;
 using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Transport;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.IO.Pipes;
@@ -10,6 +11,7 @@ namespace FluentBitwarden.Platform.Ipc.Services;
 internal sealed class PipeIpcServer(
     string pipeName,
     IReadOnlyDictionary<ushort, IpcRpcEndpoint> endpoints,
+    IServiceScopeFactory scopeFactory,
     IIpcClientsVerifier ipcClientsVerifier,
     ILogger<PipeIpcServer> logger)
     : BackgroundService
@@ -89,7 +91,8 @@ internal sealed class PipeIpcServer(
             byte[] payload = new byte[header.PayloadLength];
             await pipe.ReadExactlyAsync(payload, 0, payload.Length, stoppingToken);
 
-            await endpoint.InvokeAsync(pipe, payload, stoppingToken);
+            await using var scope = scopeFactory.CreateAsyncScope();
+            await endpoint.InvokeAsync(scope.ServiceProvider, pipe, payload, stoppingToken);
         }
         catch (IOException)
         {

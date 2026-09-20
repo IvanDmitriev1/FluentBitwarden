@@ -5,14 +5,21 @@ namespace FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
 
 internal sealed class IpcTestHost : IAsyncDisposable
 {
-    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+    public const int TimeoutMilliseconds = 10_000;
+    public static readonly TimeSpan Timeout = TimeSpan.FromMilliseconds(TimeoutMilliseconds);
 
     private readonly IHost _host;
+    private readonly CancellationToken _cancellationToken;
     private int _disposed;
 
-    private IpcTestHost(IHost host, string pipeName, TestIpcClientsVerifier verifier)
+    private IpcTestHost(
+        IHost host,
+        string pipeName,
+        TestIpcClientsVerifier verifier,
+        CancellationToken cancellationToken)
     {
         _host = host;
+        _cancellationToken = cancellationToken;
         PipeName = pipeName;
         Verifier = verifier;
     }
@@ -23,14 +30,12 @@ internal sealed class IpcTestHost : IAsyncDisposable
 
     public IIpcClient Client => _host.Services.GetRequiredService<IIpcClient>();
 
-    public THandler Handler<THandler>()
-        where THandler : class, IIpcRequestsHandler =>
-        _host.Services.GetRequiredService<THandler>();
-
     public Task StopAsync(CancellationToken cancellationToken) => _host.StopAsync(cancellationToken);
 
     public static async Task<IpcTestHost> StartAsync<THandler>(
-        IpcAuthenticationLevel authenticationLevel = IpcAuthenticationLevel.SamePackage)
+        IpcAuthenticationLevel authenticationLevel = IpcAuthenticationLevel.SamePackage,
+        Action<IServiceCollection>? configureServices = null,
+        CancellationToken cancellationToken = default)
         where THandler : class, IIpcRequestsHandler
     {
         string pipeName = $"FluentBitwarden.Tests.{Guid.NewGuid():N}";
@@ -40,20 +45,27 @@ internal sealed class IpcTestHost : IAsyncDisposable
             DisableDefaults = true,
         });
 
+        builder.ConfigureContainer(new DefaultServiceProviderFactory(
+            new ServiceProviderOptions
+            {
+                ValidateOnBuild = true,
+                ValidateScopes = true,
+            }));
+
         builder.Services.AddLogging();
         builder.Services.AddSingleton<IIpcClientsVerifier>(verifier);
+        configureServices?.Invoke(builder.Services);
 
-#pragma warning disable IL2026, IL2091, IL3050 // The test intentionally exercises the reflection-based registration boundary.
-builder.Services.AddIpcServer(pipeName, handlers => handlers.Add<THandler>());
-#pragma warning restore IL2026, IL2091, IL3050
+        builder.Services.AddIpcServer(pipeName, handlers =>
+            handlers.Add<THandler>());
         builder.Services.AddIpcClient(pipeName);
 
         IHost host = builder.Build();
 
         try
         {
-            await host.StartAsync();
-            return new IpcTestHost(host, pipeName, verifier);
+            await host.StartAsync(cancellationToken);
+            return new IpcTestHost(host, pipeName, verifier, cancellationToken);
         }
         catch
         {
@@ -69,7 +81,7 @@ builder.Services.AddIpcServer(pipeName, handlers => handlers.Add<THandler>());
 
         try
         {
-            await _host.StopAsync();
+            await _host.StopAsync(_cancellationToken);
         }
         finally
         {

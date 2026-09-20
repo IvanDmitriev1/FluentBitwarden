@@ -8,26 +8,32 @@ internal static class IpcRpcEndpointFactory
         "IPC endpoint creation closes generic endpoint types at runtime.")]
     [RequiresUnreferencedCode(
         "IPC endpoint creation reflects over handler methods.")]
-    public static IpcRpcEndpoint Create<THandler>(THandler handler, IpcRpcHandlerMethodDescriptor descriptor)
+    public static IpcRpcEndpoint Create<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)]
+        THandler>(IpcRpcHandlerMethodDescriptor descriptor)
         where THandler : class, IIpcRequestsHandler
     {
         var endpointType = descriptor.Kind switch
         {
             IpcRpcHandlerMethodKind.RequestResponse =>
-                typeof(RequestResponseEndpoint<,>).MakeGenericType(
+                typeof(RequestResponseEndpoint<,,>).MakeGenericType(
+                    typeof(THandler),
                     descriptor.RequestType!,
                     descriptor.ResponseType!),
 
             IpcRpcHandlerMethodKind.RequestCommand =>
-                typeof(RequestCommandEndpoint<>).MakeGenericType(
+                typeof(RequestCommandEndpoint<,>).MakeGenericType(
+                    typeof(THandler),
                     descriptor.RequestType!),
 
             IpcRpcHandlerMethodKind.CommandResponse =>
-                typeof(CommandResponseEndpoint<>).MakeGenericType(
+                typeof(CommandResponseEndpoint<,>).MakeGenericType(
+                    typeof(THandler),
                     descriptor.ResponseType!),
 
             IpcRpcHandlerMethodKind.Command =>
-                null,
+                typeof(CommandEndpoint<>).MakeGenericType(typeof(THandler)),
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(descriptor),
@@ -35,11 +41,6 @@ internal static class IpcRpcEndpointFactory
                 "Unsupported IPC endpoint kind.")
         };
 
-        if (endpointType is null)
-        {
-            return new CommandEndpoint(handler, descriptor);
-        }
-
-        return (IpcRpcEndpoint)Activator.CreateInstance(endpointType, handler, descriptor)!;
+        return (IpcRpcEndpoint)Activator.CreateInstance(endpointType, descriptor)!;
     }
 }

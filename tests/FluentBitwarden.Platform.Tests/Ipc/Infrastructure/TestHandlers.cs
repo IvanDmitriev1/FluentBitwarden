@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
 
-public sealed class RpcShapesHandler : IIpcRequestsHandler
+public sealed class RpcShapesHandlerState
 {
     public int EchoInvocationCount { get; private set; }
     public int RequestCommandInvocationCount { get; private set; }
@@ -11,41 +11,55 @@ public sealed class RpcShapesHandler : IIpcRequestsHandler
     public EchoRequest LastEchoRequest { get; private set; }
     public CommandRequest LastCommandRequest { get; private set; }
 
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    public void RecordEcho(EchoRequest request)
     {
         EchoInvocationCount++;
         LastEchoRequest = request;
+    }
+
+    public void RecordRequestCommand(CommandRequest request)
+    {
+        RequestCommandInvocationCount++;
+        LastCommandRequest = request;
+    }
+
+    public void RecordCommandResponse() => CommandResponseInvocationCount++;
+
+    public void RecordCommand() => CommandInvocationCount++;
+}
+
+public sealed class RpcShapesHandler(RpcShapesHandlerState state) : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    {
+        state.RecordEcho(request);
         return ValueTask.FromResult(new EchoResponse(91, $"response:{request.Text}", 407));
     }
 
     public ValueTask Apply(CommandRequest request, CancellationToken cancellationToken)
     {
-        RequestCommandInvocationCount++;
-        LastCommandRequest = request;
+        state.RecordRequestCommand(request);
         return ValueTask.CompletedTask;
     }
 
     [IpcMessageHandler(TestMessageTypes.CommandResponse)]
     public ValueTask<EchoResponse> GetCommandResponse(CancellationToken cancellationToken)
     {
-        CommandResponseInvocationCount++;
+        state.RecordCommandResponse();
         return ValueTask.FromResult(new EchoResponse(17, "command-response", 3));
     }
 
     [IpcMessageHandler(TestMessageTypes.Command)]
     public ValueTask RunCommand(CancellationToken cancellationToken)
     {
-        CommandInvocationCount++;
+        state.RecordCommand();
         return ValueTask.CompletedTask;
     }
 }
 
-public sealed class BlockingEchoHandler : IIpcRequestsHandler
+public sealed class BlockingEchoHandlerState
 {
     private readonly ConcurrentDictionary<int, RequestState> states = new();
-
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
-        WaitForReleaseAsync(request, cancellationToken);
 
     internal RequestState StateFor(int requestNumber) =>
         states.GetOrAdd(requestNumber, static _ => new RequestState());
@@ -61,7 +75,7 @@ public sealed class BlockingEchoHandler : IIpcRequestsHandler
             new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
-    private async ValueTask<EchoResponse> WaitForReleaseAsync(
+    public async ValueTask<EchoResponse> WaitForReleaseAsync(
         EchoRequest request,
         CancellationToken cancellationToken)
     {
@@ -83,7 +97,13 @@ public sealed class BlockingEchoHandler : IIpcRequestsHandler
     }
 }
 
-public sealed class ImmediateEchoHandler : IIpcRequestsHandler
+public sealed class BlockingEchoHandler(BlockingEchoHandlerState state) : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+        state.WaitForReleaseAsync(request, cancellationToken);
+}
+
+public sealed class ImmediateEchoHandlerState
 {
     public TaskCompletionSource<bool> Completed { get; } =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -91,11 +111,127 @@ public sealed class ImmediateEchoHandler : IIpcRequestsHandler
     public bool HandlerTokenWasCancelled { get; private set; }
     public int InvocationCount { get; private set; }
 
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    public void RecordInvocation(CancellationToken cancellationToken)
     {
         InvocationCount++;
         HandlerTokenWasCancelled = cancellationToken.IsCancellationRequested;
         Completed.TrySetResult(true);
+    }
+}
+
+public sealed class ImmediateEchoHandler(ImmediateEchoHandlerState state) : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    {
+        state.RecordInvocation(cancellationToken);
         return ValueTask.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
+    }
+}
+
+public sealed class ScopedLifetimeProbe
+{
+    private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> disposals = new();
+    private int nextInstanceId;
+    private int disposalCount;
+
+    public int DisposalCount => Volatile.Read(ref disposalCount);
+
+    public int CreateInstance()
+    {
+        int instanceId = Interlocked.Increment(ref nextInstanceId);
+        disposals[instanceId] = NewCompletionSource();
+        return instanceId;
+    }
+
+    public Task DisposalFor(int instanceId) => disposals[instanceId].Task;
+
+    public void RecordDisposal(int instanceId)
+    {
+        if (disposals[instanceId].TrySetResult(true))
+            Interlocked.Increment(ref disposalCount);
+    }
+
+    private static TaskCompletionSource<bool> NewCompletionSource() =>
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+}
+
+public sealed class ScopedRequestDependency(ScopedLifetimeProbe probe) : IAsyncDisposable
+{
+    public int InstanceId { get; } = probe.CreateInstance();
+
+    public ValueTask DisposeAsync()
+    {
+        probe.RecordDisposal(InstanceId);
+        return ValueTask.CompletedTask;
+    }
+}
+
+public sealed class ScopedLifetimeHandler(ScopedRequestDependency dependency) : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(new EchoResponse(request.Number, request.Text, dependency.InstanceId));
+}
+
+public sealed class ScopedRequestState
+{
+    private readonly TaskCompletionSource<bool> cancellationGate =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public TaskCompletionSource<int> Started { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public TaskCompletionSource<bool> Completed { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public void RecordStarted(int instanceId) => Started.TrySetResult(instanceId);
+
+    public void RecordCompleted() => Completed.TrySetResult(true);
+
+    public Task WaitForCancellationAsync(CancellationToken cancellationToken) =>
+        cancellationGate.Task.WaitAsync(cancellationToken);
+}
+
+public sealed class ScopedCancellationHandler(
+    ScopedRequestDependency dependency,
+    ScopedRequestState state)
+    : IIpcRequestsHandler
+{
+    public async ValueTask<EchoResponse> Echo(
+        EchoRequest request,
+        CancellationToken cancellationToken)
+    {
+        state.RecordStarted(dependency.InstanceId);
+
+        try
+        {
+            await state.WaitForCancellationAsync(cancellationToken);
+            return new EchoResponse(request.Number, request.Text, dependency.InstanceId);
+        }
+        finally
+        {
+            state.RecordCompleted();
+        }
+    }
+}
+
+public sealed class ScopedThrowingHandler(
+    ScopedRequestDependency dependency,
+    ScopedRequestState state)
+    : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(
+        EchoRequest request,
+        CancellationToken cancellationToken)
+    {
+        state.RecordStarted(dependency.InstanceId);
+
+        try
+        {
+            throw new InvalidOperationException("Expected test handler failure.");
+        }
+        finally
+        {
+            state.RecordCompleted();
+        }
     }
 }

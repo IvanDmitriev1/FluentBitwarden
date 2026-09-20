@@ -6,7 +6,9 @@
     <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
 	  <IsAotCompatible>false</IsAotCompatible>
-    <EnableAotAnalyzer>false</EnableAotAnalyzer>
+	  <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+	  <EnableAotAnalyzer>false</EnableAotAnalyzer>
+	  <EnableSingleFileAnalyzer>false</EnableSingleFileAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

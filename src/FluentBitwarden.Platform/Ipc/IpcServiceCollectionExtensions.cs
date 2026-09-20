@@ -19,7 +19,8 @@ public static class IpcServiceCollectionExtensions
             services.AddHostedService(sp =>
                 new PipeIpcServer(
                     pipeName,
-                    handlers.Build(sp),
+                    handlers.Build(),
+                    sp.GetRequiredService<IServiceScopeFactory>(),
                     sp.GetRequiredService<IIpcClientsVerifier>(),
                     sp.GetRequiredService<ILogger<PipeIpcServer>>()));
 

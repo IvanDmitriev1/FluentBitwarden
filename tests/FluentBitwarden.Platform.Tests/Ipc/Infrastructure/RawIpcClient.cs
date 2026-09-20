@@ -6,9 +6,10 @@ namespace FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
 internal static class RawIpcClient
 {
     private const int RequestHeaderSize = sizeof(ushort) + sizeof(ushort) + sizeof(int);
-    private const int ResponseHeaderSize = sizeof(ushort) + sizeof(int);
 
-    public static async Task<NamedPipeClientStream> ConnectAsync(string pipeName)
+    public static async Task<NamedPipeClientStream> ConnectAsync(
+        string pipeName,
+        CancellationToken cancellationToken)
     {
         var pipe = new NamedPipeClientStream(
             ".",
@@ -18,7 +19,7 @@ internal static class RawIpcClient
 
         try
         {
-            await pipe.ConnectAsync((int)IpcTestHost.Timeout.TotalMilliseconds);
+            await pipe.ConnectAsync(IpcTestHost.TimeoutMilliseconds, cancellationToken);
             return pipe;
         }
         catch
@@ -44,43 +45,55 @@ internal static class RawIpcClient
         Stream pipe,
         ushort version,
         ushort messageType,
-        ReadOnlyMemory<byte> payload = default)
+        ReadOnlyMemory<byte> payload,
+        CancellationToken cancellationToken)
     {
         byte[] header = RequestHeader(version, messageType, payload.Length);
-        await pipe.WriteAsync(header);
+        await pipe.WriteAsync(header, cancellationToken);
         if (!payload.IsEmpty)
-            await pipe.WriteAsync(payload);
-        await pipe.FlushAsync();
+            await pipe.WriteAsync(payload, cancellationToken);
+        await pipe.FlushAsync(cancellationToken);
     }
 
-    public static async Task<Exception> SendMalformedRequestAsync(
+    public static async Task SendRequestExpectingServerDisconnectAsync(
         string pipeName,
         ReadOnlyMemory<byte> request,
-        bool closeAfterWrite)
+        CancellationToken cancellationToken)
     {
-        await using var pipe = await ConnectAsync(pipeName);
-        Task<Exception> responseRead = ReadResponseFailureAsync(pipe);
+        await using var pipe = await ConnectAsync(pipeName, cancellationToken);
+        Task responseRead = ReadServerDisconnectAsync(pipe, cancellationToken);
 
-        await pipe.WriteAsync(request);
-        await pipe.FlushAsync();
+        await pipe.WriteAsync(request, cancellationToken);
+        await pipe.FlushAsync(cancellationToken);
 
-        if (closeAfterWrite)
-            await pipe.DisposeAsync();
-
-        return await responseRead.WaitAsync(IpcTestHost.Timeout);
+        await responseRead.WaitAsync(IpcTestHost.Timeout, cancellationToken);
     }
 
-    private static async Task<Exception> ReadResponseFailureAsync(Stream pipe)
+    public static async Task SendPartialRequestAndDisconnectAsync(
+        string pipeName,
+        ReadOnlyMemory<byte> request,
+        CancellationToken cancellationToken)
+    {
+        await using var pipe = await ConnectAsync(pipeName, cancellationToken);
+
+        await pipe.WriteAsync(request, cancellationToken);
+        await pipe.FlushAsync(cancellationToken);
+    }
+
+    private static async Task ReadServerDisconnectAsync(
+        Stream pipe,
+        CancellationToken cancellationToken)
     {
         try
         {
-            byte[] header = new byte[ResponseHeaderSize];
-            await pipe.ReadExactlyAsync(header);
-            return new InvalidOperationException("The server unexpectedly sent a response.");
+            byte[] responseStart = new byte[1];
+            await pipe.ReadExactlyAsync(responseStart, cancellationToken);
         }
-        catch (Exception exception)
+        catch (IOException)
         {
-            return exception;
+            return;
         }
+
+        throw new InvalidOperationException("The server unexpectedly sent a response.");
     }
 }

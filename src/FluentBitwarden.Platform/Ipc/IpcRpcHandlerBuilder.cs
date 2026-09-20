@@ -6,7 +6,7 @@ namespace FluentBitwarden.Platform.Ipc;
 
 public sealed class IpcRpcHandlerBuilder(IServiceCollection services)
 {
-    private readonly Dictionary<ushort, (Type HandlerType, Func<IServiceProvider, IpcRpcEndpoint> Create)> _endpoints = [];
+    private readonly Dictionary<ushort, (Type HandlerType, IpcRpcEndpoint Endpoint)> _endpoints = [];
 
     [RequiresDynamicCode("IPC handler registration closes generic invoker types at runtime.")]
     [RequiresUnreferencedCode("IPC handler registration reflects over handler methods and message metadata.")]
@@ -18,28 +18,25 @@ public sealed class IpcRpcHandlerBuilder(IServiceCollection services)
     {
         foreach (var descriptor in IpcRpcHandlerMethodDescriptorFactory.Discover<THandler>())
         {
-            var registration = (
-                HandlerType: typeof(THandler),
-                Create: (Func<IServiceProvider, IpcRpcEndpoint>)(serviceProvider =>
-                    IpcRpcEndpointFactory.Create(
-                        serviceProvider.GetRequiredService<THandler>(), descriptor)));
-
-            if (!_endpoints.TryAdd(descriptor.MessageType, registration))
+            if (_endpoints.TryGetValue(descriptor.MessageType, out var existingRegistration))
             {
-                var existingHandler = _endpoints[descriptor.MessageType].HandlerType;
                 throw new InvalidOperationException(
                     $"RPC message type '{descriptor.MessageType}' is already registered by " +
-                    $"'{existingHandler.FullName}' and cannot also be registered by " +
+                    $"'{existingRegistration.HandlerType.FullName}' and cannot also be registered by " +
                     $"'{typeof(THandler).FullName}'.");
             }
+
+            _endpoints.Add(
+                descriptor.MessageType,
+                (typeof(THandler), IpcRpcEndpointFactory.Create<THandler>(descriptor)));
         }
 
-        services.TryAddSingleton<THandler>();
+        services.TryAddScoped<THandler>();
         return this;
     }
 
-    internal IReadOnlyDictionary<ushort, IpcRpcEndpoint> Build(IServiceProvider serviceProvider) =>
+    internal IReadOnlyDictionary<ushort, IpcRpcEndpoint> Build() =>
         _endpoints.ToDictionary(
             static pair => pair.Key,
-            pair => pair.Value.Create(serviceProvider));
+            static pair => pair.Value.Endpoint);
 }

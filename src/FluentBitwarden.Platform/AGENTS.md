@@ -6,7 +6,7 @@ Root instructions apply. This project supplies reusable Windows plumbing: named-
 
 ## IPC and compatibility
 
-Ipc/ contains abstractions, transport headers, dispatch internals, pipe services, constants, and registration extensions. A request connection carries one request and one response; it is not multiplexed or sessionful. Register handlers through IpcRpcHandlerBuilder.Add<THandler>(); duplicate IDs intentionally fail at startup. The default IPC authentication level is SamePackage; lower it only with a written reason.
+Ipc/ contains abstractions, transport headers, dispatch internals, pipe services, constants, and registration extensions. A request connection carries one request and one response; it is not multiplexed or sessionful. Register handlers through IpcRpcHandlerBuilder.Add<THandler>(); duplicate IDs intentionally fail at startup. RPC endpoints and their open delegates are cached at registration, while handlers are scoped by default and resolved from an asynchronously disposed scope per valid request. The default IPC authentication level is SamePackage; lower it only with a written reason.
 
 Ipc/Transport headers are protocol. A framing change must update IpcConstants.ProtocolVersion, pipe names, and the mirrored FluentBitwarden.ComServer implementation. Events are one-way through IIpcEventPublisher and IIpcEventClient.
 
