@@ -6,4 +6,6 @@ internal interface IDbSession
 {
     SqliteConnection Connection { get; }
     SqliteTransaction? Transaction { get; }
+
+
 }

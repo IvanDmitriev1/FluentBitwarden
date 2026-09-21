@@ -10,4 +10,7 @@ global using Windows.Win32;
 global using Windows.Win32.Foundation;
 global using Windows.Win32.UI.Shell;
 global using Windows.Win32.UI.WindowsAndMessaging;
+global using BitwardenApi.Primitives.Ids;
 global using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+global using FluentBitwarden.AppHost.Infrastructure.Extensions;
+global using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;

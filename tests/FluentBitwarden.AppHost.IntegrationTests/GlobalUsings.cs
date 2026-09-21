@@ -1,0 +1,10 @@
+global using BitwardenApi.Identity.Contracts;
+global using BitwardenApi.Infrastructure.Cryptography;
+global using BitwardenApi.Infrastructure.Cryptography.Enc;
+global using BitwardenApi.Primitives;
+global using BitwardenApi.Primitives.Ids;
+global using BitwardenApi.Vault.Items.Contracts;
+global using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+global using FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
+global using FluentBitwarden.AppHost.Modules.Account.Persistance;
+global using Microsoft.Data.Sqlite;

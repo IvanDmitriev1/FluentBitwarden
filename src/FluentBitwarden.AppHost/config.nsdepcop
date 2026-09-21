@@ -5,6 +5,7 @@
                 MaxIssueCount="500">
 
 
+  <!-- Shared framework, platform, API, and contract dependencies are available throughout AppHost. -->
   <Allowed From="FluentBitwarden.*" To="System.*" />
   <Allowed From="FluentBitwarden.*" To="Microsoft.*" />
   <Allowed From="FluentBitwarden.*" To="WinRT.*" />
@@ -15,6 +16,7 @@
   <Allowed From="FluentBitwarden.*" To="FluentBitwarden.Platform.*" />
   <Allowed From="FluentBitwarden.*" To="FluentBitwarden.Contracts.*" />
 
+  <!-- Hosting owns its implementation details and may compose Infrastructure services. -->
   <Allowed
     From="FluentBitwarden.AppHost.Hosting.*"
     To="FluentBitwarden.AppHost.Hosting.*" />
@@ -23,6 +25,7 @@
     From="FluentBitwarden.AppHost.Hosting.*"
     To="FluentBitwarden.AppHost.Infrastructure.*" />
 
+  <!-- Infrastructure may use its own implementation details. -->
   <Allowed
     From="FluentBitwarden.AppHost.Infrastructure.*"
     To="FluentBitwarden.AppHost.Infrastructure.*" />
@@ -31,7 +34,37 @@
     From="FluentBitwarden.AppHost.Infrastructure.Data.*"
     To="DbUp.*" />
 
+  <!-- Feature modules may use shared AppHost infrastructure, but not the reverse. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.Modules.*"
+    To="FluentBitwarden.AppHost.Infrastructure.*" />
 
+  <!-- A module may reference its own implementation namespaces. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.Modules.[Module].*"
+    To="FluentBitwarden.AppHost.Modules.[Module].*" />
+
+  <!-- Module registration composes the implementations into the host. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.Modules"
+    To="FluentBitwarden.AppHost.Modules.*" />
+
+  <!-- Code outside a module may depend on that module only through Contracts. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.*"
+    To="FluentBitwarden.AppHost.Modules.*.Contracts.*" />
+
+  <!-- AppSession follows the same internal/Contracts boundary as a feature module. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.AppSession.*"
+    To="FluentBitwarden.AppHost.AppSession.*" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost.*"
+    To="FluentBitwarden.AppHost.AppSession.Contracts.*" />
+
+
+  <!-- The AppHost composition root may register Hosting and Infrastructure services. -->
   <Allowed
     From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.Hosting" />
@@ -42,6 +75,6 @@
 
 
   
-
+  
   
 </NsDepCopConfig>

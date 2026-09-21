@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="FluentBitwarden.AppHost.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\FluentBitwarden.Ui\Assets\Bitwarden_icon.ico" Link="Assets\Bitwarden_icon.ico" CopyToOutputDirectory="PreserveNewest" />
     <EmbeddedResource Include="Infrastructure\Data\Migrations\**\*.sql" />
     <Manifest Include="$(ApplicationManifest)" />

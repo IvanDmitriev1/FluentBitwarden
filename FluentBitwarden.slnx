@@ -29,6 +29,9 @@
     </Project>
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/FluentBitwarden.AppHost.IntegrationTests/FluentBitwarden.AppHost.IntegrationTests.csproj">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="tests/FluentBitwarden.Platform.Tests/FluentBitwarden.Platform.Tests.csproj" Id="cd4a1a93-8310-4af8-b7d5-dd6c1e1d9409" />
   </Folder>
 </Solution>

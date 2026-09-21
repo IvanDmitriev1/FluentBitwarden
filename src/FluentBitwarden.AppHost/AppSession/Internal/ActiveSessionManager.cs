@@ -1,6 +1,5 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.Contracts.AppSession.Status;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.AppHost.AppSession.Internal;
 

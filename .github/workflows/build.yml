@@ -51,3 +51,11 @@ jobs:
           /p:AppxPackageSigningEnabled=false
           /p:GenerateAppxPackageOnBuild=false
           /v:minimal
+
+      - name: Run tests
+        run: >
+          dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj
+          --no-build
+          --configuration ${{ env.Configuration }}
+          --arch x64
+          --results-directory TestResults
