@@ -5,20 +5,25 @@ using FluentBitwarden.Contracts.AppSession.Unlock;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
-internal sealed class AppSessionService(AppSessionState appSessionState) : IAppSessionService
+internal sealed class AppSessionService(ActiveSessionManager activeSessionManager) : IAppSessionService
 {
-    public AppSessionSnapshot Snapshot => appSessionState.Current;
+    public AppSessionSnapshot Snapshot => activeSessionManager.Snapshot;
 
-    public Task<UnlockedSessionView> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default) =>
-        appSessionState.WaitUntilUnlockedAsync(cancellationToken);
+    public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default)
+        => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);
 
-    public ValueTask<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken = default)
+    public async ValueTask<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken = default)
     {
+        using var transition = activeSessionManager.TryEnterTransition();
+        if (transition is null)
+            throw new OperationCanceledException("Concurrent session unlock attempt detected.");
+
         throw new NotImplementedException();
     }
 
-    public ValueTask LockAsync(CancellationToken cancellationToken = default)
+    public async ValueTask LockAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        using var transition = await activeSessionManager.EnterTransition(cancellationToken);
+        transition.Lock();
     }
 }

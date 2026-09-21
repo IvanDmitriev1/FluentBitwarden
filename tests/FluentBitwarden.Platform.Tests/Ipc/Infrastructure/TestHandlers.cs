@@ -128,6 +128,16 @@ public sealed class ImmediateEchoHandler(ImmediateEchoHandlerState state) : IIpc
     }
 }
 
+public sealed class ServerCancellingHandler : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(
+        EchoRequest request,
+        CancellationToken cancellationToken)
+    {
+        throw new OperationCanceledException("Expected test handler cancellation.");
+    }
+}
+
 public sealed class ScopedLifetimeProbe
 {
     private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> disposals = new();

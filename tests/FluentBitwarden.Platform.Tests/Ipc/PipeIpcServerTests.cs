@@ -136,6 +136,19 @@ public class PipeIpcServerTests
     }
 
     [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Server_cancelled_request_is_reported_as_operation_canceled_to_client()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHost.StartAsync<ServerCancellingHandler>(
+            cancellationToken: testCancellation);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(9, "server-cancelled"),
+                testCancellation).AsTask());
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
     public async Task Failed_response_write_after_client_disconnect_does_not_stop_the_accept_loop()
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;

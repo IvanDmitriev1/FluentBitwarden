@@ -7,7 +7,7 @@ public interface IAppSessionService
 {
     AppSessionSnapshot Snapshot { get; }
 
-    Task<UnlockedSessionView> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default);
+    ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default);
 
     ValueTask<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request,
