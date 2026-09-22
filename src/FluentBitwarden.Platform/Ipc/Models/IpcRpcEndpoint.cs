@@ -6,7 +6,7 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
 
     public IpcAuthenticationLevel AuthenticationLevel { get; } = descriptor.AuthenticationLevel;
 
-    public async ValueTask InvokeAsync(
+    public async ValueTask<IpcRpcInvocationResult> InvokeAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
@@ -14,25 +14,57 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
     {
         using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var disconnectTask = stream.MonitorDisconnectAsync(requestCts);
+        IpcRpcInvocationResult result;
 
         try
         {
-            await InvokeCoreAsync(requestServices, stream, payload, requestCts.Token);
-            await stream.FlushAsync(requestCts.Token);
+            result = IpcRpcInvocationResult.Success(
+                await InvokeCoreAsync(requestServices, stream, payload, requestCts.Token));
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (
+            cancellationToken.IsCancellationRequested || requestCts.IsCancellationRequested)
         {
+            result = IpcRpcInvocationResult.NoResponse;
+        }
+        catch (Exception exception)
+        {
+            result = IpcRpcInvocationResult.Failure(exception);
         }
         finally
         {
             requestCts.Cancel();
-            await disconnectTask;
+            if (await disconnectTask && !cancellationToken.IsCancellationRequested)
+                result = IpcRpcInvocationResult.NoResponse;
         }
+
+        return result;
     }
 
-    protected abstract ValueTask InvokeCoreAsync(
+    protected abstract ValueTask<byte[]> InvokeCoreAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
         CancellationToken cancellationToken);
+}
+
+internal readonly record struct IpcRpcInvocationResult(
+    IpcRpcInvocationStatus Status,
+    byte[]? ResponsePayload,
+    Exception? Exception)
+{
+    public static IpcRpcInvocationResult Success(byte[] responsePayload) =>
+        new(IpcRpcInvocationStatus.Success, responsePayload, null);
+
+    public static IpcRpcInvocationResult Failure(Exception exception) =>
+        new(IpcRpcInvocationStatus.Failure, null, exception);
+
+    public static IpcRpcInvocationResult NoResponse =>
+        new(IpcRpcInvocationStatus.NoResponse, null, null);
+}
+
+internal enum IpcRpcInvocationStatus
+{
+    Success,
+    Failure,
+    NoResponse,
 }

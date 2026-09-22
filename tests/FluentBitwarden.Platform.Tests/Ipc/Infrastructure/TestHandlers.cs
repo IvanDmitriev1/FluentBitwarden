@@ -138,6 +138,43 @@ public sealed class ServerCancellingHandler : IIpcRequestsHandler
     }
 }
 
+public sealed class FailingRpcShapesHandler : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("Expected test handler failure.");
+
+    public ValueTask Apply(CommandRequest request, CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("Expected test handler failure.");
+
+    [IpcMessageHandler(TestMessageTypes.CommandResponse)]
+    public ValueTask<EchoResponse> GetCommandResponse(CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("Expected test handler failure.");
+
+    [IpcMessageHandler(TestMessageTypes.Command)]
+    public ValueTask RunCommand(CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("Expected test handler failure.");
+}
+
+public sealed class FailOnceHandlerState
+{
+    private int invocationCount;
+
+    public int InvocationCount => Volatile.Read(ref invocationCount);
+
+    public bool ShouldFail() => Interlocked.Increment(ref invocationCount) == 1;
+}
+
+public sealed class FailOnceHandler(FailOnceHandlerState state) : IIpcRequestsHandler
+{
+    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    {
+        if (state.ShouldFail())
+            throw new InvalidOperationException("Expected one-time test handler failure.");
+
+        return ValueTask.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
+    }
+}
+
 public sealed class ScopedLifetimeProbe
 {
     private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> disposals = new();

@@ -20,4 +20,7 @@ public abstract partial record SessionUnlockOutcome
 
     [MemoryPackable]
     public sealed partial record Failure(string Reason) : SessionUnlockOutcome;
+
+    [MemoryPackable]
+    public sealed partial record ConcurrentRequest : SessionUnlockOutcome;
 }

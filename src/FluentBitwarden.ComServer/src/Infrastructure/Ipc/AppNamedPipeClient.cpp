@@ -37,6 +37,11 @@ namespace FluentBitwarden::ComServer::Ipc
 		const auto responseHeader = ResponseHeader::Parse(
 			std::span<const std::byte>{ responseHeaderBuffer.data(), responseHeaderBuffer.size() });
 
+		if (!responseHeader.IsSuccessful)
+		{
+			THROW_HR(HRESULT_FROM_WIN32(ERROR_CANCELLED));
+		}
+
 		co_return co_await PipeWin32::ReadExactly(
 			m_pipe.get(),
 			static_cast<std::size_t>(responseHeader.PayloadLength));

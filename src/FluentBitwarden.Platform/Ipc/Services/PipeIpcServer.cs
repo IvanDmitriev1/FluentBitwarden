@@ -91,8 +91,41 @@ internal sealed class PipeIpcServer(
             byte[] payload = new byte[header.PayloadLength];
             await pipe.ReadExactlyAsync(payload, 0, payload.Length, stoppingToken);
 
-            await using var scope = scopeFactory.CreateAsyncScope();
-            await endpoint.InvokeAsync(scope.ServiceProvider, pipe, payload, stoppingToken);
+            IpcRpcInvocationResult result;
+            try
+            {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                result = await endpoint.InvokeAsync(scope.ServiceProvider, pipe, payload, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception exception)
+            {
+                result = IpcRpcInvocationResult.Failure(exception);
+            }
+
+            switch (result.Status)
+            {
+                case IpcRpcInvocationStatus.NoResponse:
+                    return;
+
+                case IpcRpcInvocationStatus.Failure:
+                    logger.RequestFailed(result.Exception!);
+                    await TryWriteFailureResponseAsync(pipe, stoppingToken);
+                    return;
+
+                case IpcRpcInvocationStatus.Success:
+                    if (stoppingToken.IsCancellationRequested)
+                        return;
+
+                    await TryWriteSuccessResponseAsync(pipe, result.ResponsePayload!, stoppingToken);
+                    return;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
         catch (IOException)
         {
@@ -109,6 +142,53 @@ internal sealed class PipeIpcServer(
         finally
         {
             await pipe.DisposeAsync();
+        }
+    }
+
+    private async Task TryWriteSuccessResponseAsync(
+        NamedPipeServerStream pipe,
+        ReadOnlyMemory<byte> payload,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await IpcWireProtocol.WriteRpcResponseAsync(pipe, payload, cancellationToken);
+            await pipe.FlushAsync(cancellationToken);
+        }
+        catch (IOException)
+        {
+            logger.ClientDisconnected();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Host shutdown or a response write cancellation closes the connection.
+        }
+        catch (Exception exception)
+        {
+            logger.RequestFailed(exception);
+        }
+    }
+
+    private async Task TryWriteFailureResponseAsync(
+        NamedPipeServerStream pipe,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await IpcWireProtocol.WriteRpcFailureResponseAsync(pipe, cancellationToken);
+            await pipe.FlushAsync(cancellationToken);
+        }
+        catch (IOException)
+        {
+            logger.ClientDisconnected();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Host shutdown closes the connection without delivering a response.
+        }
+        catch (Exception exception)
+        {
+            logger.RequestFailed(exception);
         }
     }
 }

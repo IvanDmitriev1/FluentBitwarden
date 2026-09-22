@@ -48,8 +48,8 @@ Internal app traffic uses one request per named-pipe connection:
 
 | Pipe | Server | Clients | Purpose |
 | --- | --- | --- | --- |
-| `LOCAL\FluentBitwarden.v2` | `FluentBitwarden.AppHost.exe` | UI process and COM server | Account, vault, Windows Hello, passkey assertion, and lifecycle requests. |
-| `LOCAL\FluentBitwarden.Ui.v2` | `FluentBitwarden.Ui.exe` | AppHost process | User-facing prompts such as SSH approval and passkey credential selection. |
+| `LOCAL\FluentBitwarden.v3` | `FluentBitwarden.AppHost.exe` | UI process and COM server | Account, vault, Windows Hello, passkey assertion, and lifecycle requests. |
+| `LOCAL\FluentBitwarden.Ui.v3` | `FluentBitwarden.Ui.exe` | AppHost process | User-facing prompts such as SSH approval and passkey credential selection. |
 
 The AppHost also exposes the OpenSSH-compatible `openssh-ssh-agent` pipe for SSH-agent clients. That pipe uses the OpenSSH agent protocol, not the FluentBitwarden IPC protocol.
 

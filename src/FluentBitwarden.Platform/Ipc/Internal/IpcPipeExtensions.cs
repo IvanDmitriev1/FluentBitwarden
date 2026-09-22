@@ -72,7 +72,9 @@ internal static class IpcPipeExtensions
         return processImagePath;
     }
 
-    public static async Task MonitorDisconnectAsync(this Stream pipe, CancellationTokenSource requestCancellation)
+    public static async Task<bool> MonitorDisconnectAsync(
+        this Stream pipe,
+        CancellationTokenSource requestCancellation)
     {
         byte[] probe = new byte[1];
 
@@ -82,13 +84,16 @@ internal static class IpcPipeExtensions
             // EOF means disconnect; extra data is a protocol violation.
             _ = await pipe.ReadAsync(probe, requestCancellation.Token);
             requestCancellation.Cancel();
+            return true;
         }
         catch (IOException)
         {
             requestCancellation.Cancel();
+            return true;
         }
         catch (OperationCanceledException)
         {
+            return false;
         }
     }
 }

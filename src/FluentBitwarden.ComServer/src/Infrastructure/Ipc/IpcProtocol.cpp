@@ -78,6 +78,14 @@ namespace FluentBitwarden::ComServer::Ipc
 			throw std::runtime_error("Incompatible IPC protocol version.");
 		}
 
+		const auto isSuccessful = Binary::ReadLe<std::uint8_t>(
+			bytes.subspan(IsSuccessfulOffset, sizeof(std::uint8_t)));
+
+		if (isSuccessful > 1)
+		{
+			throw std::runtime_error("Invalid IPC response success flag.");
+		}
+
 		const auto payloadLength = Binary::ReadLe<std::int32_t>(
 			bytes.subspan(PayloadLengthOffset, sizeof(std::int32_t)));
 
@@ -86,8 +94,14 @@ namespace FluentBitwarden::ComServer::Ipc
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
 
+		if (isSuccessful == 0 && payloadLength != 0)
+		{
+			throw std::runtime_error("Failed IPC response must not include a payload.");
+		}
+
 		return ResponseHeader
 		{
+			.IsSuccessful = isSuccessful != 0,
 			.PayloadLength = payloadLength
 		};
 	}

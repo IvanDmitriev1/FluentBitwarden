@@ -118,7 +118,8 @@ internal sealed class ActiveSessionManager
         public void Unlock(UnlockedSessionState newState) =>
             Owner.UpdateState(state => state with
             {
-                UnlockedState = newState
+                UnlockedState = newState,
+                Account = newState.Account
             });
 
         public void Lock() =>

@@ -142,10 +142,55 @@ public class PipeIpcServerTests
         await using var host = await IpcTestHost.StartAsync<ServerCancellingHandler>(
             cancellationToken: testCancellation);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(() =>
             host.Client.SendAsync<EchoRequest, EchoResponse>(
                 new EchoRequest(9, "server-cancelled"),
                 testCancellation).AsTask());
+
+        Assert.Equal(new OperationCanceledException().Message, exception.Message);
+        Assert.Null(exception.InnerException);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Handler_failures_return_generic_failure_for_all_rpc_shapes()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHost.StartAsync<FailingRpcShapesHandler>(
+            cancellationToken: testCancellation);
+
+        await AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(51, "request-response"),
+            testCancellation));
+        await AssertGenericFailureAsync(() => host.Client.SendAsync<CommandRequest, IpcVoid>(
+            new CommandRequest("request-command", 52),
+            testCancellation));
+        await AssertGenericFailureAsync(() => host.Client.SendAsync<EchoResponse>(
+            TestMessageTypes.CommandResponse,
+            testCancellation));
+        await AssertGenericFailureAsync(() => host.Client.SendAsync<IpcVoid>(
+            TestMessageTypes.Command,
+            testCancellation));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Handler_failure_does_not_stop_the_listener_from_serving_subsequent_requests()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var state = new FailOnceHandlerState();
+        await using var host = await IpcTestHost.StartAsync<FailOnceHandler>(
+            configureServices: services => services.AddSingleton(state),
+            cancellationToken: testCancellation);
+
+        await AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(61, "fails-once"),
+            testCancellation));
+
+        EchoResponse response = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(62, "succeeds-next"),
+            testCancellation);
+
+        Assert.Equal(new EchoResponse(62, "succeeds-next", 62), response);
+        Assert.Equal(2, state.InvocationCount);
     }
 
     [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
@@ -268,11 +313,21 @@ public class PipeIpcServerTests
             IpcTestHost.Timeout,
             testCancellation);
 
-        await Assert.ThrowsAnyAsync<IOException>(async () =>
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
             await request.WaitAsync(IpcTestHost.Timeout, testCancellation));
         await state.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
         await probe.DisposalFor(instanceId).WaitAsync(IpcTestHost.Timeout, testCancellation);
 
         Assert.Equal(1, probe.DisposalCount);
+    }
+
+    private static async Task AssertGenericFailureAsync<TResponse>(
+        Func<ValueTask<TResponse>> operation)
+    {
+        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(
+            () => operation().AsTask());
+
+        Assert.Equal(new OperationCanceledException().Message, exception.Message);
+        Assert.Null(exception.InnerException);
     }
 }

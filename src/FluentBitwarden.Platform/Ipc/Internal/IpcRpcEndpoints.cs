@@ -17,7 +17,7 @@ internal sealed class RequestResponseEndpoint<
     private readonly Func<THandler, TRequest, CancellationToken, ValueTask<TResponse>> _handler =
         descriptor.Method.CreateDelegate<Func<THandler, TRequest, CancellationToken, ValueTask<TResponse>>>();
 
-    protected override async ValueTask InvokeCoreAsync(
+    protected override async ValueTask<byte[]> InvokeCoreAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
@@ -27,7 +27,7 @@ internal sealed class RequestResponseEndpoint<
         var handler = requestServices.GetRequiredService<THandler>();
         var response = await _handler.Invoke(handler, request, cancellationToken);
 
-        await IpcWireProtocol.WriteRpcResponseAsync(stream, response, cancellationToken);
+        return IpcWireProtocol.SerializeRpcResponse(response);
     }
 }
 
@@ -42,7 +42,7 @@ internal sealed class RequestCommandEndpoint<
     private readonly Func<THandler, TRequest, CancellationToken, ValueTask> _handler =
         descriptor.Method.CreateDelegate<Func<THandler, TRequest, CancellationToken, ValueTask>>();
 
-    protected override async ValueTask InvokeCoreAsync(
+    protected override async ValueTask<byte[]> InvokeCoreAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
@@ -52,7 +52,7 @@ internal sealed class RequestCommandEndpoint<
         var handler = requestServices.GetRequiredService<THandler>();
         await _handler.Invoke(handler, request, cancellationToken);
 
-        await IpcWireProtocol.WriteRpcResponseAsync(stream, IpcVoid.Value, cancellationToken);
+        return IpcWireProtocol.SerializeRpcResponse(IpcVoid.Value);
     }
 }
 
@@ -65,7 +65,7 @@ internal sealed class CommandResponseEndpoint<THandler, TResponse>(
     private readonly Func<THandler, CancellationToken, ValueTask<TResponse>> _handler =
         descriptor.Method.CreateDelegate<Func<THandler, CancellationToken, ValueTask<TResponse>>>();
 
-    protected override async ValueTask InvokeCoreAsync(
+    protected override async ValueTask<byte[]> InvokeCoreAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
@@ -75,7 +75,7 @@ internal sealed class CommandResponseEndpoint<THandler, TResponse>(
 
         var handler = requestServices.GetRequiredService<THandler>();
         var response = await _handler(handler, cancellationToken);
-        await IpcWireProtocol.WriteRpcResponseAsync(stream, response, cancellationToken);
+        return IpcWireProtocol.SerializeRpcResponse(response);
     }
 }
 
@@ -87,7 +87,7 @@ internal sealed class CommandEndpoint<THandler>(
     private readonly Func<THandler, CancellationToken, ValueTask> _handler =
         descriptor.Method.CreateDelegate<Func<THandler, CancellationToken, ValueTask>>();
 
-    protected override async ValueTask InvokeCoreAsync(
+    protected override async ValueTask<byte[]> InvokeCoreAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
@@ -97,6 +97,6 @@ internal sealed class CommandEndpoint<THandler>(
 
         var handler = requestServices.GetRequiredService<THandler>();
         await _handler(handler, cancellationToken);
-        await IpcWireProtocol.WriteRpcResponseAsync(stream, IpcVoid.Value, cancellationToken);
+        return IpcWireProtocol.SerializeRpcResponse(IpcVoid.Value);
     }
 }

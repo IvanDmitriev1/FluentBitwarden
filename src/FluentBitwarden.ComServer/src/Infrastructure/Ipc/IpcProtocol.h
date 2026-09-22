@@ -12,8 +12,8 @@ namespace FluentBitwarden::ComServer::Ipc
 {
 	namespace Constants
 	{
-		inline constexpr std::wstring_view PipePath = LR"(\\.\pipe\LOCAL\FluentBitwarden.v2)";
-		inline constexpr std::uint16_t ProtocolVersion = 2;
+		inline constexpr std::wstring_view PipePath = LR"(\\.\pipe\LOCAL\FluentBitwarden.v3)";
+		inline constexpr std::uint16_t ProtocolVersion = 3;
 	}
 
 	struct RequestHeader
@@ -36,14 +36,17 @@ namespace FluentBitwarden::ComServer::Ipc
 
 	struct ResponseHeader
 	{
+		bool IsSuccessful{};
 		std::int32_t PayloadLength{};
 
-		static constexpr std::size_t Size = sizeof(std::uint16_t) + sizeof(std::int32_t);
+		static constexpr std::size_t Size = sizeof(std::uint16_t) + sizeof(std::uint8_t) + sizeof(std::int32_t);
 		static constexpr std::size_t VersionOffset = 0;
-		static constexpr std::size_t PayloadLengthOffset = VersionOffset + sizeof(std::uint16_t);
+		static constexpr std::size_t IsSuccessfulOffset = VersionOffset + sizeof(std::uint16_t);
+		static constexpr std::size_t PayloadLengthOffset = IsSuccessfulOffset + sizeof(std::uint8_t);
 
 		static_assert(PayloadLengthOffset + sizeof(std::int32_t) == Size);
 		static_assert(sizeof(std::uint16_t) == 2);
+		static_assert(sizeof(std::uint8_t) == 1);
 		static_assert(sizeof(std::int32_t) == 4);
 
 		[[nodiscard]] static ResponseHeader Parse(std::span<const std::byte> bytes);

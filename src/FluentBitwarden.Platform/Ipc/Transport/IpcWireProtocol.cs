@@ -25,18 +25,25 @@ internal static class IpcWireProtocol
         return header.WriteAsync(stream, cancellationToken);
     }
 
-    public static async ValueTask WriteRpcResponseAsync<TMessage>(
-        Stream stream,
-        TMessage message,
-        CancellationToken cancellationToken)
+    public static byte[] SerializeRpcResponse<TMessage>(TMessage message)
         where TMessage : notnull
-    {
-        byte[] payload = MemoryPackSerializer.Serialize(new IpcOptional<TMessage>(message));
+        => MemoryPackSerializer.Serialize(new IpcOptional<TMessage>(message));
 
-        IpcRpcResponseHeader header = new(payload.Length);
+    public static async ValueTask WriteRpcResponseAsync(
+        Stream stream,
+        ReadOnlyMemory<byte> payload,
+        CancellationToken cancellationToken)
+    {
+        IpcRpcResponseHeader header = new(IsSuccessful: true, payload.Length);
         await header.WriteAsync(stream, cancellationToken);
         await stream.WriteAsync(payload, cancellationToken);
     }
+
+    public static ValueTask WriteRpcFailureResponseAsync(
+        Stream stream,
+        CancellationToken cancellationToken) =>
+        new IpcRpcResponseHeader(IsSuccessful: false, PayloadLength: 0)
+            .WriteAsync(stream, cancellationToken);
 
     public static async ValueTask WriteEventAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>(

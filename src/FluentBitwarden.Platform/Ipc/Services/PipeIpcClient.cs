@@ -19,11 +19,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             request,
             cancellationToken);
 
-        var responseHeader = await IpcRpcResponseHeader.ReadAsync(pipe, cancellationToken);
-        return (await IpcWireProtocol.ReadRpcResponsePayloadAsync<TResponse>(
-            pipe,
-            responseHeader.PayloadLength,
-            cancellationToken))!;
+        return await ReadResponseAsync<TResponse>(pipe, cancellationToken);
     }
 
     public async ValueTask<TResponse> SendAsync<
@@ -40,7 +36,19 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
             messageType,
             cancellationToken);
 
+        return await ReadResponseAsync<TResponse>(pipe, cancellationToken);
+    }
+
+    private static async ValueTask<TResponse> ReadResponseAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+    TResponse>(
+        Stream pipe,
+        CancellationToken cancellationToken)
+    {
         var responseHeader = await IpcRpcResponseHeader.ReadAsync(pipe, cancellationToken);
+        if (!responseHeader.IsSuccessful)
+            throw new OperationCanceledException();
+
         return (await IpcWireProtocol.ReadRpcResponsePayloadAsync<TResponse>(
             pipe,
             responseHeader.PayloadLength,

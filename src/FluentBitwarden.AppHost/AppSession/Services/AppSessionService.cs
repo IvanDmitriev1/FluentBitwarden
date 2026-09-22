@@ -17,16 +17,15 @@ internal sealed class AppSessionService(
     public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default)
         => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);
 
-    public async ValueTask<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken = default)
+    public SessionUnlockOutcome Unlock(SessionUnlockRequest request, CancellationToken cancellationToken = default)
     {
         using var sessionTransitionGate = activeSessionManager.TryEnterTransition();
         if (sessionTransitionGate is null)
-            throw new OperationCanceledException("Concurrent session unlock attempt detected.");
+            return new SessionUnlockOutcome.ConcurrentRequest();
 
-        var currentAccount = activeSessionManager.Snapshot.CurrentAccount;
-        if (currentAccount is not null)
+        if (activeSessionManager.Snapshot.Status == AppSessionStatus.Unlocked)
         {
-            return currentAccount.UserId == request.UserId
+            return activeSessionManager.Snapshot.CurrentAccount?.UserId == request.UserId
                 ? new SessionUnlockOutcome.Success()
                 : new SessionUnlockOutcome.Failure(
                     "Lock the current account before unlocking another account.");
