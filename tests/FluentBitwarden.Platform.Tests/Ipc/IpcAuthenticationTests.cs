@@ -10,7 +10,7 @@ public class IpcAuthenticationTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
             IpcAuthenticationLevel.Rejected,
             services => services.AddSingleton(state),
             testCancellation);
@@ -29,7 +29,7 @@ public class IpcAuthenticationTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
             IpcAuthenticationLevel.SamePackage,
             services => services.AddSingleton(state),
             testCancellation);

@@ -11,7 +11,7 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new RpcShapesHandlerState();
-        await using var host = await IpcTestHost.StartAsync<RpcShapesHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<RpcShapesHandler>(
             configureServices: services => services.AddSingleton(state),
             cancellationToken: testCancellation);
 
@@ -46,7 +46,7 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var handlerState = new BlockingEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<BlockingEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<BlockingEchoHandler>(
             configureServices: services => services.AddSingleton(handlerState),
             cancellationToken: testCancellation);
         var firstState = handlerState.StateFor(1);
@@ -78,7 +78,7 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var handlerState = new BlockingEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<BlockingEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<BlockingEchoHandler>(
             configureServices: services => services.AddSingleton(handlerState),
             cancellationToken: testCancellation);
         var cancelledState = handlerState.StateFor(3);
@@ -121,7 +121,7 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
             configureServices: services => services.AddSingleton(state),
             cancellationToken: testCancellation);
 
@@ -139,7 +139,7 @@ public class PipeIpcServerTests
     public async Task Server_cancelled_request_is_reported_as_operation_canceled_to_client()
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
-        await using var host = await IpcTestHost.StartAsync<ServerCancellingHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ServerCancellingHandler>(
             cancellationToken: testCancellation);
 
         OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(() =>
@@ -155,19 +155,19 @@ public class PipeIpcServerTests
     public async Task Handler_failures_return_generic_failure_for_all_rpc_shapes()
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
-        await using var host = await IpcTestHost.StartAsync<FailingRpcShapesHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<FailingRpcShapesHandler>(
             cancellationToken: testCancellation);
 
-        await AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(51, "request-response"),
             testCancellation));
-        await AssertGenericFailureAsync(() => host.Client.SendAsync<CommandRequest, IpcVoid>(
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<CommandRequest, IpcVoid>(
             new CommandRequest("request-command", 52),
             testCancellation));
-        await AssertGenericFailureAsync(() => host.Client.SendAsync<EchoResponse>(
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EchoResponse>(
             TestMessageTypes.CommandResponse,
             testCancellation));
-        await AssertGenericFailureAsync(() => host.Client.SendAsync<IpcVoid>(
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<IpcVoid>(
             TestMessageTypes.Command,
             testCancellation));
     }
@@ -177,11 +177,11 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new FailOnceHandlerState();
-        await using var host = await IpcTestHost.StartAsync<FailOnceHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<FailOnceHandler>(
             configureServices: services => services.AddSingleton(state),
             cancellationToken: testCancellation);
 
-        await AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(61, "fails-once"),
             testCancellation));
 
@@ -198,7 +198,7 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var handlerState = new BlockingEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<BlockingEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<BlockingEchoHandler>(
             configureServices: services => services.AddSingleton(handlerState),
             cancellationToken: testCancellation);
         var state = handlerState.StateFor(7);
@@ -236,7 +236,7 @@ public class PipeIpcServerTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var probe = new ScopedLifetimeProbe();
-        await using var host = await IpcTestHost.StartAsync<ScopedLifetimeHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ScopedLifetimeHandler>(
             configureServices: services =>
             {
                 services.AddSingleton(probe);
@@ -265,7 +265,7 @@ public class PipeIpcServerTests
         using var requestCancellation = new CancellationTokenSource();
         var probe = new ScopedLifetimeProbe();
         var state = new ScopedRequestState();
-        await using var host = await IpcTestHost.StartAsync<ScopedCancellationHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ScopedCancellationHandler>(
             configureServices: services =>
             {
                 services.AddSingleton(probe);
@@ -297,7 +297,7 @@ public class PipeIpcServerTests
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var probe = new ScopedLifetimeProbe();
         var state = new ScopedRequestState();
-        await using var host = await IpcTestHost.StartAsync<ScopedThrowingHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ScopedThrowingHandler>(
             configureServices: services =>
             {
                 services.AddSingleton(probe);
@@ -319,15 +319,5 @@ public class PipeIpcServerTests
         await probe.DisposalFor(instanceId).WaitAsync(IpcTestHost.Timeout, testCancellation);
 
         Assert.Equal(1, probe.DisposalCount);
-    }
-
-    private static async Task AssertGenericFailureAsync<TResponse>(
-        Func<ValueTask<TResponse>> operation)
-    {
-        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(
-            () => operation().AsTask());
-
-        Assert.Equal(new OperationCanceledException().Message, exception.Message);
-        Assert.Null(exception.InnerException);
     }
 }

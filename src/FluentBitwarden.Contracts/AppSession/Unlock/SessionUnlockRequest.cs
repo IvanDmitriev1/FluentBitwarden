@@ -1,4 +1,4 @@
-using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 namespace FluentBitwarden.Contracts.AppSession.Unlock;
 

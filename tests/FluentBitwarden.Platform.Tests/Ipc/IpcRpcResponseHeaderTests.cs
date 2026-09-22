@@ -13,7 +13,12 @@ public class IpcRpcResponseHeaderTests
         int payloadLength)
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
-        byte[] header = CreateHeader(successFlag, payloadLength);
+        byte[] header = new byte[7];
+        BinaryPrimitives.WriteUInt16LittleEndian(
+            header.AsSpan(0, sizeof(ushort)),
+            IpcConstants.ProtocolVersion);
+        header[2] = successFlag;
+        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(3, sizeof(int)), payloadLength);
 
         await Assert.ThrowsAsync<InvalidDataException>(async () =>
             await IpcRpcResponseHeader.ReadAsync(new MemoryStream(header), testCancellation));
@@ -36,14 +41,4 @@ public class IpcRpcResponseHeaderTests
                 testCancellation));
     }
 
-    private static byte[] CreateHeader(byte successFlag, int payloadLength)
-    {
-        byte[] header = new byte[7];
-        BinaryPrimitives.WriteUInt16LittleEndian(
-            header.AsSpan(0, sizeof(ushort)),
-            IpcConstants.ProtocolVersion);
-        header[2] = successFlag;
-        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(3, sizeof(int)), payloadLength);
-        return header;
-    }
 }

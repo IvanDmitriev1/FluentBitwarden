@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+namespace FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 [MemoryPackable]
 public readonly partial record struct GetWindowsHelloEnrollmentRequest(

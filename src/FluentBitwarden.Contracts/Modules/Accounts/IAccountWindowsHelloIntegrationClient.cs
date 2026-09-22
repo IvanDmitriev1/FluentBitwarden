@@ -1,8 +1,8 @@
-using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
-namespace FluentBitwarden.Contracts.Infrastructure.WindowsHello;
+namespace FluentBitwarden.Contracts.Modules.Accounts;
 
-public interface IWindowsHelloIntegrationClient
+public interface IAccountWindowsHelloIntegrationClient
 {
     ValueTask<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(
         GetWindowsHelloEnrollmentRequest request,

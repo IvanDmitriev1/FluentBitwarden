@@ -10,12 +10,12 @@ public sealed class AccountBitwardenSessionTokenRepositoryTests(AccountRepositor
     public void Store_and_get_round_trip_refresh_token()
     {
         using var database = fixture.CreateDatabase();
-        var account = InsertAccount(database);
+        var account = AccountRepositoryTestHelper.InsertAccount(database);
         RefreshToken expected = RefreshToken.Parse("dummy-refresh-token");
 
-        StoreToken(database, account.UserId, expected);
+        AccountRepositoryTestHelper.StoreToken(database, account.UserId, expected);
 
-        RefreshToken actual = ReadToken(database, account.UserId);
+        RefreshToken actual = AccountRepositoryTestHelper.ReadToken(database, account.UserId);
 
         Assert.Equal(expected, actual);
     }
@@ -24,23 +24,23 @@ public sealed class AccountBitwardenSessionTokenRepositoryTests(AccountRepositor
     public void Store_replaces_existing_refresh_token()
     {
         using var database = fixture.CreateDatabase();
-        var account = InsertAccount(database);
+        var account = AccountRepositoryTestHelper.InsertAccount(database);
         RefreshToken initial = RefreshToken.Parse("dummy-refresh-token-initial");
         RefreshToken replacement = RefreshToken.Parse("dummy-refresh-token-replacement");
 
-        StoreToken(database, account.UserId, initial);
-        StoreToken(database, account.UserId, replacement);
+        AccountRepositoryTestHelper.StoreToken(database, account.UserId, initial);
+        AccountRepositoryTestHelper.StoreToken(database, account.UserId, replacement);
 
-        Assert.Equal(replacement, ReadToken(database, account.UserId));
+        Assert.Equal(replacement, AccountRepositoryTestHelper.ReadToken(database, account.UserId));
     }
 
     [Fact]
     public void Store_protects_refresh_token_bytes_at_rest()
     {
         using var database = fixture.CreateDatabase();
-        var account = InsertAccount(database);
+        var account = AccountRepositoryTestHelper.InsertAccount(database);
         const string tokenValue = "dummy-refresh-token-at-rest";
-        StoreToken(database, account.UserId, RefreshToken.Parse(tokenValue));
+        AccountRepositoryTestHelper.StoreToken(database, account.UserId, RefreshToken.Parse(tokenValue));
 
         using SqliteConnection connection = database.OpenConnection();
         using var command = connection.CreateCommand();
@@ -56,8 +56,11 @@ public sealed class AccountBitwardenSessionTokenRepositoryTests(AccountRepositor
     public void Remove_deletes_refresh_token()
     {
         using var database = fixture.CreateDatabase();
-        var account = InsertAccount(database);
-        StoreToken(database, account.UserId, RefreshToken.Parse("dummy-refresh-token"));
+        var account = AccountRepositoryTestHelper.InsertAccount(database);
+        AccountRepositoryTestHelper.StoreToken(
+            database,
+            account.UserId,
+            RefreshToken.Parse("dummy-refresh-token"));
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -66,24 +69,31 @@ public sealed class AccountBitwardenSessionTokenRepositoryTests(AccountRepositor
             unitOfWork.Commit();
         }
 
-        Assert.Equal(RefreshToken.Empty, ReadToken(database, account.UserId));
+        Assert.Equal(
+            RefreshToken.Empty,
+            AccountRepositoryTestHelper.ReadToken(database, account.UserId));
     }
 
     [Fact]
     public void Missing_refresh_token_returns_empty_value()
     {
         using var database = fixture.CreateDatabase();
-        var account = InsertAccount(database);
+        var account = AccountRepositoryTestHelper.InsertAccount(database);
 
-        Assert.Equal(RefreshToken.Empty, ReadToken(database, account.UserId));
+        Assert.Equal(
+            RefreshToken.Empty,
+            AccountRepositoryTestHelper.ReadToken(database, account.UserId));
     }
 
     [Fact]
     public void Removing_profile_cascades_to_refresh_token()
     {
         using var database = fixture.CreateDatabase();
-        var account = InsertAccount(database);
-        StoreToken(database, account.UserId, RefreshToken.Parse("dummy-refresh-token"));
+        var account = AccountRepositoryTestHelper.InsertAccount(database);
+        AccountRepositoryTestHelper.StoreToken(
+            database,
+            account.UserId,
+            RefreshToken.Parse("dummy-refresh-token"));
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -98,40 +108,5 @@ public sealed class AccountBitwardenSessionTokenRepositoryTests(AccountRepositor
             RefreshToken.Empty,
             new AccountBitwardenSessionTokenRepository(readUnitOfWork).Get(account.UserId));
         readUnitOfWork.Commit();
-    }
-
-    private static AccountProfile InsertAccount(AccountRepositoryTestDatabase database)
-    {
-        var account = AccountTestData.Profile(
-            AccountTestData.FirstUserId,
-            "user@example.test",
-            "first");
-        using var unitOfWork = database.CreateUnitOfWork();
-        unitOfWork.Begin();
-        new AccountProfileRepository(unitOfWork).Upsert(account);
-        unitOfWork.Commit();
-        return account;
-    }
-
-    private static void StoreToken(
-        AccountRepositoryTestDatabase database,
-        UserId userId,
-        RefreshToken token)
-    {
-        using var unitOfWork = database.CreateUnitOfWork();
-        unitOfWork.Begin();
-        new AccountBitwardenSessionTokenRepository(unitOfWork).Store(userId, token);
-        unitOfWork.Commit();
-    }
-
-    private static RefreshToken ReadToken(
-        AccountRepositoryTestDatabase database,
-        UserId userId)
-    {
-        using var unitOfWork = database.CreateUnitOfWork();
-        unitOfWork.Begin();
-        RefreshToken token = new AccountBitwardenSessionTokenRepository(unitOfWork).Get(userId);
-        unitOfWork.Commit();
-        return token;
     }
 }

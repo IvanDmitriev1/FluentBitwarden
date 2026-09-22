@@ -66,13 +66,11 @@ public sealed class BlockingEchoHandlerState
 
     internal sealed class RequestState
     {
-        public TaskCompletionSource<bool> Started { get; } = NewCompletionSource();
-        public TaskCompletionSource<bool> Release { get; } = NewCompletionSource();
-        public TaskCompletionSource<bool> Completed { get; } = NewCompletionSource();
-        public TaskCompletionSource<bool> CancellationObserved { get; } = NewCompletionSource();
-
-        private static TaskCompletionSource<bool> NewCompletionSource() =>
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<bool> Started { get; } = TestTaskCompletionSource.Create<bool>();
+        public TaskCompletionSource<bool> Release { get; } = TestTaskCompletionSource.Create<bool>();
+        public TaskCompletionSource<bool> Completed { get; } = TestTaskCompletionSource.Create<bool>();
+        public TaskCompletionSource<bool> CancellationObserved { get; } =
+            TestTaskCompletionSource.Create<bool>();
     }
 
     public async ValueTask<EchoResponse> WaitForReleaseAsync(
@@ -186,7 +184,7 @@ public sealed class ScopedLifetimeProbe
     public int CreateInstance()
     {
         int instanceId = Interlocked.Increment(ref nextInstanceId);
-        disposals[instanceId] = NewCompletionSource();
+        disposals[instanceId] = TestTaskCompletionSource.Create<bool>();
         return instanceId;
     }
 
@@ -198,8 +196,6 @@ public sealed class ScopedLifetimeProbe
             Interlocked.Increment(ref disposalCount);
     }
 
-    private static TaskCompletionSource<bool> NewCompletionSource() =>
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
 }
 
 public sealed class ScopedRequestDependency(ScopedLifetimeProbe probe) : IAsyncDisposable

@@ -1,7 +1,6 @@
-using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Contracts;
-
 
 public abstract record AccountUnlockMethod
 {

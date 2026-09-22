@@ -59,7 +59,7 @@ public class IpcPayloadValidationTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
             configureServices: services => services.AddSingleton(state),
             cancellationToken: testCancellation);
 
@@ -88,7 +88,7 @@ public class IpcPayloadValidationTests
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();
-        await using var host = await IpcTestHost.StartAsync<ImmediateEchoHandler>(
+        await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
             configureServices: services => services.AddSingleton(state),
             cancellationToken: testCancellation);
 

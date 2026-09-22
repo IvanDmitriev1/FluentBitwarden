@@ -48,9 +48,9 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
             new KdfConfig.Argon2Id(3, 64, 4),
             "replacement");
 
-        InsertAccount(database, account);
-        UpsertKeyMaterial(database, initial);
-        UpsertKeyMaterial(database, replacement);
+        AccountRepositoryTestHelper.InsertAccount(database, account);
+        AccountRepositoryTestHelper.UpsertKeyMaterial(database, initial);
+        AccountRepositoryTestHelper.UpsertKeyMaterial(database, replacement);
 
         using var unitOfWork = database.CreateUnitOfWork();
         Assert.Equal(
@@ -86,8 +86,8 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
             new KdfConfig.Pbkdf2(600_000),
             "remove");
 
-        InsertAccount(database, account);
-        UpsertKeyMaterial(database, keyMaterial);
+        AccountRepositoryTestHelper.InsertAccount(database, account);
+        AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -129,8 +129,8 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
             new KdfConfig.Pbkdf2(600_000),
             "cascade");
 
-        InsertAccount(database, account);
-        UpsertKeyMaterial(database, keyMaterial);
+        AccountRepositoryTestHelper.InsertAccount(database, account);
+        AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -146,31 +146,14 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
     private AccountKeyMaterial RoundTrip(AccountKeyMaterial keyMaterial)
     {
         using var database = fixture.CreateDatabase();
-        InsertAccount(database, AccountTestData.Profile(
+        AccountRepositoryTestHelper.InsertAccount(database, AccountTestData.Profile(
             keyMaterial.UserId.ToString(),
             "user@example.test",
             "first"));
-        UpsertKeyMaterial(database, keyMaterial);
+        AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
 
         using var unitOfWork = database.CreateUnitOfWork();
         return new AccountKeyMaterialRepository(unitOfWork).GetById(keyMaterial.UserId)!;
     }
 
-    private static void InsertAccount(AccountRepositoryTestDatabase database, AccountProfile account)
-    {
-        using var unitOfWork = database.CreateUnitOfWork();
-        unitOfWork.Begin();
-        new AccountProfileRepository(unitOfWork).Upsert(account);
-        unitOfWork.Commit();
-    }
-
-    private static void UpsertKeyMaterial(
-        AccountRepositoryTestDatabase database,
-        AccountKeyMaterial keyMaterial)
-    {
-        using var unitOfWork = database.CreateUnitOfWork();
-        unitOfWork.Begin();
-        new AccountKeyMaterialRepository(unitOfWork).Upsert(keyMaterial);
-        unitOfWork.Commit();
-    }
 }

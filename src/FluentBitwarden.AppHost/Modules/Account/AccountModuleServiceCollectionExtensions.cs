@@ -3,7 +3,7 @@ using FluentBitwarden.AppHost.Modules.Account.Persistance;
 using FluentBitwarden.AppHost.Modules.Account.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.AppHost.Modules;
+namespace FluentBitwarden.AppHost.Modules.Account;
 
 internal static class AccountModuleServiceCollectionExtensions
 {
@@ -12,7 +12,9 @@ internal static class AccountModuleServiceCollectionExtensions
         services.AddScoped<AccountBitwardenSessionTokenRepository>();
         services.AddScoped<AccountKeyMaterialRepository>();
         services.AddScoped<AccountProfileRepository>();
+        services.AddScoped<AccountTpmUnlockKeyRepository>();
 
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IAccountWindowsHelloService, AccountWindowsHelloService>();
     }
 }
