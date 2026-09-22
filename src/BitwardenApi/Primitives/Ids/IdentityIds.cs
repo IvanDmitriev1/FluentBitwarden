@@ -4,11 +4,11 @@ namespace BitwardenApi.Primitives.Ids;
 
 [MemoryPackable(GenerateType.NoGenerate)]
 [StronglyTypedId(Template.String)]
-public readonly partial struct AccessToken;
+public readonly partial struct SessionAccessToken;
 
 [MemoryPackable(GenerateType.NoGenerate)]
 [StronglyTypedId(Template.String)]
-public readonly partial struct RefreshToken;
+public readonly partial struct SessionRefreshToken;
 
 [MemoryPackable(GenerateType.NoGenerate)]
 [StronglyTypedId(Template.String)]

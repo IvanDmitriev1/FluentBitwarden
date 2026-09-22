@@ -25,7 +25,7 @@ internal static class AccountRepositoryTestHelper
     public static void StoreToken(
         AccountRepositoryTestDatabase database,
         UserId userId,
-        RefreshToken token)
+        SessionRefreshToken token)
     {
         using var unitOfWork = database.CreateUnitOfWork();
         unitOfWork.Begin();
@@ -33,13 +33,13 @@ internal static class AccountRepositoryTestHelper
         unitOfWork.Commit();
     }
 
-    public static RefreshToken ReadToken(
+    public static SessionRefreshToken ReadToken(
         AccountRepositoryTestDatabase database,
         UserId userId)
     {
         using var unitOfWork = database.CreateUnitOfWork();
         unitOfWork.Begin();
-        RefreshToken token = new AccountBitwardenSessionTokenRepository(unitOfWork).Get(userId);
+        SessionRefreshToken token = new AccountBitwardenSessionTokenRepository(unitOfWork).Get(userId);
         unitOfWork.Commit();
         return token;
     }

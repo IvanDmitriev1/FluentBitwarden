@@ -107,10 +107,10 @@ internal static class TestApiSupport
 
     private sealed class FixedAccessTokenProvider : IBitwardenAccessTokenProvider
     {
-        public ValueTask<AccessToken> GetAccessTokenAsync(
+        public ValueTask<SessionAccessToken> GetAccessTokenAsync(
             BitwardenAccountContext accountContext,
             CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(AccessToken.Parse("vault-access-token"));
+            ValueTask.FromResult(SessionAccessToken.Parse("vault-access-token"));
     }
 
     internal sealed class SnapshottingHttpMessageHandler(

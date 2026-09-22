@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.AppSession.Contracts;
+using BitwardenApi.Infrastructure.Transport;
 using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.AppSession.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +11,7 @@ internal static class AppSessionServiceCollection
     {
         services.AddSingleton<ActiveSessionManager>();
 
-        services.AddScoped<IAppSessionService, AppSessionService>();
+        services.AddScoped<AppSessionService, AppSessionService>();
+        services.AddScoped<IBitwardenAccessTokenProvider, SessionAccessTokenProvider>();
     }
 }

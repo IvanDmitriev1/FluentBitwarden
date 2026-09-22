@@ -22,7 +22,8 @@ internal sealed class AccountKeyMaterialRepository(IDbSession dbSession)
 
         AccountKeyMaterialMapper.Row? row = dbSession.Connection.QuerySingleOrDefault<AccountKeyMaterialMapper.Row>(
             sql,
-            AccountKeyMaterialMapper.ToUserIdParameters(userId));
+            AccountKeyMaterialMapper.ToUserIdParameters(userId),
+            transaction: dbSession.Transaction);
 
         return AccountKeyMaterialMapper.ToDomain(row);
     }

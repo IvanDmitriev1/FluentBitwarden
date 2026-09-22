@@ -19,8 +19,8 @@ internal sealed partial class IdentityJsonContext : JsonSerializerContext
     private static JsonSerializerOptions CreateOptions()
     {
         JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
-        options.Converters.Add(new AccessToken.AccessTokenSystemTextJsonConverter());
-        options.Converters.Add(new RefreshToken.RefreshTokenSystemTextJsonConverter());
+        options.Converters.Add(new SessionAccessToken.SessionAccessTokenSystemTextJsonConverter());
+        options.Converters.Add(new SessionRefreshToken.SessionRefreshTokenSystemTextJsonConverter());
         options.Converters.Add(new TwoFactorToken.TwoFactorTokenSystemTextJsonConverter());
         options.Converters.Add(new WebAuthnLoginAssertionOptionsToken.WebAuthnLoginAssertionOptionsTokenSystemTextJsonConverter());
         options.Converters.Add(new UserId.UserIdSystemTextJsonConverter());

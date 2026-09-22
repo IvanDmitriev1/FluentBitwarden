@@ -10,13 +10,13 @@ internal sealed class BitwardenAuthorizationHandler(
         CancellationToken cancellationToken)
     {
         BitwardenAccountContext accountContext = request.GetBitwardenAccountContext();
-        AccessToken accessToken = await accessTokenProvider.GetAccessTokenAsync(
+        SessionAccessToken sessionAccessToken = await accessTokenProvider.GetAccessTokenAsync(
             accountContext,
             cancellationToken);
 
         request.Headers.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            accessToken.ToString());
+            sessionAccessToken.ToString());
 
         return await base.SendAsync(request, cancellationToken);
     }

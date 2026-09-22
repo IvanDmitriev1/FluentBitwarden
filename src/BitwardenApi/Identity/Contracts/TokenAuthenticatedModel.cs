@@ -1,14 +1,14 @@
 namespace BitwardenApi.Identity.Contracts;
 
 public sealed record TokenRefreshSessionModel(
-    AccessToken AccessToken,
-    RefreshToken RefreshToken,
+    SessionAccessToken SessionAccessToken,
+    SessionRefreshToken SessionRefreshToken,
     TwoFactorToken? TwoFactorToken,
     DateTimeOffset ExpiresAt);
 
 public sealed record TokenAuthenticatedModel(
-    AccessToken AccessToken,
-    RefreshToken RefreshToken,
+    SessionAccessToken SessionAccessToken,
+    SessionRefreshToken SessionRefreshToken,
     TwoFactorToken? TwoFactorToken,
     DateTimeOffset ExpiresAt,
     ProtectedPrivateKey PrivateKey,

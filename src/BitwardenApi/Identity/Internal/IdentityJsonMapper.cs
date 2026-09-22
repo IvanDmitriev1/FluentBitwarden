@@ -5,7 +5,7 @@ internal static class IdentityJsonMapper
     public static TokenRefreshSessionModel ToTokenRefreshSessionModel(this IdentityTokenRefreshSessionResponse dto)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddSeconds(dto.ExpiresInSeconds);
-        return new TokenRefreshSessionModel(dto.AccessToken, dto.RefreshToken, dto.TwoFactorToken, expiresAt);
+        return new TokenRefreshSessionModel(dto.SessionAccessToken, dto.SessionRefreshToken, dto.TwoFactorToken, expiresAt);
     }
 
     public static TokenAuthenticatedModel ToTokenResponse(this IdentityTokenAuthenticatedResponse dto)
@@ -13,8 +13,8 @@ internal static class IdentityJsonMapper
         var expiresAt = DateTimeOffset.UtcNow.AddSeconds(dto.ExpiresInSeconds);
 
         return new TokenAuthenticatedModel(
-            dto.AccessToken,
-            dto.RefreshToken,
+            dto.SessionAccessToken,
+            dto.SessionRefreshToken,
             dto.TwoFactorToken,
             expiresAt,
             ProtectedPrivateKey.Create(dto.ProtectedPrivateKey),

@@ -15,7 +15,7 @@ public sealed record PasswordTwoFactorAuthenticationRequest(
 
 public sealed record RefreshAuthenticationRequest(
     BitwardenClientContext Context,
-    RefreshToken RefreshToken,
+    SessionRefreshToken SessionRefreshToken,
     string Scope = "api offline_access");
 
 public sealed record DeviceAuthenticationRequest(

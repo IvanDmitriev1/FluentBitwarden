@@ -4,7 +4,24 @@ namespace FluentBitwarden.AppHost.Modules.Account.Persistance;
 
 internal sealed class AccountBitwardenSessionTokenRepository(IDbSession dbSession)
 {
-    public void Store(UserId userId, RefreshToken token)
+    public SessionRefreshToken Get(UserId userId)
+    {
+        const string sql = """
+                           SELECT protected_refresh_token AS ProtectedRefreshToken
+                           FROM account_session_tokens
+                           WHERE user_id = @UserId COLLATE NOCASE;
+                           """;
+
+        AccountBitwardenSessionTokenMapper.Row? row =
+            dbSession.Connection.QuerySingleOrDefault<AccountBitwardenSessionTokenMapper.Row>(
+                sql,
+                AccountBitwardenSessionTokenMapper.ToUserIdParameters(userId),
+                transaction: dbSession.Transaction);
+
+        return AccountBitwardenSessionTokenMapper.ToDomain(row);
+    }
+
+    public void Store(UserId userId, SessionRefreshToken token)
     {
         const string sql = """
                            INSERT INTO account_session_tokens (
@@ -23,23 +40,6 @@ internal sealed class AccountBitwardenSessionTokenRepository(IDbSession dbSessio
             sql,
             AccountBitwardenSessionTokenMapper.ToStoreParameters(userId, token),
             transaction: dbSession.RequiredTransaction);
-    }
-
-    public RefreshToken Get(UserId userId)
-    {
-        const string sql = """
-                           SELECT protected_refresh_token AS ProtectedRefreshToken
-                           FROM account_session_tokens
-                           WHERE user_id = @UserId COLLATE NOCASE;
-                           """;
-
-        AccountBitwardenSessionTokenMapper.Row? row =
-            dbSession.Connection.QuerySingleOrDefault<AccountBitwardenSessionTokenMapper.Row>(
-                sql,
-                AccountBitwardenSessionTokenMapper.ToUserIdParameters(userId),
-                transaction: dbSession.RequiredTransaction);
-
-        return AccountBitwardenSessionTokenMapper.ToDomain(row);
     }
 
     public void Remove(UserId userId)

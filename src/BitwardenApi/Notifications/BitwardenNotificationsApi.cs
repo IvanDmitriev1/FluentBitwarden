@@ -59,11 +59,11 @@ internal sealed class BitwardenNotificationsApi(
             {
                 options.AccessTokenProvider = async () =>
                 {
-                    AccessToken accessToken = await accessTokenProvider.GetAccessTokenAsync(
+                    SessionAccessToken sessionAccessToken = await accessTokenProvider.GetAccessTokenAsync(
                         accountContext,
                         CancellationToken.None);
 
-                    return accessToken.ToString();
+                    return sessionAccessToken.ToString();
                 };
             })
             .AddJsonProtocol(options =>

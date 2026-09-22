@@ -1,14 +1,18 @@
+using BitwardenApi.Identity;
+using BitwardenApi.Identity.Contracts;
+using BitwardenApi.Primitives;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Persistance;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
-using FluentBitwarden.Contracts.Modules.Accounts.Login;
+using FluentBitwarden.Platform.Infrastructure;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Services;
 
 internal sealed class AccountService(
     IUnitOfWork unitOfWork,
     IAccountWindowsHelloService accountWindowsHelloService,
+    IIdentityApi identityApi,
     AccountAuthenticatorService accountAuthenticatorService,
     AccountKeyMaterialRepository accountKeyMaterialRepository,
     AccountBitwardenSessionTokenRepository accountBitwardenSessionTokenRepository,
@@ -24,7 +28,7 @@ internal sealed class AccountService(
         if (result is AccountAuthenticatorService.Result.Rejected rejected)
             return rejected.Outcome;
 
-        var (profile, keyMaterial, refreshToken) = (AccountAuthenticatorService.Result.Authenticated)result;
+        (AccountProfile profile, AccountKeyMaterial keyMaterial, SessionRefreshToken refreshToken) = (AccountAuthenticatorService.Result.Authenticated)result;
         unitOfWork.Begin();
 
         accountProfileRepository.Upsert(profile);
@@ -34,6 +38,29 @@ internal sealed class AccountService(
         unitOfWork.Commit();
 
         return new AccountAuthenticationOutcome.Success(profile);
+    }
+
+    public async Task<AccountSessionTokens> RefreshSessionTokens(BitwardenAccountContext accountContext, CancellationToken cancellationToken)
+    {
+        var refreshToken = accountBitwardenSessionTokenRepository.Get(accountContext.UserId);
+        var result = await identityApi.RefreshAuthenticationAsync(new RefreshAuthenticationRequest(new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo), refreshToken), cancellationToken);
+        if (result is SessionTokenResult<TokenRefreshSessionModel>.Rejected rejected)
+            throw new AccountSessionRefreshException(rejected);
+
+        var success = (SessionTokenResult<TokenRefreshSessionModel>.Success)result;
+        var sessionRefreshModel = success.Value;
+
+        unitOfWork.Begin();
+        accountBitwardenSessionTokenRepository.Store(accountContext.UserId, sessionRefreshModel.SessionRefreshToken);
+        unitOfWork.Commit();
+
+        return new AccountSessionTokens(
+            UserId: accountContext.UserId,
+            ClientContext: new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo),
+            RefreshToken: sessionRefreshModel.SessionRefreshToken,
+            AccessToken: sessionRefreshModel.SessionAccessToken,
+            ExpiresAt: sessionRefreshModel.ExpiresAt
+        );
     }
 
     public AccountKeyUnlockResult UnlockKey(UserId userId, AccountUnlockMethod method)

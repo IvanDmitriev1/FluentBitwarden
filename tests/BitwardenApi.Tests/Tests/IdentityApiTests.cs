@@ -17,8 +17,8 @@ public sealed class IdentityApiTests
             TestContext.Current.CancellationToken);
 
         var success = Assert.IsType<SessionTokenResult<TokenAuthenticatedModel>.Success>(result);
-        Assert.Equal(AccessToken.Parse("access-token"), success.Value.AccessToken);
-        Assert.Equal(RefreshToken.Parse("refresh-token"), success.Value.RefreshToken);
+        Assert.Equal(SessionAccessToken.Parse("access-token"), success.Value.SessionAccessToken);
+        Assert.Equal(SessionRefreshToken.Parse("refresh-token"), success.Value.SessionRefreshToken);
         Assert.Equal("salt", success.Value.MasterPasswordUnlockModel.Salt);
         Assert.Equal(
             ProtectedPrivateKey.Create(TestApiSupport.ParseEncString(EncodedPrivateKey)),
@@ -57,13 +57,13 @@ public sealed class IdentityApiTests
 
         DateTimeOffset before = DateTimeOffset.UtcNow;
         SessionTokenResult<TokenRefreshSessionModel> result = await identityApi.RefreshAuthenticationAsync(
-            new RefreshAuthenticationRequest(TestApiSupport.ClientContext, RefreshToken.Parse("old-refresh-token")),
+            new RefreshAuthenticationRequest(TestApiSupport.ClientContext, SessionRefreshToken.Parse("old-refresh-token")),
             TestContext.Current.CancellationToken);
         DateTimeOffset after = DateTimeOffset.UtcNow;
 
         var success = Assert.IsType<SessionTokenResult<TokenRefreshSessionModel>.Success>(result);
-        Assert.Equal(AccessToken.Parse("new-access-token"), success.Value.AccessToken);
-        Assert.Equal(RefreshToken.Parse("new-refresh-token"), success.Value.RefreshToken);
+        Assert.Equal(SessionAccessToken.Parse("new-access-token"), success.Value.SessionAccessToken);
+        Assert.Equal(SessionRefreshToken.Parse("new-refresh-token"), success.Value.SessionRefreshToken);
         Assert.InRange(success.Value.ExpiresAt, before.AddSeconds(3600), after.AddSeconds(3600));
         TestApiSupport.RecordedRequest request = Assert.Single(handler.Requests);
         Assert.Equal("/connect/token", request.RequestUri.AbsolutePath);

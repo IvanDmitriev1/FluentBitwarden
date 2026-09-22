@@ -6,10 +6,10 @@ namespace BitwardenApi.Identity.Contracts;
 internal record IdentityTokenRefreshSessionResponse
 {
     [JsonPropertyName("access_token")]
-    public required AccessToken AccessToken { get; init; }
+    public required SessionAccessToken SessionAccessToken { get; init; }
 
     [JsonPropertyName("refresh_token")]
-    public required RefreshToken RefreshToken { get; init; }
+    public required SessionRefreshToken SessionRefreshToken { get; init; }
 
     [JsonPropertyName("twoFactorToken")]
     public TwoFactorToken? TwoFactorToken { get; init; }

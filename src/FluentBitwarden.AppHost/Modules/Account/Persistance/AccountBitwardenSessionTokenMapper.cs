@@ -8,17 +8,17 @@ internal static class AccountBitwardenSessionTokenMapper
 {
     private static readonly byte[] Entropy = [.. "fbw_session_v1"u8];
 
-    public static StoreParameters ToStoreParameters(UserId userId, RefreshToken token) => new(
+    public static StoreParameters ToStoreParameters(UserId userId, SessionRefreshToken token) => new(
         userId.ToString(),
         Protect(token));
 
     public static UserIdParameters ToUserIdParameters(UserId userId) => new(userId.ToString());
 
-    public static RefreshToken ToDomain(Row? row)
+    public static SessionRefreshToken ToDomain(Row? row)
     {
         byte[]? protectedBytes = row?.ProtectedRefreshToken;
         if (protectedBytes is null)
-            return RefreshToken.Empty;
+            return SessionRefreshToken.Empty;
 
         byte[] plaintext = [];
 
@@ -31,9 +31,9 @@ internal static class AccountBitwardenSessionTokenMapper
 
             string tokenValue = Encoding.UTF8.GetString(plaintext);
             if (string.IsNullOrWhiteSpace(tokenValue))
-                return RefreshToken.Empty;
+                return SessionRefreshToken.Empty;
 
-            return RefreshToken.Parse(tokenValue, CultureInfo.InvariantCulture);
+            return SessionRefreshToken.Parse(tokenValue, CultureInfo.InvariantCulture);
         }
         finally
         {
@@ -41,7 +41,7 @@ internal static class AccountBitwardenSessionTokenMapper
         }
     }
 
-    private static byte[] Protect(RefreshToken token)
+    private static byte[] Protect(SessionRefreshToken token)
     {
         byte[] plaintext = Encoding.UTF8.GetBytes(token.ToString());
 

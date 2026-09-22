@@ -40,7 +40,7 @@ internal static class TokenRequestFormFactory
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "refresh_token";
-        form["refresh_token"] = request.RefreshToken.Value;
+        form["refresh_token"] = request.SessionRefreshToken.Value;
         return form;
     }
 

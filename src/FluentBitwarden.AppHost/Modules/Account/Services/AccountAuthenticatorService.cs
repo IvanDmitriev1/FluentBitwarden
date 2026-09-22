@@ -6,7 +6,6 @@ using BitwardenApi.Infrastructure.Cryptography;
 using BitwardenApi.Primitives;
 using FluentBitwarden.AppHost.Infrastructure.WebAuthn;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
-using FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Services;
 
@@ -21,7 +20,7 @@ internal sealed class AccountAuthenticatorService(
         public sealed record Authenticated(
             AccountProfile Profile,
             AccountKeyMaterial KeyMaterial,
-            RefreshToken RefreshToken) : Result;
+            SessionRefreshToken SessionRefreshToken) : Result;
 
         public sealed record Rejected(AccountAuthenticationOutcome Outcome) : Result;
     }
@@ -186,7 +185,7 @@ internal sealed class AccountAuthenticatorService(
         BitwardenEnvironment environment)
     {
         var jwt = new JwtSecurityTokenHandler()
-            .ReadJwtToken(model.AccessToken.ToString());
+            .ReadJwtToken(model.SessionAccessToken.ToString());
 
         var accountId = jwt.GetRequiredClaim("sub");
         var email = jwt.GetRequiredClaim("email");
@@ -210,7 +209,7 @@ internal sealed class AccountAuthenticatorService(
         return new Result.Authenticated(
             profile,
             keyMaterial,
-            model.RefreshToken);
+            model.SessionRefreshToken);
     }
 
     private static Result.Rejected Reject(

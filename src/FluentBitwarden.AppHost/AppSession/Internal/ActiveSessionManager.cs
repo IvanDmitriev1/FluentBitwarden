@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.Contracts.AppSession.Status;
 
 namespace FluentBitwarden.AppHost.AppSession.Internal;
@@ -7,6 +8,7 @@ internal sealed class ActiveSessionManager
 {
     private sealed record SessionState(
         AccountProfile? Account,
+        AccountSessionTokens? SessionTokens,
         UnlockedSessionState? UnlockedState,
         DateTimeOffset ChangedAt);
 
@@ -18,6 +20,7 @@ internal sealed class ActiveSessionManager
 
     private SessionState _state = new(
         Account: null,
+        SessionTokens: null,
         UnlockedState: null,
         ChangedAt: DateTimeOffset.UtcNow);
 
@@ -41,6 +44,22 @@ internal sealed class ActiveSessionManager
         }
     }
 
+    public bool TryGetSessionAccessToken(UserId userId, out SessionAccessToken accessToken)
+    {
+        lock (_stateLock)
+        {
+            if (_state.SessionTokens is null ||
+                !_state.SessionTokens.IsValid() ||
+                _state.SessionTokens.UserId != userId)
+            {
+                accessToken = SessionAccessToken.Empty;
+                return false;
+            }
+
+            accessToken = _state.SessionTokens.AccessToken;
+            return true;
+        }
+    }
 
     public async ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken ct = default)
     {
@@ -80,7 +99,9 @@ internal sealed class ActiveSessionManager
             var previous = _state;
             var next = update.Invoke(previous);
 
-            stateToDispose = _state.UnlockedState;
+            stateToDispose = ReferenceEquals(_state.UnlockedState, next.UnlockedState)
+                ? null
+                : _state.UnlockedState;
 
             if (next.UnlockedState is not null && next.Account is null)
             {
@@ -114,6 +135,12 @@ internal sealed class ActiveSessionManager
         {
             Interlocked.Exchange(ref _owner, null)?._transitionGate.Release();
         }
+
+        public void UpdateSessionAccessToken(AccountSessionTokens sessionTokens) =>
+            Owner.UpdateState(state => state with
+            {
+                SessionTokens = sessionTokens
+            });
 
         public void Unlock(UnlockedSessionState newState) =>
             Owner.UpdateState(state => state with

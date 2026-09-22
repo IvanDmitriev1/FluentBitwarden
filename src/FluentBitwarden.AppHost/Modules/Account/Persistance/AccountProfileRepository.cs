@@ -19,7 +19,8 @@ internal sealed class AccountProfileRepository(IDbSession dbSession)
                            ORDER BY email ASC;
                            """;
 
-        return dbSession.Connection.Query<AccountProfileMapper.Row>(sql).Select(AccountProfileMapper.ToDomain).ToArray();
+        return dbSession.Connection.Query<AccountProfileMapper.Row>(sql, transaction: dbSession.Transaction)
+            .Select(AccountProfileMapper.ToDomain).ToArray();
     }
 
     public AccountProfile? GetById(UserId accountId)
@@ -38,7 +39,8 @@ internal sealed class AccountProfileRepository(IDbSession dbSession)
 
         AccountProfileMapper.Row? row = dbSession.Connection.QuerySingleOrDefault<AccountProfileMapper.Row>(
             sql,
-            AccountProfileMapper.ToUserIdParameters(accountId));
+            AccountProfileMapper.ToUserIdParameters(accountId),
+            transaction: dbSession.Transaction);
 
         return AccountProfileMapper.ToDomainOrNull(row);
     }
@@ -58,7 +60,8 @@ internal sealed class AccountProfileRepository(IDbSession dbSession)
         AccountProfileMapper.DetailsRow? row =
             dbSession.Connection.QuerySingleOrDefault<AccountProfileMapper.DetailsRow>(
                 sql,
-                AccountProfileMapper.ToUserIdParameters(accountId));
+                AccountProfileMapper.ToUserIdParameters(accountId),
+                transaction: dbSession.Transaction);
 
         return AccountProfileMapper.ToDetails(row);
     }
