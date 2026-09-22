@@ -41,7 +41,7 @@ internal sealed record IdentityTokenFailureResponse
 
     [JsonPropertyName("twoFactorProviders2")]
     [JsonConverter(typeof(IdentityTwoFactorProviders2JsonConverter))]
-    public required IReadOnlyList<IdentityTwoFactorProviderOption> TwoFactorProviders2 { get; init; }
+    public IReadOnlyList<IdentityTwoFactorProviderOption>? TwoFactorProviders2 { get; init; } = [];
 }
 
 internal sealed class UserDecryptionOptions

@@ -2,31 +2,27 @@ namespace BitwardenApi.Identity;
 
 public interface IIdentityApi
 {
-    Task<TokenExchangeOutcome> LoginWithPasswordAsync(
-        PasswordLoginRequest request,
+    Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithPasswordAsync(
+        PasswordAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<TokenExchangeOutcome> LoginWithPasswordAndTwoFactorAsync(
-        PasswordTwoFactorLoginRequest request,
+    Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithPasswordAndTwoFactorAsync(
+        PasswordTwoFactorAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<WebAuthnLoginAssertionOptionsResult> GetWebAuthnLoginAssertionOptionsAsync(
-        BitwardenClientContext context,
+    Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithWebAuthnAsync(
+        WebAuthnAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<TokenExchangeOutcome> LoginWithWebAuthnAsync(
-        WebAuthnLoginRequest request,
+    Task<SessionTokenResult<TokenRefreshSessionModel>> RefreshAuthenticationAsync(
+        RefreshAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<TokenExchangeOutcome> RefreshAsync(
-        RefreshLoginRequest request,
+    Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithDeviceAsync(
+        DeviceAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<TokenExchangeOutcome> LoginWithDeviceAsync(
-        DeviceLoginRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<TokenExchangeOutcome> LoginWithAuthorizationCodeAsync(
+    Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithAuthorizationCodeAsync(
         AuthorizationCodeLoginRequest request,
         CancellationToken cancellationToken = default);
 }

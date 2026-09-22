@@ -21,14 +21,22 @@ internal static class IdentityJsonMapper
             dto.UserDecryptionOptions.MasterPasswordUnlock.ToMasterPasswordUnlockModel());
     }
 
-    public static TokenExchangeOutcome ToTokenFailureOutcome(this IdentityTokenFailureResponse dto)
+    public static SessionTokenRejection ToTokenRejection(this IdentityTokenFailureResponse dto)
     {
         if (dto.DeviceVerificationRequest == true)
         {
-            return new TokenExchangeOutcome.DeviceVerificationRequired(dto.ErrorDescription);
+            return new SessionTokenRejection(SessionTokenRejectionKind.DeviceVerificationRequired, dto.ErrorDescription);
         }
 
-        return new TokenExchangeOutcome.TwoFactorRequired(new IdentityTwoFactorChallenge(dto.TwoFactorProviders2), dto.ErrorDescription);
+        if (dto.TwoFactorProviders2 is { Count: > 0 } providers)
+        {
+            return new SessionTokenRejection(
+                SessionTokenRejectionKind.TwoFactorRequired,
+                dto.ErrorDescription,
+                new IdentityTwoFactorChallenge(providers));
+        }
+
+        return new SessionTokenRejection(SessionTokenRejectionKind.InvalidCredentials, dto.ErrorDescription);
     }
 
     private static MasterPasswordUnlockModel ToMasterPasswordUnlockModel(this MasterPasswordUnlock dto)

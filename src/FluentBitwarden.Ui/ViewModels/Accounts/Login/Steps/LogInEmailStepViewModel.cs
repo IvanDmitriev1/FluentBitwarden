@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.ViewModels.Accounts.Login.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Infrastructure.Window;
 
@@ -101,24 +102,24 @@ internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
         _flow.Context.Email = Email.Trim();
         _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
 
-        var outcome = await _flow.AccountsClient.LoginAsync(
-            new AccountLoginRequest.PasskeyRequest(_flow.Context.BitwardenContext, _windowManager.WindowHandle), CancellationToken.None);
+        var outcome = await _flow.AccountsClient.AuthenticateAsync(
+            new AccountAuthenticationRequest.Passkey(_flow.Context.BitwardenContext, _windowManager.WindowHandle), CancellationToken.None);
 
         switch (outcome)
         {
-            case AccountLoginOutcome.Success success:
+            case AccountAuthenticationOutcome.Success success:
                 await _flow.OnSuccessLogIn(success.Account);
                 return;
 
-            case AccountLoginOutcome.TwoFactorRequired:
+            case AccountAuthenticationOutcome.TwoFactorRequired:
                 PasskeyErrorMessage = "This account requires two-step verification. Sign in with your master password instead.";
                 return;
 
-            case AccountLoginOutcome.DeviceVerificationRequired deviceVerificationRequired:
+            case AccountAuthenticationOutcome.DeviceVerificationRequired deviceVerificationRequired:
                 PasskeyErrorMessage = deviceVerificationRequired.Message;
                 return;
 
-            case AccountLoginOutcome.InvalidCredentials invalidCredentials:
+            case AccountAuthenticationOutcome.InvalidCredentials invalidCredentials:
                 PasskeyErrorMessage = invalidCredentials.Message;
                 return;
 

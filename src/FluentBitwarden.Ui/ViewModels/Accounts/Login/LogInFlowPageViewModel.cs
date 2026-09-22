@@ -5,6 +5,7 @@ using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Application.Models;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Views.Accounts;
 using FluentBitwarden.Views.Shell;
 using FluentBitwarden.Views.Startup;
@@ -50,7 +51,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
         CurrentStep = new LogInPasswordStepViewModel(this);
     }
 
-    internal void Show2FStep(AccountLoginOutcome.TwoFactorRequired twoFactorRequired)
+    internal void Show2FStep(AccountAuthenticationOutcome.TwoFactorRequired twoFactorRequired)
     {
         CurrentStep = new LogIn2FStepViewModel(twoFactorRequired, this);
     }

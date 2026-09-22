@@ -46,6 +46,7 @@ public static class BitwardenApiServiceCollectionExtensions
             .AddBitwardenReadRetry();
 
         services.AddSingleton<IIdentityApi, IdentityApi>();
+        services.AddSingleton<IWebAuthnIdentityApi, WebAuthnIdentityApi>();
         services.AddSingleton<IVaultItemsApi, VaultItemsApi>();
         services.AddSingleton<IVaultCipherAttachmentApi, VaultCipherAttachmentApi>();
 

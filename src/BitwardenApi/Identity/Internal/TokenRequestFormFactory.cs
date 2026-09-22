@@ -4,7 +4,7 @@ namespace BitwardenApi.Identity.Internal;
 
 internal static class TokenRequestFormFactory
 {
-    public static IReadOnlyDictionary<string, string> CreatePasswordGrant(this PasswordLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreatePasswordGrant(this PasswordAuthenticationRequest request)
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "password";
@@ -13,7 +13,7 @@ internal static class TokenRequestFormFactory
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreatePasswordWithTwoFactorGrant(this PasswordTwoFactorLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreatePasswordWithTwoFactorGrant(this PasswordTwoFactorAuthenticationRequest request)
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "password";
@@ -25,7 +25,7 @@ internal static class TokenRequestFormFactory
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateWebAuthnGrant(this WebAuthnLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateWebAuthnGrant(this WebAuthnAuthenticationRequest request)
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "webauthn";
@@ -36,7 +36,7 @@ internal static class TokenRequestFormFactory
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateRefreshTokenGrant(this RefreshLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateRefreshTokenGrant(this RefreshAuthenticationRequest request)
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "refresh_token";
@@ -44,7 +44,7 @@ internal static class TokenRequestFormFactory
         return form;
     }
 
-    public static IReadOnlyDictionary<string, string> CreateDeviceGrant(this DeviceLoginRequest request)
+    public static IReadOnlyDictionary<string, string> CreateDeviceGrant(this DeviceAuthenticationRequest request)
     {
         Dictionary<string, string> form = CreateBaseDeviceForm(request.Scope, request.Context);
         form["grant_type"] = "password";

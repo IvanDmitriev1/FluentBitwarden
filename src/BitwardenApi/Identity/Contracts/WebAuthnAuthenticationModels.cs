@@ -33,7 +33,7 @@ public sealed class WebAuthnPublicKeyCredentialDescriptor
     public string[]? Transports { get; init; }
 }
 
-public sealed record WebAuthnLoginRequest(
+public sealed record WebAuthnAuthenticationRequest(
     BitwardenClientContext Context,
     WebAuthnLoginAssertionOptionsToken Token,
     WebAuthnLoginAssertionResponseRequest DeviceResponse,

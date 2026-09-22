@@ -1,5 +1,5 @@
 using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.Modules.Accounts.Login;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 
 namespace FluentBitwarden.Contracts.Modules.Accounts;
@@ -13,7 +13,7 @@ public interface IAccountsClient
     ValueTask<AccountProfile[]> GetAccountsAsync(
         CancellationToken cancellationToken = default);
 
-    ValueTask<AccountLoginOutcome> LoginAsync(
-        AccountLoginRequest request,
+    ValueTask<AccountAuthenticationOutcome> AuthenticateAsync(
+        AccountAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 }

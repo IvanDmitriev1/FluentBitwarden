@@ -8,7 +8,7 @@ namespace BitwardenApi.Identity;
 [JsonSerializable(typeof(IdentityTokenAuthenticatedResponse))]
 [JsonSerializable(typeof(IdentityTokenRefreshSessionResponse))]
 [JsonSerializable(typeof(IdentityTokenFailureResponse))]
-[JsonSerializable(typeof(WebAuthnLoginAssertionOptionsResponse))]
+[JsonSerializable(typeof(WebAuthnAuthenticationAssertionOptionsResponse))]
 [JsonSerializable(typeof(WebAuthnLoginAssertionResponseRequest))]
 [JsonSerializable(typeof(PreloginRequest))]
 [JsonSerializable(typeof(string))]

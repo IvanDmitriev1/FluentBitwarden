@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login.Steps;
@@ -9,7 +10,7 @@ namespace FluentBitwarden.ViewModels.Accounts.Login.Steps;
 internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 {
     public LogIn2FStepViewModel(
-        AccountLoginOutcome.TwoFactorRequired twoFactorRequired,
+        AccountAuthenticationOutcome.TwoFactorRequired twoFactorRequired,
         LogInFlowPageViewModel flow)
     {
         _twoFactorRequired = twoFactorRequired;
@@ -25,7 +26,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
         ServerDisplayName = flow.Context.BitwardenContext.Environment.ToServerDisplayName();
     }
 
-    private readonly AccountLoginOutcome.TwoFactorRequired _twoFactorRequired;
+    private readonly AccountAuthenticationOutcome.TwoFactorRequired _twoFactorRequired;
     private readonly LogInFlowPageViewModel _flow;
 
     public string Email { get; }
@@ -64,7 +65,7 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 
         var context = _flow.Context;
 
-        var outcome = await _flow.AccountsClient.LoginAsync(new AccountLoginRequest.TwoFactorRequest(
+        var outcome = await _flow.AccountsClient.AuthenticateAsync(new AccountAuthenticationRequest.TwoFactor(
             context.BitwardenContext,
             _twoFactorRequired.Email,
             _twoFactorRequired.ServerAuthorizationHash,
@@ -72,11 +73,11 @@ internal sealed partial class LogIn2FStepViewModel : ObservableValidatorEx
 
         switch (outcome)
         {
-            case AccountLoginOutcome.Success success:
+            case AccountAuthenticationOutcome.Success success:
                 await _flow.OnSuccessLogIn(success.Account);
                 return;
 
-            case AccountLoginOutcome.InvalidCredentials invalidCredentials:
+            case AccountAuthenticationOutcome.InvalidCredentials invalidCredentials:
                 SetError(nameof(Code), invalidCredentials.Message);
                 return;
 

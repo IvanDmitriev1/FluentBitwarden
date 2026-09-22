@@ -14,6 +14,8 @@ internal static class AccountModuleServiceCollectionExtensions
         services.AddScoped<AccountProfileRepository>();
         services.AddScoped<AccountTpmUnlockKeyRepository>();
 
+        services.AddSingleton<AccountAuthenticatorService>();
+
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountWindowsHelloService, AccountWindowsHelloService>();
     }

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 namespace FluentBitwarden.ViewModels.Accounts.Login.Steps;
@@ -40,20 +41,20 @@ internal sealed partial class LogInPasswordStepViewModel(LogInFlowPageViewModel 
             return;
         }
 
-        var outcome = await flow.AccountsClient.LoginAsync(
-            new AccountLoginRequest.PasswordRequest(flow.Context.BitwardenContext, flow.Context.Email, MasterPassword),
+        var outcome = await flow.AccountsClient.AuthenticateAsync(
+            new AccountAuthenticationRequest.Password(flow.Context.BitwardenContext, flow.Context.Email, MasterPassword),
             CancellationToken.None);
 
         switch (outcome)
         {
-            case AccountLoginOutcome.Success success:
+            case AccountAuthenticationOutcome.Success success:
                 await flow.OnSuccessLogIn(success.Account);
                 return;
-            case AccountLoginOutcome.InvalidCredentials e:
+            case AccountAuthenticationOutcome.InvalidCredentials e:
                 SetError(nameof(MasterPassword), e.Message);
                 return;
 
-            case AccountLoginOutcome.TwoFactorRequired twoFactorRequired:
+            case AccountAuthenticationOutcome.TwoFactorRequired twoFactorRequired:
                 flow.Show2FStep(twoFactorRequired);
                 return;
             default:

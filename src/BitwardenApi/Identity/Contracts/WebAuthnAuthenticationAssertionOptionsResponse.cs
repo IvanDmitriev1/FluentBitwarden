@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace BitwardenApi.Identity.Contracts;
 
-internal sealed class WebAuthnLoginAssertionOptionsResponse
+internal sealed class WebAuthnAuthenticationAssertionOptionsResponse
 {
     [JsonPropertyName("options")]
     public required WebAuthnLoginAssertionOptions Options { get; init; }

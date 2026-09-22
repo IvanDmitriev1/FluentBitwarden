@@ -1,0 +1,12 @@
+global using BitwardenApi.Identity;
+global using BitwardenApi.Identity.Contracts;
+global using BitwardenApi.Infrastructure.Cryptography;
+global using BitwardenApi.Infrastructure.Cryptography.Enc;
+global using BitwardenApi.Infrastructure.Transport;
+global using BitwardenApi.Primitives;
+global using BitwardenApi.Primitives.Ids;
+global using Microsoft.Extensions.DependencyInjection;
+global using System.Net;
+global using System.Net.Http;
+global using System.Text;
+global using System.Text.Json;

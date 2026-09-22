@@ -29,6 +29,7 @@
     </Project>
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/BitwardenApi.Tests/BitwardenApi.Tests.csproj" />
     <Project Path="tests/FluentBitwarden.AppHost.IntegrationTests/FluentBitwarden.AppHost.IntegrationTests.csproj">
       <Platform Project="x64" />
     </Project>

@@ -1,27 +1,44 @@
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Persistance;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.Login;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Services;
 
 internal sealed class AccountService(
+    IUnitOfWork unitOfWork,
     IAccountWindowsHelloService accountWindowsHelloService,
-    AccountKeyMaterialRepository keyMaterialRepository,
+    AccountAuthenticatorService accountAuthenticatorService,
+    AccountKeyMaterialRepository accountKeyMaterialRepository,
+    AccountBitwardenSessionTokenRepository accountBitwardenSessionTokenRepository,
     AccountProfileRepository accountProfileRepository) : IAccountService
 {
     public AccountProfile[] GetAccounts() => accountProfileRepository.GetAccounts();
 
     public AccountProfile? GetAccount(UserId userId) => accountProfileRepository.GetById(userId);
 
-    public Task LoginAsync(AccountLoginRequest request, CancellationToken cancellationToken)
+    public async Task<AccountAuthenticationOutcome> AuthenticateAsync(AccountAuthenticationRequest request, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var result = await accountAuthenticatorService.AuthenticateAsync(request, cancellationToken);
+        if (result is AccountAuthenticatorService.Result.Rejected rejected)
+            return rejected.Outcome;
+
+        var (profile, keyMaterial, refreshToken) = (AccountAuthenticatorService.Result.Authenticated)result;
+        unitOfWork.Begin();
+
+        accountProfileRepository.Upsert(profile);
+        accountKeyMaterialRepository.Upsert(keyMaterial);
+        accountBitwardenSessionTokenRepository.Store(profile.UserId, refreshToken);
+
+        unitOfWork.Commit();
+
+        return new AccountAuthenticationOutcome.Success(profile);
     }
 
     public AccountKeyUnlockResult UnlockKey(UserId userId, AccountUnlockMethod method)
     {
-        if (keyMaterialRepository.GetById(userId) is not { } accountKeyMaterial)
+        if (accountKeyMaterialRepository.GetById(userId) is not { } accountKeyMaterial)
             return new AccountKeyUnlockResult.RequiresOnlineReauthentication();
 
         return method switch

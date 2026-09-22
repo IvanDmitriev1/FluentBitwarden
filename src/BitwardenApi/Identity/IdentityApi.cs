@@ -1,104 +1,93 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Identity.Internal;
 
 namespace BitwardenApi.Identity;
 
 internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdentityApi
 {
-    public Task<TokenExchangeOutcome> LoginWithPasswordAsync(
-        PasswordLoginRequest request,
+    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithPasswordAsync(
+        PasswordAuthenticationRequest request,
         CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreatePasswordGrant(),
-            "Identity login with password",
-            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
-            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
-            cancellationToken);
+        => SendAuthenticatedTokenRequestAsync(
+            request.Context, request.CreatePasswordGrant(), cancellationToken);
 
-    public Task<TokenExchangeOutcome> LoginWithPasswordAndTwoFactorAsync(
-        PasswordTwoFactorLoginRequest request,
+    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithPasswordAndTwoFactorAsync(
+        PasswordTwoFactorAuthenticationRequest request,
         CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreatePasswordWithTwoFactorGrant(),
-            "Identity login with password and two-factor",
-            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
-            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
-            cancellationToken);
+        => SendAuthenticatedTokenRequestAsync(
+            request.Context, request.CreatePasswordWithTwoFactorGrant(), cancellationToken);
 
-    public async Task<WebAuthnLoginAssertionOptionsResult> GetWebAuthnLoginAssertionOptionsAsync(
+    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithWebAuthnAsync(
+        WebAuthnAuthenticationRequest request,
+        CancellationToken cancellationToken = default)
+        => SendAuthenticatedTokenRequestAsync(
+            request.Context, request.CreateWebAuthnGrant(), cancellationToken);
+
+    public Task<SessionTokenResult<TokenRefreshSessionModel>> RefreshAuthenticationAsync(
+        RefreshAuthenticationRequest request,
+        CancellationToken cancellationToken = default)
+        => SendRefreshTokenRequestAsync(
+            request.Context, request.CreateRefreshTokenGrant(), cancellationToken);
+
+    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithDeviceAsync(
+        DeviceAuthenticationRequest request,
+        CancellationToken cancellationToken = default)
+        => SendAuthenticatedTokenRequestAsync(
+            request.Context, request.CreateDeviceGrant(), cancellationToken);
+
+    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithAuthorizationCodeAsync(
+        AuthorizationCodeLoginRequest request,
+        CancellationToken cancellationToken = default)
+        => SendAuthenticatedTokenRequestAsync(
+            request.Context, request.CreateAuthorizationCodeGrant(), cancellationToken);
+
+    private Task<SessionTokenResult<TokenAuthenticatedModel>> SendAuthenticatedTokenRequestAsync(
         BitwardenClientContext context,
-        CancellationToken cancellationToken = default)
+        IReadOnlyDictionary<string, string> form,
+        CancellationToken cancellationToken)
+        => SendTokenRequestAsync(
+            context, form, ReadAuthenticatedTokenAsync, cancellationToken);
+
+    private Task<SessionTokenResult<TokenRefreshSessionModel>> SendRefreshTokenRequestAsync(
+        BitwardenClientContext context,
+        IReadOnlyDictionary<string, string> form,
+        CancellationToken cancellationToken)
+        => SendTokenRequestAsync(
+            context, form, ReadRefreshTokenAsync, cancellationToken);
+
+    private static async Task<TokenAuthenticatedModel> ReadAuthenticatedTokenAsync(
+        HttpContent content,
+        CancellationToken cancellationToken)
     {
-        using var httpClient = httpClientFactory.CreateIdentityClient();
-        Uri endpoint = new(context.Environment.IdentityBase, "/accounts/webauthn/assertion-options");
-
-        using var response = await httpClient.GetAsync(endpoint, cancellationToken);
-        response.EnsureSuccess("Identity get WebAuthn assertion options", cancellationToken);
-
-        WebAuthnLoginAssertionOptionsResponse? payload = await response.Content.ReadFromJsonAsync(
-            IdentityJsonContext.ConfiguredDefault.WebAuthnLoginAssertionOptionsResponse,
+        IdentityTokenAuthenticatedResponse? payload = await content.ReadFromJsonAsync(
+            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
             cancellationToken);
 
         if (payload is null)
             throw new InvalidDataException("Response JSON payload was empty.");
 
-        return new WebAuthnLoginAssertionOptionsResult(payload.Options, payload.Token);
+        return payload.ToTokenResponse();
     }
 
-    public Task<TokenExchangeOutcome> LoginWithWebAuthnAsync(
-        WebAuthnLoginRequest request,
-        CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreateWebAuthnGrant(),
-            "Identity login with passkey",
-            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
-            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
-            cancellationToken);
-
-    public Task<TokenExchangeOutcome> RefreshAsync(
-        RefreshLoginRequest request,
-        CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreateRefreshTokenGrant(),
-            "Identity refresh token",
+    private static async Task<TokenRefreshSessionModel> ReadRefreshTokenAsync(
+        HttpContent content,
+        CancellationToken cancellationToken)
+    {
+        IdentityTokenRefreshSessionResponse? payload = await content.ReadFromJsonAsync(
             IdentityJsonContext.ConfiguredDefault.IdentityTokenRefreshSessionResponse,
-            static payload => new TokenExchangeOutcome.SessionRefreshed(payload.ToTokenRefreshSessionModel()),
             cancellationToken);
 
-    public Task<TokenExchangeOutcome> LoginWithDeviceAsync(
-        DeviceLoginRequest request,
-        CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreateDeviceGrant(),
-            "Identity login with device",
-            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
-            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
-            cancellationToken);
+        if (payload is null)
+            throw new InvalidDataException("Response JSON payload was empty.");
 
-    public Task<TokenExchangeOutcome> LoginWithAuthorizationCodeAsync(
-        AuthorizationCodeLoginRequest request,
-        CancellationToken cancellationToken = default)
-        => SendTokenRequestAsync(
-            request.Context,
-            request.CreateAuthorizationCodeGrant(),
-            "Identity login with authorization code",
-            IdentityJsonContext.ConfiguredDefault.IdentityTokenAuthenticatedResponse,
-            static payload => new TokenExchangeOutcome.Authenticated(payload.ToTokenResponse()),
-            cancellationToken);
+        return payload.ToTokenRefreshSessionModel();
+    }
 
-    private async Task<TokenExchangeOutcome> SendTokenRequestAsync<TPayload>(
+    private async Task<SessionTokenResult<TResult>> SendTokenRequestAsync<TResult>(
         BitwardenClientContext context,
         IReadOnlyDictionary<string, string> form,
-        string operation,
-        JsonTypeInfo<TPayload> payloadTypeInfo,
-        Func<TPayload, TokenExchangeOutcome> successFactory,
+        Func<HttpContent, CancellationToken, Task<TResult>> readSuccessAsync,
         CancellationToken cancellationToken)
     {
         using var httpClient = httpClientFactory.CreateIdentityClient();
@@ -117,19 +106,11 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
                                       cancellationToken: cancellationToken) ??
                                   throw new InvalidDataException("Response JSON payload was empty.");
 
-            return failureResponse.ToTokenFailureOutcome();
+            return new SessionTokenResult<TResult>.Rejected(failureResponse.ToTokenRejection());
         }
 
-        response.EnsureSuccess(operation, cancellationToken);
-
-        TPayload? payload = await response.Content.ReadFromJsonAsync(
-            payloadTypeInfo,
-            cancellationToken);
-
-        if (payload is null)
-            throw new InvalidDataException("Response JSON payload was empty.");
-
-        return successFactory(payload);
+        response.EnsureSuccessStatusCode();
+        return new SessionTokenResult<TResult>.Success(await readSuccessAsync(response.Content, cancellationToken));
     }
 }
 

@@ -54,6 +54,14 @@ jobs:
 
       - name: Run tests
         run: >
+          dotnet test --project tests\BitwardenApi.Tests\BitwardenApi.Tests.csproj
+          --no-build
+          --configuration ${{ env.Configuration }}
+          --arch x64
+          --results-directory TestResults
+
+      - name: Run AppHost integration tests
+        run: >
           dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj
           --no-build
           --configuration ${{ env.Configuration }}

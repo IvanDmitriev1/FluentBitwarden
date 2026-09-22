@@ -1,12 +1,21 @@
 namespace BitwardenApi.Identity.Contracts;
 
-public abstract record TokenExchangeOutcome
+public abstract record SessionTokenResult<T>
 {
-    private TokenExchangeOutcome() { }
+    private SessionTokenResult() { }
 
-    public sealed record Authenticated(TokenAuthenticatedModel AuthenticatedModel) : TokenExchangeOutcome;
-    public sealed record SessionRefreshed(TokenRefreshSessionModel Session) : TokenExchangeOutcome;
-    public sealed record TwoFactorRequired(IdentityTwoFactorChallenge Challenge, string Message) : TokenExchangeOutcome;
-    public sealed record InvalidCredentials(string Message) : TokenExchangeOutcome;
-    public sealed record DeviceVerificationRequired(string Message) : TokenExchangeOutcome;
+    public sealed record Success(T Value) : SessionTokenResult<T>;
+    public sealed record Rejected(SessionTokenRejection Error) : SessionTokenResult<T>;
+}
+
+public sealed record SessionTokenRejection(
+    SessionTokenRejectionKind Kind,
+    string Message,
+    IdentityTwoFactorChallenge? TwoFactorChallenge = null);
+
+public enum SessionTokenRejectionKind
+{
+    InvalidCredentials,
+    TwoFactorRequired,
+    DeviceVerificationRequired
 }

@@ -1,24 +1,24 @@
 namespace BitwardenApi.Identity.Contracts;
 
-public sealed record PasswordLoginRequest(
+public sealed record PasswordAuthenticationRequest(
     BitwardenClientContext Context,
     string Email,
     string MasterPasswordHash,
     string Scope = "api offline_access");
 
-public sealed record PasswordTwoFactorLoginRequest(
+public sealed record PasswordTwoFactorAuthenticationRequest(
     BitwardenClientContext Context,
     string Email,
     string MasterPasswordHash,
     IdentityTwoFactorProof TwoFactor,
     string Scope = "api offline_access");
 
-public sealed record RefreshLoginRequest(
+public sealed record RefreshAuthenticationRequest(
     BitwardenClientContext Context,
     RefreshToken RefreshToken,
     string Scope = "api offline_access");
 
-public sealed record DeviceLoginRequest(
+public sealed record DeviceAuthenticationRequest(
     BitwardenClientContext Context,
     string Email,
     string OneTimeAccessCode,
