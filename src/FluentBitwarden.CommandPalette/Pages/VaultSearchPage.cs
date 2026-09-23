@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using AsyncAwaitBestPractices;
 using FluentBitwarden.CommandPalette.VaultListItems;
 using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Contracts.AppSession.Status;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -36,7 +37,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         _vaultClient = vaultClient;
         _unlockVaultPage = unlockVaultPage;
         _vaultCipherListItemFactory = vaultCipherListItemFactory;
-        _sessionStatusSubscription = eventClient.Subscribe<VaultSessionStatusChangedEvent>(OnSessionStatusChanged);
+        _sessionStatusSubscription = eventClient.Subscribe<AppSesstionStatusChangedEvent>(OnSessionStatusChanged);
 
         Id = PageId;
         Title = "FluentBitwarden vault";
@@ -67,7 +68,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         cancellation?.Dispose();
     }
 
-    private void OnSessionStatusChanged(VaultSessionStatusChangedEvent message)
+    private void OnSessionStatusChanged(AppSesstionStatusChangedEvent message)
     {
         QueueSearch(string.Empty);
     }
@@ -96,7 +97,8 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         {
             await Task.Delay(SearchDebounce, cancellationToken);
 
-            if (await _appSessionClient.GetUnlockedAccount(cancellationToken) is null)
+            AppSessionSnapshot snapshot = await _appSessionClient.GetSnapshotAsync(new(), cancellationToken);
+            if (snapshot.Status != AppSessionStatus.Unlocked)
             {
                 ListItem unlockListItem = new(_unlockVaultPage)
                 {

@@ -4,7 +4,7 @@ namespace FluentBitwarden.Contracts.Integrations.Ssh;
 
 public interface ISshUserActionDialogClient
 {
-    ValueTask<UserActionDialogOutcome> ShowSshDialogAsync(
+    Task<UserActionDialogOutcome> ShowSshDialogAsync(
         SshUserActionRequest request,
         CancellationToken cancellationToken = default);
 }

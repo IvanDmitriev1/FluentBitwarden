@@ -4,15 +4,15 @@ namespace FluentBitwarden.Contracts.Modules.Accounts;
 
 public interface IAccountWindowsHelloIntegrationClient
 {
-    ValueTask<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(
+    Task<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(
         GetWindowsHelloEnrollmentRequest request,
         CancellationToken cancellationToken = default);
 
-    ValueTask<WindowsHelloEnrollmentOutcome> EnableAsync(
+    Task<WindowsHelloEnrollmentOutcome> EnableAsync(
         EnableWindowsHelloEnrollmentRequest request,
         CancellationToken cancellationToken = default);
 
-    ValueTask DisableAsync(
+    Task DisableAsync(
         DisableWindowsHelloEnrollmentRequest request,
         CancellationToken cancellationToken = default);
 }

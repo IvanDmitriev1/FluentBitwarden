@@ -11,7 +11,7 @@ internal sealed class PasskeySelectionDialogRequestHandler(
     IVaultClient vaultClient,
     IUiDialogCoordinator dialogCoordinator) : IPasskeyDialogClient, IIpcRequestsHandler
 {
-    public async ValueTask<Fido2Credential> ShowPasskeySelectionDialogAsync(PasskeySelectCredentialRequest request, CancellationToken cancellationToken = default)
+    public async Task<Fido2Credential> ShowPasskeySelectionDialogAsync(PasskeySelectCredentialRequest request, CancellationToken cancellationToken = default)
     {
         var credentials = await GetCredentialsAsync(request, cancellationToken);
         return await dialogCoordinator.ShowAsync<Fido2Credential>(() => new PasskeySelectionDialog(credentials), cancellationToken);

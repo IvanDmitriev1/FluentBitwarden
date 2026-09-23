@@ -1,5 +1,6 @@
 using FluentBitwarden.Contracts.AppSession.Status;
 using FluentBitwarden.Contracts.AppSession.Unlock;
+using FluentBitwarden.Contracts.AppSession.Lock;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault;
 
@@ -12,11 +13,15 @@ namespace FluentBitwarden.Contracts.AppSession;
 /// </summary>
 public interface IAppSessionClient
 {
-    ValueTask<AppSessionSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default);
+    Task<AppSessionSnapshot> GetSnapshotAsync(
+        GetAppSessionSnapshotRequest request,
+        CancellationToken cancellationToken = default);
 
-    ValueTask<SessionUnlockOutcome> UnlockAsync(
+    Task<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request,
         CancellationToken cancellationToken = default);
 
-    ValueTask LockAsync(CancellationToken cancellationToken = default);
+    Task LockAsync(
+        LockAppSessionRequest request,
+        CancellationToken cancellationToken = default);
 }

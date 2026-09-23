@@ -2,7 +2,7 @@ namespace FluentBitwarden.Platform.Ipc.Transport;
 
 internal static class IpcWireProtocol
 {
-    public static async ValueTask WriteRpcRequestAsync<TMessage>(
+    public static async Task WriteRpcRequestAsync<TMessage>(
         Stream stream,
         ushort messageType,
         TMessage message,
@@ -16,20 +16,11 @@ internal static class IpcWireProtocol
         await stream.WriteAsync(payload, cancellationToken);
     }
 
-    public static ValueTask WriteRpcRequestAsync(
-        Stream stream,
-        ushort messageType,
-        CancellationToken cancellationToken)
-    {
-        IpcMessageHeader header = new(messageType, PayloadLength: 0);
-        return header.WriteAsync(stream, cancellationToken);
-    }
-
     public static byte[] SerializeRpcResponse<TMessage>(TMessage message)
         where TMessage : notnull
         => MemoryPackSerializer.Serialize(new IpcOptional<TMessage>(message));
 
-    public static async ValueTask WriteRpcResponseAsync(
+    public static async Task WriteRpcResponseAsync(
         Stream stream,
         ReadOnlyMemory<byte> payload,
         CancellationToken cancellationToken)
@@ -39,13 +30,13 @@ internal static class IpcWireProtocol
         await stream.WriteAsync(payload, cancellationToken);
     }
 
-    public static ValueTask WriteRpcFailureResponseAsync(
+    public static Task WriteRpcFailureResponseAsync(
         Stream stream,
         CancellationToken cancellationToken) =>
         new IpcRpcResponseHeader(IsSuccessful: false, PayloadLength: 0)
             .WriteAsync(stream, cancellationToken);
 
-    public static async ValueTask WriteEventAsync<
+    public static async Task WriteEventAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>(
         Stream stream,
         TEvent message,
@@ -59,16 +50,17 @@ internal static class IpcWireProtocol
         await stream.WriteAsync(payload, cancellationToken);
     }
 
-    public static async ValueTask<TMessage> ReadMessagePayloadAsync<
+    public static Task<TMessage> ReadMessagePayloadAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
         TMessage>(byte[] payload, CancellationToken cancellationToken)
         where TMessage : notnull
     {
         var message = MemoryPackSerializer.Deserialize<TMessage>(payload);
-        return message ?? throw new InvalidDataException("IPC message payload was null.");
+        return Task.FromResult(
+            message ?? throw new InvalidDataException("IPC message payload was null."));
     }
 
-    public static async ValueTask<TResponse?> ReadRpcResponsePayloadAsync<
+    public static async Task<TResponse?> ReadRpcResponsePayloadAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
         TResponse>(
         Stream stream,
@@ -80,15 +72,5 @@ internal static class IpcWireProtocol
 
         var result = MemoryPackSerializer.Deserialize<IpcOptional<TResponse>>(buffer);
         return result.Value;
-    }
-
-    public static void ThrowIfCommandHasPayload(ushort messageType, int payloadLength)
-    {
-        if (payloadLength != 0)
-        {
-            throw new InvalidOperationException(
-                $"IPC message '{messageType}' does not accept a request payload, " +
-                $"but received '{payloadLength}' bytes.");
-        }
     }
 }

@@ -1,12 +1,12 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.Unlock;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Controls.Shared;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Infrastructure.Window;
 using Microsoft.UI.Xaml;
 
@@ -24,7 +24,7 @@ public sealed partial class AccountUnlockView : UserControl
         InitializeComponent();
 
         _appSessionClient = App.Current.GetRequiredService<IAppSessionClient>();
-        _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<IWindowsHelloUnlockClient>();
+        _windowsHelloAccountUnlockMethod = App.Current.GetRequiredService<IAccountWindowsHelloIntegrationClient>();
         _windowManager = App.Current.GetRequiredService<IWindowManager>();
 
         Loaded += OnLoaded;
@@ -32,8 +32,9 @@ public sealed partial class AccountUnlockView : UserControl
     }
 
     private readonly IAppSessionClient _appSessionClient;
-    private readonly IWindowsHelloUnlockClient _windowsHelloAccountUnlockMethod;
+    private readonly IAccountWindowsHelloIntegrationClient _windowsHelloAccountUnlockMethod;
     private readonly IWindowManager _windowManager;
+    private int _accountChangeVersion;
 
     public string Password => PasswordBox.Password;
 
@@ -58,13 +59,29 @@ public sealed partial class AccountUnlockView : UserControl
     async partial void OnAccountChanged()
     {
         ArgumentNullException.ThrowIfNull(Account);
+        AccountProfile account = Account;
+        int version = Interlocked.Increment(ref _accountChangeVersion);
+        WindowsHelloButton.Visibility = Visibility.Collapsed;
 
-        var status = await _windowsHelloAccountUnlockMethod.GetStatusAsync(new GetWindowsHelloStatusRequest(Account.UserId));
+        AppSessionSnapshot snapshot = await _appSessionClient.GetSnapshotAsync(new());
+        if (!IsCurrentAccountChange(version, account) || snapshot.CurrentAccount?.UserId != account.UserId)
+            return;
 
-        WindowsHelloButton.Visibility = status.IsEnabled
+        WindowsHelloEnrollmentStatus status = await _windowsHelloAccountUnlockMethod.GetEnrollmentAsync(
+            new GetWindowsHelloEnrollmentRequest());
+
+        if (!IsCurrentAccountChange(version, account))
+            return;
+
+        WindowsHelloButton.Visibility = status == WindowsHelloEnrollmentStatus.Enrolled
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
+
+    private bool IsCurrentAccountChange(int version, AccountProfile account) =>
+        Volatile.Read(ref _accountChangeVersion) == version &&
+        Account is { } currentAccount &&
+        currentAccount.UserId == account.UserId;
 
 
     [RelayCommand(AllowConcurrentExecutions = false)]
@@ -78,22 +95,24 @@ public sealed partial class AccountUnlockView : UserControl
             return Task.CompletedTask;
         }
 
-        return OnUnlockCore(new AccountUnlockRequest.MasterPasswordRequest(Account, Password));
+        return OnUnlockCore(new SessionUnlockRequest.MasterPasswordRequest(Account.UserId, Password));
     }
 
     [RelayCommand(AllowConcurrentExecutions = false)]
     private Task UnlockWithWindowsHello()
     {
         ArgumentNullException.ThrowIfNull(Account);
-        return OnUnlockCore(new AccountUnlockRequest.WindowsHelloRequest(Account, _windowManager.WindowHandle));
+        return OnUnlockCore(new SessionUnlockRequest.WindowsHelloRequest(
+            Account.UserId,
+            new NativeWindowHandle(_windowManager.WindowHandle.ToInt64())));
     }
 
-    private async Task OnUnlockCore(AccountUnlockRequest request)
+    private async Task OnUnlockCore(SessionUnlockRequest request)
     {
         PasswordBox.IsPasswordRevealed = false;
         PasswordBox.IsEnabled = false;
         WindowsHelloButton.IsEnabled = false;
-        AccountUnlockOutcome result;
+        SessionUnlockOutcome result;
 
         try
         {
@@ -107,7 +126,7 @@ public sealed partial class AccountUnlockView : UserControl
 
         switch (result)
         {
-            case AccountUnlockOutcome.Failure failure:
+            case SessionUnlockOutcome.Failure failure:
                 InfoBar.Message = failure.Reason;
                 InfoBar.IsOpen = true;
                 PasswordBox.Focus(FocusState.Programmatic);

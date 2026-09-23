@@ -4,10 +4,10 @@ namespace FluentBitwarden.Contracts.Integrations.Passkey;
 
 public interface IPasskeyClient
 {
-    ValueTask<PasskeyAssertionResponse> SelectCredentialAsync(
+    Task<PasskeyAssertionResponse> SelectCredentialAsync(
         PasskeyGetAssertionRequest request,
         CancellationToken cancellationToken);
 
-    ValueTask<PasskeyMakeCredentialResponse> MakeCredentialAsync(
+    Task<PasskeyMakeCredentialResponse> MakeCredentialAsync(
         PasskeyMakeCredentialRequest request, CancellationToken cancellationToken);
 }

@@ -1,6 +1,6 @@
 namespace FluentBitwarden.Platform.Ipc.Models;
 
-internal delegate ValueTask IpcRpcEndpointDelegate(
+internal delegate Task IpcRpcEndpointDelegate(
     Stream stream,
     byte[] payload,
     CancellationToken cancellationToken);

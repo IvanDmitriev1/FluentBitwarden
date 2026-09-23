@@ -4,15 +4,15 @@ namespace FluentBitwarden.Contracts.Integrations.BrowserExtension;
 
 public interface IBrowserExtensionClient
 {
-    ValueTask<BrowserVaultStatusResponse> GetStatusAsync(
+    Task<BrowserVaultStatusResponse> GetStatusAsync(
         BrowserVaultStatusRequest request,
         CancellationToken cancellationToken = default);
 
-    ValueTask<BrowserCredentialAvailabilityResponse> CheckCredentialAvailabilityAsync(
+    Task<BrowserCredentialAvailabilityResponse> CheckCredentialAvailabilityAsync(
         BrowserCredentialAvailabilityRequest request,
         CancellationToken cancellationToken = default);
 
-    ValueTask<BrowserCredentialFillResponse> FillCredentialAsync(
+    Task<BrowserCredentialFillResponse> FillCredentialAsync(
         BrowserCredentialFillRequest request,
         CancellationToken cancellationToken = default);
 }

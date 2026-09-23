@@ -1,11 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using System.Text.Json;
 using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.Unlock;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 namespace FluentBitwarden.CommandPalette.Pages;
 
@@ -39,12 +39,12 @@ internal sealed partial class UnlockVaultPage : ContentPage
 
         private readonly IAccountsClient _accountsClient;
         private readonly IAppSessionClient _appSessionClient;
-        private readonly IWindowsHelloUnlockClient _windowsHelloUnlockClient;
+        private readonly IAccountWindowsHelloIntegrationClient _windowsHelloUnlockClient;
 
         public UnlockFormContent(
             IAccountsClient accountsClient,
             IAppSessionClient appSessionClient,
-            IWindowsHelloUnlockClient windowsHelloUnlockClient)
+            IAccountWindowsHelloIntegrationClient windowsHelloUnlockClient)
         {
             _accountsClient = accountsClient;
             _appSessionClient = appSessionClient;
@@ -98,22 +98,33 @@ internal sealed partial class UnlockVaultPage : ContentPage
         private string BuildCurrentTemplateJson()
         {
             AccountProfile[] accounts = _accountsClient
-                .GetAccountsAsync(CancellationToken.None)
-                .AsTask()
+                .GetAccountsAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();
 
             if (accounts.Length == 0)
                 return BuildNoAccountsTemplateJson();
 
-            AccountProfile selectedAccount = accounts[0];
-            WindowsHelloStatus status = _windowsHelloUnlockClient
-                .GetStatusAsync(new GetWindowsHelloStatusRequest(selectedAccount.UserId), CancellationToken.None)
-                .AsTask()
+            AppSessionSnapshot snapshot = _appSessionClient
+                .GetSnapshotAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();
 
-            return BuildTemplateJson(selectedAccount, status is { IsSupported: true, IsEnabled: true });
+            AccountProfile selectedAccount = snapshot.CurrentAccount is { } currentAccount
+                ? accounts.FirstOrDefault(account => account.UserId == currentAccount.UserId) ?? currentAccount
+                : accounts[0];
+
+            bool windowsHelloAvailable = false;
+            if (snapshot.CurrentAccount is { } activeAccount && selectedAccount.UserId == activeAccount.UserId)
+            {
+                WindowsHelloEnrollmentStatus status = _windowsHelloUnlockClient
+                    .GetEnrollmentAsync(new GetWindowsHelloEnrollmentRequest(), CancellationToken.None)
+                    .GetAwaiter()
+                    .GetResult();
+                windowsHelloAvailable = status == WindowsHelloEnrollmentStatus.Enrolled;
+            }
+
+            return BuildTemplateJson(selectedAccount, windowsHelloAvailable);
         }
 
         private static string BuildTemplateJson(AccountProfile selectedAccount, bool windowsHelloAvailable)
@@ -221,8 +232,7 @@ internal sealed partial class UnlockVaultPage : ContentPage
         private AccountProfile? ResolveAccount(string accountUserId)
         {
             AccountProfile[] accounts = _accountsClient
-                .GetAccountsAsync(CancellationToken.None)
-                .AsTask()
+                .GetAccountsAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();
 
@@ -233,7 +243,9 @@ internal sealed partial class UnlockVaultPage : ContentPage
         private ICommandResult UnlockWithWindowsHello(AccountProfile selectedAccount)
         {
             using var ownerWindow = new HiddenWindow("FluentBitwarden_ComPlateExt_Wnd");
-            return UnlockVault(new AccountUnlockRequest.WindowsHelloRequest(selectedAccount, ownerWindow.Hwnd));
+            return UnlockVault(new SessionUnlockRequest.WindowsHelloRequest(
+                selectedAccount.UserId,
+                new NativeWindowHandle(ownerWindow.Hwnd.ToInt64())));
         }
 
         private ICommandResult UnlockWithMasterPassword(JsonElement input, AccountProfile selectedAccount)
@@ -245,23 +257,23 @@ internal sealed partial class UnlockVaultPage : ContentPage
             if (string.IsNullOrWhiteSpace(masterPassword))
                 return CommandResult.ShowToast("Enter your master password.");
 
-            return UnlockVault(new AccountUnlockRequest.MasterPasswordRequest(selectedAccount, masterPassword));
+            return UnlockVault(new SessionUnlockRequest.MasterPasswordRequest(selectedAccount.UserId, masterPassword));
         }
 
-        private ICommandResult UnlockVault(AccountUnlockRequest request)
+        private ICommandResult UnlockVault(SessionUnlockRequest request)
         {
-            AccountUnlockOutcome outcome = _appSessionClient
+            SessionUnlockOutcome outcome = _appSessionClient
                 .UnlockAsync(request, CancellationToken.None)
-                .AsTask()
                 .GetAwaiter()
                 .GetResult();
 
             return outcome switch
             {
-                AccountUnlockOutcome.Success => CommandResult.GoBack(),
-                AccountUnlockOutcome.WindowsHelloCancelled => CommandResult.ShowToast("Unlock canceled."),
-                AccountUnlockOutcome.RequiresOnlineReauth => CommandResult.ShowToast("Sign in again to unlock this account."),
-                AccountUnlockOutcome.Failure failure => CommandResult.ShowToast(failure.Reason),
+                SessionUnlockOutcome.Success => CommandResult.GoBack(),
+                SessionUnlockOutcome.WindowsHelloCancelled => CommandResult.ShowToast("Unlock canceled."),
+                SessionUnlockOutcome.RequiresOnlineReauth => CommandResult.ShowToast("Sign in again to unlock this account."),
+                SessionUnlockOutcome.Failure failure => CommandResult.ShowToast(failure.Reason),
+                SessionUnlockOutcome.ConcurrentRequest => CommandResult.ShowToast("Another unlock is already in progress."),
                 _ => CommandResult.ShowToast("Unlock failed.")
             };
         }

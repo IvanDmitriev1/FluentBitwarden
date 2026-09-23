@@ -142,7 +142,7 @@ static async Task HandleAsync<TRequest, TResponse>(
     INativeMessagingTransport messagingTransport,
     IBrowserExtensionClient client,
     BrowserNativeRequestEnvelope request,
-    Func<IBrowserExtensionClient, TRequest, CancellationToken, ValueTask<TResponse>> handler,
+    Func<IBrowserExtensionClient, TRequest, CancellationToken, Task<TResponse>> handler,
     CancellationToken cancellationToken)
 {
     var requestJsonTypeInfo = BrowseProxyJsonContext.ConfiguredDefault.GetRequiredTypeInfo<TRequest>();

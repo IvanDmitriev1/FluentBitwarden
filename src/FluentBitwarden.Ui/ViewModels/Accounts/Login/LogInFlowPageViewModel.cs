@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.Accounts.Login;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Application.Models;

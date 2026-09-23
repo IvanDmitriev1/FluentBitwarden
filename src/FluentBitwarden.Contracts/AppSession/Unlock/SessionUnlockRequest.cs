@@ -5,7 +5,7 @@ namespace FluentBitwarden.Contracts.AppSession.Unlock;
 [MemoryPackable]
 [MemoryPackUnion(0, typeof(MasterPasswordRequest))]
 [MemoryPackUnion(1, typeof(WindowsHelloRequest))]
-public abstract partial record SessionUnlockRequest(UserId UserId)
+public abstract partial record SessionUnlockRequest(UserId UserId) : IIpcRequestMessage
 {
     public static ushort MessageType => IpcMessageTypes.Session.Unlock;
 

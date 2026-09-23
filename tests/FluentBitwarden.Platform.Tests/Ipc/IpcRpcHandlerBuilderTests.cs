@@ -39,4 +39,24 @@ public class IpcRpcHandlerBuilderTests
             static descriptor => descriptor.ServiceType == typeof(RpcShapesHandler));
         Assert.Equal(ServiceLifetime.Scoped, handlerRegistration.Lifetime);
     }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public void Add_rejects_duplicate_message_ids()
+    {
+        TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+        var builder = new IpcRpcHandlerBuilder(new ServiceCollection());
+
+        builder.Add<RpcShapesHandler>();
+
+        Assert.Throws<InvalidOperationException>(() => builder.Add<DuplicateEchoHandler>());
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public void Add_rejects_message_id_zero()
+    {
+        TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+        var builder = new IpcRpcHandlerBuilder(new ServiceCollection());
+
+        Assert.Throws<InvalidOperationException>(() => builder.Add<ZeroMessageTypeHandler>());
+    }
 }

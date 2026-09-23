@@ -2,8 +2,8 @@ using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
+using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Views.Accounts;
 using FluentBitwarden.Views.Shell;
@@ -71,16 +71,16 @@ public sealed partial class UnlockPageViewModel(
     }
 
     [RelayCommand]
-    private void VaultUnlockResult(AccountUnlockOutcome result)
+    private void VaultUnlockResult(SessionUnlockOutcome result)
     {
         ArgumentNullException.ThrowIfNull(SelectedAccount);
 
         switch (result)
         {
-            case AccountUnlockOutcome.Failure:
+            case SessionUnlockOutcome.Failure:
                 //TODO
                 break;
-            case AccountUnlockOutcome.RequiresOnlineReauth:
+            case SessionUnlockOutcome.RequiresOnlineReauth:
                 //appCoordinator.RequireSignIn(SelectedAccount);
                 //TODO
                 break;

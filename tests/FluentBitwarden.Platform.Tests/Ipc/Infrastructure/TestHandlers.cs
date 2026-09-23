@@ -30,31 +30,43 @@ public sealed class RpcShapesHandlerState
 
 public sealed class RpcShapesHandler(RpcShapesHandlerState state) : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
     {
         state.RecordEcho(request);
-        return ValueTask.FromResult(new EchoResponse(91, $"response:{request.Text}", 407));
+        return Task.FromResult(new EchoResponse(91, $"response:{request.Text}", 407));
     }
 
-    public ValueTask Apply(CommandRequest request, CancellationToken cancellationToken)
+    public Task Apply(CommandRequest request, CancellationToken cancellationToken)
     {
         state.RecordRequestCommand(request);
-        return ValueTask.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    [IpcMessageHandler(TestMessageTypes.CommandResponse)]
-    public ValueTask<EchoResponse> GetCommandResponse(CancellationToken cancellationToken)
+    public Task<EchoResponse> GetCommandResponse(
+        EmptyCommandResponseRequest request,
+        CancellationToken cancellationToken)
     {
         state.RecordCommandResponse();
-        return ValueTask.FromResult(new EchoResponse(17, "command-response", 3));
+        return Task.FromResult(new EchoResponse(17, "command-response", 3));
     }
 
-    [IpcMessageHandler(TestMessageTypes.Command)]
-    public ValueTask RunCommand(CancellationToken cancellationToken)
+    public Task RunCommand(EmptyCommandRequest request, CancellationToken cancellationToken)
     {
         state.RecordCommand();
-        return ValueTask.CompletedTask;
+        return Task.CompletedTask;
     }
+}
+
+public sealed class DuplicateEchoHandler : IIpcRequestsHandler
+{
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
+}
+
+public sealed class ZeroMessageTypeHandler : IIpcRequestsHandler
+{
+    public Task<EchoResponse> Echo(ZeroMessageTypeRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new EchoResponse(0, string.Empty, 0));
 }
 
 public sealed class BlockingEchoHandlerState
@@ -73,7 +85,7 @@ public sealed class BlockingEchoHandlerState
             TestTaskCompletionSource.Create<bool>();
     }
 
-    public async ValueTask<EchoResponse> WaitForReleaseAsync(
+    public async Task<EchoResponse> WaitForReleaseAsync(
         EchoRequest request,
         CancellationToken cancellationToken)
     {
@@ -97,7 +109,7 @@ public sealed class BlockingEchoHandlerState
 
 public sealed class BlockingEchoHandler(BlockingEchoHandlerState state) : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
         state.WaitForReleaseAsync(request, cancellationToken);
 }
 
@@ -119,16 +131,16 @@ public sealed class ImmediateEchoHandlerState
 
 public sealed class ImmediateEchoHandler(ImmediateEchoHandlerState state) : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
     {
         state.RecordInvocation(cancellationToken);
-        return ValueTask.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
+        return Task.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
     }
 }
 
 public sealed class ServerCancellingHandler : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(
+    public Task<EchoResponse> Echo(
         EchoRequest request,
         CancellationToken cancellationToken)
     {
@@ -138,18 +150,18 @@ public sealed class ServerCancellingHandler : IIpcRequestsHandler
 
 public sealed class FailingRpcShapesHandler : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
         throw new InvalidOperationException("Expected test handler failure.");
 
-    public ValueTask Apply(CommandRequest request, CancellationToken cancellationToken) =>
+    public Task Apply(CommandRequest request, CancellationToken cancellationToken) =>
         throw new InvalidOperationException("Expected test handler failure.");
 
-    [IpcMessageHandler(TestMessageTypes.CommandResponse)]
-    public ValueTask<EchoResponse> GetCommandResponse(CancellationToken cancellationToken) =>
+    public Task<EchoResponse> GetCommandResponse(
+        EmptyCommandResponseRequest request,
+        CancellationToken cancellationToken) =>
         throw new InvalidOperationException("Expected test handler failure.");
 
-    [IpcMessageHandler(TestMessageTypes.Command)]
-    public ValueTask RunCommand(CancellationToken cancellationToken) =>
+    public Task RunCommand(EmptyCommandRequest request, CancellationToken cancellationToken) =>
         throw new InvalidOperationException("Expected test handler failure.");
 }
 
@@ -164,12 +176,12 @@ public sealed class FailOnceHandlerState
 
 public sealed class FailOnceHandler(FailOnceHandlerState state) : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken)
     {
         if (state.ShouldFail())
             throw new InvalidOperationException("Expected one-time test handler failure.");
 
-        return ValueTask.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
+        return Task.FromResult(new EchoResponse(request.Number, request.Text, request.Number));
     }
 }
 
@@ -211,8 +223,8 @@ public sealed class ScopedRequestDependency(ScopedLifetimeProbe probe) : IAsyncD
 
 public sealed class ScopedLifetimeHandler(ScopedRequestDependency dependency) : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(new EchoResponse(request.Number, request.Text, dependency.InstanceId));
+    public Task<EchoResponse> Echo(EchoRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new EchoResponse(request.Number, request.Text, dependency.InstanceId));
 }
 
 public sealed class ScopedRequestState
@@ -239,7 +251,7 @@ public sealed class ScopedCancellationHandler(
     ScopedRequestState state)
     : IIpcRequestsHandler
 {
-    public async ValueTask<EchoResponse> Echo(
+    public async Task<EchoResponse> Echo(
         EchoRequest request,
         CancellationToken cancellationToken)
     {
@@ -262,7 +274,7 @@ public sealed class ScopedThrowingHandler(
     ScopedRequestState state)
     : IIpcRequestsHandler
 {
-    public ValueTask<EchoResponse> Echo(
+    public Task<EchoResponse> Echo(
         EchoRequest request,
         CancellationToken cancellationToken)
     {

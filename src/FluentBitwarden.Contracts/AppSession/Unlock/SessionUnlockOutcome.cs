@@ -5,6 +5,7 @@ namespace FluentBitwarden.Contracts.AppSession.Unlock;
 [MemoryPackUnion(1, typeof(WindowsHelloCancelled))]
 [MemoryPackUnion(2, typeof(RequiresOnlineReauth))]
 [MemoryPackUnion(3, typeof(Failure))]
+[MemoryPackUnion(4, typeof(ConcurrentRequest))]
 public abstract partial record SessionUnlockOutcome
 {
     private SessionUnlockOutcome() { }

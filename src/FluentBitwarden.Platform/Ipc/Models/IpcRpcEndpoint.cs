@@ -6,7 +6,7 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
 
     public IpcAuthenticationLevel AuthenticationLevel { get; } = descriptor.AuthenticationLevel;
 
-    public async ValueTask<IpcRpcInvocationResult> InvokeAsync(
+    public async Task<IpcRpcInvocationResult> InvokeAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,
@@ -40,7 +40,7 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
         return result;
     }
 
-    protected abstract ValueTask<byte[]> InvokeCoreAsync(
+    protected abstract Task<byte[]> InvokeCoreAsync(
         IServiceProvider requestServices,
         Stream stream,
         byte[] payload,

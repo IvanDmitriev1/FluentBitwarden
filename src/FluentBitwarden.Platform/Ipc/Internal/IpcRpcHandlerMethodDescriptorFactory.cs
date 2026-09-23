@@ -42,19 +42,10 @@ internal static class IpcRpcHandlerMethodDescriptorFactory
             return CreateRequestHandlerDescriptor(method, parameters[0].ParameterType);
         }
 
-        if (parameters.Length == 1 &&
-            parameters[0].ParameterType == typeof(CancellationToken))
-        {
-            return CreateCommandHandlerDescriptor(method);
-        }
-
         throw InvalidSignature(
             method,
-            "A public IPC method must be one of: " +
-            "(TRequest, CancellationToken) returning ValueTask<TResponse>, " +
-            "(TRequest, CancellationToken) returning ValueTask, " +
-            "(CancellationToken) returning ValueTask<TResponse>, or " +
-            "(CancellationToken) returning ValueTask.");
+            "A public IPC method must declare (TRequest, CancellationToken) " +
+            "and return Task<TResponse> or Task.");
     }
 
     [RequiresDynamicCode(
@@ -67,9 +58,14 @@ internal static class IpcRpcHandlerMethodDescriptorFactory
         Type requestType)
     {
         var messageType = method.GetRequestMessageType(requestType);
-        var authRequirement = GetAuthRequirement(method);
+        if (messageType == 0)
+        {
+            throw InvalidSignature(method, "The request message type must not be zero.");
+        }
 
-        if (method.ReturnType == typeof(ValueTask))
+        const IpcAuthenticationLevel authRequirement = IpcAuthenticationLevel.SamePackage;
+
+        if (method.ReturnType == typeof(Task))
         {
             return new IpcRpcHandlerMethodDescriptor(
                 messageType,
@@ -80,7 +76,7 @@ internal static class IpcRpcHandlerMethodDescriptorFactory
                 RequestType: requestType);
         }
 
-        if (TryGetValueTaskResponseType(method.ReturnType, out var responseType))
+        if (TryGetTaskResponseType(method.ReturnType, out var responseType))
         {
             return new IpcRpcHandlerMethodDescriptor(
                 messageType,
@@ -93,58 +89,15 @@ internal static class IpcRpcHandlerMethodDescriptorFactory
 
         throw InvalidSignature(
             method,
-            "A request IPC method must return ValueTask or ValueTask<TResponse>.");
+            "A request IPC method must return Task or Task<TResponse>.");
     }
 
-    private static IpcRpcHandlerMethodDescriptor CreateCommandHandlerDescriptor(MethodInfo method)
-    {
-        var attribute = method.GetCustomAttribute<IpcMessageHandlerAttribute>()
-                        ?? throw InvalidSignature(method,
-                            "A method without a request model must declare [IpcMessageHandler(messageType)].");
-
-        if (attribute.MessageType == 0)
-        {
-            throw InvalidSignature(
-                method,
-                "A command method must declare a concrete message type.");
-        }
-
-        var messageType = attribute.MessageType;
-        var authRequirement = attribute.AuthenticationLevel;
-
-        if (method.ReturnType == typeof(ValueTask))
-        {
-            return new IpcRpcHandlerMethodDescriptor(
-                messageType,
-                authRequirement,
-                IpcRpcHandlerMethodKind.Command,
-                method,
-                ResponseType: null,
-                RequestType: null);
-        }
-
-        if (TryGetValueTaskResponseType(method.ReturnType, out var responseType))
-        {
-            return new IpcRpcHandlerMethodDescriptor(
-                messageType,
-                authRequirement,
-                IpcRpcHandlerMethodKind.CommandResponse,
-                method,
-                ResponseType: responseType,
-                RequestType: null);
-        }
-
-        throw InvalidSignature(
-            method,
-            "A command IPC method must return ValueTask or ValueTask<TResponse>.");
-    }
-
-    private static bool TryGetValueTaskResponseType(
+    private static bool TryGetTaskResponseType(
         Type returnType,
         [NotNullWhen(true)] out Type? responseType)
     {
         if (returnType.IsGenericType &&
-            returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+            returnType.GetGenericTypeDefinition() == typeof(Task<>))
         {
             responseType = returnType.GetGenericArguments()[0];
             return true;
@@ -153,10 +106,6 @@ internal static class IpcRpcHandlerMethodDescriptorFactory
         responseType = null;
         return false;
     }
-
-    private static IpcAuthenticationLevel GetAuthRequirement(MethodInfo method) =>
-        method.GetCustomAttribute<IpcMessageHandlerAttribute>()?.AuthenticationLevel ??
-        IpcAuthenticationLevel.SamePackage;
 
     private static InvalidOperationException InvalidSignature(MethodInfo method, string reason)
     {

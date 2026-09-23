@@ -11,7 +11,7 @@ using FluentBitwarden.Contracts.Settings;
 namespace FluentBitwarden.ViewModels.Settings;
 
 public sealed partial class SettingsPageViewModel(
-    IWindowsHelloUnlockClient windowsHelloUnlockClient,
+    IAccountWindowsHelloIntegrationClient windowsHelloUnlockClient,
     IWindowManager windowManager)
     : ObservableObject, INavigationAware
 {

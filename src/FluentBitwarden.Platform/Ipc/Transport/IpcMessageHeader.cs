@@ -12,7 +12,7 @@ internal readonly record struct IpcMessageHeader(
     private const int MessageTypeOffset = sizeof(ushort);
     private const int PayloadLengthOffset = sizeof(ushort) * 2;
 
-    public async ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         byte[] header = new byte[HeaderSize];
 
@@ -31,7 +31,7 @@ internal readonly record struct IpcMessageHeader(
         await stream.WriteAsync(header, cancellationToken);
     }
 
-    public static async ValueTask<IpcMessageHeader> ReadAsync(
+    public static async Task<IpcMessageHeader> ReadAsync(
         Stream stream,
         CancellationToken cancellationToken = default)
     {
@@ -58,4 +58,4 @@ internal readonly record struct IpcMessageHeader(
 
         return new IpcMessageHeader(messageType, payloadLength);
     }
-}
+}

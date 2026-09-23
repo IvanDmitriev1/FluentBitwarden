@@ -10,7 +10,7 @@ internal readonly record struct IpcRpcResponseHeader(bool IsSuccessful, int Payl
     private const int IsSuccessfulOffset = sizeof(ushort);
     private const int PayloadLengthOffset = sizeof(ushort) + sizeof(byte);
 
-    public static async ValueTask<IpcRpcResponseHeader> ReadAsync(
+    public static async Task<IpcRpcResponseHeader> ReadAsync(
         Stream stream,
         CancellationToken cancellationToken = default)
     {
@@ -45,7 +45,7 @@ internal readonly record struct IpcRpcResponseHeader(bool IsSuccessful, int Payl
         return new IpcRpcResponseHeader(isSuccessful == 1, payloadLength);
     }
 
-    public async ValueTask WriteAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         byte[] header = new byte[HeaderSize];
 

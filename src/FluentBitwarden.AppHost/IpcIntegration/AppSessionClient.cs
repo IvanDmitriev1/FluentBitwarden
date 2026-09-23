@@ -1,23 +1,28 @@
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.Status;
 using FluentBitwarden.Contracts.AppSession.Unlock;
+using FluentBitwarden.Contracts.AppSession.Lock;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.IpcIntegration;
 
 internal sealed class AppSessionClient : IAppSessionClient, IIpcRequestsHandler
 {
-    public ValueTask<AppSessionSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
+    public Task<AppSessionSnapshot> GetSnapshotAsync(
+        GetAppSessionSnapshotRequest request,
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public ValueTask<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken = default)
+    public Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public ValueTask LockAsync(CancellationToken cancellationToken = default)
+    public Task LockAsync(
+        LockAppSessionRequest request,
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

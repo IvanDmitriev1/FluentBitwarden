@@ -5,13 +5,17 @@ namespace FluentBitwarden.Contracts.Modules.Vault;
 
 public interface IVaultClient
 {
-    ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default);
-    ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default);
+    Task<VaultSyncResult> SyncVaultAsync(
+        SyncVaultRequest request,
+        CancellationToken cancellationToken = default);
+    Task<VaultFolder[]> GetFoldersAsync(
+        GetVaultFoldersRequest request,
+        CancellationToken cancellationToken = default);
 
-    ValueTask<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default);
-    ValueTask<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default);
-    ValueTask<VaultCipher?> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default);
-    ValueTask DownloadCipherAttachmentAsync(
+    Task<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default);
+    Task<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default);
+    Task<VaultCipher?> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default);
+    Task DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default);
 }

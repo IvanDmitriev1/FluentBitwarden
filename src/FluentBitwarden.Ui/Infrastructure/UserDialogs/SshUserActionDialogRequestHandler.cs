@@ -9,7 +9,7 @@ namespace FluentBitwarden.Infrastructure.UserDialogs;
 internal sealed class SshUserActionDialogRequestHandler(
     IUiDialogCoordinator dialogCoordinator) : ISshUserActionDialogClient, IIpcRequestsHandler
 {
-    public async ValueTask<UserActionDialogOutcome> ShowSshDialogAsync(SshUserActionRequest request, CancellationToken cancellationToken = default)
+    public async Task<UserActionDialogOutcome> ShowSshDialogAsync(SshUserActionRequest request, CancellationToken cancellationToken = default)
     {
         try
         {

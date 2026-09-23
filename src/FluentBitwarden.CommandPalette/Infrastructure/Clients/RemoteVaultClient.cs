@@ -1,5 +1,4 @@
 using BitwardenApi.Vault.Items.Contracts;
-using FluentBitwarden.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Contracts.Modules.Vault.Workspace;
@@ -10,28 +9,32 @@ namespace FluentBitwarden.CommandPalette.Infrastructure.Clients;
 
 internal sealed class RemoteVaultClient(IIpcClient ipcClient) : IVaultClient
 {
-    public ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<VaultSyncResult>(IpcMessageTypes.Vault.Sync, cancellationToken);
+    public Task<VaultSyncResult> SyncVaultAsync(
+        SyncVaultRequest request,
+        CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<SyncVaultRequest, VaultSyncResult>(request, cancellationToken);
 
-    public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<VaultFolder[]>(IpcMessageTypes.Vault.GetFolders, cancellationToken);
+    public Task<VaultFolder[]> GetFoldersAsync(
+        GetVaultFoldersRequest request,
+        CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<GetVaultFoldersRequest, VaultFolder[]>(request, cancellationToken);
 
-    public ValueTask<VaultCipher[]> SearchCiphersAsync(
+    public Task<VaultCipher[]> SearchCiphersAsync(
         VaultCipherQuery query,
         CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
 
-    public ValueTask<VaultCipher?> GetCipherAsync(
+    public Task<VaultCipher?> GetCipherAsync(
         GetVaultCipherRequest request,
         CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<GetVaultCipherRequest, VaultCipher?>(request, cancellationToken);
 
-    public ValueTask<VaultCipher?> SaveCipherAsync(
+    public Task<VaultCipher?> SaveCipherAsync(
         SaveVaultCipherRequest request,
         CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<SaveVaultCipherRequest, VaultCipher?>(request, cancellationToken);
 
-    public async ValueTask DownloadCipherAttachmentAsync(
+    public async Task DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {

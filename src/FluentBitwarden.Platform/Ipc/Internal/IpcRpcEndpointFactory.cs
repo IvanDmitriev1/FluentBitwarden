@@ -17,23 +17,15 @@ internal static class IpcRpcEndpointFactory
         var endpointType = descriptor.Kind switch
         {
             IpcRpcHandlerMethodKind.RequestResponse =>
-                typeof(RequestResponseEndpoint<,,>).MakeGenericType(
-                    typeof(THandler),
-                    descriptor.RequestType!,
-                    descriptor.ResponseType!),
+            typeof(RequestResponseEndpoint<,,>).MakeGenericType(
+                typeof(THandler),
+                descriptor.RequestType,
+                descriptor.ResponseType!),
 
             IpcRpcHandlerMethodKind.RequestCommand =>
-                typeof(RequestCommandEndpoint<,>).MakeGenericType(
-                    typeof(THandler),
-                    descriptor.RequestType!),
-
-            IpcRpcHandlerMethodKind.CommandResponse =>
-                typeof(CommandResponseEndpoint<,>).MakeGenericType(
-                    typeof(THandler),
-                    descriptor.ResponseType!),
-
-            IpcRpcHandlerMethodKind.Command =>
-                typeof(CommandEndpoint<>).MakeGenericType(typeof(THandler)),
+            typeof(RequestCommandEndpoint<,>).MakeGenericType(
+                typeof(THandler),
+                descriptor.RequestType),
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(descriptor),

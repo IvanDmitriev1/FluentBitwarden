@@ -18,7 +18,7 @@ public class IpcAuthenticationTests
         await Assert.ThrowsAnyAsync<IOException>(async () =>
             await host.Client.SendAsync<EchoRequest, EchoResponse>(
                 new EchoRequest(21, "rejected"),
-                testCancellation).AsTask());
+                testCancellation));
 
         Assert.Equal(1, host.Verifier.InvocationCount);
         Assert.False(state.Completed.Task.IsCompleted);

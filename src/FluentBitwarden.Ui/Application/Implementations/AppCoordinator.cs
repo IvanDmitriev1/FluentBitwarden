@@ -2,7 +2,7 @@ using AsyncAwaitBestPractices;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
-using FluentBitwarden.Contracts.Modules.Vault;
+using FluentBitwarden.Contracts.AppSession.Status;
 using FluentBitwarden.Infrastructure.UiCommand;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -27,7 +27,7 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         _windowManager = windowManager;
         _hostedServiceManager = hostedServiceManager;
 
-        eventClient.Subscribe<VaultSessionStatusChangedEvent>((_, _) =>
+        eventClient.Subscribe<AppSesstionStatusChangedEvent>((_, _) =>
             App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync));
 
         //NetworkInformation.NetworkStatusChanged += OnNetworkStatusChanged;

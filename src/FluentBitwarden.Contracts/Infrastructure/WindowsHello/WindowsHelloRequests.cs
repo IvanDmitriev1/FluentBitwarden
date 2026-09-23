@@ -1,8 +1,7 @@
 namespace FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 [MemoryPackable]
-public readonly partial record struct GetWindowsHelloEnrollmentRequest(
-    UserId UserId) : IIpcRequestMessage
+public readonly partial record struct GetWindowsHelloEnrollmentRequest : IIpcRequestMessage
 {
     public static ushort MessageType =>
         IpcMessageTypes.WindowsHello.GetEnrollment;
@@ -10,7 +9,6 @@ public readonly partial record struct GetWindowsHelloEnrollmentRequest(
 
 [MemoryPackable]
 public readonly partial record struct EnableWindowsHelloEnrollmentRequest(
-    UserId UserId,
     NativeWindowHandle OwnerWindow) : IIpcRequestMessage
 {
     public static ushort MessageType =>
@@ -18,8 +16,7 @@ public readonly partial record struct EnableWindowsHelloEnrollmentRequest(
 }
 
 [MemoryPackable]
-public readonly partial record struct DisableWindowsHelloEnrollmentRequest(
-    UserId UserId) : IIpcRequestMessage
+public readonly partial record struct DisableWindowsHelloEnrollmentRequest : IIpcRequestMessage
 {
     public static ushort MessageType =>
         IpcMessageTypes.WindowsHello.DisableEnrollment;

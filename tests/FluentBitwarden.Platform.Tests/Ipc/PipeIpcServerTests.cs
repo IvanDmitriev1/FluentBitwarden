@@ -22,11 +22,11 @@ public class PipeIpcServerTests
         IpcVoid requestCommandResponse = await host.Client.SendAsync<CommandRequest, IpcVoid>(
             new CommandRequest("sync", 12),
             testCancellation);
-        EchoResponse commandResponse = await host.Client.SendAsync<EchoResponse>(
-            TestMessageTypes.CommandResponse,
+        EchoResponse commandResponse = await host.Client.SendAsync<EmptyCommandResponseRequest, EchoResponse>(
+            new EmptyCommandResponseRequest(),
             testCancellation);
-        IpcVoid commandResult = await host.Client.SendAsync<IpcVoid>(
-            TestMessageTypes.Command,
+        IpcVoid commandResult = await host.Client.SendAsync<EmptyCommandRequest, IpcVoid>(
+            new EmptyCommandRequest(),
             testCancellation);
 
         Assert.Equal(new EchoResponse(91, "response:wire-value", 407), response);
@@ -54,10 +54,10 @@ public class PipeIpcServerTests
 
         Task<EchoResponse> first = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(1, "first"),
-            testCancellation).AsTask();
+            testCancellation);
         Task<EchoResponse> second = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(2, "second"),
-            testCancellation).AsTask();
+            testCancellation);
 
         await firstState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
         await secondState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
@@ -87,10 +87,10 @@ public class PipeIpcServerTests
 
         Task<EchoResponse> cancelled = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(3, "cancelled"),
-            cancellation.Token).AsTask();
+            cancellation.Token);
         Task<EchoResponse> successful = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(4, "successful"),
-            testCancellation).AsTask();
+            testCancellation);
 
         try
         {
@@ -145,7 +145,7 @@ public class PipeIpcServerTests
         OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(() =>
             host.Client.SendAsync<EchoRequest, EchoResponse>(
                 new EchoRequest(9, "server-cancelled"),
-                testCancellation).AsTask());
+                testCancellation));
 
         Assert.Equal(new OperationCanceledException().Message, exception.Message);
         Assert.Null(exception.InnerException);
@@ -164,11 +164,11 @@ public class PipeIpcServerTests
         await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<CommandRequest, IpcVoid>(
             new CommandRequest("request-command", 52),
             testCancellation));
-        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EchoResponse>(
-            TestMessageTypes.CommandResponse,
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EmptyCommandResponseRequest, EchoResponse>(
+            new EmptyCommandResponseRequest(),
             testCancellation));
-        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<IpcVoid>(
-            TestMessageTypes.Command,
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EmptyCommandRequest, IpcVoid>(
+            new EmptyCommandRequest(),
             testCancellation));
     }
 
@@ -221,7 +221,7 @@ public class PipeIpcServerTests
 
         Task<EchoResponse> responseTask = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(8, "after-disconnect"),
-            testCancellation).AsTask();
+            testCancellation);
 
         await afterDisconnectState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
         afterDisconnectState.Release.TrySetResult(true);
@@ -276,7 +276,7 @@ public class PipeIpcServerTests
 
         Task<EchoResponse> request = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(41, "cancel-scope"),
-            requestCancellation.Token).AsTask();
+            requestCancellation.Token);
         int instanceId = await state.Started.Task.WaitAsync(
             IpcTestHost.Timeout,
             testCancellation);
@@ -308,7 +308,7 @@ public class PipeIpcServerTests
 
         Task<EchoResponse> request = host.Client.SendAsync<EchoRequest, EchoResponse>(
             new EchoRequest(42, "fail-scope"),
-            testCancellation).AsTask();
+            testCancellation);
         int instanceId = await state.Started.Task.WaitAsync(
             IpcTestHost.Timeout,
             testCancellation);

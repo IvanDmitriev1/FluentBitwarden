@@ -12,4 +12,4 @@ internal sealed record IpcRpcHandlerMethodDescriptor(
     Type? ResponseType,
     [param: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
     [property: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    Type? RequestType);
+    Type RequestType);

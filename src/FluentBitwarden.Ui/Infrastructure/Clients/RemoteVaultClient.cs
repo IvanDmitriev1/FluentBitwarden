@@ -1,5 +1,4 @@
 using AsyncAwaitBestPractices;
-using FluentBitwarden.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -12,17 +11,21 @@ namespace FluentBitwarden.Infrastructure.Clients;
 [Fody.ConfigureAwait(false)]
 internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCache) : IVaultClient
 {
-    public ValueTask<VaultSyncResult> SyncVaultAsync(CancellationToken cancellationToken = default)
+    public Task<VaultSyncResult> SyncVaultAsync(
+        SyncVaultRequest request,
+        CancellationToken cancellationToken = default)
     {
-        return client.SendAsync<VaultSyncResult>(IpcMessageTypes.Vault.Sync, cancellationToken);
+        return client.SendAsync<SyncVaultRequest, VaultSyncResult>(request, cancellationToken);
     }
 
-    public ValueTask<VaultFolder[]> GetFoldersAsync(CancellationToken cancellationToken = default)
+    public Task<VaultFolder[]> GetFoldersAsync(
+        GetVaultFoldersRequest request,
+        CancellationToken cancellationToken = default)
     {
-        return client.SendAsync<VaultFolder[]>(IpcMessageTypes.Vault.GetFolders, cancellationToken);
+        return client.SendAsync<GetVaultFoldersRequest, VaultFolder[]>(request, cancellationToken);
     }
 
-    public async ValueTask<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
+    public async Task<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
         var result = await client.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
         if (NetworkInformation.HasInternetAccess)
@@ -31,17 +34,17 @@ internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCa
         return result;
     }
 
-    public ValueTask<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default)
+    public Task<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
         return client.SendAsync<GetVaultCipherRequest, VaultCipher?>(request, cancellationToken);
     }
 
-    public ValueTask<VaultCipher?> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default)
+    public Task<VaultCipher?> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
         return client.SendAsync<SaveVaultCipherRequest, VaultCipher?>(request, cancellationToken);
     }
 
-    public async ValueTask DownloadCipherAttachmentAsync(
+    public async Task DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {

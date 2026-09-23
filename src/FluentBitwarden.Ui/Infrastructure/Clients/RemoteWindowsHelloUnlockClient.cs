@@ -1,32 +1,25 @@
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.Accounts.Unlock.WindowsHello;
 using FluentBitwarden.Platform.Ipc.Transport;
-using FluentBitwarden.Contracts;
-using FluentBitwarden.Contracts.Infrastructure.WindowsHello.Models;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 namespace FluentBitwarden.Infrastructure.Clients;
 
 [Fody.ConfigureAwait(false)]
-internal class RemoteWindowsHelloUnlockClient(IIpcClient ipcClient) : IWindowsHelloUnlockClient
+internal class RemoteWindowsHelloUnlockClient(IIpcClient ipcClient) : IAccountWindowsHelloIntegrationClient
 {
-    public ValueTask<WindowsHelloStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<WindowsHelloStatus>(
-            IpcMessageTypes.WindowsHello.GetCurrentAccountStatus,
-            cancellationToken);
+    public Task<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(
+        GetWindowsHelloEnrollmentRequest request,
+        CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<GetWindowsHelloEnrollmentRequest, WindowsHelloEnrollmentStatus>(request, cancellationToken);
 
-    public ValueTask<WindowsHelloStatus> GetStatusAsync(GetWindowsHelloStatusRequest request, CancellationToken cancellationToken = default)
-    {
-        return ipcClient.SendAsync<GetWindowsHelloStatusRequest, WindowsHelloStatus>(request, cancellationToken);
-    }
+    public Task<WindowsHelloEnrollmentOutcome> EnableAsync(
+        EnableWindowsHelloEnrollmentRequest request,
+        CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<EnableWindowsHelloEnrollmentRequest, WindowsHelloEnrollmentOutcome>(request, cancellationToken);
 
-    public async ValueTask EnableAsync(EnableWindowsHelloRequest request, CancellationToken cancellationToken = default)
-    {
-        await ipcClient.SendAsync<EnableWindowsHelloRequest, IpcVoid>(request, cancellationToken);
-    }
-
-    public async ValueTask DisableAsync(CancellationToken cancellationToken = default)
-    {
-        await ipcClient.SendAsync<IpcVoid>(IpcMessageTypes.WindowsHello.Disable, cancellationToken);
-    }
+    public async Task DisableAsync(
+        DisableWindowsHelloEnrollmentRequest request,
+        CancellationToken cancellationToken = default) =>
+        await ipcClient.SendAsync<DisableWindowsHelloEnrollmentRequest, IpcVoid>(request, cancellationToken);
 }

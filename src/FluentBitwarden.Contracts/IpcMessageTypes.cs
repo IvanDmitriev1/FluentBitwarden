@@ -36,6 +36,7 @@ public static class IpcMessageTypes
         public const ushort Lock = 602;
         public const ushort GetStatus = 603;
         public const ushort StateChanged = 604;
+        public const ushort GetSnapshot = 605;
     }
 
     public static class WindowsHello

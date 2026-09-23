@@ -5,7 +5,7 @@ namespace FluentBitwarden.Platform.Ipc.Services;
 
 internal sealed class PipeIpcClient(string pipeName) : IIpcClient
 {
-    public async ValueTask<TResponse> SendAsync<TRequest, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
+    public async Task<TResponse> SendAsync<TRequest, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResponse>(
         TRequest request,
         CancellationToken cancellationToken = default)
         where TRequest : IIpcRequestMessage
@@ -22,24 +22,7 @@ internal sealed class PipeIpcClient(string pipeName) : IIpcClient
         return await ReadResponseAsync<TResponse>(pipe, cancellationToken);
     }
 
-    public async ValueTask<TResponse> SendAsync<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    TResponse>(
-        ushort messageType,
-        CancellationToken cancellationToken = default)
-    {
-        await using var pipe = CreatePipeClient();
-        await pipe.ConnectAsync(cancellationToken);
-
-        await IpcWireProtocol.WriteRpcRequestAsync(
-            pipe,
-            messageType,
-            cancellationToken);
-
-        return await ReadResponseAsync<TResponse>(pipe, cancellationToken);
-    }
-
-    private static async ValueTask<TResponse> ReadResponseAsync<
+    private static async Task<TResponse> ReadResponseAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
     TResponse>(
         Stream pipe,

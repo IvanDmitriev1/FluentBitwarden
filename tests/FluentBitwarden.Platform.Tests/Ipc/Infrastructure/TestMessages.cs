@@ -23,4 +23,22 @@ public readonly partial record struct CommandRequest(string Operation, int Count
 }
 
 [MemoryPack.MemoryPackable]
+public readonly partial record struct EmptyCommandResponseRequest : IIpcRequestMessage
+{
+    public static ushort MessageType => TestMessageTypes.CommandResponse;
+}
+
+[MemoryPack.MemoryPackable]
+public readonly partial record struct EmptyCommandRequest : IIpcRequestMessage
+{
+    public static ushort MessageType => TestMessageTypes.Command;
+}
+
+[MemoryPack.MemoryPackable]
+public readonly partial record struct ZeroMessageTypeRequest : IIpcRequestMessage
+{
+    public static ushort MessageType => 0;
+}
+
+[MemoryPack.MemoryPackable]
 public readonly partial record struct EchoResponse(int Number, string Text, int Count);

@@ -167,8 +167,9 @@ public sealed partial class VaultPageViewModel(
 
     private async Task SyncVault(CancellationToken cancellationToken)
     {
-        var result = await vaultClient.SyncVaultAsync(cancellationToken);
-        Folders = new ObservableCollection<VaultFolder>(await vaultClient.GetFoldersAsync(cancellationToken));
+        var result = await vaultClient.SyncVaultAsync(new(), cancellationToken);
+        Folders = new ObservableCollection<VaultFolder>(
+            await vaultClient.GetFoldersAsync(new(), cancellationToken));
 
         if (result != VaultSyncResult.Synced)
             return;

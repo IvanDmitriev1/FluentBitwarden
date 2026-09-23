@@ -10,10 +10,11 @@ namespace FluentBitwarden.Contracts.Modules.Accounts;
 /// </summary>
 public interface IAccountsClient
 {
-    ValueTask<AccountProfile[]> GetAccountsAsync(
+    Task<AccountProfile[]> GetAccountsAsync(
+        GetAccountsRequest request,
         CancellationToken cancellationToken = default);
 
-    ValueTask<AccountAuthenticationOutcome> AuthenticateAsync(
+    Task<AccountAuthenticationOutcome> AuthenticateAsync(
         AccountAuthenticationRequest request,
         CancellationToken cancellationToken = default);
 }
