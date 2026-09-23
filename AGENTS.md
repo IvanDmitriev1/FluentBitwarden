@@ -35,7 +35,17 @@ nuget restore src\FluentBitwarden.ComServer\packages.config -PackagesDirectory p
 msbuild FluentBitwarden.slnx /restore /m /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false /p:GenerateAppxPackageOnBuild=false /v:minimal
 `
 
-This is the CI build in [.github/workflows/build.yml](.github/workflows/build.yml); it restores native packages and builds the complete solution without creating a signed MSIX. No test projects or test scripts are currently present, so no verified repository-wide test command exists.
+This is the CI build in [.github/workflows/build.yml](.github/workflows/build.yml); it restores native packages and builds the complete solution without creating a signed MSIX.
+
+The solution has three active test projects. They use Microsoft.Testing.Platform through the .NET 10 `dotnet test --project` interface; MTP options such as `--report-trx` are passed directly, without a `--` separator:
+
+```powershell
+dotnet test --project tests\BitwardenApi.Tests\BitwardenApi.Tests.csproj --configuration Release --arch x64 --results-directory TestResults\BitwardenApi --report-trx
+dotnet test --project tests\FluentBitwarden.Platform.Tests\FluentBitwarden.Platform.Tests.csproj --configuration Release --arch x64 --results-directory TestResults\Platform --report-trx
+dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj --configuration Release --arch x64 --results-directory TestResults\AppHostIntegration --report-trx
+```
+
+CI runs all three projects after the solution build.
 
 ## Global workflow and cross-project changes
 

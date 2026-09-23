@@ -1,29 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\FluentBitwarden.WindowsApp.props" />
-
-  <PropertyGroup>
-    <IsTestProject>true</IsTestProject>
-    <IsPackable>false</IsPackable>
-	  <IsAotCompatible>false</IsAotCompatible>
-	  <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
-	  <EnableAotAnalyzer>false</EnableAotAnalyzer>
-	  <EnableSingleFileAnalyzer>false</EnableSingleFileAnalyzer>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.runner.visualstudio" />
-  </ItemGroup>
+  <Import Project="..\..\FluentBitwarden.Windows.props" />
+  <Import Project="..\..\FluentBitwarden.Tests.props" />
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
     <ProjectReference Include="..\..\src\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
   </ItemGroup>
 
 </Project>

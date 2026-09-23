@@ -2,7 +2,6 @@
   <Import Project="..\..\FluentBitwarden.WindowsApp.props" />
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
     <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>

@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="..\..\FluentBitwarden.WindowsApp.props" />
 
-	<PropertyGroup>
-    <OutputType>WinExe</OutputType>
+  <PropertyGroup>
     <RootNamespace>FluentBitwarden.CommandPalette</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>

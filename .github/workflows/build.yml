@@ -58,7 +58,17 @@ jobs:
           --no-build
           --configuration ${{ env.Configuration }}
           --arch x64
-          --results-directory TestResults
+          --results-directory TestResults\BitwardenApi
+          --report-trx
+
+      - name: Run Platform tests
+        run: >
+          dotnet test --project tests\FluentBitwarden.Platform.Tests\FluentBitwarden.Platform.Tests.csproj
+          --no-build
+          --configuration ${{ env.Configuration }}
+          --arch x64
+          --results-directory TestResults\Platform
+          --report-trx
 
       - name: Run AppHost integration tests
         run: >
@@ -66,4 +76,5 @@ jobs:
           --no-build
           --configuration ${{ env.Configuration }}
           --arch x64
-          --results-directory TestResults
+          --results-directory TestResults\AppHostIntegration
+          --report-trx
