@@ -3,7 +3,7 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using System.Text.Json;
 using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
@@ -37,16 +37,16 @@ internal sealed partial class UnlockVaultPage : ContentPage
         private const string MasterPasswordUnlockAction = "MasterPasswordUnlock";
         private const string WindowsHelloUnlockAction = "WindowsHelloUnlock";
 
-        private readonly IAccountsClient _accountsClient;
+        private readonly IAccountClient _accountClient;
         private readonly IAppSessionClient _appSessionClient;
         private readonly IAccountWindowsHelloIntegrationClient _windowsHelloUnlockClient;
 
         public UnlockFormContent(
-            IAccountsClient accountsClient,
+            IAccountClient accountClient,
             IAppSessionClient appSessionClient,
             IAccountWindowsHelloIntegrationClient windowsHelloUnlockClient)
         {
-            _accountsClient = accountsClient;
+            _accountClient = accountClient;
             _appSessionClient = appSessionClient;
             _windowsHelloUnlockClient = windowsHelloUnlockClient;
 
@@ -97,7 +97,7 @@ internal sealed partial class UnlockVaultPage : ContentPage
 
         private string BuildCurrentTemplateJson()
         {
-            AccountProfile[] accounts = _accountsClient
+            AccountProfile[] accounts = _accountClient
                 .GetAccountsAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();
@@ -105,17 +105,23 @@ internal sealed partial class UnlockVaultPage : ContentPage
             if (accounts.Length == 0)
                 return BuildNoAccountsTemplateJson();
 
-            AppSessionSnapshot snapshot = _appSessionClient
-                .GetSnapshotAsync(new(), CancellationToken.None)
+            AppSessionState state = _appSessionClient
+                .GetStateAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();
 
-            AccountProfile selectedAccount = snapshot.CurrentAccount is { } currentAccount
-                ? accounts.FirstOrDefault(account => account.UserId == currentAccount.UserId) ?? currentAccount
+            AccountProfile? currentAccount = state switch
+            {
+                AppSessionState.Locked locked => locked.Account,
+                AppSessionState.Unlocked unlocked => unlocked.Account,
+                _ => null
+            };
+            AccountProfile selectedAccount = currentAccount is { } activeAccount
+                ? accounts.FirstOrDefault(account => account.UserId == activeAccount.UserId) ?? activeAccount
                 : accounts[0];
 
             bool windowsHelloAvailable = false;
-            if (snapshot.CurrentAccount is { } activeAccount && selectedAccount.UserId == activeAccount.UserId)
+            if (currentAccount is { } sessionAccount && selectedAccount.UserId == sessionAccount.UserId)
             {
                 WindowsHelloEnrollmentStatus status = _windowsHelloUnlockClient
                     .GetEnrollmentAsync(new GetWindowsHelloEnrollmentRequest(), CancellationToken.None)
@@ -231,7 +237,7 @@ internal sealed partial class UnlockVaultPage : ContentPage
 
         private AccountProfile? ResolveAccount(string accountUserId)
         {
-            AccountProfile[] accounts = _accountsClient
+            AccountProfile[] accounts = _accountClient
                 .GetAccountsAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();

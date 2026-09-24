@@ -1,8 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
-using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
@@ -12,20 +13,28 @@ internal sealed class AppSessionService(
     IVaultManager vaultManager,
     ActiveSessionManager activeSessionManager) : IAppSessionService
 {
-    public AppSessionSnapshot Snapshot => activeSessionManager.Snapshot;
+    public AppSessionState State => activeSessionManager.State;
 
-    public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default)
+    public bool TryGetUnlockedAccount([NotNullWhen(true)] out AccountProfile? accountProfile) =>
+        activeSessionManager.TryGetUnlockedAccount(out accountProfile);
+
+    public IUnlockedSessionLease? TryAcquireUnlockedSessionLease()
+    {
+        throw new NotImplementedException();
+    }
+
+    public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
         => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);
 
-    public SessionUnlockOutcome Unlock(SessionUnlockRequest request, CancellationToken cancellationToken = default)
+    public SessionUnlockOutcome Unlock(SessionUnlockRequest request)
     {
         using var sessionTransitionGate = activeSessionManager.TryEnterTransition();
         if (sessionTransitionGate is null)
             return new SessionUnlockOutcome.ConcurrentRequest();
 
-        if (activeSessionManager.Snapshot.Status == AppSessionStatus.Unlocked)
+        if (activeSessionManager.State is AppSessionState.Unlocked unlocked)
         {
-            return activeSessionManager.Snapshot.CurrentAccount?.UserId == request.UserId
+            return unlocked.Account.UserId == request.UserId
                 ? new SessionUnlockOutcome.Success()
                 : new SessionUnlockOutcome.Failure(
                     "Lock the current account before unlocking another account.");
@@ -50,12 +59,12 @@ internal sealed class AppSessionService(
             return SessionUnlockOutcomeExtensions.ConvertFailure(keyResult, request);
 
         var unlockedVault = vaultManager.Open(account, accountKey);
-        sessionTransitionGate.Unlock(new UnlockedSessionState(account, unlockedVault));
+        sessionTransitionGate.Unlock(account, new UnlockedVaultLifetime(unlockedVault, accountKey));
 
         return new SessionUnlockOutcome.Success();
     }
 
-    public async ValueTask LockAsync(CancellationToken cancellationToken = default)
+    public async Task LockAsync(CancellationToken cancellationToken = default)
     {
         using var transition = await activeSessionManager.EnterTransition(cancellationToken);
         transition.Lock();

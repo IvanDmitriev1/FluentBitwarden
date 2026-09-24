@@ -1,16 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.Modules.Account.Contracts;
-using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.State;
 
 namespace FluentBitwarden.AppHost.AppSession.Internal;
 
 internal sealed class ActiveSessionManager
 {
-    private sealed record SessionState(
-        AccountProfile? Account,
-        AccountSessionTokens? SessionTokens,
-        UnlockedSessionState? UnlockedState,
-        DateTimeOffset ChangedAt);
+    private abstract record SessionState
+    {
+        public sealed record NotAuthenticated : SessionState;
+        public sealed record Locked(AccountProfile Account) : SessionState;
+        public sealed record Unlocked(AccountProfile Account, UnlockedVaultLifetime Vault) : SessionState;
+    }
 
     private static TaskCompletionSource NewSignal() =>
         new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -18,63 +19,63 @@ internal sealed class ActiveSessionManager
     private readonly SemaphoreSlim _transitionGate = new(1, 1);
     private readonly Lock _stateLock = new();
 
-    private SessionState _state = new(
-        Account: null,
-        SessionTokens: null,
-        UnlockedState: null,
-        ChangedAt: DateTimeOffset.UtcNow);
+    private SessionState _state = new SessionState.NotAuthenticated();
 
     private TaskCompletionSource _unlockedSignalTcs = NewSignal();
 
-    public AppSessionSnapshot Snapshot
+    public AppSessionState State
     {
         get
         {
             lock (_stateLock)
             {
-                var status = _state switch
+                return _state switch
                 {
-                    { UnlockedState: not null } => AppSessionStatus.Unlocked,
-                    { Account: not null } => AppSessionStatus.Locked,
-                    _ => AppSessionStatus.NotAuthenticated
+                    SessionState.NotAuthenticated => new AppSessionState.NotAuthenticated(),
+                    SessionState.Locked locked => new AppSessionState.Locked(locked.Account),
+                    SessionState.Unlocked unlocked => new AppSessionState.Unlocked(unlocked.Account),
+                    _ => throw new InvalidOperationException("Unknown session state.")
                 };
-
-                return new AppSessionSnapshot(status, _state.Account, _state.ChangedAt);
             }
         }
     }
 
-    public bool TryGetSessionAccessToken(UserId userId, out SessionAccessToken accessToken)
+    public bool TryGetUnlockedAccount([NotNullWhen(true)] out AccountProfile? accountProfile)
     {
         lock (_stateLock)
         {
-            if (_state.SessionTokens is null ||
-                !_state.SessionTokens.IsValid() ||
-                _state.SessionTokens.UserId != userId)
-            {
-                accessToken = SessionAccessToken.Empty;
-                return false;
-            }
-
-            accessToken = _state.SessionTokens.AccessToken;
-            return true;
+            accountProfile = _state is SessionState.Unlocked unlocked ? unlocked.Account : null;
+            return accountProfile is not null;
         }
     }
 
-    public async ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken ct = default)
+    public IUnlockedSessionLease? TryAcquireUnlockedSessionLease()
+    {
+        lock (_stateLock)
+        {
+            if (_state is SessionState.Unlocked unlocked)
+            {
+                return unlocked.Vault.CreateLease(unlocked.Account);
+            }
+
+            return null;
+        }
+    }
+
+    public async ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
     {
         while (true)
         {
             Task pending;
             lock (_stateLock)
             {
-                if (_state?.UnlockedState is not null)
-                    return _state.UnlockedState.CreateLease();
+                if (_state is SessionState.Unlocked unlocked)
+                    return unlocked.Vault.CreateLease(unlocked.Account);
 
                 pending = _unlockedSignalTcs.Task;
             }
 
-            await pending.WaitAsync(ct).ConfigureAwait(false);
+            await pending.WaitAsync(cancellationToken);
         }
     }
 
@@ -92,36 +93,62 @@ internal sealed class ActiveSessionManager
     private void UpdateState(Func<SessionState, SessionState> update)
     {
         TaskCompletionSource signal;
-        UnlockedSessionState? stateToDispose;
+        UnlockedVaultLifetime? stateToDispose = null;
+        UnlockedVaultLifetime? uncommittedVault = null;
 
-        lock (_stateLock)
+        try
         {
-            var previous = _state;
-            var next = update.Invoke(previous);
-
-            stateToDispose = ReferenceEquals(_state.UnlockedState, next.UnlockedState)
-                ? null
-                : _state.UnlockedState;
-
-            if (next.UnlockedState is not null && next.Account is null)
+            lock (_stateLock)
             {
-                throw new InvalidOperationException(
-                    "An unlocked session must have an account.");
+                SessionState previous = _state;
+                SessionState next = update.Invoke(previous);
+                UnlockedVaultLifetime? previousVault = GetVault(previous);
+                UnlockedVaultLifetime? nextVault = GetVault(next);
+                if (!ReferenceEquals(previousVault, nextVault))
+                    uncommittedVault = nextVault;
+
+                ValidateState(next);
+
+                if (!ReferenceEquals(previousVault, nextVault))
+                {
+                    stateToDispose = previousVault;
+                }
+
+                _state = next;
+                uncommittedVault = null;
+
+                signal = _unlockedSignalTcs;
+                _unlockedSignalTcs = NewSignal();
             }
-
-            _state = next with
-            {
-                ChangedAt = DateTimeOffset.UtcNow
-            };
-
-            signal = _unlockedSignalTcs;
-            _unlockedSignalTcs = NewSignal();
+        }
+        catch
+        {
+            uncommittedVault?.Dispose();
+            throw;
         }
 
         stateToDispose?.Dispose();
         signal.TrySetResult();
     }
 
+    private static UnlockedVaultLifetime? GetVault(SessionState state) =>
+        state is SessionState.Unlocked unlocked ? unlocked.Vault : null;
+
+    private static void ValidateState(SessionState state)
+    {
+        if (state is not SessionState.Unlocked unlocked)
+            return;
+
+        if (unlocked.Account is not { } account)
+        {
+            throw new InvalidOperationException("An unlocked vault must have an active account.");
+        }
+
+        if (unlocked.Vault.UserId != account.UserId)
+        {
+            throw new InvalidOperationException("The active account and unlocked vault must have the same user ID.");
+        }
+    }
 
     public sealed class Transition(ActiveSessionManager owner) : IDisposable
     {
@@ -136,30 +163,17 @@ internal sealed class ActiveSessionManager
             Interlocked.Exchange(ref _owner, null)?._transitionGate.Release();
         }
 
-        public void UpdateSessionAccessToken(AccountSessionTokens sessionTokens) =>
-            Owner.UpdateState(state => state with
-            {
-                SessionTokens = sessionTokens
-            });
-
-        public void Unlock(UnlockedSessionState newState) =>
-            Owner.UpdateState(state => state with
-            {
-                UnlockedState = newState,
-                Account = newState.Account
-            });
+        public void Unlock(AccountProfile account, UnlockedVaultLifetime unlockedVault) =>
+            Owner.UpdateState(_ => new SessionState.Unlocked(account, unlockedVault));
 
         public void Lock() =>
-            Owner.UpdateState(static state => state with
+            Owner.UpdateState(static state => state switch
             {
-                UnlockedState = null
+                SessionState.Unlocked unlocked => new SessionState.Locked(unlocked.Account),
+                _ => state
             });
 
         public void SignOut() =>
-            Owner.UpdateState(static state => state with
-            {
-                Account = null,
-                UnlockedState = null
-            });
+            Owner.UpdateState(static _ => new SessionState.NotAuthenticated());
     }
 }

@@ -57,7 +57,6 @@ jobs:
           dotnet test --project tests\BitwardenApi.Tests\BitwardenApi.Tests.csproj
           --no-build
           --configuration ${{ env.Configuration }}
-          --arch x64
           --results-directory TestResults\BitwardenApi
           --report-trx
 
@@ -66,7 +65,6 @@ jobs:
           dotnet test --project tests\FluentBitwarden.Platform.Tests\FluentBitwarden.Platform.Tests.csproj
           --no-build
           --configuration ${{ env.Configuration }}
-          --arch x64
           --results-directory TestResults\Platform
           --report-trx
 
@@ -75,6 +73,5 @@ jobs:
           dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj
           --no-build
           --configuration ${{ env.Configuration }}
-          --arch x64
           --results-directory TestResults\AppHostIntegration
           --report-trx

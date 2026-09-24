@@ -14,7 +14,7 @@ internal static class InfrastructureServiceCollectionExtensions
     {
         services.AddIpcClient(IpcConstants.AppHostPipeName);
         services.AddIpcEventClient(IpcConstants.AppHostEventsPipeName);
-        services.AddSingleton<IAccountsClient, RemoteAccountsClient>();
+        services.AddSingleton<IAccountClient, RemoteAccountClient>();
         services.AddSingleton<IAppSessionClient, RemoteAppSessionClient>();
         services.AddSingleton<IAccountWindowsHelloIntegrationClient, RemoteWindowsHelloUnlockClient>();
         services.AddSingleton<IVaultClient, RemoteVaultClient>();

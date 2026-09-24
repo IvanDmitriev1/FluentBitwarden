@@ -1,4 +1,6 @@
+using BitwardenApi.Infrastructure.Transport;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
+using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Persistance;
 using FluentBitwarden.AppHost.Modules.Account.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,8 +17,10 @@ internal static class AccountModuleServiceCollectionExtensions
         services.AddScoped<AccountTpmUnlockKeyRepository>();
 
         services.AddSingleton<AccountAuthenticatorService>();
+        services.AddSingleton<AccountTokenCache>();
 
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountWindowsHelloService, AccountWindowsHelloService>();
+        services.AddScoped<IBitwardenAccessTokenProvider, AccountSessionAccessTokenProvider>();
     }
 }

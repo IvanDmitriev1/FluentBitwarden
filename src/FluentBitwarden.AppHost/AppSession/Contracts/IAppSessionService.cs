@@ -1,17 +1,20 @@
-using FluentBitwarden.Contracts.AppSession.Status;
+using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 
 namespace FluentBitwarden.AppHost.AppSession.Contracts;
 
 public interface IAppSessionService
 {
-    AppSessionSnapshot Snapshot { get; }
+    AppSessionState State { get; }
 
-    ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken = default);
+    bool TryGetUnlockedAccount([NotNullWhen(true)] out AccountProfile? accountProfile);
 
-    SessionUnlockOutcome Unlock(
-        SessionUnlockRequest request,
-        CancellationToken cancellationToken = default);
+    IUnlockedSessionLease? TryAcquireUnlockedSessionLease();
 
-    ValueTask LockAsync(CancellationToken cancellationToken = default);
+    ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken);
+
+    SessionUnlockOutcome Unlock(SessionUnlockRequest request);
+
+    Task LockAsync(CancellationToken cancellationToken = default);
 }

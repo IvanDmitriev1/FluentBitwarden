@@ -1,7 +1,7 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Controls.Shared;
@@ -63,8 +63,14 @@ public sealed partial class AccountUnlockView : UserControl
         int version = Interlocked.Increment(ref _accountChangeVersion);
         WindowsHelloButton.Visibility = Visibility.Collapsed;
 
-        AppSessionSnapshot snapshot = await _appSessionClient.GetSnapshotAsync(new());
-        if (!IsCurrentAccountChange(version, account) || snapshot.CurrentAccount?.UserId != account.UserId)
+        AppSessionState state = await _appSessionClient.GetStateAsync(new());
+        AccountProfile? activeAccount = state switch
+        {
+            AppSessionState.Locked locked => locked.Account,
+            AppSessionState.Unlocked unlocked => unlocked.Account,
+            _ => null
+        };
+        if (!IsCurrentAccountChange(version, account) || activeAccount?.UserId != account.UserId)
             return;
 
         WindowsHelloEnrollmentStatus status = await _windowsHelloAccountUnlockMethod.GetEnrollmentAsync(

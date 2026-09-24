@@ -2,7 +2,7 @@ using AsyncAwaitBestPractices;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
-using FluentBitwarden.Contracts.AppSession.Status;
+using AppSessionStateChangedEvent = FluentBitwarden.Contracts.AppSession.State.AppSessionStateChangedEvent;
 using FluentBitwarden.Infrastructure.UiCommand;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -27,7 +27,7 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         _windowManager = windowManager;
         _hostedServiceManager = hostedServiceManager;
 
-        eventClient.Subscribe<AppSesstionStatusChangedEvent>((_, _) =>
+        eventClient.Subscribe<AppSessionStateChangedEvent>((_, _) =>
             App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync));
 
         //NetworkInformation.NetworkStatusChanged += OnNetworkStatusChanged;

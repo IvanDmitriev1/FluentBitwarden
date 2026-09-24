@@ -14,7 +14,7 @@ namespace FluentBitwarden.ViewModels.Accounts.Login;
 public sealed partial class LogInFlowPageViewModel : ObservableObject
 {
     public LogInFlowPageViewModel(
-        IAccountsClient accountsClient,
+        IAccountClient accountClient,
         IWindowManager windowManager,
         IAppCoordinator appCoordinator,
         INavigation navigation)
@@ -22,7 +22,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
         _windowManager = windowManager;
         _appCoordinator = appCoordinator;
         _navigation = navigation;
-        AccountsClient = accountsClient;
+        AccountClient = accountClient;
         CurrentStep = new LogInEmailStepViewModel(this, _windowManager);
     }
 
@@ -30,7 +30,7 @@ public sealed partial class LogInFlowPageViewModel : ObservableObject
     private readonly IAppCoordinator _appCoordinator;
     private readonly INavigation _navigation;
 
-    internal IAccountsClient AccountsClient { get; }
+    internal IAccountClient AccountClient { get; }
     internal LogInFlowContext Context { get; } = new();
 
 

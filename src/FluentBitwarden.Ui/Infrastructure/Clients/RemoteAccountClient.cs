@@ -5,7 +5,7 @@ using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 
 namespace FluentBitwarden.Infrastructure.Clients;
 
-internal sealed class RemoteAccountsClient(IIpcClient ipcClient) : IAccountsClient
+internal sealed class RemoteAccountClient(IIpcClient ipcClient) : IAccountClient
 {
     public Task<AccountProfile[]> GetAccountsAsync(
         GetAccountsRequest request,

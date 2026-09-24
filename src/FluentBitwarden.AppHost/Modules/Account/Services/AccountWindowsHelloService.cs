@@ -10,6 +10,8 @@ internal sealed class AccountWindowsHelloService(
     IUnitOfWork unitOfWork,
     AccountTpmUnlockKeyRepository repository) : IAccountWindowsHelloService
 {
+    public Task<bool> IsSupportedAsync() => WindowsHelloTpmKeyProtector.IsSupportedAsync();
+
     public bool IsEnabled(UserId userId) => repository.Exists(userId);
 
     public void Enable(UnlockedUserKey userKey, IntPtr hwnd)

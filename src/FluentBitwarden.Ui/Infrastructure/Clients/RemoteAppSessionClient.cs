@@ -1,5 +1,5 @@
 using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.AppSession.Status;
+using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.AppSession.Lock;
 using FluentBitwarden.Platform.Ipc.Abstractions;
@@ -10,10 +10,10 @@ namespace FluentBitwarden.Infrastructure.Clients;
 [Fody.ConfigureAwait(false)]
 internal sealed class RemoteAppSessionClient(IIpcClient ipcClient) : IAppSessionClient
 {
-    public Task<AppSessionSnapshot> GetSnapshotAsync(
-        GetAppSessionSnapshotRequest request,
+    public Task<AppSessionState> GetStateAsync(
+        GetAppSessionStateRequest request,
         CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<GetAppSessionSnapshotRequest, AppSessionSnapshot>(request, cancellationToken);
+        ipcClient.SendAsync<GetAppSessionStateRequest, AppSessionState>(request, cancellationToken);
 
     public Task<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request,

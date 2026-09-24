@@ -8,7 +8,7 @@ namespace FluentBitwarden.Contracts.Modules.Accounts;
 /// Stored-account operations. Session lifecycle (unlock/lock/status) lives on
 /// <see cref="IAppSessionClient"/>.
 /// </summary>
-public interface IAccountsClient
+public interface IAccountClient
 {
     Task<AccountProfile[]> GetAccountsAsync(
         GetAccountsRequest request,

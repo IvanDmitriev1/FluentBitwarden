@@ -5,7 +5,7 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.CommandPalette.Infrastructure.Clients;
 
-internal sealed class RemoteAccountsClient(IIpcClient ipcClient) : IAccountsClient
+internal sealed class RemoteAccountClient(IIpcClient ipcClient) : IAccountClient
 {
     public Task<AccountProfile[]> GetAccountsAsync(
         GetAccountsRequest request,
