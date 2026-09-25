@@ -9,7 +9,7 @@ namespace FluentBitwarden.CommandPalette.Infrastructure.Clients;
 
 internal sealed class RemoteVaultClient(IIpcClient ipcClient) : IVaultClient
 {
-    public Task<VaultSyncResult> SyncVaultAsync(
+    public Task<VaultSyncResult> SyncAsync(
         SyncVaultRequest request,
         CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<SyncVaultRequest, VaultSyncResult>(request, cancellationToken);

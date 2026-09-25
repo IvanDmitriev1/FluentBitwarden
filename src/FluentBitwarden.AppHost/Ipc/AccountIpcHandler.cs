@@ -5,7 +5,7 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class AccountClient(IAccountService accountService) : IAccountClient, IIpcRequestsHandler
+internal sealed class AccountIpcHandler(IAccountService accountService) : IAccountClient, IIpcRequestsHandler
 {
     public Task<AccountProfile[]> GetAccountsAsync(
         GetAccountsRequest request, CancellationToken cancellationToken = default) =>

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
@@ -15,13 +14,8 @@ internal sealed class AppSessionService(
 {
     public AppSessionState State => activeSessionManager.State;
 
-    public bool TryGetUnlockedAccount([NotNullWhen(true)] out AccountProfile? accountProfile) =>
-        activeSessionManager.TryGetUnlockedAccount(out accountProfile);
-
-    public IUnlockedSessionLease? TryAcquireUnlockedSessionLease()
-    {
-        throw new NotImplementedException();
-    }
+    public IUnlockedSessionLease? TryAcquireUnlockedSessionLease() =>
+        activeSessionManager.TryAcquireUnlockedSessionLease();
 
     public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
         => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);
@@ -59,7 +53,7 @@ internal sealed class AppSessionService(
             return SessionUnlockOutcomeExtensions.ConvertFailure(keyResult, request);
 
         var unlockedVault = vaultManager.Open(account, accountKey);
-        sessionTransitionGate.Unlock(account, new UnlockedVaultLifetime(unlockedVault, accountKey));
+        sessionTransitionGate.Unlock(new UnlockedVaultLifetime(account, unlockedVault, accountKey));
 
         return new SessionUnlockOutcome.Success();
     }

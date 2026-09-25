@@ -73,8 +73,20 @@
     From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.Infrastructure" />
 
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Ipc" />
 
-  
-  
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.AppSession" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Modules.Account" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Modules.Vault" />
   
 </NsDepCopConfig>

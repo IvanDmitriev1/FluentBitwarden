@@ -1,6 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using BitwardenApi;
+using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.Hosting;
 using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Ipc;
+using FluentBitwarden.AppHost.Modules.Account;
+using FluentBitwarden.AppHost.Modules.Vault;
 using FluentBitwarden.Platform.Diagnostics;
 using FluentBitwarden.Platform.Ipc;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,13 +51,13 @@ internal static class Program
 
         builder.Services.AddApplicationInfrastructureServices();
         builder.Services.AddBitwardenApi();
+        builder.Services.AddAppSessionModule();
+        builder.Services.AddAccountModule();
+        builder.Services.AddVaultModule();
 
         builder.Services.AddIpcServer(
             IpcConstants.AppHostPipeName,
-            handlers =>
-            {
-
-            });
+            RegisterIpcHandlers);
 
         builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
@@ -66,6 +71,23 @@ internal static class Program
 
         host.Run();
         return 0;
+    }
+
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification =
+            "IPC handler registration is the documented reflection boundary. Each handler is statically registered and its required public members are preserved by Add<THandler>().")]
+    [UnconditionalSuppressMessage(
+        "AOT",
+        "IL3050",
+        Justification =
+            "IPC endpoint creation intentionally closes generic endpoint types at registration time.")]
+    private static void RegisterIpcHandlers(IpcRpcHandlerBuilder handlers)
+    {
+        handlers.Add<AppSessionIpcHandler>();
+        handlers.Add<AccountIpcHandler>();
+        handlers.Add<AccountWindowsHelloIntegrationIpcHandler>();
     }
 
     private static void RedirectActivationTo(AppActivationArguments args, AppInstance keyInstance)

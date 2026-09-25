@@ -4,9 +4,9 @@ using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 
 namespace FluentBitwarden.AppHost.AppSession.Internal;
 
-internal sealed class UnlockedVaultLifetime(IUnlockedVault vault, UnlockedUserKey accountKey) : IDisposable
+internal sealed class UnlockedVaultLifetime : IDisposable
 {
-    private sealed class Lease(UnlockedVaultLifetime owner, AccountProfile account) : IUnlockedSessionLease
+    private sealed class Lease(UnlockedVaultLifetime owner) : IUnlockedSessionLease
     {
         private UnlockedVaultLifetime? _owner = owner;
 
@@ -14,7 +14,7 @@ internal sealed class UnlockedVaultLifetime(IUnlockedVault vault, UnlockedUserKe
             Volatile.Read(ref _owner)
             ?? throw new ObjectDisposedException(nameof(Lease));
 
-        public AccountProfile Account { get; } = account;
+        public AccountProfile Account => Owner.Account;
         public IUnlockedVault Vault => Owner._vault;
         public UnlockedUserKey UnlockedUserKey => Owner._accountKey;
 
@@ -33,8 +33,25 @@ internal sealed class UnlockedVaultLifetime(IUnlockedVault vault, UnlockedUserKe
                                   _activeLeaseCount == 0 &&
                                   !_disposed;
 
-    private readonly IUnlockedVault _vault = vault;
-    private readonly UnlockedUserKey _accountKey = accountKey;
+    private readonly IUnlockedVault _vault;
+    private readonly UnlockedUserKey _accountKey;
+
+    public UnlockedVaultLifetime(
+        AccountProfile account,
+        IUnlockedVault vault,
+        UnlockedUserKey accountKey)
+    {
+        _vault = vault;
+        _accountKey = accountKey;
+        Account = account;
+
+        if (Account.UserId != _accountKey.UserId)
+        {
+            throw new InvalidOperationException("The active account and unlocked vault must have the same user ID.");
+        }
+    }
+
+    public AccountProfile Account { get; }
     public UserId UserId => _vault.UserId;
 
     public void Dispose()
@@ -51,14 +68,14 @@ internal sealed class UnlockedVaultLifetime(IUnlockedVault vault, UnlockedUserKe
         }
     }
 
-    public IUnlockedSessionLease CreateLease(AccountProfile account)
+    public IUnlockedSessionLease CreateLease()
     {
         using var _ = _sync.EnterScope();
         ObjectDisposedException.ThrowIf(_disposeRequested, nameof(UnlockedVaultLifetime));
 
         _activeLeaseCount++;
 
-        return new Lease(this, account);
+        return new Lease(this);
     }
 
     private void ReleaseLease()
@@ -80,6 +97,6 @@ internal sealed class UnlockedVaultLifetime(IUnlockedVault vault, UnlockedUserKe
         ObjectDisposedException.ThrowIf(_disposed, nameof(UnlockedVaultLifetime));
 
         _disposed = true;
-        _vault.Dispose();
+        _accountKey.Dispose();
     }
 }

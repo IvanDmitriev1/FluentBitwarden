@@ -11,7 +11,7 @@ namespace FluentBitwarden.Infrastructure.Clients;
 [Fody.ConfigureAwait(false)]
 internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCache) : IVaultClient
 {
-    public Task<VaultSyncResult> SyncVaultAsync(
+    public Task<VaultSyncResult> SyncAsync(
         SyncVaultRequest request,
         CancellationToken cancellationToken = default)
     {

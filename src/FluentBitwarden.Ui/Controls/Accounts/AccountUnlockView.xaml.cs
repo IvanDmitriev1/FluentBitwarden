@@ -64,17 +64,18 @@ public sealed partial class AccountUnlockView : UserControl
         WindowsHelloButton.Visibility = Visibility.Collapsed;
 
         AppSessionState state = await _appSessionClient.GetStateAsync(new());
-        AccountProfile? activeAccount = state switch
+        AccountProfile activeAccount = state switch
         {
             AppSessionState.Locked locked => locked.Account,
             AppSessionState.Unlocked unlocked => unlocked.Account,
-            _ => null
+            _ => account
         };
+
         if (!IsCurrentAccountChange(version, account) || activeAccount?.UserId != account.UserId)
             return;
 
         WindowsHelloEnrollmentStatus status = await _windowsHelloAccountUnlockMethod.GetEnrollmentAsync(
-            new GetWindowsHelloEnrollmentRequest());
+            new GetWindowsHelloEnrollmentRequest(account.UserId));
 
         if (!IsCurrentAccountChange(version, account))
             return;

@@ -21,7 +21,7 @@ internal sealed class AppSessionResolver(
             return new AppSessionResolution.UnlockedResolution(unlocked.Account);
         }
 
-        if (state is AppSessionState.NotAuthenticated || accounts.Length == 0)
+        if (state is AppSessionState.NotAuthenticated && accounts.Length == 0)
         {
             return new AppSessionResolution.LoggedOutResolution();
         }

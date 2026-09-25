@@ -7,19 +7,18 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class AccountWindowsHelloIntegrationClient(
+internal sealed class AccountWindowsHelloIntegrationIpcHandler(
     IAccountWindowsHelloService accountWindowsHelloService,
     IAppSessionService sessionService) : IAccountWindowsHelloIntegrationClient, IIpcRequestsHandler
 {
     public async Task<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(GetWindowsHelloEnrollmentRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await accountWindowsHelloService.IsSupportedAsync() ||
-            !sessionService.TryGetUnlockedAccount(out var profile))
+        if (!await accountWindowsHelloService.IsSupportedAsync())
         {
             return WindowsHelloEnrollmentStatus.Unavailable;
         }
 
-        return accountWindowsHelloService.IsEnabled(profile.UserId)
+        return accountWindowsHelloService.IsEnabled(request.UserId)
             ? WindowsHelloEnrollmentStatus.Enrolled
             : WindowsHelloEnrollmentStatus.NotEnrolled;
     }

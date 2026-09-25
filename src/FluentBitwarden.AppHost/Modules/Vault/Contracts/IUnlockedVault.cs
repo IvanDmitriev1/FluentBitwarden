@@ -3,7 +3,7 @@ using FluentBitwarden.Contracts.Modules.Vault.Workspace;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Contracts;
 
-public interface IUnlockedVault : IDisposable
+public interface IUnlockedVault
 {
     public UserId UserId { get; }
 

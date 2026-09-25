@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Modules.Account;
 
-internal static class AccountModuleServiceCollectionExtensions
+internal static class AccountModuleServiceCollection
 {
     public static void AddAccountModule(this IServiceCollection services)
     {

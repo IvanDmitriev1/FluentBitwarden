@@ -10,7 +10,7 @@ internal sealed class AppTrayCommandsHandler(
 {
     public void HandleLeftClick()
     {
-
+        uiProcessLauncher.ActivateMainWindow();
     }
 
     public void HandleRightClick(TrayMenuCommand command)

@@ -1,7 +1,7 @@
 namespace FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 
 [MemoryPackable]
-public readonly partial record struct GetWindowsHelloEnrollmentRequest : IIpcRequestMessage
+public readonly partial record struct GetWindowsHelloEnrollmentRequest(UserId UserId) : IIpcRequestMessage
 {
     public static ushort MessageType =>
         IpcMessageTypes.WindowsHello.GetEnrollment;

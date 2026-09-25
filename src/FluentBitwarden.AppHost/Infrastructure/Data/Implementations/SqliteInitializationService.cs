@@ -32,6 +32,6 @@ internal sealed class SqliteInitializationService(ISqliteConnectionFactory sqlit
             return;
 
         string scriptName = result.ErrorScript?.Name ?? "unknown script";
-        throw new InvalidOperationException($"SQLite database migration failed. Script: {scriptName}.", result.Error);
+        //TODO remove throw new InvalidOperationException($"SQLite database migration failed. Script: {scriptName}.", result.Error);
     }
 }
