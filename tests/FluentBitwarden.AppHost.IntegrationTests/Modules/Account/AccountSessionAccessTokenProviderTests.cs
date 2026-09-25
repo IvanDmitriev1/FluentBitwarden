@@ -5,6 +5,7 @@ using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
+using FluentBitwarden.AppHost.Modules.Account;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
@@ -223,6 +224,7 @@ public sealed class AccountSessionAccessTokenProviderTests
     public void Registers_the_session_service_and_token_cache_with_the_required_lifetimes()
     {
         var services = new ServiceCollection();
+        services.AddAccountModule();
         services.AddSingleton(Substitute.For<IAccountService>());
         services.AddSingleton(Substitute.For<IVaultManager>());
         services.AddAppSessionModule();
@@ -249,8 +251,10 @@ public sealed class AccountSessionAccessTokenProviderTests
     private static ServiceProvider CreateServices(IAccountService accountService, IVaultManager? vaultManager = null)
     {
         var services = new ServiceCollection();
+        services.AddAccountModule();
         services.AddScoped(_ => accountService);
         services.AddScoped(_ => vaultManager ?? Substitute.For<IVaultManager>());
+        services.AddAppSessionModule();
         return services.BuildServiceProvider();
     }
 

@@ -20,8 +20,7 @@ public sealed class AppSessionServiceTests
         var context = new SessionTestContext();
 
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
-        Assert.False(context.Service.TryGetUnlockedAccount(out AccountProfile? account));
-        Assert.Null(account);
+        Assert.Null(GetAccount(context.Service.State));
     }
 
     [Fact]
@@ -34,13 +33,10 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.Unlock(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
-        Assert.True(context.Service.TryGetUnlockedAccount(out AccountProfile? unlockedAccount));
-        Assert.Equal(account, unlockedAccount);
+        Assert.Equal(account, GetAccount(context.Service.State));
 
         await context.Service.LockAsync(TestContext.Current.CancellationToken);
 
-        Assert.False(context.Service.TryGetUnlockedAccount(out unlockedAccount));
-        Assert.Null(unlockedAccount);
         Assert.Equal(account, GetAccount(context.Service.State));
     }
 
@@ -233,14 +229,12 @@ public sealed class AppSessionServiceTests
         await context.Service.LockAsync(TestContext.Current.CancellationToken);
 
         Assert.IsType<AppSessionState.Locked>(context.Service.State);
-        firstVault.Received(1).Dispose();
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.Unlock(
             request));
 
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
         Assert.Equal(account, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
         context.VaultManager.Received(2).Open(account, userKey);
-        secondVault.DidNotReceive().Dispose();
     }
 
     [Fact]
@@ -261,23 +255,18 @@ public sealed class AppSessionServiceTests
         IUnlockedSessionLease lease = await context.Service.WaitUntilUnlockedAsync(TestContext.Current.CancellationToken);
 
         await context.Service.LockAsync(TestContext.Current.CancellationToken);
-        firstVault.DidNotReceive().Dispose();
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.Unlock(
             new SessionUnlockRequest.MasterPasswordRequest(secondAccount.UserId, "synthetic-password")));
 
         Assert.Equal(secondAccount, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
         Assert.Equal(firstAccount, lease.Account);
         Assert.Same(firstVault, lease.Vault);
-        firstVault.DidNotReceive().Dispose();
 
         await context.Service.LockAsync(TestContext.Current.CancellationToken);
         Assert.IsType<AppSessionState.Locked>(context.Service.State);
-        secondVault.Received(1).Dispose();
-        firstVault.DidNotReceive().Dispose();
 
         lease.Dispose();
         lease.Dispose();
-        firstVault.Received(1).Dispose();
     }
 
     [Fact]
@@ -317,24 +306,23 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
         Assert.Null((context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-        mismatchedVault.Received(1).Dispose();
     }
 
     [Fact]
-    public void Rejects_an_unlocked_vault_without_an_account()
+    public void Rejects_an_unlocked_vault_with_a_mismatched_account_key()
     {
         var manager = new ActiveSessionManager();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var vault = Substitute.For<IUnlockedVault>();
         vault.UserId.Returns(UserId.Parse(AccountTestData.FirstUserId));
+        using var accountKey = new UnlockedUserKey(UserId.Empty, []);
         using ActiveSessionManager.Transition transition = manager.TryEnterTransition()!;
 
         Assert.Throws<InvalidOperationException>(() => transition.Unlock(
-            null!,
-            new UnlockedVaultLifetime(vault, new UnlockedUserKey(UserId.Empty, []))));
+            new UnlockedVaultLifetime(account, vault, accountKey)));
 
         Assert.IsType<AppSessionState.NotAuthenticated>(manager.State);
         Assert.Null((manager.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-        vault.Received(1).Dispose();
     }
 
     [Fact]
@@ -345,13 +333,15 @@ public sealed class AppSessionServiceTests
         var vault = Substitute.For<IUnlockedVault>();
         vault.UserId.Returns(account.UserId);
         using ActiveSessionManager.Transition transition = manager.TryEnterTransition()!;
-        transition.Unlock(account, new UnlockedVaultLifetime(vault, new UnlockedUserKey(account.UserId, [])));
+        transition.Unlock(new UnlockedVaultLifetime(
+            account,
+            vault,
+            new UnlockedUserKey(account.UserId, [])));
 
         transition.SignOut();
 
         Assert.IsType<AppSessionState.NotAuthenticated>(manager.State);
         Assert.Null(GetAccount(manager.State));
-        vault.Received(1).Dispose();
     }
 
     [Fact]
@@ -401,7 +391,7 @@ public sealed class AppSessionServiceTests
     }
 
     [Fact]
-    public async Task Lock_defers_vault_disposal_until_the_active_session_lease_is_released()
+    public async Task Lock_defers_account_key_disposal_until_the_active_session_lease_is_released()
     {
         var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
@@ -416,10 +406,10 @@ public sealed class AppSessionServiceTests
         await context.Service.LockAsync(TestContext.Current.CancellationToken);
 
         Assert.IsType<AppSessionState.Locked>(context.Service.State);
-        vault.DidNotReceive().Dispose();
+        _ = userKey.Key;
         lease.Dispose();
         lease.Dispose();
-        vault.Received(1).Dispose();
+        Assert.Throws<ObjectDisposedException>(() => userKey.Key.ToArray());
     }
 
     private static AccountProfile? GetAccount(AppSessionState state) => state switch
