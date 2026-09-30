@@ -1,9 +1,10 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.AppSession.Internal;
 
-internal sealed class ActiveSessionManager
+internal sealed class ActiveSessionManager(IIpcEventPublisher eventPublisher)
 {
     private abstract record SessionState
     {
@@ -80,43 +81,45 @@ internal sealed class ActiveSessionManager
         return new Transition(this);
     }
 
-    private void UpdateState(Func<SessionState, SessionState> update)
+    private async Task UpdateStateAsync(Func<SessionState, SessionState> update)
     {
         TaskCompletionSource signal;
-        UnlockedVaultLifetime? stateToDispose = null;
-        UnlockedVaultLifetime? uncommittedVault = null;
+        UnlockedVaultLifetime? vaultToDispose;
+        AppSessionState previousState;
+        AppSessionState committedState;
+
+        lock (_stateLock)
+        {
+            previousState = State;
+
+            SessionState previous = _state;
+            SessionState next = update(previous);
+
+            UnlockedVaultLifetime? previousVault = GetVault(previous);
+            vaultToDispose = ReferenceEquals(previousVault, GetVault(next))
+                ? null
+                : previousVault;
+
+            _state = next;
+            committedState = State;
+
+            signal = _unlockedSignalTcs;
+            _unlockedSignalTcs = NewSignal();
+        }
 
         try
         {
-            lock (_stateLock)
-            {
-                SessionState previous = _state;
-                SessionState next = update.Invoke(previous);
-                UnlockedVaultLifetime? previousVault = GetVault(previous);
-                UnlockedVaultLifetime? nextVault = GetVault(next);
-                if (!ReferenceEquals(previousVault, nextVault))
-                    uncommittedVault = nextVault;
-
-                if (!ReferenceEquals(previousVault, nextVault))
-                {
-                    stateToDispose = previousVault;
-                }
-
-                _state = next;
-                uncommittedVault = null;
-
-                signal = _unlockedSignalTcs;
-                _unlockedSignalTcs = NewSignal();
-            }
+            vaultToDispose?.Dispose();
         }
-        catch
+        finally
         {
-            uncommittedVault?.Dispose();
-            throw;
+            signal.TrySetResult();
         }
 
-        stateToDispose?.Dispose();
-        signal.TrySetResult();
+        if (previousState != committedState)
+        {
+            await eventPublisher.PublishAsync(new AppSessionStateChangedEvent(committedState));
+        }
     }
 
     private static UnlockedVaultLifetime? GetVault(SessionState state) =>
@@ -135,17 +138,18 @@ internal sealed class ActiveSessionManager
             Interlocked.Exchange(ref _owner, null)?._transitionGate.Release();
         }
 
-        public void Unlock(UnlockedVaultLifetime unlockedVault) =>
-            Owner.UpdateState(_ => new SessionState.Unlocked(unlockedVault));
+        public Task UnlockAsync(UnlockedVaultLifetime unlockedVault) =>
+            Owner.UpdateStateAsync(_ => new SessionState.Unlocked(unlockedVault));
 
-        public void Lock() =>
-            Owner.UpdateState(static state => state switch
+        public Task LockAsync() =>
+            Owner.UpdateStateAsync(static state => state switch
             {
-                SessionState.Unlocked unlocked => new SessionState.Locked(unlocked.Vault.Account),
+                SessionState.Unlocked unlocked =>
+                    new SessionState.Locked(unlocked.Vault.Account),
                 _ => state
             });
 
-        public void SignOut() =>
-            Owner.UpdateState(static _ => new SessionState.NotAuthenticated());
+        public Task SignOutAsync() =>
+            Owner.UpdateStateAsync(static _ => new SessionState.NotAuthenticated());
     }
 }

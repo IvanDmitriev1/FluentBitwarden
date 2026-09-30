@@ -34,7 +34,7 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
             if (accountWindowsHelloService.IsEnabled(lease.Account.UserId))
                 return WindowsHelloEnrollmentOutcome.Enrolled;
 
-            accountWindowsHelloService.Enable(lease.UnlockedUserKey, request.OwnerWindow);
+            accountWindowsHelloService.Enable(lease.AccountKeySession.UserKey, request.OwnerWindow);
             return WindowsHelloEnrollmentOutcome.Enrolled;
         }
         catch (OperationCanceledException)

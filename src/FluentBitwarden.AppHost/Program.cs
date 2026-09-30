@@ -88,6 +88,7 @@ internal static class Program
         handlers.Add<AppSessionIpcHandler>();
         handlers.Add<AccountIpcHandler>();
         handlers.Add<AccountWindowsHelloIntegrationIpcHandler>();
+        handlers.Add<VaultClientIpcHandler>();
     }
 
     private static void RedirectActivationTo(AppActivationArguments args, AppInstance keyInstance)

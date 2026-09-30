@@ -15,8 +15,9 @@ internal static class AccountKeyMaterialExtensions
                 accountKeyMaterial.Salt,
                 accountKeyMaterial.KdfConfig);
 
-            return new AccountKeyUnlockResult.Success(new UnlockedUserKey(accountKeyMaterial.UserId, decryptedKey));
-
+            return new AccountKeyUnlockResult.Success(new AccountKeySession(
+                new UnlockedUserKey(accountKeyMaterial.UserId, decryptedKey),
+                accountKeyMaterial.ProtectedPrivateKey));
         }
         catch (CryptographicException exception)
         {

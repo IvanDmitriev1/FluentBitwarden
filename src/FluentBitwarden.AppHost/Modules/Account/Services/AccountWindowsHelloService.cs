@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Infrastructure.WindowsHelloIntegration;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
+using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Persistance;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Services;
@@ -44,7 +45,7 @@ internal sealed class AccountWindowsHelloService(
             if (protectedBytes is null)
             {
                 return new AccountKeyUnlockResult.Failure(
-                    "Windows Hello unlock is not enabled for this account. Unlock with your master password and enable Windows Hello again.");
+                    "Windows Hello unlock is not enabled for this account. UnlockAsync with your master password and enable Windows Hello again.");
             }
 
             byte[] decryptedBytes = WindowsHelloTpmKeyProtector.UnwrapUserKey(
@@ -53,7 +54,9 @@ internal sealed class AccountWindowsHelloService(
                 hwnd);
 
             return new AccountKeyUnlockResult.Success(
-                new UnlockedUserKey(userId, decryptedBytes));
+                new AccountKeySession(
+                    new UnlockedUserKey(userId, decryptedBytes),
+                    accountKeyMaterial.ProtectedPrivateKey));
         }
         catch (WindowsHelloAuthenticationCanceledException)
         {
@@ -64,7 +67,7 @@ internal sealed class AccountWindowsHelloService(
             RemoveWindowsHelloUnlock(userId);
 
             return new AccountKeyUnlockResult.Failure(
-                "Windows Hello unlock is not enabled for this account. Unlock with your master password and enable Windows Hello again.");
+                "Windows Hello unlock is not enabled for this account. UnlockAsync with your master password and enable Windows Hello again.");
         }
         catch (CryptographicException exception)
         {

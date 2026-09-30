@@ -50,7 +50,7 @@ internal sealed class UnitOfWork(ISqliteConnectionFactory connectionFactory) : I
 
     public void Dispose()
     {
-        if (_disposed)
+        if (Interlocked.Exchange(ref _disposed, true))
             return;
 
         try
@@ -63,7 +63,6 @@ internal sealed class UnitOfWork(ISqliteConnectionFactory connectionFactory) : I
 
             _connection?.Dispose();
             _connection = null;
-            _disposed = true;
         }
     }
 }

@@ -52,11 +52,12 @@ jobs:
           /p:GenerateAppxPackageOnBuild=false
           /v:minimal
 
-      - name: Run tests
+      - name: Run Api tests
         run: >
           dotnet test --project tests\BitwardenApi.Tests\BitwardenApi.Tests.csproj
           --no-build
           --configuration ${{ env.Configuration }}
+          --property:Platform=AnyCPU
           --results-directory TestResults\BitwardenApi
           --report-trx
 

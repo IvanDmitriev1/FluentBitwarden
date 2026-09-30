@@ -15,7 +15,7 @@ internal static class WindowsHelloNcryptProperties
     private const string NgcCacheTypePropertyDeprecated = "NgcCacheTypeProperty";
     private const string PinCacheIsGestureRequiredProperty = "PinCacheIsGestureRequired";
 
-    private const string DefaultUseContext = "Unlock your FluentBitwarden vault";
+    private const string DefaultUseContext = "UnlockAsync your FluentBitwarden vault";
     private const int RsaKeySizeBits = 2048;
     private const int AllowDecryptFlag = 0x00000001;
     private const int NgcCacheAuthMandatoryFlag = 0x00000001;

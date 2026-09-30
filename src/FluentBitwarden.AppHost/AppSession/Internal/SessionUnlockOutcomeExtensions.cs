@@ -18,6 +18,6 @@ internal static class SessionUnlockOutcomeExtensions
             AccountKeyUnlockResult.RequiresOnlineReauthentication =>
                 new SessionUnlockOutcome.RequiresOnlineReauth(),
 
-            _ => new SessionUnlockOutcome.Failure("Unlock failed.")
+            _ => new SessionUnlockOutcome.Failure("UnlockAsync failed.")
         };
 }

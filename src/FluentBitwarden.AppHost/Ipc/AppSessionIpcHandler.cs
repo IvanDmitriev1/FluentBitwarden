@@ -15,7 +15,7 @@ internal sealed class AppSessionIpcHandler(IAppSessionService sessionService) : 
 
     public Task<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromResult(sessionService.Unlock(request));
+        sessionService.UnlockAsync(request, cancellationToken);
 
     public Task LockAsync(
         LockAppSessionRequest request, CancellationToken cancellationToken = default) =>

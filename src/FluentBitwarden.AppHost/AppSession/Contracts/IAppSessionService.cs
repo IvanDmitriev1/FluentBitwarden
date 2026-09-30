@@ -11,7 +11,7 @@ public interface IAppSessionService
 
     ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken);
 
-    SessionUnlockOutcome Unlock(SessionUnlockRequest request);
+    Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken);
 
-    Task LockAsync(CancellationToken cancellationToken = default);
+    Task LockAsync(CancellationToken cancellationToken);
 }

@@ -200,7 +200,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         using ServiceProvider services = CreateServices(accountService, vaultManager);
         using IServiceScope scope = services.CreateScope();
         IAppSessionService sessionService = scope.ServiceProvider.GetRequiredService<IAppSessionService>();
-        Assert.IsType<SessionUnlockOutcome.Success>(sessionService.Unlock(
+        Assert.IsType<SessionUnlockOutcome.Success>(sessionService.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
         IBitwardenAccessTokenProvider provider = Provider(scope);
         Task<SessionAccessToken> refresh = GetToken(provider, accountContext, TestContext.Current.CancellationToken).AsTask();

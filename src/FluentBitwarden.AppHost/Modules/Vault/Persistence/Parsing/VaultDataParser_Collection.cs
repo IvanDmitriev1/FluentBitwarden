@@ -1,0 +1,21 @@
+using BitwardenApi.Vault.Cryptography;
+using BitwardenApi.Vault.Items.Contracts;
+
+namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
+
+partial class VaultDataParser
+{
+    public static VaultCollection ParseAndDecryptCollection(
+        ref readonly VaultCollectionResponse dto,
+        SymmetricCryptoKey key)
+    {
+        return new VaultCollection
+        {
+            Id = dto.Id,
+            Name = dto.EncryptedName.Decode(key),
+            HidePasswords = dto.HidePasswords,
+            ReadOnly = dto.ReadOnly,
+            Manage = dto.Manage
+        };
+    }
+}

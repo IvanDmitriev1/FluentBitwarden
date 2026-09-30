@@ -1,5 +1,5 @@
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 
 namespace FluentBitwarden.AppHost.AppSession.Internal;
@@ -16,7 +16,7 @@ internal sealed class UnlockedVaultLifetime : IDisposable
 
         public AccountProfile Account => Owner.Account;
         public IUnlockedVault Vault => Owner._vault;
-        public UnlockedUserKey UnlockedUserKey => Owner._accountKey;
+        public IAccountKeySession AccountKeySession => Owner._accountKey;
 
         public void Dispose()
         {
@@ -34,18 +34,18 @@ internal sealed class UnlockedVaultLifetime : IDisposable
                                   !_disposed;
 
     private readonly IUnlockedVault _vault;
-    private readonly UnlockedUserKey _accountKey;
+    private readonly IAccountKeySession _accountKey;
 
     public UnlockedVaultLifetime(
         AccountProfile account,
         IUnlockedVault vault,
-        UnlockedUserKey accountKey)
+        IAccountKeySession accountKeySession)
     {
         _vault = vault;
-        _accountKey = accountKey;
+        _accountKey = accountKeySession;
         Account = account;
 
-        if (Account.UserId != _accountKey.UserId)
+        if (Account.UserId != _accountKey.UserKey.UserId)
         {
             throw new InvalidOperationException("The active account and unlocked vault must have the same user ID.");
         }
@@ -98,5 +98,6 @@ internal sealed class UnlockedVaultLifetime : IDisposable
 
         _disposed = true;
         _accountKey.Dispose();
+        _vault.Dispose();
     }
 }

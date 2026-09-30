@@ -20,11 +20,9 @@ internal sealed class AppSessionService(
     public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
         => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);
 
-    public SessionUnlockOutcome Unlock(SessionUnlockRequest request)
+    public async Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken)
     {
-        using var sessionTransitionGate = activeSessionManager.TryEnterTransition();
-        if (sessionTransitionGate is null)
-            return new SessionUnlockOutcome.ConcurrentRequest();
+        using var sessionTransitionGate = await activeSessionManager.EnterTransition(cancellationToken);
 
         if (activeSessionManager.State is AppSessionState.Unlocked unlocked)
         {
@@ -49,11 +47,11 @@ internal sealed class AppSessionService(
         };
 
         var keyResult = accountService.UnlockKey(request.UserId, method);
-        if (keyResult is not AccountKeyUnlockResult.Success { UserKey: { } accountKey })
+        if (keyResult is not AccountKeyUnlockResult.Success { AccountKeySession: { } accountKey })
             return SessionUnlockOutcomeExtensions.ConvertFailure(keyResult, request);
 
-        var unlockedVault = vaultManager.Open(account, accountKey);
-        sessionTransitionGate.Unlock(new UnlockedVaultLifetime(account, unlockedVault, accountKey));
+        var unlockedVault = vaultManager.Open(accountKey);
+        await sessionTransitionGate.UnlockAsync(new UnlockedVaultLifetime(account, unlockedVault, accountKey));
 
         return new SessionUnlockOutcome.Success();
     }
@@ -61,6 +59,6 @@ internal sealed class AppSessionService(
     public async Task LockAsync(CancellationToken cancellationToken = default)
     {
         using var transition = await activeSessionManager.EnterTransition(cancellationToken);
-        transition.Lock();
+        await transition.LockAsync();
     }
 }

@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,6 +9,9 @@ internal static class VaultModuleServiceCollection
 {
     public static void AddVaultModule(this IServiceCollection services)
     {
-        services.AddSingleton<IVaultManager, VaultManager>();
+        services.AddScoped<VaultReaderRepository>();
+        services.AddScoped<VaultWriterRepository>();
+
+        services.AddScoped<IVaultManager, VaultManager>();
     }
 }
