@@ -6,6 +6,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
+    <!-- Source generation sees inherited VaultCipher.Attachments.FileSize, but the parser removes
+         attachments from its cipher JSON contract and maps them from DTOs after deserialization. -->
+    <NoWarn>$(NoWarn);SYSLIB1220;SYSLIB1030</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

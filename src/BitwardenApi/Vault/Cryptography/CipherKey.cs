@@ -21,6 +21,12 @@ public readonly ref struct CipherKey
 
     internal ReadOnlySpan<byte> Key => _key.AsSpan(.._length);
 
+    /// <summary>
+    /// Borrows the owned key buffer without copying it. The view is valid only until this key is
+    /// disposed; release it before disposing the key. Ownership remains with this instance.
+    /// </summary>
+    public ReadOnlyMemory<byte> BorrowKeyMemory() => _key.AsMemory(0, _length);
+
     public static CipherKey Create(in EncString encryptedKey, SymmetricCryptoKey baseKey)
     {
         if (encryptedKey.IsEmpty)
@@ -67,4 +73,4 @@ public static class CipherKeyExtensions
 
     public static int DecodeEncStringInPlace(this Span<byte> encodedUtf8, CipherKey key)
         => encodedUtf8.DecodeEncStringInPlace(key.Key);
-}
+}

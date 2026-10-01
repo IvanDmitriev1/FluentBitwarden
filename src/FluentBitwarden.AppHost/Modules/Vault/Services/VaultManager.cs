@@ -18,6 +18,7 @@ internal sealed class VaultManager(
             .ToDictionary(static organization => organization.Id, static organization => organization.ProtectedOrganizationKey);
 
         List<VaultCipher> ciphers = [];
+        var parser = new VaultDataParser();
 
         vaultReaderRepository.ReadAllCiphers(
             accountKeySession.UserId,
@@ -25,7 +26,7 @@ internal sealed class VaultManager(
             {
                 var key = accountKeySession.GetOrganizationKey(dto.OrganizationId,
                     organizationKeys.GetValueOrDefault(dto.OrganizationId, AsymmetricEncString.Empty));
-                var cipher = VaultDataParser.ParseAndDecryptCipher(in dto, payload, key);
+                var cipher = parser.ParseAndDecryptCipher(in dto, payload, key);
                 ciphers.Add(cipher);
             });
 

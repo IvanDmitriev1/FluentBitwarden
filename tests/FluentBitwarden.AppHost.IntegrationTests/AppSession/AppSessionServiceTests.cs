@@ -8,6 +8,7 @@ using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using NSubstitute;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
@@ -29,7 +30,7 @@ public sealed class AppSessionServiceTests
         var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), Substitute.For<IUnlockedVault>());
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), Substitute.For<IUnlockedVault>());
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
@@ -47,7 +48,7 @@ public sealed class AppSessionServiceTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), vault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
         const string password = "synthetic-password";
 
         SessionUnlockOutcome result = context.Service.UnlockAsync(
@@ -59,7 +60,7 @@ public sealed class AppSessionServiceTests
         context.AccountService.Received(1).UnlockKey(
             account.UserId,
             new AccountUnlockMethod.MasterPassword(password));
-        context.VaultManager.Received(1).Open(account, userKey);
+        context.VaultManager.Received(1).Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
 
     [Fact]
@@ -69,7 +70,7 @@ public sealed class AppSessionServiceTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), vault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
         NativeWindowHandle ownerWindow = new(1234);
 
         SessionUnlockOutcome result = context.Service.UnlockAsync(
@@ -80,7 +81,7 @@ public sealed class AppSessionServiceTests
         context.AccountService.Received(1).UnlockKey(
             account.UserId,
             new AccountUnlockMethod.WindowsHello(ownerWindow));
-        context.VaultManager.Received(1).Open(account, userKey);
+        context.VaultManager.Received(1).Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
 
     [Fact]
@@ -94,7 +95,7 @@ public sealed class AppSessionServiceTests
 
         Assert.Equal(new SessionUnlockOutcome.Failure("Account not found."), result);
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
-        context.VaultManager.DidNotReceive().Open(Arg.Any<AccountProfile>(), Arg.Any<UnlockedUserKey>());
+        context.VaultManager.DidNotReceive().Open(Arg.Any<IAccountKeySession>());
     }
 
     [Fact]
@@ -170,7 +171,7 @@ public sealed class AppSessionServiceTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), vault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
         var request = new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password");
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
@@ -179,7 +180,7 @@ public sealed class AppSessionServiceTests
             request));
 
         Assert.Equal(account, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-        context.VaultManager.Received(1).Open(account, userKey);
+        context.VaultManager.Received(1).Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
 
     [Fact]
@@ -192,8 +193,8 @@ public sealed class AppSessionServiceTests
         using var secondUserKey = new UnlockedUserKey(secondAccount.UserId, [0x40, 0x50, 0x60]);
         var firstVault = Substitute.For<IUnlockedVault>();
         var secondVault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(firstAccount, new AccountKeyUnlockResult.Success(firstUserKey), firstVault);
-        context.ConfigureAccount(secondAccount, new AccountKeyUnlockResult.Success(secondUserKey), secondVault);
+        context.ConfigureAccount(firstAccount, new AccountKeyUnlockResult.Success(new TestAccountKeySession(firstUserKey)), firstVault);
+        context.ConfigureAccount(secondAccount, new AccountKeyUnlockResult.Success(new TestAccountKeySession(secondUserKey)), secondVault);
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(firstAccount.UserId, "synthetic-password")));
@@ -206,8 +207,8 @@ public sealed class AppSessionServiceTests
             result);
         Assert.Equal(firstAccount, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
-        context.VaultManager.Received(1).Open(firstAccount, firstUserKey);
-        context.VaultManager.DidNotReceive().Open(secondAccount, secondUserKey);
+        context.VaultManager.Received(1).Open(Arg.Is<IAccountKeySession>(key => key.UserId == firstAccount.UserId));
+        context.VaultManager.DidNotReceive().Open(Arg.Is<IAccountKeySession>(key => key.UserId == secondAccount.UserId));
     }
 
     [Fact]
@@ -220,8 +221,8 @@ public sealed class AppSessionServiceTests
         var secondVault = Substitute.For<IUnlockedVault>();
         firstVault.UserId.Returns(account.UserId);
         secondVault.UserId.Returns(account.UserId);
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey));
-        context.VaultManager.Open(account, userKey).Returns(firstVault, secondVault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
+        context.VaultManager.Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(firstVault, secondVault);
         var request = new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password");
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
@@ -234,7 +235,7 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
         Assert.Equal(account, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-        context.VaultManager.Received(2).Open(account, userKey);
+        context.VaultManager.Received(2).Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
 
     [Fact]
@@ -247,8 +248,8 @@ public sealed class AppSessionServiceTests
         using var secondUserKey = new UnlockedUserKey(secondAccount.UserId, [0x40, 0x50, 0x60]);
         var firstVault = Substitute.For<IUnlockedVault>();
         var secondVault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(firstAccount, new AccountKeyUnlockResult.Success(firstUserKey), firstVault);
-        context.ConfigureAccount(secondAccount, new AccountKeyUnlockResult.Success(secondUserKey), secondVault);
+        context.ConfigureAccount(firstAccount, new AccountKeyUnlockResult.Success(new TestAccountKeySession(firstUserKey)), firstVault);
+        context.ConfigureAccount(secondAccount, new AccountKeyUnlockResult.Success(new TestAccountKeySession(secondUserKey)), secondVault);
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(firstAccount.UserId, "synthetic-password")));
@@ -277,7 +278,7 @@ public sealed class AppSessionServiceTests
         var secondAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
         using var firstUserKey = new UnlockedUserKey(firstAccount.UserId, [0x10, 0x20, 0x30]);
         using var secondUserKey = new UnlockedUserKey(secondAccount.UserId, [0x40, 0x50, 0x60]);
-        context.ConfigureAccount(firstAccount, new AccountKeyUnlockResult.Success(firstUserKey), Substitute.For<IUnlockedVault>());
+        context.ConfigureAccount(firstAccount, new AccountKeyUnlockResult.Success(new TestAccountKeySession(firstUserKey)), Substitute.For<IUnlockedVault>());
         context.ConfigureAccount(secondAccount, new AccountKeyUnlockResult.InvalidCredentials());
 
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
@@ -298,7 +299,7 @@ public sealed class AppSessionServiceTests
         var otherAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var mismatchedVault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), mismatchedVault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), mismatchedVault);
         mismatchedVault.UserId.Returns(otherAccount.UserId);
 
         Assert.Throws<InvalidOperationException>(() => context.Service.UnlockAsync(
@@ -311,11 +312,11 @@ public sealed class AppSessionServiceTests
     [Fact]
     public void Rejects_an_unlocked_vault_with_a_mismatched_account_key()
     {
-        var manager = new ActiveSessionManager();
+        var manager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var vault = Substitute.For<IUnlockedVault>();
         vault.UserId.Returns(UserId.Parse(AccountTestData.FirstUserId));
-        using var accountKey = new UnlockedUserKey(UserId.Empty, []);
+        using var accountKey = new TestAccountKeySession(new UnlockedUserKey(UserId.Empty, []));
         using ActiveSessionManager.Transition transition = manager.TryEnterTransition()!;
 
         Assert.Throws<InvalidOperationException>(() => transition.Unlock(
@@ -329,14 +330,14 @@ public sealed class AppSessionServiceTests
     public void SignOut_clears_the_selected_account_and_disposes_the_vault()
     {
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var manager = new ActiveSessionManager();
+        var manager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
         var vault = Substitute.For<IUnlockedVault>();
         vault.UserId.Returns(account.UserId);
         using ActiveSessionManager.Transition transition = manager.TryEnterTransition()!;
         transition.Unlock(new UnlockedVaultLifetime(
             account,
             vault,
-            new UnlockedUserKey(account.UserId, [])));
+            new TestAccountKeySession(new UnlockedUserKey(account.UserId, []))));
 
         transition.SignOut();
 
@@ -351,7 +352,7 @@ public sealed class AppSessionServiceTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), vault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
         ValueTask<IUnlockedSessionLease> waiter = context.Service.WaitUntilUnlockedAsync(
             TestContext.Current.CancellationToken);
 
@@ -376,17 +377,20 @@ public sealed class AppSessionServiceTests
     }
 
     [Fact]
-    public async Task Unlock_during_an_active_transition_returns_concurrent_request()
+    public async Task Unlock_waits_for_an_active_transition()
     {
         var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using ActiveSessionManager.Transition transition = await context.ActiveSessionManager.EnterTransition(
             TestContext.Current.CancellationToken);
 
-        SessionUnlockOutcome result = context.Service.UnlockAsync(
-            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"));
+        Task<SessionUnlockOutcome> unlock = context.Service.UnlockAsync(
+            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
+            TestContext.Current.CancellationToken);
 
-        Assert.IsType<SessionUnlockOutcome.ConcurrentRequest>(result);
+        Assert.False(unlock.IsCompleted);
+        transition.Dispose();
+        Assert.Equal(new SessionUnlockOutcome.Failure("Account not found."), await unlock);
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
     }
 
@@ -397,7 +401,7 @@ public sealed class AppSessionServiceTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(userKey), vault);
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
         Assert.IsType<SessionUnlockOutcome.Success>(context.Service.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
         IUnlockedSessionLease lease = await context.Service.WaitUntilUnlockedAsync(
@@ -425,7 +429,7 @@ public sealed class AppSessionServiceTests
         {
             AccountService = Substitute.For<IAccountService>();
             VaultManager = Substitute.For<IVaultManager>();
-            ActiveSessionManager = new ActiveSessionManager();
+            ActiveSessionManager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
             Service = new AppSessionService(AccountService, VaultManager, ActiveSessionManager);
         }
 
@@ -442,7 +446,7 @@ public sealed class AppSessionServiceTests
             if (unlockResult is AccountKeyUnlockResult.Success success && vault is not null)
             {
                 vault.UserId.Returns(account.UserId);
-                VaultManager.Open(account, success.UserKey).Returns(vault);
+                VaultManager.Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
             }
         }
     }

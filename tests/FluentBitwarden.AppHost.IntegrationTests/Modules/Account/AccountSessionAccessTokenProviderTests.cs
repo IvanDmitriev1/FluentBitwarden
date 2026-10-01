@@ -182,8 +182,8 @@ public sealed class AccountSessionAccessTokenProviderTests
         vault.UserId.Returns(account.UserId);
         accountService.GetAccount(account.UserId).Returns(account);
         accountService.UnlockKey(account.UserId, Arg.Any<AccountUnlockMethod>())
-            .Returns(new AccountKeyUnlockResult.Success(userKey));
-        vaultManager.Open(account, userKey).Returns(vault);
+            .Returns(new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
+        vaultManager.Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
 
         BitwardenAccountContext accountContext = Context(account.UserId.ToString());
         AccountSessionTokens tokens = Tokens(accountContext, "paused-refresh");

@@ -1,6 +1,7 @@
+using System.Buffers;
 using System.Security.Cryptography;
 using System.Text.Json;
-using BitwardenApi.Vault.Cryptography;
+using BitwardenApi.Infrastructure.Cryptography.Enc;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
@@ -12,42 +13,43 @@ internal static class EncryptedJsonValueReader
 
     public static T ParseEncryptedValue<T>(
         this ref Utf8JsonReader reader,
-        CipherKey key,
+        ReadOnlySpan<byte> key,
         DecryptedJsonValueParser<T> parser)
     {
         int length = reader.ValueSpan.Length;
-        bool useStackAlloc = length <= MaxStackByteCount;
+        if (length <= MaxStackByteCount)
+        {
+            Span<byte> scratch = stackalloc byte[length];
+            return ParseInPlace(ref reader, key, scratch, parser);
+        }
 
-        Span<byte> buffer = useStackAlloc
-            ? stackalloc byte[length]
-            : new byte[length];
-
-        int bytesWritten = reader.CopyString(buffer);
-
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
         try
         {
-            bytesWritten = buffer[..bytesWritten].DecodeEncStringInPlace(key);
-            return parser(buffer[..bytesWritten]);
+            return ParseInPlace(ref reader, key, rented.AsSpan(0, length), parser);
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(buffer);
+            CryptographicOperations.ZeroMemory(rented);
+            ArrayPool<byte>.Shared.Return(rented);
         }
     }
 
-    public static T ReadRequired<T>(
+    internal static T ParseInPlace<T>(
         ref Utf8JsonReader reader,
-        CipherKey key,
+        scoped ReadOnlySpan<byte> key,
+        scoped Span<byte> scratch,
         DecryptedJsonValueParser<T> parser)
     {
-        reader.Read();
-
-        if (reader.TokenType == JsonTokenType.Null)
-            throw new JsonException("Property must not be null.");
-
-        if (reader.TokenType != JsonTokenType.String)
-            throw new JsonException("Property must be an encrypted string.");
-
-        return reader.ParseEncryptedValue(key, parser);
+        try
+        {
+            int bytesWritten = reader.CopyString(scratch);
+            bytesWritten = scratch[..bytesWritten].DecodeEncStringInPlace(key);
+            return parser(scratch[..bytesWritten]);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(scratch);
+        }
     }
 }

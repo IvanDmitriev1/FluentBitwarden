@@ -13,7 +13,7 @@ internal sealed class AppActivationHandler(IUiProcessLauncher uiProcessLauncher)
                 return;
 
             case AppHostCliCommand.Lock:
-                // Lock session here eventually.
+                
                 return;
 
             case AppHostCliCommand.Start:

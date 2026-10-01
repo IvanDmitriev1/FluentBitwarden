@@ -171,10 +171,10 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
             new AccountUnlockMethod.MasterPassword(password));
 
         var success = Assert.IsType<AccountKeyUnlockResult.Success>(result);
-        using (success.UserKey)
+        using (success.AccountKeySession)
         {
-            Assert.Equal(account.UserId, success.UserKey.UserId);
-            Assert.Equal(expectedUserKey, success.UserKey.Key.ToArray());
+            Assert.Equal(account.UserId, success.AccountKeySession.UserId);
+            Assert.Equal(expectedUserKey, success.AccountKeySession.UserKey.Key.ToArray());
         }
     }
 
@@ -203,7 +203,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
         finally
         {
             if (result is AccountKeyUnlockResult.Success unexpectedSuccess)
-                unexpectedSuccess.UserKey.Dispose();
+                unexpectedSuccess.AccountKeySession.Dispose();
         }
     }
 
@@ -221,7 +221,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
             AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first"));
         NativeWindowHandle ownerWindow = new(42);
         using var unlockedUserKey = new UnlockedUserKey(keyMaterial.UserId, [0x10, 0x20, 0x30]);
-        var expected = new AccountKeyUnlockResult.Success(unlockedUserKey);
+        var expected = new AccountKeyUnlockResult.Success(new TestAccountKeySession(unlockedUserKey));
         AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
         context.WindowsHelloService.Unlock(keyMaterial, (IntPtr)ownerWindow.Value).Returns(expected);
 
