@@ -38,6 +38,16 @@ jobs:
         with:
           vs-version: '[18.0,19.0)'
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.nuget/packages
+            packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.wapproj', '**/packages.config', 'Directory.Packages.props', 'Directory.Build.props', 'Directory.Build.targets') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore native packages
         run: nuget restore src\FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
 
