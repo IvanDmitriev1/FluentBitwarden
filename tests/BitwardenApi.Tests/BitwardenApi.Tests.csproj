@@ -3,6 +3,7 @@
   <Import Project="..\..\FluentBitwarden.Tests.props" />
 
   <ItemGroup>
+    <PackageReference Include="NSubstitute" />
     <ProjectReference Include="..\..\src\BitwardenApi\BitwardenApi.csproj" />
   </ItemGroup>
 

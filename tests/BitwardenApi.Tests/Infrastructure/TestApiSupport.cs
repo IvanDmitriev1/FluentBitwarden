@@ -1,3 +1,5 @@
+using NSubstitute;
+
 namespace BitwardenApi.Tests.Infrastructure;
 
 internal static class TestApiSupport
@@ -21,7 +23,12 @@ internal static class TestApiSupport
     {
         var services = new ServiceCollection();
         services.AddBitwardenApi();
-        services.AddSingleton<IBitwardenAccessTokenProvider>(new FixedAccessTokenProvider());
+        var accessTokenProvider = Substitute.For<IBitwardenAccessTokenProvider>();
+        accessTokenProvider.GetAccessTokenAsync(
+                Arg.Any<BitwardenAccountContext>(),
+                Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult(SessionAccessToken.Parse("vault-access-token")));
+        services.AddSingleton<IBitwardenAccessTokenProvider>(accessTokenProvider);
 
         if (identityHandler is not null)
         {
@@ -103,14 +110,6 @@ internal static class TestApiSupport
                 static header => header.Key,
                 static header => header.Value.ToArray(),
                 StringComparer.OrdinalIgnoreCase));
-    }
-
-    private sealed class FixedAccessTokenProvider : IBitwardenAccessTokenProvider
-    {
-        public ValueTask<SessionAccessToken> GetAccessTokenAsync(
-            BitwardenAccountContext accountContext,
-            CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(SessionAccessToken.Parse("vault-access-token"));
     }
 
     internal sealed class SnapshottingHttpMessageHandler(

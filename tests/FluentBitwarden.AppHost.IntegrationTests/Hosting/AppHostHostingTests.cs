@@ -17,26 +17,26 @@ public sealed class AppHostHostingTests
     public void Start_activation_activates_the_UI()
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
-        var applicationLifetime = new FakeApplicationLifetime();
+        var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
         var handler = new AppActivationHandler(TestSupport.CreateActions(uiProcessLauncher, applicationLifetime));
 
         handler.Handle(new AppHostCliCommand.Start());
 
         Assert.Equal(1, uiProcessLauncher.ActivationCount);
-        Assert.Equal(0, applicationLifetime.StopCount);
+        applicationLifetime.DidNotReceive().StopApplication();
     }
 
     [Fact]
     public void Headless_activation_has_no_action()
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
-        var applicationLifetime = new FakeApplicationLifetime();
+        var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
         var handler = new AppActivationHandler(TestSupport.CreateActions(uiProcessLauncher, applicationLifetime));
 
         handler.Handle(new AppHostCliCommand.Headless());
 
         Assert.Equal(0, uiProcessLauncher.ActivationCount);
-        Assert.Equal(0, applicationLifetime.StopCount);
+        applicationLifetime.DidNotReceive().StopApplication();
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class AppHostHostingTests
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var actions = TestSupport.CreateActions(
             new FakeUiProcessLauncher(),
-            new FakeApplicationLifetime(),
+            Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>());
         var handler = new AppActivationHandler(actions);
 
@@ -77,7 +77,7 @@ public sealed class AppHostHostingTests
     [Fact]
     public void Tray_menu_has_expected_labels_and_order()
     {
-        AppTray tray = TestSupport.CreateTray(new FakeUiProcessLauncher(), new FakeApplicationLifetime());
+        AppTray tray = TestSupport.CreateTray(new FakeUiProcessLauncher(), Substitute.For<IHostApplicationLifetime>());
 
         Assert.Collection(tray.CreateMenu(),
             item => Assert.Equal("Show", Assert.IsType<TrayMenuItem.Command>(item).Text),
@@ -90,38 +90,38 @@ public sealed class AppHostHostingTests
     public void Tray_activation_activates_the_UI()
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
-        var applicationLifetime = new FakeApplicationLifetime();
+        var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
         AppTray tray = TestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
 
         tray.Activate();
 
         Assert.Equal(1, uiProcessLauncher.ActivationCount);
-        Assert.Equal(0, applicationLifetime.StopCount);
+        applicationLifetime.DidNotReceive().StopApplication();
     }
 
     [Fact]
     public void Tray_show_menu_item_activates_the_UI()
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
-        var applicationLifetime = new FakeApplicationLifetime();
+        var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
         AppTray tray = TestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
 
         Assert.IsType<TrayMenuItem.Command>(tray.CreateMenu()[0]).Execute();
 
         Assert.Equal(1, uiProcessLauncher.ActivationCount);
-        Assert.Equal(0, applicationLifetime.StopCount);
+        applicationLifetime.DidNotReceive().StopApplication();
     }
 
     [Fact]
     public void Tray_exit_menu_item_requests_host_shutdown()
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
-        var applicationLifetime = new FakeApplicationLifetime();
+        var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
         AppTray tray = TestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
 
         Assert.IsType<TrayMenuItem.Command>(tray.CreateMenu()[3]).Execute();
 
-        Assert.Equal(1, applicationLifetime.StopCount);
+        applicationLifetime.Received(1).StopApplication();
         Assert.Equal(0, uiProcessLauncher.ActivationCount);
     }
 
@@ -148,7 +148,7 @@ public sealed class AppHostHostingTests
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var actions = TestSupport.CreateActions(
             new FakeUiProcessLauncher(),
-            new FakeApplicationLifetime(),
+            Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>());
         var tray = new AppTray(actions);
 
@@ -183,7 +183,7 @@ public sealed class AppHostHostingTests
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         AppHostActions actions = TestSupport.CreateActions(
             new FakeUiProcessLauncher(),
-            new FakeApplicationLifetime(),
+            Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>());
 
         actions.Lock();
@@ -212,7 +212,7 @@ public sealed class AppHostHostingTests
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         AppHostActions actions = TestSupport.CreateActions(
             new FakeUiProcessLauncher(),
-            new FakeApplicationLifetime(),
+            Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>(),
             logger);
 
@@ -260,7 +260,7 @@ public sealed class AppHostHostingTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<IUiProcessLauncher>(new FakeUiProcessLauncher());
-        services.AddSingleton<IHostApplicationLifetime>(new FakeApplicationLifetime());
+        services.AddSingleton(Substitute.For<IHostApplicationLifetime>());
         services.AddLogging();
         services.AddAppHostHosting();
 
@@ -282,15 +282,6 @@ public sealed class AppHostHostingTests
         public void ActivateMainWindow() => ActivationCount++;
         public void ActivateOverlay() { }
         public void Exit() { }
-    }
-
-    private sealed class FakeApplicationLifetime : IHostApplicationLifetime
-    {
-        public int StopCount { get; private set; }
-        public CancellationToken ApplicationStarted => CancellationToken.None;
-        public CancellationToken ApplicationStopping => CancellationToken.None;
-        public CancellationToken ApplicationStopped => CancellationToken.None;
-        public void StopApplication() => StopCount++;
     }
 
     private sealed class UnusedServiceScopeFactory : IServiceScopeFactory
@@ -323,7 +314,7 @@ public sealed class AppHostHostingTests
     {
         public static AppHostActions CreateActions(
             FakeUiProcessLauncher uiProcessLauncher,
-            FakeApplicationLifetime applicationLifetime,
+            IHostApplicationLifetime applicationLifetime,
             IServiceScopeFactory? scopeFactory = null,
             ILogger<AppHostActions>? logger = null) =>
             new(
@@ -332,7 +323,7 @@ public sealed class AppHostHostingTests
                 scopeFactory ?? new UnusedServiceScopeFactory(),
                 logger ?? NullLogger<AppHostActions>.Instance);
 
-        public static AppTray CreateTray(FakeUiProcessLauncher uiProcessLauncher, FakeApplicationLifetime applicationLifetime) =>
+        public static AppTray CreateTray(FakeUiProcessLauncher uiProcessLauncher, IHostApplicationLifetime applicationLifetime) =>
             new(CreateActions(uiProcessLauncher, applicationLifetime));
 
         public static IReadOnlyList<TrayMenuItem> SelectionItems(Action execute) =>
