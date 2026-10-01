@@ -11,6 +11,8 @@ internal sealed class AccountWindowsHelloService(
     IUnitOfWork unitOfWork,
     AccountTpmUnlockKeyRepository repository) : IAccountWindowsHelloService
 {
+    private const string WindowsHelloUnlockPrompt = "Unlock your FluentBitwarden vault";
+
     public Task<bool> IsSupportedAsync() => WindowsHelloTpmKeyProtector.IsSupportedAsync();
 
     public bool IsEnabled(UserId userId) => repository.Exists(userId);
@@ -19,7 +21,7 @@ internal sealed class AccountWindowsHelloService(
     {
         var keyName = userKey.UserId.ToString();
 
-        WindowsHelloTpmKeyProtector.CreateOrReplaceWrappingKey(keyName, hwnd);
+        WindowsHelloTpmKeyProtector.CreateOrReplaceWrappingKey(keyName, hwnd, WindowsHelloUnlockPrompt);
 
         byte[] protectedBytes = WindowsHelloTpmKeyProtector.WrapUserKey(
             keyName,
@@ -51,7 +53,8 @@ internal sealed class AccountWindowsHelloService(
             byte[] decryptedBytes = WindowsHelloTpmKeyProtector.UnwrapUserKey(
                 keyName,
                 protectedBytes,
-                hwnd);
+                hwnd,
+                WindowsHelloUnlockPrompt);
 
             return new AccountKeyUnlockResult.Success(
                 new AccountKeySession(

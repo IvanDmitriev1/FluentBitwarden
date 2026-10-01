@@ -1,10 +1,14 @@
-using FluentBitwarden.AppHost.Hosting.Cli;
-using FluentBitwarden.AppHost.Infrastructure.Processes;
+using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.AppHost.Hosting.Handlers;
+namespace FluentBitwarden.AppHost.Hosting.Activation;
 
-internal sealed class AppActivationHandler(IUiProcessLauncher uiProcessLauncher)
+internal sealed class AppActivationHandler(AppHostActions actions)
 {
+    public void HandleActivation(AppActivationArguments arguments)
+    {
+        Handle(AppHostCliCommand.Create(arguments));
+    }
+
     public void Handle(AppHostCliCommand command)
     {
         switch (command)
@@ -13,11 +17,11 @@ internal sealed class AppActivationHandler(IUiProcessLauncher uiProcessLauncher)
                 return;
 
             case AppHostCliCommand.Lock:
-                
+                actions.Lock();
                 return;
 
             case AppHostCliCommand.Start:
-                uiProcessLauncher.ActivateMainWindow();
+                actions.ShowMainWindow();
                 return;
 
             default:

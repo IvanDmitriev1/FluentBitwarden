@@ -1,11 +1,17 @@
-using Windows.ApplicationModel.Activation;
 using Microsoft.Windows.AppLifecycle;
+using Windows.ApplicationModel.Activation;
 
-namespace FluentBitwarden.AppHost.Hosting.Cli;
+namespace FluentBitwarden.AppHost.Hosting.Activation;
 
-internal static class AppHostCliCommandFactory
+internal abstract record AppHostCliCommand
 {
-    public static AppHostCliCommand ToCliCommand(this AppActivationArguments args)
+    private AppHostCliCommand() { }
+
+    public sealed record Start : AppHostCliCommand;
+    public sealed record Headless : AppHostCliCommand;
+    public sealed record Lock : AppHostCliCommand;
+
+    public static AppHostCliCommand Create(AppActivationArguments args)
     {
         if (args.Data is not ILaunchActivatedEventArgs launchArgs)
         {

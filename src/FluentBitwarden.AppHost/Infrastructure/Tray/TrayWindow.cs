@@ -1,4 +1,4 @@
-namespace FluentBitwarden.AppHost.Hosting.Tray;
+namespace FluentBitwarden.AppHost.Infrastructure.Tray;
 
 internal sealed class TrayWindow : IDisposable
 {
@@ -13,14 +13,19 @@ internal sealed class TrayWindow : IDisposable
     private readonly HWND _windowHandle;
     private readonly NotificationIcon _trayIcon;
     private readonly string _windowName;
-    private readonly ITrayCommandsHandler _commandsHandler;
+    private readonly Action _onActivate;
+    private readonly Func<IReadOnlyList<TrayMenuItem>> _createMenu;
     private bool _windowDestroyed;
     private bool _disposed;
 
-    public TrayWindow(string windowName, ITrayCommandsHandler commandsHandler)
+    public TrayWindow(
+        string windowName,
+        Action onActivate,
+        Func<IReadOnlyList<TrayMenuItem>> createMenu)
     {
         _windowName = windowName;
-        _commandsHandler = commandsHandler;
+        _onActivate = onActivate;
+        _createMenu = createMenu;
         _moduleHandle = PInvoke.GetModuleHandle(default(PCWSTR));
         RegisterWindowClass();
 
@@ -136,12 +141,13 @@ internal sealed class TrayWindow : IDisposable
             case TrayIconMessage.LeftButtonDoubleClick:
             case TrayIconMessage.Select:
             case TrayIconMessage.KeySelect:
-                _commandsHandler.HandleLeftClick();
+                _onActivate();
                 return;
 
             case TrayIconMessage.ContextMenu:
             case TrayIconMessage.RightButtonUp:
-                _commandsHandler.HandleRightClick(TrayMenu.Show(_windowHandle));
+                TrayMenuItem.Command? selectedCommand = TrayMenu.Show(_windowHandle, _createMenu.Invoke());
+                selectedCommand?.Execute();
                 return;
         }
     }

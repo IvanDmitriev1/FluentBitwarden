@@ -1,4 +1,4 @@
-namespace FluentBitwarden.AppHost.Hosting.Tray;
+namespace FluentBitwarden.AppHost.Infrastructure.Tray;
 
 internal enum TrayIconMessage : uint
 {

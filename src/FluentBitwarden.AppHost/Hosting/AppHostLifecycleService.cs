@@ -1,8 +1,11 @@
-using FluentBitwarden.AppHost.Hosting.Tray;
+using AsyncAwaitBestPractices;
+using FluentBitwarden.AppHost.Hosting.Activation;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
+using FluentBitwarden.AppHost.Infrastructure.Tray;
+using FluentBitwarden.Contracts.Settings;
+using FluentBitwarden.Platform.Infrastructure.Integrations;
+using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.Hosting;
-using FluentBitwarden.AppHost.Hosting.Cli;
-using FluentBitwarden.AppHost.Hosting.Handlers;
 using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.AppHost.Hosting;
@@ -17,9 +20,9 @@ internal sealed class AppHostLifecycleService : IHostedService
 
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IUiProcessLauncher _uiProcessLauncher;
+    private readonly IDatabaseInitializationService _databaseInitializationService;
 
-    private readonly AppTrayCommandsHandler _tryAppTrayCommandsHandler;
-    private readonly AppInitializer _appInitializer;
+    private readonly AppTray _appTray;
     private readonly AppActivationHandler _activationHandler;
 
     private readonly AppActivationArguments _initialActivationArguments;
@@ -28,17 +31,18 @@ internal sealed class AppHostLifecycleService : IHostedService
 
     public AppHostLifecycleService(
         IHostApplicationLifetime applicationLifetime,
-        IDatabaseInitializationService databaseInitializationService,
         IUiProcessLauncher uiProcessLauncher,
+        IDatabaseInitializationService databaseInitializationService,
+        AppActivationHandler activationHandler,
+        AppTray appTray,
         AppActivationArguments initialActivationArguments)
     {
         _applicationLifetime = applicationLifetime;
         _uiProcessLauncher = uiProcessLauncher;
+        _databaseInitializationService = databaseInitializationService;
         _initialActivationArguments = initialActivationArguments;
-
-        _activationHandler = new AppActivationHandler(uiProcessLauncher);
-        _appInitializer = new AppInitializer(databaseInitializationService);
-        _tryAppTrayCommandsHandler = new AppTrayCommandsHandler(uiProcessLauncher, applicationLifetime);
+        _activationHandler = activationHandler;
+        _appTray = appTray;
 
         _messageLoopThread = new Thread(MessageLoopThread)
         {
@@ -54,8 +58,8 @@ internal sealed class AppHostLifecycleService : IHostedService
         _messageLoopThread.Start();
         await _messageLoopStarted.Task.WaitAsync(cancellationToken);
 
-        _appInitializer.Initialize();
-        _activationHandler.Handle(_initialActivationArguments.ToCliCommand());
+        Initialize();
+        _activationHandler.HandleActivation(_initialActivationArguments);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -68,14 +72,11 @@ internal sealed class AppHostLifecycleService : IHostedService
         _uiProcessLauncher.Exit();
     }
 
-    public void HandleAppActivation(AppActivationArguments arguments) =>
-        _activationHandler.Handle(arguments.ToCliCommand());
-
     private void MessageLoopThread()
     {
         try
         {
-            using var trayWindow = new TrayWindow("FluentBitwarden.AppHost", _tryAppTrayCommandsHandler);
+            using var trayWindow = new TrayWindow("FluentBitwarden.AppHost", _appTray.Activate, _appTray.CreateMenu);
             _messageLoopStarted.SetResult(trayWindow);
             trayWindow.Run();
 
@@ -88,5 +89,28 @@ internal sealed class AppHostLifecycleService : IHostedService
 
             _applicationLifetime.StopApplication();
         }
+    }
+
+    public void Initialize()
+    {
+        _databaseInitializationService.Initialize();
+
+        if (SettingsStore.Instance.Get(AppSettingKeys.App.SetupCompletedKey))
+        {
+            return;
+        }
+
+        if (PasskeyPluginSetupService.IsSupported())
+        {
+            PasskeyPluginSetupService.EnsureRegisteredAsync().SafeFireAndForget();
+
+            SettingsStore.Instance.Set(
+                AppSettingKeys.Passkeys.PluginEnabledKey,
+                true);
+        }
+
+        SettingsStore.Instance.Set(
+            AppSettingKeys.App.SetupCompletedKey,
+            true);
     }
 }

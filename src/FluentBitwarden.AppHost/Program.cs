@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using BitwardenApi;
 using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.Hosting;
+using FluentBitwarden.AppHost.Hosting.Activation;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.Modules.Account;
@@ -46,7 +47,7 @@ internal static class Program
             }));
 #endif
 
-        builder.Services.AddHostedService<AppHostLifecycleService>();
+        builder.Services.AddAppHostHosting();
         builder.Services.AddAppLogging("apphost");
 
         builder.Services.AddApplicationInfrastructureServices();
@@ -62,12 +63,10 @@ internal static class Program
         builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
 
-        builder.Services.AddHostedService<AppHostLifecycleService>();
-
         var host = builder.Build();
 
         keyInstance.Activated += (_, arguments) =>
-            host.Services.GetRequiredService<AppHostLifecycleService>().HandleAppActivation(arguments);
+            host.Services.GetRequiredService<AppActivationHandler>().HandleActivation(arguments);
 
         host.Run();
         return 0;

@@ -66,6 +66,7 @@ jobs:
           dotnet test --project tests\FluentBitwarden.Platform.Tests\FluentBitwarden.Platform.Tests.csproj
           --no-build
           --configuration ${{ env.Configuration }}
+          --property:Platform=AnyCPU
           --results-directory TestResults\Platform
           --report-trx
 
@@ -74,5 +75,6 @@ jobs:
           dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj
           --no-build
           --configuration ${{ env.Configuration }}
+          --property:Platform=AnyCPU
           --results-directory TestResults\AppHostIntegration
           --report-trx

@@ -15,7 +15,6 @@
 
   <PropertyGroup Label="Windows App Project Configurations" Condition="'$(UsingMicrosoftNETSdk)' == 'true' and Exists('$(MSBuildProjectDirectory)\app.manifest')">
     <Configurations Condition="'$(Configurations)' == ''">Debug;Release</Configurations>
-    <Platforms Condition="'$(Platforms)' == ''">x64;ARM64</Platforms>
   </PropertyGroup>
 
 	<PropertyGroup Condition="'$(UsingMicrosoftNETSdk)' == 'true' and '$(Configuration)' == 'Debug'">

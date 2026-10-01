@@ -71,6 +71,10 @@
 
   <Allowed
     From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Hosting.Activation" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.Infrastructure" />
 
   <Allowed

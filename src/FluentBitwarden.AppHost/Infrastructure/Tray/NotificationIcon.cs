@@ -1,4 +1,4 @@
-namespace FluentBitwarden.AppHost.Hosting.Tray;
+namespace FluentBitwarden.AppHost.Infrastructure.Tray;
 
 internal sealed class NotificationIcon : IDisposable
 {

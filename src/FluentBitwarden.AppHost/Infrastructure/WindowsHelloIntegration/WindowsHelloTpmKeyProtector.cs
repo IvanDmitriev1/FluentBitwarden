@@ -14,7 +14,7 @@ public static class WindowsHelloTpmKeyProtector
     /// <summary>
     /// Creates or replaces the persisted Windows Hello RSA wrapping key used to protect the account user key.
     /// </summary>
-    public static void CreateOrReplaceWrappingKey(string keyName, IntPtr ownerWindowHandle)
+    public static void CreateOrReplaceWrappingKey(string keyName, IntPtr ownerWindowHandle, string useContext)
     {
         string persistentKeyName = WindowsHelloKeyName.Create(keyName);
 
@@ -24,7 +24,7 @@ public static class WindowsHelloTpmKeyProtector
             persistentKeyName,
             overwrite: true);
 
-        key.ConfigureNewWrappingKey(ownerWindowHandle);
+        key.ConfigureNewWrappingKey(ownerWindowHandle, useContext);
         WindowsHelloNcryptKeyStore.FinalizeKey(key);
     }
 
@@ -81,14 +81,15 @@ public static class WindowsHelloTpmKeyProtector
     public static byte[] UnwrapUserKey(
         string keyName,
         ReadOnlySpan<byte> protectedUserKey,
-        IntPtr ownerWindowHandle)
+        IntPtr ownerWindowHandle,
+        string useContext)
     {
         string persistentKeyName = WindowsHelloKeyName.Create(keyName);
 
         using var provider = WindowsHelloNcryptKeyStore.OpenProvider();
         using var key = WindowsHelloNcryptKeyStore.OpenKey(provider, persistentKeyName);
 
-        key.ApplyUiContext(ownerWindowHandle);
+        key.ApplyUiContext(ownerWindowHandle, useContext);
         key.RequireGestureOnNextUse();
 
         return WindowsHelloNcryptKeyStore.Decrypt(key, protectedUserKey);
