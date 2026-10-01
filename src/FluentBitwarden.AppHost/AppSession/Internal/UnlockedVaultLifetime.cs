@@ -45,9 +45,9 @@ internal sealed class UnlockedVaultLifetime : IDisposable
         _accountKey = accountKeySession;
         Account = account;
 
-        if (Account.UserId != _accountKey.UserKey.UserId)
+        if (Account.UserId != _accountKey.UserKey.UserId || Account.UserId != _vault.UserId)
         {
-            throw new InvalidOperationException("The active account and unlocked vault must have the same user ID.");
+            throw new InvalidOperationException("The active account, unlocked vault, and account key must have the same user ID.");
         }
     }
 

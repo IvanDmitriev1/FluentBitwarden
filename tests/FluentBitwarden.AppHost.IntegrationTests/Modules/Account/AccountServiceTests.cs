@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using BitwardenApi.Identity;
 using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
@@ -161,7 +162,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
         using var context = new AccountServiceTestContext(database);
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         const string password = "synthetic-master-password";
-        byte[] expectedUserKey = [0x11, 0x22, 0x33, 0x44, 0x55];
+        byte[] expectedUserKey = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         var keyMaterial = CreateMasterPasswordUnlockMaterial(account.UserId, password, expectedUserKey);
         AccountRepositoryTestHelper.InsertAccount(database, account);
         AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
@@ -188,7 +189,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
         var keyMaterial = CreateMasterPasswordUnlockMaterial(
             account.UserId,
             password,
-            [0x11, 0x22, 0x33, 0x44, 0x55]);
+            Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray());
         AccountRepositoryTestHelper.InsertAccount(database, account);
         AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
 
@@ -284,11 +285,21 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
             kdfConfig,
             "master-password-unlock");
 
-        return keyMaterial with
+        using var rsa = RSA.Create();
+        byte[] privateKey = rsa.ExportPkcs8PrivateKey();
+        try
         {
-            Salt = salt,
-            ProtectedUserKey = protectedUserKey
-        };
+            return keyMaterial with
+            {
+                Salt = salt,
+                ProtectedUserKey = protectedUserKey,
+                ProtectedPrivateKey = ProtectedPrivateKey.Create(EncString.Encrypt(privateKey, expectedUserKey))
+            };
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(privateKey);
+        }
     }
 
     private sealed class AccountServiceTestContext : IDisposable

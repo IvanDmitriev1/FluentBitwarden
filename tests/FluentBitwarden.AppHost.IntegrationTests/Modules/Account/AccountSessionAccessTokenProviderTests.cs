@@ -11,6 +11,7 @@ using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -225,6 +226,7 @@ public sealed class AccountSessionAccessTokenProviderTests
     {
         var services = new ServiceCollection();
         services.AddAccountModule();
+        services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddSingleton(Substitute.For<IAccountService>());
         services.AddSingleton(Substitute.For<IVaultManager>());
         services.AddAppSessionModule();
@@ -252,6 +254,7 @@ public sealed class AccountSessionAccessTokenProviderTests
     {
         var services = new ServiceCollection();
         services.AddAccountModule();
+        services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddScoped(_ => accountService);
         services.AddScoped(_ => vaultManager ?? Substitute.For<IVaultManager>());
         services.AddAppSessionModule();
