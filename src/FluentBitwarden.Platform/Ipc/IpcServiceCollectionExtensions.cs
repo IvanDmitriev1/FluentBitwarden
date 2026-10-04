@@ -56,7 +56,14 @@ public static class IpcServiceCollectionExtensions
 
         public IServiceCollection AddIpcClient(string pipeName)
         {
-            services.AddSingleton<IIpcClient>(_ => new PipeIpcClient(pipeName));
+            services.TryAddSingleton<IpcExceptionNotifier>();
+            services.TryAddSingleton<IIpcExceptionNotifier>(static sp => sp.GetRequiredService<IpcExceptionNotifier>());
+            services.TryAddSingleton<IIpcExceptionHandler>(static sp => sp.GetRequiredService<IpcExceptionNotifier>());
+
+            services.AddSingleton<IIpcClient>(sp => new PipeIpcClient(
+                pipeName,
+                sp.GetRequiredService<IIpcExceptionHandler>()));
+
             return services;
         }
     }

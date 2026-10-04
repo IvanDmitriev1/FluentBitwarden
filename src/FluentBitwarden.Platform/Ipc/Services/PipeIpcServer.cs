@@ -1,4 +1,5 @@
 using AsyncAwaitBestPractices;
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Platform.Ipc.Models;
 using FluentBitwarden.Platform.Ipc.Transport;
 using Microsoft.Extensions.DependencyInjection;
@@ -97,7 +98,7 @@ internal sealed class PipeIpcServer(
                 await using var scope = scopeFactory.CreateAsyncScope();
                 result = await endpoint.InvokeAsync(scope.ServiceProvider, pipe, payload, stoppingToken);
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (OperationCanceledException)
             {
                 return;
             }
@@ -113,13 +114,13 @@ internal sealed class PipeIpcServer(
 
                 case IpcRpcInvocationStatus.Failure:
                     logger.RequestFailed(result.Exception!);
-                    await TryWriteFailureResponseAsync(pipe, stoppingToken);
+                    await TryWriteFailureResponseAsync(
+                        pipe,
+                        GetFailureCode(result.Exception!),
+                        stoppingToken);
                     return;
 
                 case IpcRpcInvocationStatus.Success:
-                    if (stoppingToken.IsCancellationRequested)
-                        return;
-
                     await TryWriteSuccessResponseAsync(pipe, result.ResponsePayload!, stoppingToken);
                     return;
 
@@ -171,18 +172,19 @@ internal sealed class PipeIpcServer(
 
     private async Task TryWriteFailureResponseAsync(
         NamedPipeServerStream pipe,
+        IpcRpcFailureCode failureCode,
         CancellationToken cancellationToken)
     {
         try
         {
-            await IpcWireProtocol.WriteRpcFailureResponseAsync(pipe, cancellationToken);
+            await IpcWireProtocol.WriteRpcFailureResponseAsync(pipe, failureCode, cancellationToken);
             await pipe.FlushAsync(cancellationToken);
         }
         catch (IOException)
         {
             logger.ClientDisconnected();
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
             // Host shutdown closes the connection without delivering a response.
         }
@@ -191,4 +193,11 @@ internal sealed class PipeIpcServer(
             logger.RequestFailed(exception);
         }
     }
+
+    private static IpcRpcFailureCode GetFailureCode(Exception exception) => exception switch
+    {
+        UnlockedSessionRequiredException => IpcRpcFailureCode.LockedSession,
+        OperationCanceledException => IpcRpcFailureCode.Cancellation,
+        _ => IpcRpcFailureCode.Generic,
+    };
 }

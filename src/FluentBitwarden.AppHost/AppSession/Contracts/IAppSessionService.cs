@@ -7,7 +7,7 @@ public interface IAppSessionService
 {
     AppSessionState State { get; }
 
-    IUnlockedSessionLease? TryAcquireUnlockedSessionLease();
+    IUnlockedSessionLease RequireUnlockedSessionLease();
 
     ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken);
 

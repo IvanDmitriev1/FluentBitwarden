@@ -5,6 +5,7 @@ using AppSessionStateChangedEvent = FluentBitwarden.Contracts.AppSession.State.A
 using FluentBitwarden.Infrastructure.UiCommand;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
+using FluentBitwarden.Contracts.AppSession;
 
 namespace FluentBitwarden.Application.Implementations;
 
@@ -19,19 +20,22 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         IAppSessionResolver sessionResolver,
         IWindowManager windowManager,
         IIpcEventClient eventClient,
+        IIpcExceptionNotifier exceptionNotifier,
         IUiHostedServiceManager hostedServiceManager)
     {
         _sessionResolver = sessionResolver;
         _windowManager = windowManager;
+        _exceptionNotifier = exceptionNotifier;
         _hostedServiceManager = hostedServiceManager;
 
         eventClient.Subscribe<AppSessionStateChangedEvent>((_, _) =>
             App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync));
-
+        _exceptionNotifier.UnlockedSessionRequired += OnUnlockedSessionRequired;
     }
 
     private readonly IAppSessionResolver _sessionResolver;
     private readonly IWindowManager _windowManager;
+    private readonly IIpcExceptionNotifier _exceptionNotifier;
     private readonly IUiHostedServiceManager _hostedServiceManager;
 
     private readonly SemaphoreSlim _flowGate = new(1, 1);
@@ -143,5 +147,12 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         SessionStateApplied?.Invoke(SessionState, unlockParameter, _currentIntent);
     }
 
-    public void Dispose() => _flowGate.Dispose();
+    private void OnUnlockedSessionRequired(UnlockedSessionRequiredException _) =>
+        App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync);
+
+    public void Dispose()
+    {
+        _exceptionNotifier.UnlockedSessionRequired -= OnUnlockedSessionRequired;
+        _flowGate.Dispose();
+    }
 }

@@ -36,12 +36,6 @@ internal readonly record struct IpcRpcResponseHeader(bool IsSuccessful, int Payl
         if (payloadLength < 0)
             throw new InvalidDataException($"IPC payload length cannot be negative: {payloadLength}.");
 
-        if (isSuccessful == 0 && payloadLength != 0)
-        {
-            throw new InvalidDataException(
-                $"An unsuccessful IPC response must have an empty payload, got {payloadLength} bytes.");
-        }
-
         return new IpcRpcResponseHeader(isSuccessful == 1, payloadLength);
     }
 
@@ -54,11 +48,6 @@ internal readonly record struct IpcRpcResponseHeader(bool IsSuccessful, int Payl
             IpcConstants.ProtocolVersion);
 
         header[IsSuccessfulOffset] = IsSuccessful ? (byte)1 : (byte)0;
-
-        if (!IsSuccessful && PayloadLength != 0)
-        {
-            throw new InvalidDataException("An unsuccessful IPC response must have an empty payload.");
-        }
 
         BinaryPrimitives.WriteInt32LittleEndian(
             header.AsSpan(PayloadLengthOffset, sizeof(int)),

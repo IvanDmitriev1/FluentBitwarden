@@ -2,6 +2,7 @@ using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 
@@ -14,8 +15,9 @@ internal sealed class AppSessionService(
 {
     public AppSessionState State => activeSessionManager.State;
 
-    public IUnlockedSessionLease? TryAcquireUnlockedSessionLease() =>
-        activeSessionManager.TryAcquireUnlockedSessionLease();
+    public IUnlockedSessionLease RequireUnlockedSessionLease() =>
+        activeSessionManager.TryAcquireUnlockedSessionLease()
+        ?? throw new UnlockedSessionRequiredException();
 
     public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
         => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);

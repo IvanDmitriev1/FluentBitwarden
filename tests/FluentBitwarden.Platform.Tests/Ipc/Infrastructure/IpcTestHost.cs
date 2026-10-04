@@ -28,6 +28,8 @@ internal sealed class IpcTestHost : IAsyncDisposable
 
     public TestIpcClientsVerifier Verifier { get; }
 
+    public IServiceProvider Services => _host.Services;
+
     public IIpcClient Client => _host.Services.GetRequiredService<IIpcClient>();
 
     public Task StopAsync(CancellationToken cancellationToken) => _host.StopAsync(cancellationToken);

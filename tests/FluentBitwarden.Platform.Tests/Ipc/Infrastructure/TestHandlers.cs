@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using FluentBitwarden.Contracts.AppSession;
 
 namespace FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
 
@@ -146,6 +147,14 @@ public sealed class ServerCancellingHandler : IIpcRequestsHandler
     {
         throw new OperationCanceledException("Expected test handler cancellation.");
     }
+}
+
+public sealed class LockedSessionHandler : IIpcRequestsHandler
+{
+    public Task<EchoResponse> Echo(
+        EchoRequest request,
+        CancellationToken cancellationToken) =>
+        throw new UnlockedSessionRequiredException();
 }
 
 public sealed class FailingRpcShapesHandler : IIpcRequestsHandler

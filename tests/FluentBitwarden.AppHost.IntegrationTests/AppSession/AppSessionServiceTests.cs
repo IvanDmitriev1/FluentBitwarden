@@ -5,6 +5,7 @@ using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
@@ -22,6 +23,57 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
         Assert.Null(GetAccount(context.Service.State));
+    }
+
+    [Fact]
+    public void RequireUnlockedSessionLease_throws_when_not_authenticated()
+    {
+        var context = new SessionTestContext();
+
+        Assert.Throws<UnlockedSessionRequiredException>(
+            context.Service.RequireUnlockedSessionLease);
+    }
+
+    [Fact]
+    public async Task RequireUnlockedSessionLease_throws_when_locked()
+    {
+        var context = new SessionTestContext();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
+        var vault = Substitute.For<IUnlockedVault>();
+        context.ConfigureAccount(
+            account,
+            new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)),
+            vault);
+        _ = context.Service.UnlockAsync(
+            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"));
+        await context.Service.LockAsync(TestContext.Current.CancellationToken);
+
+        Assert.Throws<UnlockedSessionRequiredException>(
+            context.Service.RequireUnlockedSessionLease);
+    }
+
+    [Fact]
+    public async Task RequireUnlockedSessionLease_returns_a_lease_that_survives_lock_until_disposed()
+    {
+        var context = new SessionTestContext();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
+        var vault = Substitute.For<IUnlockedVault>();
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
+        _ = context.Service.UnlockAsync(
+            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"));
+
+        IUnlockedSessionLease lease = context.Service.RequireUnlockedSessionLease();
+        await context.Service.LockAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(account, lease.Account);
+        Assert.Same(vault, lease.Vault);
+        vault.DidNotReceive().Dispose();
+
+        lease.Dispose();
+
+        vault.Received(1).Dispose();
     }
 
     [Fact]

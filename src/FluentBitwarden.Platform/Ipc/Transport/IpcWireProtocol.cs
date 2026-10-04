@@ -30,11 +30,44 @@ internal static class IpcWireProtocol
         await stream.WriteAsync(payload, cancellationToken);
     }
 
-    public static Task WriteRpcFailureResponseAsync(
+    public static byte[] SerializeRpcFailureResponse(IpcRpcFailureCode code) =>
+        MemoryPackSerializer.Serialize(new IpcRpcFailureResponse(code));
+
+    public static async Task<IpcRpcFailureResponse> ReadRpcFailureResponseAsync(
         Stream stream,
-        CancellationToken cancellationToken) =>
-        new IpcRpcResponseHeader(IsSuccessful: false, PayloadLength: 0)
+        int payloadLength,
+        CancellationToken cancellationToken)
+    {
+        int expectedPayloadLength = SerializeRpcFailureResponse(IpcRpcFailureCode.Generic).Length;
+        if (payloadLength != expectedPayloadLength)
+        {
+            throw new InvalidDataException(
+                $"An IPC failure payload must be {expectedPayloadLength} bytes, got {payloadLength}.");
+        }
+
+        byte[] buffer = new byte[payloadLength];
+        await stream.ReadExactlyAsync(buffer, cancellationToken);
+
+        IpcRpcFailureResponse response = MemoryPackSerializer.Deserialize<IpcRpcFailureResponse>(buffer);
+        if (!Enum.IsDefined(response.Code)
+            || !SerializeRpcFailureResponse(response.Code).AsSpan().SequenceEqual(buffer))
+        {
+            throw new InvalidDataException("The IPC failure payload is invalid.");
+        }
+
+        return response;
+    }
+
+    public static async Task WriteRpcFailureResponseAsync(
+        Stream stream,
+        IpcRpcFailureCode code,
+        CancellationToken cancellationToken)
+    {
+        byte[] payload = SerializeRpcFailureResponse(code);
+        await new IpcRpcResponseHeader(IsSuccessful: false, payload.Length)
             .WriteAsync(stream, cancellationToken);
+        await stream.WriteAsync(payload, cancellationToken);
+    }
 
     public static async Task WriteEventAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEvent>(

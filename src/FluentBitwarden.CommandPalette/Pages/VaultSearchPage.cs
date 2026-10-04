@@ -20,6 +20,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     private readonly IVaultClient _vaultClient;
     private readonly UnlockVaultPage _unlockVaultPage;
     private readonly VaultCipherListItemFactory _vaultCipherListItemFactory;
+    private readonly IIpcExceptionNotifier _exceptionNotifier;
     private readonly IDisposable _sessionStatusSubscription;
 
     private IListItem[] _items = [];
@@ -30,14 +31,17 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         IAppSessionClient appSessionClient,
         IVaultClient vaultClient,
         IIpcEventClient eventClient,
+        IIpcExceptionNotifier exceptionNotifier,
         UnlockVaultPage unlockVaultPage,
         VaultCipherListItemFactory vaultCipherListItemFactory)
     {
         _appSessionClient = appSessionClient;
         _vaultClient = vaultClient;
+        _exceptionNotifier = exceptionNotifier;
         _unlockVaultPage = unlockVaultPage;
         _vaultCipherListItemFactory = vaultCipherListItemFactory;
         _sessionStatusSubscription = eventClient.Subscribe<AppSessionStateChangedEvent>(OnSessionStatusChanged);
+        _exceptionNotifier.UnlockedSessionRequired += OnUnlockedSessionRequired;
 
         Id = PageId;
         Title = "FluentBitwarden vault";
@@ -62,6 +66,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     public void Dispose()
     {
         _sessionStatusSubscription.Dispose();
+        _exceptionNotifier.UnlockedSessionRequired -= OnUnlockedSessionRequired;
 
         var cancellation = Interlocked.Exchange(ref _searchCancellation, null);
         cancellation?.Cancel();
@@ -69,6 +74,11 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     }
 
     private void OnSessionStatusChanged(AppSessionStateChangedEvent message)
+    {
+        QueueSearch(string.Empty);
+    }
+
+    private void OnUnlockedSessionRequired(UnlockedSessionRequiredException exception)
     {
         QueueSearch(string.Empty);
     }
@@ -100,14 +110,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
             AppSessionState state = await _appSessionClient.GetStateAsync(new(), cancellationToken);
             if (state is not AppSessionState.Unlocked)
             {
-                ListItem unlockListItem = new(_unlockVaultPage)
-                {
-                    Title = "Unlock vault",
-                    Subtitle = "Vault is locked. Unlock before searching.",
-                    Icon = Icons.Unlock
-                };
-
-                PublishItems(generation, [unlockListItem]);
+                PublishLockedItems(generation);
                 return;
             }
 
@@ -153,6 +156,18 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
             };
             PublishItems(generation, [errorItem]);
         }
+    }
+
+    private void PublishLockedItems(uint generation)
+    {
+        ListItem unlockListItem = new(_unlockVaultPage)
+        {
+            Title = "Unlock vault",
+            Subtitle = "Vault is locked. Unlock before searching.",
+            Icon = Icons.Unlock
+        };
+
+        PublishItems(generation, [unlockListItem]);
     }
 
     private void PublishItems(uint generation, IListItem[] items)

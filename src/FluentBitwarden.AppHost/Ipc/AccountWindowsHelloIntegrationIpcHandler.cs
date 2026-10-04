@@ -27,8 +27,8 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
     {
         try
         {
-            using var lease = sessionService.TryAcquireUnlockedSessionLease();
-            if (lease is null || !await accountWindowsHelloService.IsSupportedAsync())
+            using var lease = sessionService.RequireUnlockedSessionLease();
+            if (!await accountWindowsHelloService.IsSupportedAsync())
                 return WindowsHelloEnrollmentOutcome.Unavailable;
 
             if (accountWindowsHelloService.IsEnabled(lease.Account.UserId))
@@ -51,8 +51,8 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
 
     public async Task DisableAsync(DisableWindowsHelloEnrollmentRequest request, CancellationToken cancellationToken = default)
     {
-        using var lease = sessionService.TryAcquireUnlockedSessionLease();
-        if (lease is null || !await accountWindowsHelloService.IsSupportedAsync())
+        using var lease = sessionService.RequireUnlockedSessionLease();
+        if (!await accountWindowsHelloService.IsSupportedAsync())
             return;
 
         if (!accountWindowsHelloService.IsEnabled(lease.Account.UserId))

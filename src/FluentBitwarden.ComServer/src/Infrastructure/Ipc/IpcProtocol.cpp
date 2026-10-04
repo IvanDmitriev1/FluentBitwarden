@@ -94,11 +94,6 @@ namespace FluentBitwarden::ComServer::Ipc
 			throw std::runtime_error("Invalid IPC payload length.");
 		}
 
-		if (isSuccessful == 0 && payloadLength != 0)
-		{
-			throw std::runtime_error("Failed IPC response must not include a payload.");
-		}
-
 		return ResponseHeader
 		{
 			.IsSuccessful = isSuccessful != 0,

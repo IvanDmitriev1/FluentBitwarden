@@ -12,8 +12,8 @@ namespace FluentBitwarden::ComServer::Ipc
 {
 	namespace Constants
 	{
-		inline constexpr std::wstring_view PipePath = LR"(\\.\pipe\LOCAL\FluentBitwarden.v3)";
-		inline constexpr std::uint16_t ProtocolVersion = 3;
+		inline constexpr std::wstring_view PipePath = LR"(\\.\pipe\LOCAL\FluentBitwarden.v4)";
+		inline constexpr std::uint16_t ProtocolVersion = 4;
 	}
 
 	struct RequestHeader

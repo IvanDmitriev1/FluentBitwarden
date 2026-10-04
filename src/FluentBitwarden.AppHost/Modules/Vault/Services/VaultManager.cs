@@ -81,12 +81,13 @@ internal sealed class VaultManager(
 
             return VaultSyncResult.Synced;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when(ct.IsCancellationRequested)
         {
             return VaultSyncResult.SkippedOffline;
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            Debug.WriteLine(e);
             return VaultSyncResult.Failed;
         }
     }

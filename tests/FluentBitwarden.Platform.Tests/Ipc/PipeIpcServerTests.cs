@@ -1,6 +1,8 @@
 using FluentBitwarden.Platform.Ipc.Transport;
 using FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Platform.Ipc.Services;
 
 namespace FluentBitwarden.Platform.Tests.Ipc;
 
@@ -173,6 +175,74 @@ public class PipeIpcServerTests
     }
 
     [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Locked_session_failure_round_trips_as_the_typed_exception()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHostFactory.StartAsync<LockedSessionHandler>(
+            cancellationToken: testCancellation);
+
+        UnlockedSessionRequiredException exception = await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(53, "locked-session"),
+                testCancellation));
+
+        Assert.Null(exception.InnerException);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Locked_session_failure_notifies_once_and_rethrows_the_same_exception()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHostFactory.StartAsync<LockedSessionHandler>(
+            cancellationToken: testCancellation);
+        var notifications = new List<UnlockedSessionRequiredException>();
+        IIpcExceptionNotifier notifier = host.Services.GetRequiredService<IIpcExceptionNotifier>();
+        notifier.UnlockedSessionRequired += notifications.Add;
+
+        UnlockedSessionRequiredException exception = await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(54, "locked-session-notification"),
+                testCancellation));
+
+        Assert.Same(exception, Assert.Single(notifications));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Exception_handler_failure_does_not_mask_the_remote_exception()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var handlerFailure = new InvalidOperationException("Notifier failure.");
+        var exceptionHandler = new RecordingIpcExceptionHandler(handlerFailure);
+        await using var host = await IpcTestHostFactory.StartAsync<LockedSessionHandler>(
+            configureServices: services => services.AddSingleton<IIpcExceptionHandler>(exceptionHandler),
+            cancellationToken: testCancellation);
+
+        UnlockedSessionRequiredException exception = await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(55, "handler-failure"),
+                testCancellation));
+
+        Assert.Same(exception, Assert.Single(exceptionHandler.Exceptions));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Local_transport_failure_does_not_invoke_the_exception_handler()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var exceptionHandler = new RecordingIpcExceptionHandler();
+        var client = new PipeIpcClient($"FluentBitwarden.Tests.{Guid.NewGuid():N}", exceptionHandler);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(testCancellation);
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(56, "cancel-before-connect"),
+                cancellation.Token));
+
+        Assert.Empty(exceptionHandler.Exceptions);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
     public async Task Handler_failure_does_not_stop_the_listener_from_serving_subsequent_requests()
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
@@ -313,7 +383,7 @@ public class PipeIpcServerTests
             IpcTestHost.Timeout,
             testCancellation);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        await Assert.ThrowsAsync<IpcRemoteException>(async () =>
             await request.WaitAsync(IpcTestHost.Timeout, testCancellation));
         await state.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
         await probe.DisposalFor(instanceId).WaitAsync(IpcTestHost.Timeout, testCancellation);

@@ -17,18 +17,14 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddHttpClient("BitwardenApiIdentityHttpClient", static client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(2);
-                client.DefaultRequestVersion = HttpVersion.Version20;
-                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+                client.Timeout = TimeSpan.FromSeconds(30);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddBitwardenReadRetry();
 
         services.AddHttpClient("BitwardenApiVaultHttpClient", static client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(2);
-                client.DefaultRequestVersion = HttpVersion.Version20;
-                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+                client.Timeout = TimeSpan.FromSeconds(30);
             })
             .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddHttpMessageHandler<BitwardenAuthorizationHandler>()
