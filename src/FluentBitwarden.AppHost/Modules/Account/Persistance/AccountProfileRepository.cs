@@ -1,5 +1,5 @@
-﻿using BitwardenApi.Vault.Items.Contracts;
 using Dapper;
+using FluentBitwarden.AppHost.Modules.Account.Persistance.Mappers;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Persistance;
 
@@ -64,28 +64,6 @@ internal sealed class AccountProfileRepository(IDbSession dbSession)
                 transaction: dbSession.Transaction);
 
         return AccountProfileMapper.ToDetails(row);
-    }
-
-    public void UpdateSyncedProfile(UserId accountId, VaultProfileResponse profile)
-    {
-        const string sql = """
-                           UPDATE account_profiles
-                           SET
-                               email                         = @Email,
-                               profile_name                  = @ProfileName,
-                               profile_culture               = @ProfileCulture,
-                               profile_creation_date_unix_ms = @ProfileCreationDateUnixMs,
-                               profile_synced                = 1
-                           WHERE user_id = @UserId COLLATE NOCASE;
-                           """;
-
-        var affectedRows = dbSession.Connection.Execute(
-            sql,
-            AccountProfileMapper.ToSyncedProfileParameters(accountId, profile),
-            transaction: dbSession.RequiredTransaction);
-
-        if (affectedRows == 0)
-            throw new InvalidOperationException($"Account profile was not found for user '{accountId}'.");
     }
 
     public void Upsert(AccountProfile accountProfile)

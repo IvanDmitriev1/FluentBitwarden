@@ -1,8 +1,8 @@
 using System.Globalization;
+using BitwardenApi.Infrastructure.Cryptography.Enc;
 using BitwardenApi.Vault.Attachments.Contracts;
 using BitwardenApi.Vault.Items.Contracts;
 using Dapper;
-using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
 using Microsoft.Data.Sqlite;
@@ -31,7 +31,7 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
         return rows.Select(static row => VaultFolderMapper.ToDomain(row)).ToArray();
     }
 
-    public VaultOrganizationResponse[] GetAllOrganizations(UserId userId)
+    public Dictionary<OrganizationId, AsymmetricEncString> LoadOrganizationKeys(UserId userId)
     {
         var rows = dbSession.Connection.Query<VaultOrganizationMapper.OrganizationRow>(
             """
@@ -51,7 +51,10 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
             new { UserId = userId.ToString() },
             transaction: dbSession.Transaction);
 
-        return rows.Select(static row => VaultOrganizationMapper.ToDomain(row)).ToArray();
+        return rows
+            .Select(static row => VaultOrganizationMapper.ToDomain(row))
+            .ToDictionary(static organization => organization.Id,
+                static organization => organization.ProtectedOrganizationKey);
     }
 
     public VaultCollectionResponse[] GetAllCollections(UserId userId)
@@ -133,20 +136,6 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
             var dto = VaultCipherMapper.ToDomain(row, collectionIds ?? [], attachments ?? []);
             onCipher.Invoke(ref dto, buffer.AsSpan(0, bytesWritten));
         }
-    }
-
-    public DateTimeOffset? GetLastSyncTime(UserId userId)
-    {
-        long? maxRevisionUnixMs = dbSession.Connection.ExecuteScalar<long?>(
-            """
-            SELECT MAX(revision_date_unix_ms)
-            FROM vault_cipher
-            WHERE user_id = @UserId;
-            """,
-            new { UserId = userId.ToString() },
-            transaction: dbSession.Transaction);
-
-        return maxRevisionUnixMs.ToDateTimeOffsetFromUnixMs();
     }
 
     public VaultCipherKeyMaterial? GetCipherKeyMaterial(UserId userId, CipherId cipherId)

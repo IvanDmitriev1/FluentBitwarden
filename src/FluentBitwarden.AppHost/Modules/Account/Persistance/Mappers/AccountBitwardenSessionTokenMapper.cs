@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace FluentBitwarden.AppHost.Modules.Account.Persistance;
+namespace FluentBitwarden.AppHost.Modules.Account.Persistance.Mappers;
 
 internal static class AccountBitwardenSessionTokenMapper
 {

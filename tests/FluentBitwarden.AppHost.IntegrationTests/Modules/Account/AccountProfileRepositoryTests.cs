@@ -98,47 +98,6 @@ public sealed class AccountProfileRepositoryTests(AccountRepositoryFixture fixtu
     }
 
     [Fact]
-    public void UpdateSyncedProfile_persists_details_and_updates_email()
-    {
-        using var database = fixture.CreateDatabase();
-        var account = AccountTestData.Profile(
-            AccountTestData.FirstUserId,
-            "before@example.test",
-            "first");
-        DateTimeOffset creationDate = AccountTestData.ProfileCreationDate;
-        var syncedProfile = AccountTestData.SyncedProfile(
-            AccountTestData.FirstUserId,
-            "after@example.test",
-            "Test User",
-            "en-US",
-            creationDate);
-
-        using (var unitOfWork = database.CreateUnitOfWork())
-        {
-            unitOfWork.Begin();
-            var repository = new AccountProfileRepository(unitOfWork);
-            repository.Upsert(account);
-            unitOfWork.Commit();
-        }
-
-        using (var unitOfWork = database.CreateUnitOfWork())
-        {
-            unitOfWork.Begin();
-            new AccountProfileRepository(unitOfWork)
-                .UpdateSyncedProfile(account.UserId, syncedProfile);
-            unitOfWork.Commit();
-        }
-
-        using var readUnitOfWork = database.CreateUnitOfWork();
-        var repositoryAfterSync = new AccountProfileRepository(readUnitOfWork);
-
-        Assert.Equal("after@example.test", repositoryAfterSync.GetById(account.UserId)?.Email);
-        Assert.Equal(
-            new AccountProfileDetails("Test User", "en-US", creationDate),
-            repositoryAfterSync.GetProfileDetails(account.UserId));
-    }
-
-    [Fact]
     public void Missing_profile_and_details_return_null()
     {
         using var database = fixture.CreateDatabase();

@@ -136,4 +136,4 @@ internal sealed class SiteIconCache(IHttpClientFactory httpClientFactory, ILogge
             extension.AsSpan().CopyTo(destination[charsWritten..]);
         });
     }
-}
+}

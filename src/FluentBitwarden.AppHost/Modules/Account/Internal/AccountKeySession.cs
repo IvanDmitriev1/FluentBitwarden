@@ -6,16 +6,17 @@ using FluentBitwarden.AppHost.Modules.Account.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Internal;
 
-internal sealed class AccountKeySession(UnlockedUserKey userKey, ProtectedPrivateKey protectedPrivateKey) : IAccountKeySession
+internal sealed class AccountKeySession(
+    UnlockedUserKey userKey,
+    ProtectedPrivateKey protectedPrivateKey) : IAccountKeySession
 {
     private readonly Dictionary<OrganizationId, OrganizationKey> _organizationKeysById = [];
     private bool _disposed;
 
     private PrivateKey PrivateKey { get; } = userKey.CreatePrivateKey(protectedPrivateKey);
-    
-    public UnlockedUserKey UserKey { get; } = userKey;
 
     public UserId UserId => UserKey.UserId;
+    public UnlockedUserKey UserKey { get; } = userKey;
 
     public SymmetricCryptoKey GetOrganizationKey(OrganizationId organizationId, AsymmetricEncString protectedOrganizationKey)
     {
@@ -55,7 +56,7 @@ internal sealed class AccountKeySession(UnlockedUserKey userKey, ProtectedPrivat
 
     public void Dispose()
     {
-        if (!Interlocked.Exchange(ref _disposed, true))
+        if (Interlocked.Exchange(ref _disposed, true))
             return;
 
         foreach (var key in _organizationKeysById.Values)
@@ -65,5 +66,6 @@ internal sealed class AccountKeySession(UnlockedUserKey userKey, ProtectedPrivat
 
         _organizationKeysById.Clear();
         PrivateKey.Dispose();
+        UserKey.Dispose();
     }
 }

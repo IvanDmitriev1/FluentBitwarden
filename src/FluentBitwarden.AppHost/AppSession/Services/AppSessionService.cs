@@ -50,7 +50,7 @@ internal sealed class AppSessionService(
         if (keyResult is not AccountKeyUnlockResult.Success { AccountKeySession: { } accountKey })
             return SessionUnlockOutcomeExtensions.ConvertFailure(keyResult, request);
 
-        var unlockedVault = vaultManager.Open(accountKey);
+        var unlockedVault = vaultManager.Open(account.BitwardenAccountContext, accountKey);
         await sessionTransitionGate.UnlockAsync(new UnlockedVaultLifetime(account, unlockedVault, accountKey));
 
         return new SessionUnlockOutcome.Success();

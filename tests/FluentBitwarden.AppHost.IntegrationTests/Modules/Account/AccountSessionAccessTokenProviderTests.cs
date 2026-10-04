@@ -180,11 +180,13 @@ public sealed class AccountSessionAccessTokenProviderTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
-        vault.UserId.Returns(account.UserId);
+        vault.AccountContext.Returns(account.BitwardenAccountContext);
         accountService.GetAccount(account.UserId).Returns(account);
         accountService.UnlockKey(account.UserId, Arg.Any<AccountUnlockMethod>())
             .Returns(new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
-        vaultManager.Open(Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
+        vaultManager.Open(
+            Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
+            Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
 
         BitwardenAccountContext accountContext = Context(account.UserId.ToString());
         AccountSessionTokens tokens = Tokens(accountContext, "paused-refresh");

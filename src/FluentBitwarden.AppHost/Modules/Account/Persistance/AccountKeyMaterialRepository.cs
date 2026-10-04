@@ -1,4 +1,5 @@
-﻿using Dapper;
+using Dapper;
+using FluentBitwarden.AppHost.Modules.Account.Persistance.Mappers;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Persistance;
 

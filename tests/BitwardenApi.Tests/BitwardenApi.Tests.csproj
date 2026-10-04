@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup />
+
   <Import Project="..\..\FluentBitwarden.Tests.props" />
 
   <ItemGroup>

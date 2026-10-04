@@ -177,6 +177,8 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
             Assert.Equal(account.UserId, success.AccountKeySession.UserId);
             Assert.Equal(expectedUserKey, success.AccountKeySession.UserKey.Key.ToArray());
         }
+
+        Assert.Throws<ObjectDisposedException>(() => success.AccountKeySession.UserKey.Key.ToArray());
     }
 
     [Fact]

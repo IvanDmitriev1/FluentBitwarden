@@ -6,8 +6,8 @@ using FluentBitwarden.Infrastructure.Notifications;
 using FluentBitwarden.Infrastructure.UserDialogs;
 using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Infrastructure.Window;
+using FluentBitwarden.Platform;
 using FluentBitwarden.Platform.Ipc;
-using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.Extensions.DependencyInjection;
 using Navis.WinUI.Extensions;
 
@@ -21,7 +21,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<WindowManager>();
         services.AddSingleton<IWindowManager>(static sp => sp.GetRequiredService<WindowManager>());
         services.AddSingleton<INotificationService, NotificationService>();
-        services.AddSiteIconCache();
+        services.AddPlatformServices();
 
         services.AddIpcClient(IpcConstants.AppHostPipeName);
         services.AddIpcEventClient(IpcConstants.AppHostEventsPipeName);

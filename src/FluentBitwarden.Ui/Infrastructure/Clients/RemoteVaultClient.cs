@@ -1,15 +1,15 @@
 using AsyncAwaitBestPractices;
 using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Platform.Infrastructure.Connectivity;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Platform.Ipc.Transport;
 using FluentBitwarden.Platform.SiteIcons;
-using Windows.Networking.Connectivity;
 
 namespace FluentBitwarden.Infrastructure.Clients;
 
 [Fody.ConfigureAwait(false)]
-internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCache) : IVaultClient
+internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCache, INetworkStatus networkStatus) : IVaultClient
 {
     public Task<VaultSyncResult> SyncAsync(
         SyncVaultRequest request,
@@ -28,7 +28,7 @@ internal sealed class RemoteVaultClient(IIpcClient client, ISiteIconCache iconCa
     public async Task<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
         var result = await client.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
-        if (NetworkInformation.HasInternetAccess)
+        if (networkStatus.HasInternetAccess)
             PreloadSiteIconsAsync(result).SafeFireAndForget();
 
         return result;

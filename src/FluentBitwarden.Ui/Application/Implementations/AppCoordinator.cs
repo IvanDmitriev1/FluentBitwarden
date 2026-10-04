@@ -1,4 +1,3 @@
-using AsyncAwaitBestPractices;
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
@@ -6,7 +5,6 @@ using AppSessionStateChangedEvent = FluentBitwarden.Contracts.AppSession.State.A
 using FluentBitwarden.Infrastructure.UiCommand;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Platform.Ipc.Abstractions;
-using Windows.Networking.Connectivity;
 
 namespace FluentBitwarden.Application.Implementations;
 
@@ -30,7 +28,6 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         eventClient.Subscribe<AppSessionStateChangedEvent>((_, _) =>
             App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync));
 
-        //NetworkInformation.NetworkStatusChanged += OnNetworkStatusChanged;
     }
 
     private readonly IAppSessionResolver _sessionResolver;
@@ -144,21 +141,6 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         }
 
         SessionStateApplied?.Invoke(SessionState, unlockParameter, _currentIntent);
-    }
-
-    private void OnNetworkStatusChanged(object? sender)
-    {
-        if (!NetworkInformation.HasInternetAccess)
-        {
-            return;
-        }
-
-        if (SessionState != AppSessionState.LoggedOut)
-        {
-            return;
-        }
-
-        RefreshSessionAsync().SafeFireAndForget();
     }
 
     public void Dispose() => _flowGate.Dispose();

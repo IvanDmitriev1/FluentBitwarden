@@ -21,7 +21,7 @@ public interface IVaultClient
         GetVaultCipherRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<VaultCipher?> SaveCipherAsync(
+    Task<VaultCipher> SaveCipherAsync(
         SaveVaultCipherRequest request,
         CancellationToken cancellationToken = default);
 

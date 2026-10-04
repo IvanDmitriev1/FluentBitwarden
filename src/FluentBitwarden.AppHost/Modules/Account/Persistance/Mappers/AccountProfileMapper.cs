@@ -1,8 +1,8 @@
-﻿using BitwardenApi.Primitives;
+using BitwardenApi.Primitives;
 using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 
-namespace FluentBitwarden.AppHost.Modules.Account.Persistance;
+namespace FluentBitwarden.AppHost.Modules.Account.Persistance.Mappers;
 
 internal static class AccountProfileMapper
 {

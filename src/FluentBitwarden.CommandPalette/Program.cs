@@ -1,7 +1,7 @@
 using AsyncAwaitBestPractices;
 using FluentBitwarden.CommandPalette.Application;
+using FluentBitwarden.Platform;
 using FluentBitwarden.Platform.Diagnostics;
-using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -22,7 +22,7 @@ public static class Program
         builder.Services
             .AddAppLogging("commandpalette")
             .AddInfrastructureServices()
-            .AddSiteIconCache()
+            .AddPlatformServices()
             .AddCommandPaletteApplicationServices();
 
         using var host = builder.Build();
