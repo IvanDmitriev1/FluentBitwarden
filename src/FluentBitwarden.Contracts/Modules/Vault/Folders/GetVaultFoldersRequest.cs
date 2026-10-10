@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
+namespace FluentBitwarden.Contracts.Modules.Vault.Folders;
 
 [MemoryPackable]
 public readonly partial record struct GetVaultFoldersRequest : IIpcRequestMessage

@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
-using FluentBitwarden.Contracts.Modules.Vault;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
@@ -11,7 +10,7 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 public sealed partial class VaultCipherSearchBox : UserControl
 {
     public sealed record Selection(string QueryText, VaultCipher SelectedItem);
-    private readonly IVaultClient _vaultClient;
+    private readonly IVaultCipherClient _vaultClient;
     private CancellationTokenSource? _searchCancellationTokenSource;
     private int _searchRequestId;
 
@@ -19,7 +18,7 @@ public sealed partial class VaultCipherSearchBox : UserControl
     {
         InitializeComponent();
 
-        _vaultClient = App.Current.GetRequiredService<IVaultClient>();
+        _vaultClient = App.Current.GetRequiredService<IVaultCipherClient>();
         Unloaded += OnUnloaded;
     }
 

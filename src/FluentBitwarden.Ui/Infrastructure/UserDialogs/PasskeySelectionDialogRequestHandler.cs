@@ -1,6 +1,5 @@
 using FluentBitwarden.Contracts.Integrations.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
-using FluentBitwarden.Contracts.Modules.Vault;
 using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Views.UserDialogs;
@@ -8,7 +7,7 @@ using FluentBitwarden.Views.UserDialogs;
 namespace FluentBitwarden.Infrastructure.UserDialogs;
 
 internal sealed class PasskeySelectionDialogRequestHandler(
-    IVaultClient vaultClient,
+    IVaultCipherClient vaultClient,
     IUiDialogCoordinator dialogCoordinator) : IPasskeyDialogClient, IIpcRequestsHandler
 {
     public async Task<Fido2Credential> ShowPasskeySelectionDialogAsync(PasskeySelectCredentialRequest request, CancellationToken cancellationToken = default)

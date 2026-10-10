@@ -1,12 +1,14 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Folders;
+using FluentBitwarden.Contracts.Modules.Vault.Operations;
 
 namespace FluentBitwarden.ViewModels.Vault;
 
 public sealed partial class VaultPageViewModel(
-    IVaultClient vaultClient) : ObservableObject, INavigationAware, INavigationAware<VaultCipherNavigationIntent>
+    IVaultOperationsClient operationsClient,
+    IVaultCipherClient cipherClient,
+    IVaultFolderClient folderClient) : ObservableObject, INavigationAware, INavigationAware<VaultCipherNavigationIntent>
 {
     [ObservableProperty]
     public partial VaultCipher? SelectedCipher { get; set; }
@@ -53,7 +55,7 @@ public sealed partial class VaultPageViewModel(
                 await LoadOrApplyNavigationAsync(show, cancellationToken);
                 break;
             case OpenVaultCipherIntent open:
-                var cipher = await vaultClient.GetCipherAsync(
+                var cipher = await cipherClient.GetCipherAsync(
                     new GetVaultCipherRequest(open.CipherId),
                     cancellationToken);
 
@@ -120,7 +122,7 @@ public sealed partial class VaultPageViewModel(
         if (EditingCipher is null)
             return;
 
-        var saved = await vaultClient.SaveCipherAsync(new SaveVaultCipherRequest(EditingCipher), cancellationToken);
+        var saved = await cipherClient.SaveCipherAsync(new SaveVaultCipherRequest(EditingCipher), cancellationToken);
         if (saved is null)
             return; // Save failed; stay in edit mode so the user can retry.
 
@@ -167,9 +169,9 @@ public sealed partial class VaultPageViewModel(
 
     private async Task SyncVault(CancellationToken cancellationToken)
     {
-        var result = await vaultClient.SyncAsync(new(), cancellationToken);
+        var result = await operationsClient.SyncAsync(new(), cancellationToken);
         Folders = new ObservableCollection<VaultFolder>(
-            await vaultClient.GetFoldersAsync(new(), cancellationToken));
+            await folderClient.GetFoldersAsync(new(), cancellationToken));
 
         if (result != VaultSyncResult.Synced)
             return;

@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
+namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 
 /// <summary>
 /// Creates the cipher when <see cref="VaultCipher.Id"/> is empty, otherwise updates it.

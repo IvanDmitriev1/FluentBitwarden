@@ -1,6 +1,6 @@
 using BitwardenApi.Vault.Attachments.Contracts;
 
-namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
+namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers.Attachments;
 
 [MemoryPackable]
 public readonly partial record struct DownloadVaultCipherAttachmentRequest(

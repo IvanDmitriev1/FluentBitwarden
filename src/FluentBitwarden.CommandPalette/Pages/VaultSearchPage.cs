@@ -1,10 +1,10 @@
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using System.Diagnostics.CodeAnalysis;
 using AsyncAwaitBestPractices;
 using FluentBitwarden.CommandPalette.VaultListItems;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
-using FluentBitwarden.Contracts.Modules.Vault;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.CommandPalette.Pages;
@@ -17,7 +17,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
     private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(2);
 
     private readonly IAppSessionClient _appSessionClient;
-    private readonly IVaultClient _vaultClient;
+    private readonly IVaultCipherClient _vaultClient;
     private readonly UnlockVaultPage _unlockVaultPage;
     private readonly VaultCipherListItemFactory _vaultCipherListItemFactory;
     private readonly IIpcExceptionNotifier _exceptionNotifier;
@@ -29,7 +29,7 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
 
     public VaultSearchPage(
         IAppSessionClient appSessionClient,
-        IVaultClient vaultClient,
+        IVaultCipherClient vaultClient,
         IIpcEventClient eventClient,
         IIpcExceptionNotifier exceptionNotifier,
         UnlockVaultPage unlockVaultPage,

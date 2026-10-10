@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+namespace FluentBitwarden.Contracts.Modules.Vault.Operations;
 
 public enum VaultSyncResult
 {

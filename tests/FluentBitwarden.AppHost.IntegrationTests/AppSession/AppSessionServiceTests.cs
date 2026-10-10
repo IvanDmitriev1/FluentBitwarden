@@ -112,7 +112,7 @@ public sealed class AppSessionServiceTests
         context.AccountService.Received(1).UnlockKey(
             account.UserId,
             new AccountUnlockMethod.MasterPassword(password));
-        context.VaultManager.Received(1).Open(
+        context.VaultService.Received(1).Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
@@ -135,7 +135,7 @@ public sealed class AppSessionServiceTests
         context.AccountService.Received(1).UnlockKey(
             account.UserId,
             new AccountUnlockMethod.WindowsHello(ownerWindow));
-        context.VaultManager.Received(1).Open(
+        context.VaultService.Received(1).Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
@@ -151,7 +151,7 @@ public sealed class AppSessionServiceTests
 
         Assert.Equal(new SessionUnlockOutcome.Failure("Account not found."), result);
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
-        context.VaultManager.DidNotReceive().Open(Arg.Any<BitwardenAccountContext>(), Arg.Any<IAccountKeySession>());
+        context.VaultService.DidNotReceive().Open(Arg.Any<BitwardenAccountContext>(), Arg.Any<IAccountKeySession>());
     }
 
     [Fact]
@@ -236,7 +236,7 @@ public sealed class AppSessionServiceTests
             request));
 
         Assert.Equal(account, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-        context.VaultManager.Received(1).Open(
+        context.VaultService.Received(1).Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
@@ -265,10 +265,10 @@ public sealed class AppSessionServiceTests
             result);
         Assert.Equal(firstAccount, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
-        context.VaultManager.Received(1).Open(
+        context.VaultService.Received(1).Open(
             Arg.Is<BitwardenAccountContext>(context => context == firstAccount.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == firstAccount.UserId));
-        context.VaultManager.DidNotReceive().Open(
+        context.VaultService.DidNotReceive().Open(
             Arg.Is<BitwardenAccountContext>(context => context == secondAccount.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == secondAccount.UserId));
     }
@@ -284,7 +284,7 @@ public sealed class AppSessionServiceTests
         firstVault.AccountContext.Returns(account.BitwardenAccountContext);
         secondVault.AccountContext.Returns(account.BitwardenAccountContext);
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
-        context.VaultManager.Open(
+        context.VaultService.Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(firstVault, secondVault);
         var request = new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password");
@@ -299,7 +299,7 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
         Assert.Equal(account, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-        context.VaultManager.Received(2).Open(
+        context.VaultService.Received(2).Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
     }
@@ -509,13 +509,13 @@ public sealed class AppSessionServiceTests
         public SessionTestContext()
         {
             AccountService = Substitute.For<IAccountService>();
-            VaultManager = Substitute.For<IVaultManager>();
+            VaultService = Substitute.For<IVaultService>();
             ActiveSessionManager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
-            Service = new AppSessionService(AccountService, VaultManager, ActiveSessionManager);
+            Service = new AppSessionService(AccountService, VaultService, ActiveSessionManager);
         }
 
         public IAccountService AccountService { get; }
-        public IVaultManager VaultManager { get; }
+        public IVaultService VaultService { get; }
         public ActiveSessionManager ActiveSessionManager { get; }
         public AppSessionService Service { get; }
 
@@ -527,7 +527,7 @@ public sealed class AppSessionServiceTests
             if (unlockResult is AccountKeyUnlockResult.Success success && vault is not null)
             {
                 vault.AccountContext.Returns(account.BitwardenAccountContext);
-                VaultManager.Open(
+                VaultService.Open(
                     Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
                     Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
             }

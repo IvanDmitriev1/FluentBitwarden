@@ -1,5 +1,4 @@
 using BitwardenApi.Vault.Attachments.Contracts;
-using FluentBitwarden.Contracts.Modules.Vault;
 using Humanizer;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.Storage.Pickers;
@@ -70,7 +69,7 @@ public sealed partial class VaultCipherAttachmentField : Control
             if (result is null)
                 return;
 
-            await App.Current.GetRequiredService<IVaultClient>()
+            await App.Current.GetRequiredService<IVaultCipherClient>()
                 .DownloadCipherAttachmentAsync(new DownloadVaultCipherAttachmentRequest(Attachment, result.Path));
         }
         finally

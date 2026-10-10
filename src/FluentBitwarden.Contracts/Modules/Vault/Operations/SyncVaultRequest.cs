@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+namespace FluentBitwarden.Contracts.Modules.Vault.Operations;
 
 [MemoryPackable]
 public readonly partial record struct SyncVaultRequest : IIpcRequestMessage

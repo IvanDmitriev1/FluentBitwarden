@@ -1,18 +1,9 @@
-using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Attachments;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
+namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 
-namespace FluentBitwarden.Contracts.Modules.Vault;
-
-public interface IVaultClient
+public interface IVaultCipherClient
 {
-    Task<VaultSyncResult> SyncAsync(
-        SyncVaultRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<VaultFolder[]> GetFoldersAsync(
-        GetVaultFoldersRequest request,
-        CancellationToken cancellationToken = default);
-
     Task<VaultCipher[]> SearchCiphersAsync(
         VaultCipherQuery query,
         CancellationToken cancellationToken = default);

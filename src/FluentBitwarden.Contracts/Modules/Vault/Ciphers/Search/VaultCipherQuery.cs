@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
+namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
 [MemoryPackable]
 public sealed partial class VaultCipherQuery : IIpcRequestMessage

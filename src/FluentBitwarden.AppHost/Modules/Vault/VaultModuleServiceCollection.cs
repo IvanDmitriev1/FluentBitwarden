@@ -15,6 +15,6 @@ internal static class VaultModuleServiceCollection
         services.AddScoped<VaultSyncStateRepository>();
         services.AddScoped<VaultWriterRepository>();
 
-        services.AddScoped<IVaultManager, VaultManager>();
+        services.AddScoped<IVaultService, VaultService>();
     }
 }

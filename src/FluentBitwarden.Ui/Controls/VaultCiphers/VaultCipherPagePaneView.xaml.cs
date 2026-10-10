@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using AsyncAwaitBestPractices;
-using FluentBitwarden.Contracts.Modules.Vault;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
@@ -78,7 +77,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
         }
     }
 
-    private readonly IVaultClient _vaultClient;
+    private readonly IVaultCipherClient _vaultClient;
 
     private bool _isApplyingQuery;
     private CancellationTokenSource? _queryCancellationTokenSource;
@@ -92,7 +91,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
 
         InitializeComponent();
 
-        _vaultClient = App.Current.GetRequiredService<IVaultClient>();
+        _vaultClient = App.Current.GetRequiredService<IVaultCipherClient>();
     }
 
     private void VaultCipherPagePaneView_OnUnloaded(object sender, RoutedEventArgs e)

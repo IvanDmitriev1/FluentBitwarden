@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
+namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 
 [MemoryPackable]
 public readonly partial record struct GetVaultCipherRequest([property: StronglyTypedIdFormatter<CipherId>] CipherId CipherId) : IIpcRequestMessage

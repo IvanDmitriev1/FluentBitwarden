@@ -176,7 +176,7 @@ public sealed class AccountSessionAccessTokenProviderTests
     public async Task Lock_completes_while_token_refresh_is_paused_and_keeps_the_session_locked_for_same_account()
     {
         var accountService = Substitute.For<IAccountService>();
-        var vaultManager = Substitute.For<IVaultManager>();
+        var vaultService = Substitute.For<IVaultService>();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -184,7 +184,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         accountService.GetAccount(account.UserId).Returns(account);
         accountService.UnlockKey(account.UserId, Arg.Any<AccountUnlockMethod>())
             .Returns(new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
-        vaultManager.Open(
+        vaultService.Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
 
@@ -200,7 +200,7 @@ public sealed class AccountSessionAccessTokenProviderTests
                 return tokens;
             });
 
-        using ServiceProvider services = CreateServices(accountService, vaultManager);
+        using ServiceProvider services = CreateServices(accountService, vaultService);
         using IServiceScope scope = services.CreateScope();
         IAppSessionService sessionService = scope.ServiceProvider.GetRequiredService<IAppSessionService>();
         Assert.IsType<SessionUnlockOutcome.Success>(sessionService.UnlockAsync(
@@ -230,7 +230,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         services.AddAccountModule();
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddSingleton(Substitute.For<IAccountService>());
-        services.AddSingleton(Substitute.For<IVaultManager>());
+        services.AddSingleton(Substitute.For<IVaultService>());
         services.AddAppSessionModule();
 
         using ServiceProvider provider = services.BuildServiceProvider();
@@ -252,13 +252,13 @@ public sealed class AccountSessionAccessTokenProviderTests
             secondScope.ServiceProvider.GetRequiredService<AccountTokenCache>());
     }
 
-    private static ServiceProvider CreateServices(IAccountService accountService, IVaultManager? vaultManager = null)
+    private static ServiceProvider CreateServices(IAccountService accountService, IVaultService? vaultService = null)
     {
         var services = new ServiceCollection();
         services.AddAccountModule();
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddScoped(_ => accountService);
-        services.AddScoped(_ => vaultManager ?? Substitute.For<IVaultManager>());
+        services.AddScoped(_ => vaultService ?? Substitute.For<IVaultService>());
         services.AddAppSessionModule();
         return services.BuildServiceProvider();
     }

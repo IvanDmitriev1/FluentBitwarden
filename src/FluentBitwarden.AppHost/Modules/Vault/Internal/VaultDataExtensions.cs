@@ -1,5 +1,5 @@
 using BitwardenApi.Vault.Items.Contracts;
-using FluentBitwarden.Contracts.Modules.Vault.Workspace;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Internal;
 

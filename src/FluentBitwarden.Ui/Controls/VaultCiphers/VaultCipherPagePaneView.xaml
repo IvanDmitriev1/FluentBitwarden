@@ -9,7 +9,7 @@
     xmlns:models="using:FluentBitwarden.ViewModels.Vault.Models"
     xmlns:sharedControls="using:FluentBitwarden.Controls.Shared"
     xmlns:vault="using:FluentBitwarden.Templates.Vault"
-    xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Workspace"
+    xmlns:workspace="using:FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search"
     Unloaded="VaultCipherPagePaneView_OnUnloaded"
     mc:Ignorable="d">
 

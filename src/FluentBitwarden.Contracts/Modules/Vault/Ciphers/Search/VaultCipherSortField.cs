@@ -1,4 +1,4 @@
-﻿namespace FluentBitwarden.Contracts.Modules.Vault.Workspace;
+namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
 public enum VaultCipherSortField
 {

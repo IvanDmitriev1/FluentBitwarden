@@ -5,7 +5,7 @@ using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Services;
-using FluentBitwarden.Contracts.Modules.Vault.Synchronization;
+using FluentBitwarden.Contracts.Modules.Vault.Operations;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
 using NSubstitute;
 using static FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultParserTestData;
@@ -23,7 +23,7 @@ public sealed class VaultManagerTests
         var folder = VaultManagerTestData.Folder("cached-folder", "Cached folder", keySession.UserKey.Key);
         context.SeedCache([cipher], [folder]);
 
-        using var vault = context.Manager.Open(context.AccountContext, keySession);
+        using var vault = context.VaultService.Open(context.AccountContext, keySession);
 
         var openedCipher = Assert.IsType<LoginVaultCipher>(vault.GetCipher(cipher.Id));
         Assert.Equal("Synthetic item", openedCipher.Name);
@@ -37,10 +37,10 @@ public sealed class VaultManagerTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var keySession = new TestAccountKeySession(
             new UnlockedUserKey(UserId.Parse(AccountTestData.SecondUserId), [0x10, 0x20, 0x30]));
-        var manager = new VaultManager(null!, null!, null!, null!, null!, Substitute.For<INetworkStatus>());
+        var service = new VaultService(null!, null!, null!, null!, null!, null!);
 
         Assert.Throws<InvalidOperationException>(() =>
-            manager.Open(account.BitwardenAccountContext, keySession));
+            service.Open(account.BitwardenAccountContext, keySession));
     }
 
     [Fact]
@@ -54,11 +54,13 @@ public sealed class VaultManagerTests
         context.NetworkStatus.HasInternetAccess.Returns(false);
         using var vault = context.OpenVault();
 
-        var result = await context.Manager.SyncAsync(vault, CancellationToken.None);
+        var result = await context.VaultService.SyncAsync(vault, keySession, CancellationToken.None);
 
         Assert.Equal(VaultSyncResult.SkippedOffline, result);
         _ = context.Api.DidNotReceive().GetRevisionDateAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>());
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
+        Assert.Equal("Cached folder", Assert.Single(vault.GetFolders()).Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
         Assert.Equal("Cached folder", Assert.Single(cachedVault.GetFolders()).Name);
@@ -76,11 +78,12 @@ public sealed class VaultManagerTests
             .Returns(revision);
         using var vault = context.OpenVault();
 
-        var result = await context.Manager.SyncAsync(vault, CancellationToken.None);
+        var result = await context.VaultService.SyncAsync(vault, keySession, CancellationToken.None);
 
         Assert.Equal(VaultSyncResult.NoChanges, result);
         _ = context.Api.DidNotReceive().GetSyncAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>());
         Assert.Equal(revision, context.GetServerRevisionDate());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
     }
@@ -104,9 +107,14 @@ public sealed class VaultManagerTests
             .Returns(VaultManagerTestData.SyncResponse(context.AccountContext.UserId, [syncedCipher], [syncedFolder]));
         using var vault = context.OpenVault();
 
-        var result = await context.Manager.SyncAsync(vault, CancellationToken.None);
+        var result = await context.VaultService.SyncAsync(vault, keySession, CancellationToken.None);
 
         Assert.Equal(VaultSyncResult.Synced, result);
+        Assert.Null(vault.GetCipher(cachedCipher.Id));
+        Assert.Equal("Synthetic item", vault.GetCipher(syncedCipher.Id)?.Name);
+        var activeFolder = Assert.Single(vault.GetFolders());
+        Assert.Equal(syncedFolder.Id, activeFolder.Id);
+        Assert.Equal("Synced folder", activeFolder.Name);
         Assert.Equal(revision, context.GetServerRevisionDate());
         using var syncedVault = context.OpenVault();
         Assert.Null(syncedVault.GetCipher(cachedCipher.Id));
@@ -134,13 +142,57 @@ public sealed class VaultManagerTests
                 UserId.Parse(AccountTestData.SecondUserId), [], []));
         using var vault = context.OpenVault();
 
-        var result = await context.Manager.SyncAsync(vault, CancellationToken.None);
+        var result = await context.VaultService.SyncAsync(vault, keySession, CancellationToken.None);
 
         Assert.Equal(VaultSyncResult.Failed, result);
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
+        Assert.Equal("Cached folder", Assert.Single(vault.GetFolders()).Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
         Assert.Equal("Cached folder", Assert.Single(cachedVault.GetFolders()).Name);
+    }
+
+    [Fact]
+    public async Task Sync_rejects_a_key_for_another_account_without_calling_the_api_or_changing_live_data()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var cachedCipher = VaultManagerTestData.Cipher("cached-cipher", keySession.UserKey.Key);
+        context.SeedCache([cachedCipher]);
+        using var vault = context.OpenVault();
+        using var mismatchedKeySession = new TestAccountKeySession(
+            new UnlockedUserKey(UserId.Parse(AccountTestData.SecondUserId), [0x10, 0x20, 0x30]));
+
+        var result = await context.VaultService.SyncAsync(vault, mismatchedKeySession, CancellationToken.None);
+
+        Assert.Equal(VaultSyncResult.Failed, result);
+        _ = context.Api.DidNotReceive().GetRevisionDateAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
+    }
+
+    [Fact]
+    public async Task Sync_keeps_live_data_when_the_encrypted_response_is_malformed()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var cachedCipher = VaultManagerTestData.Cipher("cached-cipher", keySession.UserKey.Key);
+        var malformedCipher = VaultManagerTestData.Cipher("malformed-cipher", keySession.UserKey.Key);
+        malformedCipher.Data[0] = (byte)'x';
+        DateTimeOffset lastRevision = VaultManagerTestData.RevisionDate;
+        context.SeedCache([cachedCipher], [], lastRevision);
+        context.Api.GetRevisionDateAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>())
+            .Returns(lastRevision.AddDays(1));
+        context.Api.GetSyncAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>())
+            .Returns(VaultManagerTestData.SyncResponse(context.AccountContext.UserId, [malformedCipher], []));
+        using var vault = context.OpenVault();
+
+        var result = await context.VaultService.SyncAsync(vault, keySession, CancellationToken.None);
+
+        Assert.Equal(VaultSyncResult.Failed, result);
+        Assert.Equal(lastRevision, context.GetServerRevisionDate());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
+        Assert.Null(vault.GetCipher(malformedCipher.Id));
     }
 
     [Fact]
@@ -160,10 +212,12 @@ public sealed class VaultManagerTests
             .Returns(Task.FromException<VaultSyncResponse>(new InvalidOperationException("Sync failed.")));
         using var vault = context.OpenVault();
 
-        var result = await context.Manager.SyncAsync(vault, CancellationToken.None);
+        var result = await context.VaultService.SyncAsync(vault, keySession, CancellationToken.None);
 
         Assert.Equal(VaultSyncResult.Failed, result);
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
+        Assert.Equal("Cached folder", Assert.Single(vault.GetFolders()).Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
         Assert.Equal("Cached folder", Assert.Single(cachedVault.GetFolders()).Name);
@@ -185,10 +239,11 @@ public sealed class VaultManagerTests
             .Returns(Task.FromCanceled<VaultSyncResponse>(cancellation.Token));
         using var vault = context.OpenVault();
 
-        var result = await context.Manager.SyncAsync(vault, cancellation.Token);
+        var result = await context.VaultService.SyncAsync(vault, keySession, cancellation.Token);
 
         Assert.Equal(VaultSyncResult.SkippedOffline, result);
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
     }
@@ -211,7 +266,7 @@ public sealed class VaultManagerTests
         cipher.Username = "input-user";
         using var vault = context.OpenVault();
 
-        var saved = await context.Manager.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None);
+        var saved = await context.VaultService.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None);
 
         var savedLogin = Assert.IsType<LoginVaultCipher>(saved);
         Assert.Equal(savedResponse.Id, savedLogin.Id);
@@ -227,6 +282,8 @@ public sealed class VaultManagerTests
             Arg.Any<VaultCipherRequest>(),
             Arg.Any<CancellationToken>());
 
+        Assert.Equal("Synthetic item", vault.GetCipher(savedResponse.Id)?.Name);
+        Assert.Equal("Synthetic item", vault.GetCipher(existingCipher.Id)?.Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(savedResponse.Id)?.Name);
         Assert.Equal("Synthetic item", cachedVault.GetCipher(existingCipher.Id)?.Name);
@@ -252,7 +309,7 @@ public sealed class VaultManagerTests
         cipher.Name = "Edited input";
         using var vault = context.OpenVault();
 
-        var saved = await context.Manager.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None);
+        var saved = await context.VaultService.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None);
 
         Assert.Equal(existingCipher.Id, saved.Id);
         Assert.Equal("Updated item", saved.Name);
@@ -266,6 +323,8 @@ public sealed class VaultManagerTests
             Arg.Any<VaultCipherRequest>(),
             Arg.Any<CancellationToken>());
 
+        Assert.Equal("Updated item", vault.GetCipher(existingCipher.Id)?.Name);
+        Assert.Equal("Unchanged item", vault.GetCipher(otherCipher.Id)?.Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Updated item", cachedVault.GetCipher(existingCipher.Id)?.Name);
         Assert.Equal("Unchanged item", cachedVault.GetCipher(otherCipher.Id)?.Name);
@@ -292,11 +351,62 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            context.Manager.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None));
+            context.VaultService.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None));
 
+        Assert.Equal("Synthetic item", vault.GetCipher(existingCipher.Id)?.Name);
+        Assert.Equal("Cached folder", Assert.Single(vault.GetFolders()).Name);
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(existingCipher.Id)?.Name);
         Assert.Equal("Cached folder", Assert.Single(cachedVault.GetFolders()).Name);
+    }
+
+    [Fact]
+    public async Task SaveCipher_rejects_a_key_for_another_account_without_calling_the_api()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var existingCipher = VaultManagerTestData.Cipher("existing-cipher", keySession.UserKey.Key);
+        context.SeedCache([existingCipher]);
+        using var vault = context.OpenVault();
+        using var mismatchedKeySession = new TestAccountKeySession(
+            new UnlockedUserKey(UserId.Parse(AccountTestData.SecondUserId), [0x10, 0x20, 0x30]));
+        var cipher = (LoginVaultCipher)VaultCipher.CreateBlankCipher(VaultCipherType.Login);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            context.VaultService.SaveCipherAsync(vault, mismatchedKeySession, cipher, CancellationToken.None));
+
+        _ = context.Api.DidNotReceive().CreateCipherAsync(
+            Arg.Any<BitwardenAccountContext>(), Arg.Any<VaultCipherRequest>(), Arg.Any<CancellationToken>());
+        _ = context.Api.DidNotReceive().UpdateCipherAsync(
+            Arg.Any<BitwardenAccountContext>(), Arg.Any<CipherId>(), Arg.Any<VaultCipherRequest>(), Arg.Any<CancellationToken>());
+        Assert.Equal("Synthetic item", vault.GetCipher(existingCipher.Id)?.Name);
+    }
+
+    [Fact]
+    public async Task SaveCipher_keeps_live_data_when_the_encrypted_response_is_malformed()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var existingCipher = VaultManagerTestData.Cipher("existing-cipher", keySession.UserKey.Key);
+        var malformedCipher = VaultManagerTestData.Cipher("existing-cipher", keySession.UserKey.Key);
+        malformedCipher.Data[0] = (byte)'x';
+        context.SeedCache([existingCipher]);
+        context.Api.UpdateCipherAsync(
+                Arg.Any<BitwardenAccountContext>(),
+                existingCipher.Id,
+                Arg.Any<VaultCipherRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(malformedCipher);
+        var cipher = (LoginVaultCipher)VaultCipher.CreateBlankCipher(VaultCipherType.Login);
+        cipher.Id = existingCipher.Id;
+        using var vault = context.OpenVault();
+
+        await Assert.ThrowsAnyAsync<System.Text.Json.JsonException>(() =>
+            context.VaultService.SaveCipherAsync(vault, keySession, cipher, CancellationToken.None));
+
+        Assert.Equal("Synthetic item", vault.GetCipher(existingCipher.Id)?.Name);
+        using var persistedVault = context.OpenVault();
+        Assert.Equal("Synthetic item", persistedVault.GetCipher(existingCipher.Id)?.Name);
     }
 }
 
@@ -306,7 +416,6 @@ internal sealed class VaultManagerTestContext : IDisposable
     private readonly UnitOfWork _unitOfWork;
     private readonly VaultWriterRepository _vaultWriterRepository;
     private readonly VaultSyncStateRepository _vaultSyncStateRepository;
-
     public VaultManagerTestContext()
     {
         Account = AccountTestData.Profile(AccountTestData.FirstUserId, "vault@example.test", "first");
@@ -318,8 +427,9 @@ internal sealed class VaultManagerTestContext : IDisposable
         NetworkStatus = Substitute.For<INetworkStatus>();
         NetworkStatus.HasInternetAccess.Returns(true);
 
-        Manager = new VaultManager(
-            new VaultReaderRepository(_unitOfWork),
+        var vaultReaderRepository = new VaultReaderRepository(_unitOfWork);
+        VaultService = new VaultService(
+            vaultReaderRepository,
             _vaultWriterRepository,
             _vaultSyncStateRepository,
             Api,
@@ -331,14 +441,14 @@ internal sealed class VaultManagerTestContext : IDisposable
     public BitwardenAccountContext AccountContext => Account.BitwardenAccountContext;
     public IVaultItemsApi Api { get; }
     public INetworkStatus NetworkStatus { get; }
-    public VaultManager Manager { get; }
+    public VaultService VaultService { get; }
 
     public VaultManagerTestKeySession CreateKeySession() => new(AccountContext.UserId);
 
     public IUnlockedVault OpenVault()
     {
         using var keySession = CreateKeySession();
-        return Manager.Open(AccountContext, keySession);
+        return VaultService.Open(AccountContext, keySession);
     }
 
     public void SeedCache(
