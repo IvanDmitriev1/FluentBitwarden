@@ -9,12 +9,13 @@ internal sealed class TestAccountKeySession(UnlockedUserKey userKey) : IAccountK
 
     public UnlockedUserKey UserKey => userKey;
 
-    public SymmetricCryptoKey GetOrganizationKey(
-        OrganizationId organizationId,
-        AsymmetricEncString protectedOrganizationKey) => throw new NotSupportedException();
+    public void UpdateOrganizations(
+        IReadOnlyDictionary<OrganizationId, AsymmetricEncString> organizationKeys) => throw new NotSupportedException();
+
+    public SymmetricCryptoKey GetDecryptionKey(OrganizationId organizationId) => throw new NotSupportedException();
 
     public AttachmentKey CreateAttachmentKey(
-        AsymmetricEncString protectedOrganizationKey,
+        OrganizationId organizationId,
         EncString protectedCipherKey,
         EncString protectedAttachmentKey) => throw new NotSupportedException();
 

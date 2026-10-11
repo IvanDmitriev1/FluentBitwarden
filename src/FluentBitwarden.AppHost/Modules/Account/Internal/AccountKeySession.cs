@@ -18,7 +18,29 @@ internal sealed class AccountKeySession(
     public UserId UserId => UserKey.UserId;
     public UnlockedUserKey UserKey { get; } = userKey;
 
-    public SymmetricCryptoKey GetOrganizationKey(OrganizationId organizationId, AsymmetricEncString protectedOrganizationKey)
+    public void UpdateOrganizations(IReadOnlyDictionary<OrganizationId, AsymmetricEncString> organizationKeys)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _organizationKeysById.Clear();
+
+        foreach ((OrganizationId organizationId, AsymmetricEncString protectedOrganizationKey) in organizationKeys)
+        {
+            if (protectedOrganizationKey.IsEmpty)
+            {
+                throw new InvalidOperationException(
+                    $"Organization '{organizationId}' does not include an encrypted organization key.");
+            }
+
+            var organizationKey = OrganizationKey.Create(
+                organizationId,
+                protectedOrganizationKey,
+                PrivateKey);
+
+            _organizationKeysById.Add(organizationId, organizationKey);
+        }
+    }
+
+    public SymmetricCryptoKey GetDecryptionKey(OrganizationId organizationId)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -28,31 +50,21 @@ internal sealed class AccountKeySession(
         if (_organizationKeysById.TryGetValue(organizationId, out var cachedKey))
             return cachedKey;
 
-        if (protectedOrganizationKey.IsEmpty)
-        {
-            throw new InvalidOperationException(
-                $"Organization '{organizationId}' does not include an encrypted organization key.");
-        }
-
-        var organizationKey = OrganizationKey.Create(
-            organizationId,
-            protectedOrganizationKey,
-            PrivateKey);
-
-        _organizationKeysById.Add(organizationId, organizationKey);
-        return organizationKey;
+        throw new InvalidOperationException("No decrypted key found for the specified organization ID. Ensure that UpdateOrganizations has been called with the appropriate keys.");
     }
 
     public AttachmentKey CreateAttachmentKey(
-        AsymmetricEncString protectedOrganizationKey,
+        OrganizationId organizationId,
         EncString protectedCipherKey,
         EncString protectedAttachmentKey)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        using var cipherKey = CipherKey.Create(protectedCipherKey, UserKey);
+        var cipherDecryptionKey = GetDecryptionKey(organizationId);
+        using var cipherKey = CipherKey.Create(protectedCipherKey, cipherDecryptionKey);
         return AttachmentKey.Create(protectedAttachmentKey, cipherKey);
     }
+
 
     public void Dispose()
     {

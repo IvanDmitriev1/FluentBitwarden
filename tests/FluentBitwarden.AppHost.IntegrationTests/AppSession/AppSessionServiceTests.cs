@@ -281,8 +281,6 @@ public sealed class AppSessionServiceTests
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var firstVault = Substitute.For<IUnlockedVault>();
         var secondVault = Substitute.For<IUnlockedVault>();
-        firstVault.AccountContext.Returns(account.BitwardenAccountContext);
-        secondVault.AccountContext.Returns(account.BitwardenAccountContext);
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
         context.VaultService.Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
@@ -358,45 +356,11 @@ public sealed class AppSessionServiceTests
     }
 
     [Fact]
-    public void Rejects_a_vault_whose_user_id_does_not_match_the_selected_account()
-    {
-        var context = new SessionTestContext();
-        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var otherAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
-        using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
-        var mismatchedVault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), mismatchedVault);
-        mismatchedVault.AccountContext.Returns(otherAccount.BitwardenAccountContext);
-
-        Assert.Throws<InvalidOperationException>(() => context.Service.UnlockAsync(
-            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
-
-        Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
-        Assert.Null((context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
-    }
-
-    [Fact]
-    public void Rejects_a_vault_from_a_different_environment_for_the_same_user()
-    {
-        var context = new SessionTestContext();
-        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var otherEnvironment = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "other");
-        using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
-        var mismatchedVault = Substitute.For<IUnlockedVault>();
-        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), mismatchedVault);
-        mismatchedVault.AccountContext.Returns(otherEnvironment.BitwardenAccountContext);
-
-        Assert.Throws<InvalidOperationException>(() => context.Service.UnlockAsync(
-            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
-    }
-
-    [Fact]
     public void Rejects_an_unlocked_vault_with_a_mismatched_account_key()
     {
         var manager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var vault = Substitute.For<IUnlockedVault>();
-        vault.AccountContext.Returns(account.BitwardenAccountContext);
         using var accountKey = new TestAccountKeySession(new UnlockedUserKey(UserId.Empty, []));
         using ActiveSessionManager.Transition transition = manager.TryEnterTransition()!;
 
@@ -413,7 +377,6 @@ public sealed class AppSessionServiceTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var manager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
         var vault = Substitute.For<IUnlockedVault>();
-        vault.AccountContext.Returns(account.BitwardenAccountContext);
         using ActiveSessionManager.Transition transition = manager.TryEnterTransition()!;
         transition.Unlock(new UnlockedVaultLifetime(
             account,
@@ -524,9 +487,8 @@ public sealed class AppSessionServiceTests
             AccountService.GetAccount(account.UserId).Returns(account);
             AccountService.UnlockKey(account.UserId, Arg.Any<AccountUnlockMethod>()).Returns(unlockResult);
 
-            if (unlockResult is AccountKeyUnlockResult.Success success && vault is not null)
+            if (unlockResult is AccountKeyUnlockResult.Success && vault is not null)
             {
-                vault.AccountContext.Returns(account.BitwardenAccountContext);
                 VaultService.Open(
                     Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
                     Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);

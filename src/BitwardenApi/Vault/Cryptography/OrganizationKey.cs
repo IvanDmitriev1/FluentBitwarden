@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-
 namespace BitwardenApi.Vault.Cryptography;
 
 public sealed class OrganizationKey : SymmetricCryptoKey
@@ -14,15 +12,7 @@ public sealed class OrganizationKey : SymmetricCryptoKey
         in AsymmetricEncString encryptedOrganizationKey,
         PrivateKey privateKey)
     {
-        byte[] key = privateKey.Decrypt(in encryptedOrganizationKey);
-        try
-        {
-            return new OrganizationKey(organizationId, key);
-        }
-        catch
-        {
-            CryptographicOperations.ZeroMemory(key);
-            throw;
-        }
+        var key = privateKey.Decrypt(in encryptedOrganizationKey);
+        return new OrganizationKey(organizationId, key);
     }
 }

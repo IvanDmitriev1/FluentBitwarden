@@ -5,16 +5,14 @@ namespace FluentBitwarden.AppHost.Modules.Account.Contracts;
 
 public interface IAccountKeySession : IDisposable
 {
-    public UserId UserId { get; }
+    UserId UserId { get; }
+    UnlockedUserKey UserKey { get; }
 
-    public UnlockedUserKey UserKey { get; }
+    void UpdateOrganizations(IReadOnlyDictionary<OrganizationId, AsymmetricEncString> organizationKeys);
 
-    public SymmetricCryptoKey GetOrganizationKey(
+    SymmetricCryptoKey GetDecryptionKey(OrganizationId organizationId);
+    AttachmentKey CreateAttachmentKey(
         OrganizationId organizationId,
-        AsymmetricEncString protectedOrganizationKey);
-
-    public AttachmentKey CreateAttachmentKey(
-        AsymmetricEncString protectedOrganizationKey,
         EncString protectedCipherKey,
         EncString protectedAttachmentKey);
 }

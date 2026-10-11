@@ -10,7 +10,8 @@ namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class VaultCipherIpcHandler(
     IAppSessionService appSessionService,
-    IVaultService vaultService) : IVaultCipherClient, IIpcRequestsHandler
+    IVaultService vaultService,
+    IVaultCipherAttachmentService cipherAttachmentService) : IVaultCipherClient, IIpcRequestsHandler
 {
     public Task<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
@@ -31,18 +32,22 @@ internal sealed class VaultCipherIpcHandler(
         using var lease = appSessionService.RequireUnlockedSessionLease();
 
         return await vaultService.SaveCipherAsync(
-            lease.Vault,
-            lease.AccountKeySession,
+            lease,
             request.Cipher,
             cancellationToken);
     }
 
-    public Task DownloadCipherAttachmentAsync(
+    public async Task DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {
         using var lease = appSessionService.RequireUnlockedSessionLease();
 
-        throw new NotImplementedException();
+        await cipherAttachmentService.DownloadAsync(
+            lease,
+            request.CipherId,
+            request.AttachmentId,
+            request.DestinationPath,
+            cancellationToken);
     }
 }

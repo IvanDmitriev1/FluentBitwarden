@@ -138,7 +138,7 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
         }
     }
 
-    public VaultCipherKeyMaterial? GetCipherKeyMaterial(UserId userId, CipherId cipherId)
+    public VaultCipherKeyMaterial GetCipherKeyMaterial(UserId userId, CipherId cipherId)
     {
         userId.ThrowIfEmpty();
         cipherId.ThrowIfEmpty();
@@ -159,7 +159,10 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
             },
             transaction: dbSession.Transaction);
 
-        return row is null ? null : VaultCipherMapper.ToKeyMaterial(row);
+        if (row is null)
+            throw new InvalidOperationException($"Cipher key material is missing for cipher '{cipherId}'.");
+
+        return VaultCipherMapper.ToKeyMaterial(row);
     }
 
     private Dictionary<string, CollectionId[]> GetCollectionIdsByCipherId(string userId)

@@ -2,6 +2,7 @@ using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Attachments;
 using FluentBitwarden.Platform.Ipc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -17,7 +18,10 @@ public sealed class VaultClientIpcHandlerTests
         sessionService.RequireUnlockedSessionLease().Returns(_ => throw new UnlockedSessionRequiredException());
         var vaultService = Substitute.For<IVaultService>();
         var operationsHandler = new VaultOperationsIpcHandler(sessionService, vaultService);
-        var cipherHandler = new VaultCipherIpcHandler(sessionService, vaultService);
+        var cipherHandler = new VaultCipherIpcHandler(
+            sessionService,
+            vaultService,
+            Substitute.For<IVaultCipherAttachmentService>());
         var folderHandler = new VaultFolderIpcHandler(sessionService);
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
@@ -38,18 +42,31 @@ public sealed class VaultClientIpcHandlerTests
     }
 
     [Fact]
-    public async Task Unimplemented_download_operation_remains_unimplemented_when_unlocked()
+    public async Task Download_attachment_delegates_to_service_with_the_unlocked_session()
     {
         IAppSessionService sessionService = Substitute.For<IAppSessionService>();
         IUnlockedSessionLease lease = Substitute.For<IUnlockedSessionLease>();
         sessionService.RequireUnlockedSessionLease().Returns(lease);
-        var handler = new VaultCipherIpcHandler(sessionService, Substitute.For<IVaultService>());
+        IVaultCipherAttachmentService attachmentService = Substitute.For<IVaultCipherAttachmentService>();
+        var handler = new VaultCipherIpcHandler(
+            sessionService,
+            Substitute.For<IVaultService>(),
+            attachmentService);
+        var request = new DownloadVaultCipherAttachmentRequest(
+            CipherId.Parse("synthetic-cipher"),
+            AttachmentId.Parse("synthetic-attachment"),
+            Path.Combine("destination", "attachment.bin"));
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
-        await Assert.ThrowsAsync<NotImplementedException>(async () =>
-            await handler.DownloadCipherAttachmentAsync(default!, cancellationToken));
+        await handler.DownloadCipherAttachmentAsync(request, cancellationToken);
 
         sessionService.Received(1).RequireUnlockedSessionLease();
+        await attachmentService.Received(1).DownloadAsync(
+            lease,
+            request.CipherId,
+            request.AttachmentId,
+            request.DestinationPath,
+            cancellationToken);
     }
 
     [Fact]

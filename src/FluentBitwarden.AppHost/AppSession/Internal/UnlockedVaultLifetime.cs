@@ -45,14 +45,14 @@ internal sealed class UnlockedVaultLifetime : IDisposable
         _accountKey = accountKeySession;
         Account = account;
 
-        if (Account.BitwardenAccountContext != _vault.AccountContext || Account.UserId != _accountKey.UserId)
+        if (Account.UserId != _accountKey.UserId)
         {
             throw new InvalidOperationException("The unlocked vault and account key must match the selected account.");
         }
     }
 
     public AccountProfile Account { get; }
-    public UserId UserId => _vault.AccountContext.UserId;
+    public UserId UserId => Account.UserId;
 
     public void Dispose()
     {

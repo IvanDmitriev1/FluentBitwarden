@@ -7,22 +7,24 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
 {
     public async Task DownloadToAsync(
         BitwardenAccountContext accountContext,
-        VaultCipherAttachment attachment,
+        CipherId cipherId,
+        AttachmentId attachmentId,
         VaultCipherAttachmentStreamHandler streamHandler,
         CancellationToken cancellationToken = default)
     {
-        attachment.CipherId.ThrowIfEmpty();
-        attachment.Id.ThrowIfEmpty();
+        cipherId.ThrowIfEmpty();
+        attachmentId.ThrowIfEmpty();
 
         var downloadResponse = await GetAttachmentDownloadResponseAsync(
             accountContext,
-            attachment,
+            cipherId,
+            attachmentId,
             cancellationToken);
 
         if (!Uri.TryCreate(downloadResponse.Url, UriKind.Absolute, out var downloadUri))
         {
             throw new InvalidOperationException(
-                $"Attachment download URL is not an absolute URI for attachment '{attachment.Id}'.");
+                $"Attachment download URL is not an absolute URI for attachment '{attachmentId}'.");
         }
 
         // The download URL is a pre-signed third-party storage URL; it is fetched with a bare client
@@ -42,14 +44,15 @@ internal sealed class VaultCipherAttachmentApi(IHttpClientFactory httpClientFact
 
     private async Task<VaultCipherAttachmentDownloadResponse> GetAttachmentDownloadResponseAsync(
         BitwardenAccountContext accountContext,
-        VaultCipherAttachment attachment,
+        CipherId cipherId,
+        AttachmentId attachmentId,
         CancellationToken cancellationToken)
     {
         using var httpClient = httpClientFactory.CreateVaultClient();
 
         Uri requestUri = new(
             accountContext.Environment.ApiBase,
-            $"/ciphers/{attachment.CipherId.Value}/attachment/{attachment.Id.Value}");
+            $"/ciphers/{cipherId}/attachment/{attachmentId}");
 
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         requestMessage.SetBitwardenAccountContext(accountContext);

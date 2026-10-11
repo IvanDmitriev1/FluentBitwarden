@@ -1,16 +1,13 @@
-using BitwardenApi.Primitives;
 using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Internal;
 
-internal sealed class UnlockedVault(BitwardenAccountContext accountContext, VaultData data) : IUnlockedVault
+internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
 {
     private readonly Lock _lock = new();
     private VaultData _data = data;
-
-    public BitwardenAccountContext AccountContext { get; } = accountContext;
 
     public void Dispose()
     {

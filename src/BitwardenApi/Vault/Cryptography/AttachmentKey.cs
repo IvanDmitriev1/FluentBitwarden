@@ -46,23 +46,6 @@ public sealed class AttachmentKey : IDisposable
         }
     }
 
-    public static AttachmentKey Create(
-        in EncString encryptedKey,
-        CipherKey cipherKey)
-    {
-        var key = new byte[KeyByteLength];
-        try
-        {
-            encryptedKey.DecodeTo(cipherKey.Key, key);
-            return new AttachmentKey(key);
-        }
-        catch
-        {
-            CryptographicOperations.ZeroMemory(key);
-            throw;
-        }
-    }
-
     public void Dispose()
     {
         if (_disposed)
@@ -70,5 +53,14 @@ public sealed class AttachmentKey : IDisposable
 
         _disposed = true;
         CryptographicOperations.ZeroMemory(_key.AsSpan());
+    }
+
+    public static AttachmentKey Create(
+        in EncString encryptedKey,
+        CipherKey cipherKey)
+    {
+        var key = new byte[KeyByteLength];
+        encryptedKey.DecodeTo(cipherKey.Key, key);
+        return new AttachmentKey(key);
     }
 }

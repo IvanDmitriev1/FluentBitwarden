@@ -70,7 +70,10 @@ public sealed partial class VaultCipherAttachmentField : Control
                 return;
 
             await App.Current.GetRequiredService<IVaultCipherClient>()
-                .DownloadCipherAttachmentAsync(new DownloadVaultCipherAttachmentRequest(Attachment, result.Path));
+                .DownloadCipherAttachmentAsync(new DownloadVaultCipherAttachmentRequest(
+                    Attachment.CipherId,
+                    Attachment.Id,
+                    result.Path));
         }
         finally
         {

@@ -1,6 +1,7 @@
 using BitwardenApi.Primitives;
 using BitwardenApi.Vault.Items;
 using BitwardenApi.Vault.Items.Contracts;
+using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
@@ -23,16 +24,21 @@ internal sealed class VaultService(
         if (accountContext.UserId != keySession.UserId)
             throw new InvalidOperationException("The selected account and account key must have the same user ID.");
 
+        keySession.UpdateOrganizations(vaultReaderRepository.LoadOrganizationKeys(accountContext.UserId));
+
         var data = VaultDataLoader.LoadCached(vaultReaderRepository, keySession.UserId, keySession);
-        return new UnlockedVault(accountContext, data);
+        return new UnlockedVault(data);
     }
 
     public async Task<VaultSyncResult> SyncAsync(
-        IUnlockedVault vault,
-        IAccountKeySession keySession,
+        IUnlockedSessionLease lease,
         CancellationToken cancellationToken)
     {
-        if (vault.AccountContext.UserId != keySession.UserId)
+        IUnlockedVault vault = lease.Vault;
+        IAccountKeySession keySession = lease.AccountKeySession;
+        BitwardenAccountContext accountContext = lease.Account.BitwardenAccountContext;
+
+        if (lease.Account.UserId != keySession.UserId)
             return VaultSyncResult.Failed;
 
         try
@@ -40,13 +46,13 @@ internal sealed class VaultService(
             if (!networkStatus.HasInternetAccess)
                 return VaultSyncResult.SkippedOffline;
 
-            var revisionDate = await vaultApiClient.GetRevisionDateAsync(vault.AccountContext, cancellationToken);
-            var userId = vault.AccountContext.UserId;
+            var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
+            var userId = lease.Account.UserId;
             var lastSync = vaultSyncStateRepository.GetServerRevisionDate(userId);
             if (lastSync is not null && lastSync.Value >= revisionDate)
                 return VaultSyncResult.NoChanges;
 
-            var response = await vaultApiClient.GetSyncAsync(vault.AccountContext, cancellationToken);
+            var response = await vaultApiClient.GetSyncAsync(accountContext, cancellationToken);
             if (response.Profile.Id != userId)
                 throw new InvalidDataException("Sync profile user id did not match the unlocked account.");
 
@@ -75,24 +81,26 @@ internal sealed class VaultService(
     }
 
     public async Task<VaultCipher> SaveCipherAsync(
-        IUnlockedVault vault,
-        IAccountKeySession keySession,
+        IUnlockedSessionLease lease,
         VaultCipher cipher,
         CancellationToken cancellationToken)
     {
-        if (vault.AccountContext.UserId != keySession.UserId)
+        IUnlockedVault vault = lease.Vault;
+        IAccountKeySession keySession = lease.AccountKeySession;
+        BitwardenAccountContext accountContext = lease.Account.BitwardenAccountContext;
+
+        if (lease.Account.UserId != keySession.UserId)
             throw new InvalidOperationException("The unlocked account and account key must have the same user ID.");
 
         var request = VaultCipherRequestFactory.BuildRequest(keySession.UserKey, cipher);
         VaultCipherResponse savedDto = cipher.Id.IsEmpty
-            ? await vaultApiClient.CreateCipherAsync(vault.AccountContext, request, cancellationToken)
-            : await vaultApiClient.UpdateCipherAsync(vault.AccountContext, cipher.Id, request, cancellationToken);
+            ? await vaultApiClient.CreateCipherAsync(accountContext, request, cancellationToken)
+            : await vaultApiClient.UpdateCipherAsync(accountContext, cipher.Id, request, cancellationToken);
 
-        var organizationKeys = vaultReaderRepository.LoadOrganizationKeys(vault.AccountContext.UserId);
-        var savedCipher = VaultDataLoader.DecryptSavedCipher(in savedDto, keySession, organizationKeys);
+        var savedCipher = VaultDataLoader.DecryptSavedCipher(in savedDto, keySession);
 
         unitOfWork.Begin();
-        vaultWriterRepository.UpsertCipher(vault.AccountContext.UserId, in savedDto);
+        vaultWriterRepository.UpsertCipher(lease.Account.UserId, in savedDto);
         unitOfWork.Commit();
 
         vault.UpsertCipher(savedCipher);

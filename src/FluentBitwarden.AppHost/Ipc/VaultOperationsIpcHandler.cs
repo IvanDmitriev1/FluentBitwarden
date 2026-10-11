@@ -13,6 +13,6 @@ internal sealed class VaultOperationsIpcHandler(
     {
         using var lease = appSessionService.RequireUnlockedSessionLease();
 
-        return await vaultService.SyncAsync(lease.Vault, lease.AccountKeySession, cancellationToken);
+        return await vaultService.SyncAsync(lease, cancellationToken);
     }
 }

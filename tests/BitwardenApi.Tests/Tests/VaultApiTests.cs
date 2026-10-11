@@ -1,6 +1,5 @@
 using BitwardenApi.Tests.Infrastructure;
 using BitwardenApi.Vault.Attachments;
-using BitwardenApi.Vault.Attachments.Contracts;
 using BitwardenApi.Vault.Items;
 using BitwardenApi.Vault.Items.Contracts;
 
@@ -97,17 +96,15 @@ public sealed class VaultApiTests
         using var blobHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
             () => TestApiSupport.BytesResponse("blob"u8.ToArray()));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: vaultHandler, attachmentHandler: blobHandler);
-        var attachment = new VaultCipherAttachment
-        {
-            CipherId = CipherId.Parse("cipher-id"),
-            Id = AttachmentId.Parse("attachment-id")
-        };
+        CipherId cipherId = CipherId.Parse("cipher-id");
+        AttachmentId attachmentId = AttachmentId.Parse("attachment-id");
         byte[]? downloaded = null;
         EncString? encryptedKey = null;
 
         await provider.GetRequiredService<IVaultCipherAttachmentApi>().DownloadToAsync(
             TestApiSupport.AccountContext,
-            attachment,
+            cipherId,
+            attachmentId,
             async (stream, key) =>
             {
                 using var memory = new MemoryStream();
@@ -140,15 +137,17 @@ public sealed class VaultApiTests
         using var blobHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
             () => TestApiSupport.BytesResponse([]));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: vaultHandler, attachmentHandler: blobHandler);
-        var attachment = new VaultCipherAttachment
-        {
-            CipherId = CipherId.Parse("cipher-id"),
-            Id = AttachmentId.Parse("attachment-id")
-        };
+        CipherId cipherId = CipherId.Parse("cipher-id");
+        AttachmentId attachmentId = AttachmentId.Parse("attachment-id");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => provider
             .GetRequiredService<IVaultCipherAttachmentApi>()
-            .DownloadToAsync(TestApiSupport.AccountContext, attachment, static (_, _) => Task.CompletedTask, TestContext.Current.CancellationToken));
+            .DownloadToAsync(
+                TestApiSupport.AccountContext,
+                cipherId,
+                attachmentId,
+                static (_, _) => Task.CompletedTask,
+                TestContext.Current.CancellationToken));
 
         Assert.Single(vaultHandler.Requests);
         Assert.Empty(blobHandler.Requests);

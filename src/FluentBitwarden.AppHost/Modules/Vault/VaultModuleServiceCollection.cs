@@ -16,5 +16,6 @@ internal static class VaultModuleServiceCollection
         services.AddScoped<VaultWriterRepository>();
 
         services.AddScoped<IVaultService, VaultService>();
+        services.AddScoped<IVaultCipherAttachmentService, VaultCipherAttachmentService>();
     }
 }
