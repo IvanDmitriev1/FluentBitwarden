@@ -4,11 +4,14 @@ using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.Hosting;
 using FluentBitwarden.AppHost.Hosting.Activation;
 using FluentBitwarden.AppHost.Infrastructure;
+using FluentBitwarden.AppHost.Integrations.SshAgent;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.Modules.Account;
 using FluentBitwarden.AppHost.Modules.Vault;
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Diagnostics;
 using FluentBitwarden.Platform.Ipc;
+using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Win32.SafeHandles;
@@ -49,12 +52,15 @@ internal static class Program
 
         builder.Services.AddAppHostHosting();
         builder.Services.AddAppLogging("apphost");
+        builder.Services.AddSingleton<ISettingsStore>(_ => SettingsStore.Instance);
 
         builder.Services.AddApplicationInfrastructureServices();
         builder.Services.AddBitwardenApi();
         builder.Services.AddAppSessionModule();
         builder.Services.AddAccountModule();
         builder.Services.AddVaultModule();
+
+        builder.Services.AddSshAgentIntegration();
 
         builder.Services.AddIpcServer(
             IpcConstants.AppHostPipeName,

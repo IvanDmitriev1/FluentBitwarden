@@ -39,6 +39,10 @@
     From="FluentBitwarden.AppHost.Modules.*"
     To="FluentBitwarden.AppHost.Infrastructure.*" />
 
+  <Disallowed
+    From="FluentBitwarden.AppHost.Modules.*"
+    To="FluentBitwarden.AppHost.Infrastructure.Data.Implementations.*" />
+
   <!-- A module may reference its own implementation namespaces. -->
   <Allowed
     From="FluentBitwarden.AppHost.Modules.[Module].*"
@@ -92,5 +96,22 @@
   <Allowed
     From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.Modules.Vault" />
+
+  <!-- SSH agent integration owns its internal protocol and service dependencies. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.Integrations.SshAgent.*"
+    To="FluentBitwarden.AppHost.Integrations.SshAgent.*" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost.Integrations.SshAgent.*"
+    To="FluentBitwarden.AppHost.Infrastructure.Processes.*" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost.Integrations.SshAgent.*"
+    To="Org.BouncyCastle.*" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Integrations.SshAgent" />
   
 </NsDepCopConfig>
