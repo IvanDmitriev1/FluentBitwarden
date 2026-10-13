@@ -8,6 +8,7 @@ using FluentBitwarden.AppHost.Integrations.SshAgent;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.Modules.Account;
 using FluentBitwarden.AppHost.Modules.Vault;
+using FluentBitwarden.Contracts.Integrations.Passkey;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Diagnostics;
 using FluentBitwarden.Platform.Ipc;
@@ -69,6 +70,8 @@ internal static class Program
         builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
 
+        builder.Services.AddSingleton<IPasskeyDialogClient, PasskeyDialogClient>();
+
         var host = builder.Build();
 
         keyInstance.Activated += (_, arguments) =>
@@ -96,6 +99,7 @@ internal static class Program
         handlers.Add<VaultOperationsIpcHandler>();
         handlers.Add<VaultCipherIpcHandler>();
         handlers.Add<VaultFolderIpcHandler>();
+        handlers.Add<PasskeyIpcHandler>();
     }
 
     private static void RedirectActivationTo(AppActivationArguments args, AppInstance keyInstance)

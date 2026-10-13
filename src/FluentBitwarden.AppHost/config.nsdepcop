@@ -85,6 +85,15 @@
     From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.Ipc" />
 
+  <!-- IPC handlers may use the process and WebAuthn infrastructure they dispatch to. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.Ipc"
+    To="FluentBitwarden.AppHost.Infrastructure.Processes" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost.Ipc"
+    To="FluentBitwarden.AppHost.Infrastructure.WebAuthn" />
+
   <Allowed
     From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.AppSession" />
