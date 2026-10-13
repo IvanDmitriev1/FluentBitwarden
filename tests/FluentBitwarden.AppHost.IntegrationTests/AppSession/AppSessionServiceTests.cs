@@ -108,6 +108,7 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<SessionUnlockOutcome.Success>(result);
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
+        context.AppHostTermination.DidNotReceive().TerminateApplication();
         Assert.Equal(account, (context.Service.State switch { AppSessionState.Locked locked => locked.Account, AppSessionState.Unlocked unlocked => unlocked.Account, _ => null }));
         context.AccountService.Received(1).UnlockKey(
             account.UserId,
@@ -115,6 +116,48 @@ public sealed class AppSessionServiceTests
         context.VaultService.Received(1).Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId));
+    }
+
+    [Fact]
+    public async Task Unlock_when_opening_the_vault_throws_requests_application_termination()
+    {
+        var context = new SessionTestContext();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
+        var expectedException = new InvalidOperationException("Vault open failed.");
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
+        context.AppHostTermination.When(termination => termination.TerminateApplication())
+            .Do(_ => throw new TerminationRequestedException());
+        context.VaultService.Open(account.BitwardenAccountContext, Arg.Any<IAccountKeySession>())
+            .Returns<IUnlockedVault>(_ => throw expectedException);
+
+        await Assert.ThrowsAsync<TerminationRequestedException>(() =>
+            context.Service.UnlockAsync(
+                new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
+                TestContext.Current.CancellationToken));
+
+        context.AppHostTermination.Received(1).TerminateApplication();
+        Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
+    }
+
+    [Fact]
+    public async Task Unlock_when_lifetime_creation_fails_requests_application_termination()
+    {
+        var context = new SessionTestContext();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        using var userKey = new UnlockedUserKey(UserId.Empty, []);
+        var vault = Substitute.For<IUnlockedVault>();
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
+        context.AppHostTermination.When(termination => termination.TerminateApplication())
+            .Do(_ => throw new TerminationRequestedException());
+        context.VaultService.Open(account.BitwardenAccountContext, Arg.Any<IAccountKeySession>()).Returns(vault);
+
+        await Assert.ThrowsAsync<TerminationRequestedException>(() => context.Service.UnlockAsync(
+            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
+            TestContext.Current.CancellationToken));
+
+        context.AppHostTermination.Received(1).TerminateApplication();
+        Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
     }
 
     [Fact]
@@ -132,6 +175,7 @@ public sealed class AppSessionServiceTests
 
         Assert.IsType<SessionUnlockOutcome.Success>(result);
         Assert.IsType<AppSessionState.Unlocked>(context.Service.State);
+        context.AppHostTermination.DidNotReceive().TerminateApplication();
         context.AccountService.Received(1).UnlockKey(
             account.UserId,
             new AccountUnlockMethod.WindowsHello(ownerWindow));
@@ -166,6 +210,7 @@ public sealed class AppSessionServiceTests
 
         Assert.Equal(new SessionUnlockOutcome.Failure("Invalid credentials."), result);
         Assert.IsType<AppSessionState.NotAuthenticated>(context.Service.State);
+        context.AppHostTermination.DidNotReceive().TerminateApplication();
     }
 
     [Fact]
@@ -474,12 +519,14 @@ public sealed class AppSessionServiceTests
             AccountService = Substitute.For<IAccountService>();
             VaultService = Substitute.For<IVaultService>();
             ActiveSessionManager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
-            Service = new AppSessionService(AccountService, VaultService, ActiveSessionManager);
+            AppHostTermination = Substitute.For<IAppHostTermination>();
+            Service = new AppSessionService(AccountService, VaultService, ActiveSessionManager, AppHostTermination);
         }
 
         public IAccountService AccountService { get; }
         public IVaultService VaultService { get; }
         public ActiveSessionManager ActiveSessionManager { get; }
+        public IAppHostTermination AppHostTermination { get; }
         public AppSessionService Service { get; }
 
         public void ConfigureAccount(AccountProfile account, AccountKeyUnlockResult unlockResult, IUnlockedVault? vault = null)
@@ -495,4 +542,6 @@ public sealed class AppSessionServiceTests
             }
         }
     }
+
+    private sealed class TerminationRequestedException : Exception { }
 }

@@ -16,17 +16,36 @@ internal sealed class SshAgentServer(
     private const string DefaultPipeName = "openssh-ssh-agent";
     private static readonly TimeSpan ClientIdleTimeout = TimeSpan.FromMinutes(1);
 
-    private const int MaxConnections = 16;
+    private const int MaxConnections = 4;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken) => RunAsync(DefaultPipeName, stoppingToken);
+
+    internal async Task RunAsync(string pipeName, CancellationToken stoppingToken)
     {
-        using var slots = new SemaphoreSlim(MaxConnections);
+        try
+        {
+            await Parallel.ForEachAsync(
+                AcceptConnectionsAsync(pipeName, stoppingToken),
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = MaxConnections,
+                    CancellationToken = stoppingToken
+                },
+                HandleConnectionAsync);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Normal shutdown.
+        }
+    }
+
+    private async IAsyncEnumerable<NamedPipeServerStream> AcceptConnectionsAsync(
+        string pipeName, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
         bool firstInstance = true;
 
-        while (!stoppingToken.IsCancellationRequested)
+        while (true)
         {
-            await slots.WaitAsync(stoppingToken);
-
             NamedPipeServerStream? server = null;
 
             try
@@ -41,7 +60,7 @@ internal sealed class SshAgentServer(
                 }
 
                 server = new NamedPipeServerStream(
-                    DefaultPipeName,
+                    pipeName,
                     PipeDirection.InOut,
                     NamedPipeServerStream.MaxAllowedServerInstances,
                     PipeTransmissionMode.Byte,
@@ -49,43 +68,33 @@ internal sealed class SshAgentServer(
                     inBufferSize: 1 * 1024,
                     outBufferSize: 8 * 1024);
 
-                try
-                {
-                    await server.WaitForConnectionAsync(stoppingToken);
-                }
-                catch (IOException e) when (!stoppingToken.IsCancellationRequested)
-                {
-                    logger.AgentAcceptFailed(e);
-                    continue;
-                }
-
-                firstInstance = false;
-                _ = HandleConnectionAsync(server, slots, stoppingToken);
-                server = null;
+                await server.WaitForConnectionAsync(cancellationToken);
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (IOException e) when (server is not null && !cancellationToken.IsCancellationRequested)
             {
-                // Normal shutdown.
+                server.Dispose();
+                logger.AgentAcceptFailed(e);
+                continue;
             }
-            finally
+            catch
             {
                 server?.Dispose();
-                slots.Release();
+                throw;
             }
+
+            firstInstance = false;
+            NamedPipeServerStream acceptedServer = server;
+            yield return acceptedServer;
         }
     }
 
-    private async Task HandleConnectionAsync(
-        NamedPipeServerStream pipe,
-        SemaphoreSlim slots,
-        CancellationToken stoppingToken)
+    private async ValueTask HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken stoppingToken)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var messagesHandler = scope.ServiceProvider.GetRequiredService<ISshAgentMessagesHandler>();
-
         try
         {
             await using NamedPipeServerStream _ = pipe;
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var messagesHandler = scope.ServiceProvider.GetRequiredService<ISshAgentMessagesHandler>();
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -124,10 +133,6 @@ internal sealed class SshAgentServer(
         catch (Exception e)
         {
             logger.AgentLoopFailed(e);
-        }
-        finally
-        {
-            slots.Release();
         }
     }
 }

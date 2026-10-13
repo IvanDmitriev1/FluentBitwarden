@@ -1,8 +1,8 @@
 using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
+using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
@@ -38,11 +38,9 @@ internal sealed class SshKeyProvider(
 
     public async ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken)
     {
-        //TODO show ui for unlock
         if (appSessionService.State is AppSessionState.NotAuthenticated)
             return null;
 
-        uiProcessLauncher.Activate(); //TODO Remove, hack. We need propert solution
         var userVerificationPolicy = settingsStore.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
         UserId accountId;
         SshUserActionRequest actionRequest;
@@ -53,7 +51,10 @@ internal sealed class SshKeyProvider(
                 return null;
 
             if (userVerificationPolicy != SensitiveActionPolicy.RequireUserAction)
+            {
+                uiProcessLauncher.Activate();
                 return Ed25519SshSigner.Sign(request, cipher.PrivateKey);
+            }
 
             accountId = lease.Account.UserId;
             actionRequest = new SshUserActionRequest(
@@ -84,6 +85,7 @@ internal sealed class SshKeyProvider(
                 return null;
             }
 
+            uiProcessLauncher.Activate();
             return Ed25519SshSigner.Sign(request, activeCipher.PrivateKey);
         }
     }

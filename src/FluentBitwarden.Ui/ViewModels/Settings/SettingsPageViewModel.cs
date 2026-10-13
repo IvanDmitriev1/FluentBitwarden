@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using Windows.ApplicationModel;
 using Windows.Storage;
+using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Infrastructure.Window;
 using FluentBitwarden.Contracts.Settings;
@@ -11,6 +12,7 @@ using FluentBitwarden.Contracts.Settings;
 namespace FluentBitwarden.ViewModels.Settings;
 
 public sealed partial class SettingsPageViewModel(
+    IAppSessionClient appSessionClient,
     IAccountWindowsHelloIntegrationClient windowsHelloUnlockClient,
     IWindowManager windowManager)
     : ObservableObject, INavigationAware
@@ -31,7 +33,7 @@ public sealed partial class SettingsPageViewModel(
     public SettingValue<SensitiveActionPolicy> PasskeyUserVerificationPolicy { get; } = AppSettingKeys.Passkeys.UserVerificationPolicyKey.CreateSettingValue();
     public SettingValue<SensitiveActionPolicy> SshUserVerificationPolicy { get; } = AppSettingKeys.SshAgent.UserVerificationPolicyKey.CreateSettingValue();
 
-    public WindowsHelloSettingValue WindowsHello { get; } = new(windowsHelloUnlockClient, windowManager);
+    public WindowsHelloSettingValue WindowsHello { get; } = new(appSessionClient, windowsHelloUnlockClient, windowManager);
     public PasskeyPluginSettingValue PasskeyPlugin { get; } = new();
     public BrowserExtensionSettingValue BrowserExtension { get; } = new();
 
@@ -41,7 +43,7 @@ public sealed partial class SettingsPageViewModel(
     {
         BrowserExtension.Load();
         PasskeyPlugin.Load();
-        await WindowsHello.LoadAsync();
+        await WindowsHello.LoadAsync(cancellationToken);
     }
 
     public ValueTask OnNavigatedFromAsync(CancellationToken cancellationToken) =>

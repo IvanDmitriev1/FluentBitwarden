@@ -1,3 +1,4 @@
+using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.ProcessManager;
 using FluentBitwarden.Platform.Settings;
@@ -5,13 +6,25 @@ using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Processes;
 
-public sealed class UiProcessLauncher(IHostApplicationLifetime applicationLifetime) : ProcessManager(ExeName, ExeDirectoryName), IUiProcessLauncher
+public sealed class UiProcessLauncher(IHostApplicationLifetime applicationLifetime) : ProcessManager(ExeName, ExeDirectoryName), IUiProcessLauncher, IAppHostTermination
 {
     private const string ExeName = "FluentBitwarden.Ui.exe";
     private const string ExeDirectoryName = "FluentBitwarden.Ui";
 
     public void ActivateMainWindow() => LunchProcess(string.Empty);
     public void ActivateOverlay() => LunchProcess("--overlay");
+
+    public void TerminateApplication()
+    {
+        try
+        {
+            KillTrackedProcess();
+        }
+        finally
+        {
+            Environment.Exit(1);
+        }
+    }
 
     public override void Activate()
     {

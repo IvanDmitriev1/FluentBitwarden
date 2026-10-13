@@ -1,4 +1,4 @@
-﻿using Windows.ApplicationModel;
+using Windows.ApplicationModel;
 
 namespace FluentBitwarden.Platform.Infrastructure.ProcessManager;
 
@@ -76,6 +76,13 @@ public abstract class ProcessManager : IProcessManager
         _uiProcess.Exited += ProcessOnExitedHandler;
     }
 
+    protected void KillTrackedProcess()
+    {
+        using var _ = _lock.EnterScope();
+        _uiProcess?.Kill();
+        CleanUpUiProcess();
+    }
+
     protected virtual void OnProcessExited()
     {
         ProcessExited?.Invoke();
@@ -86,6 +93,7 @@ public abstract class ProcessManager : IProcessManager
         CleanUpUiProcess();
         OnProcessExited();
     }
+
     private void CleanUpUiProcess()
     {
         using var _ = _lock.EnterScope();

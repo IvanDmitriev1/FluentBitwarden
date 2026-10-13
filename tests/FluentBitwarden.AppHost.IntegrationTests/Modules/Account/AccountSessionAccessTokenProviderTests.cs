@@ -230,6 +230,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddSingleton(Substitute.For<IAccountService>());
         services.AddSingleton(Substitute.For<IVaultService>());
+        services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
 
         using ServiceProvider provider = services.BuildServiceProvider();
@@ -258,6 +259,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddScoped(_ => accountService);
         services.AddScoped(_ => vaultService ?? Substitute.For<IVaultService>());
+        services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
         return services.BuildServiceProvider();
     }

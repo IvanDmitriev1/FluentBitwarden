@@ -11,7 +11,8 @@ namespace FluentBitwarden.AppHost.AppSession.Services;
 internal sealed class AppSessionService(
     IAccountService accountService,
     IVaultService vaultService,
-    ActiveSessionManager activeSessionManager) : IAppSessionService
+    ActiveSessionManager activeSessionManager,
+    IAppHostTermination appHostTermination) : IAppSessionService
 {
     public AppSessionState State => activeSessionManager.State;
 
@@ -52,9 +53,19 @@ internal sealed class AppSessionService(
         if (keyResult is not AccountKeyUnlockResult.Success { AccountKeySession: { } accountKey })
             return SessionUnlockOutcomeExtensions.ConvertFailure(keyResult, request);
 
-        var unlockedVault = vaultService.Open(account.BitwardenAccountContext, accountKey);
-        await sessionTransitionGate.UnlockAsync(new UnlockedVaultLifetime(account, unlockedVault, accountKey));
+        UnlockedVaultLifetime unlockedVaultLifetime;
+        try
+        {
+            IUnlockedVault unlockedVault = vaultService.Open(account.BitwardenAccountContext, accountKey);
+            unlockedVaultLifetime = new UnlockedVaultLifetime(account, unlockedVault, accountKey);
+        }
+        catch
+        {
+            appHostTermination.TerminateApplication();
+            throw;
+        }
 
+        await sessionTransitionGate.UnlockAsync(unlockedVaultLifetime);
         return new SessionUnlockOutcome.Success();
     }
 

@@ -1,5 +1,6 @@
 using BitwardenApi;
 using FluentBitwarden.AppHost.AppSession;
+using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Hosting;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
@@ -36,7 +37,9 @@ public sealed class AppHostServiceRegistrationTests
         builder.Services.AddScoped<IUnitOfWork>(static provider => provider.GetRequiredService<UnitOfWork>());
         builder.Services.AddScoped<IDbSession>(static provider => provider.GetRequiredService<UnitOfWork>());
         builder.Services.AddHttpClient("SharedHttpClient");
-        builder.Services.AddSingleton<IUiProcessLauncher, UiProcessLauncher>();
+        builder.Services.AddSingleton<UiProcessLauncher>();
+        builder.Services.AddSingleton<IUiProcessLauncher>(provider => provider.GetRequiredService<UiProcessLauncher>());
+        builder.Services.AddSingleton<IAppHostTermination>(provider => provider.GetRequiredService<UiProcessLauncher>());
         builder.Services.AddBitwardenApi();
         builder.Services.AddAppSessionModule();
         builder.Services.AddAccountModule();

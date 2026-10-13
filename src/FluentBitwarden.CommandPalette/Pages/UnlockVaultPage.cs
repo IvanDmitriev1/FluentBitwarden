@@ -124,7 +124,7 @@ internal sealed partial class UnlockVaultPage : ContentPage
             if (currentAccount is { } sessionAccount && selectedAccount.UserId == sessionAccount.UserId)
             {
                 WindowsHelloEnrollmentStatus status = _windowsHelloUnlockClient
-                    .GetEnrollmentAsync(new GetWindowsHelloEnrollmentRequest(), CancellationToken.None)
+                    .GetEnrollmentAsync(new GetWindowsHelloEnrollmentRequest(sessionAccount.UserId), CancellationToken.None)
                     .GetAwaiter()
                     .GetResult();
                 windowsHelloAvailable = status == WindowsHelloEnrollmentStatus.Enrolled;

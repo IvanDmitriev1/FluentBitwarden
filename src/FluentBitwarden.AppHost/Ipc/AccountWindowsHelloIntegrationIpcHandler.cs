@@ -55,7 +55,7 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
         if (!await accountWindowsHelloService.IsSupportedAsync())
             return;
 
-        if (!accountWindowsHelloService.IsEnabled(lease.Account.UserId))
+        if (accountWindowsHelloService.IsEnabled(lease.Account.UserId))
             accountWindowsHelloService.Disable(lease.Account.UserId);
     }
 }

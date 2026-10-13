@@ -1,3 +1,4 @@
+using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,9 @@ internal static class InfrastructureServiceCollectionExtensions
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
         });
 
-        services.AddSingleton<IUiProcessLauncher, UiProcessLauncher>();
+        services.AddSingleton<UiProcessLauncher>();
+        services.AddSingleton<IUiProcessLauncher>(provider => provider.GetRequiredService<UiProcessLauncher>());
+        services.AddSingleton<IAppHostTermination>(provider => provider.GetRequiredService<UiProcessLauncher>());
 
         return services;
     }

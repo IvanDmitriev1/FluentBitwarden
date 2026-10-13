@@ -1,11 +1,15 @@
 using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Contracts.Modules.Accounts;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.ViewModels.Settings.Models;
 
 public sealed partial class WindowsHelloSettingValue(
+    IAppSessionClient appSessionClient,
     IAccountWindowsHelloIntegrationClient windowsHelloUnlockClient,
     IWindowManager windowManager) : ObservableObject
 {
@@ -18,14 +22,29 @@ public sealed partial class WindowsHelloSettingValue(
     [ObservableProperty]
     public partial bool IsEnabled { get; set; }
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(CancellationToken cancellationToken)
     {
         _isLoading = true;
         try
         {
+            AppSessionState state = await appSessionClient.GetStateAsync(new(), cancellationToken);
+            AccountProfile? activeAccount = state switch
+            {
+                AppSessionState.Locked locked => locked.Account,
+                AppSessionState.Unlocked unlocked => unlocked.Account,
+                _ => null
+            };
+
+            if (activeAccount is null)
+            {
+                IsSupported = false;
+                IsEnabled = false;
+                return;
+            }
+
             WindowsHelloEnrollmentStatus status = await windowsHelloUnlockClient.GetEnrollmentAsync(
-                new GetWindowsHelloEnrollmentRequest(),
-                CancellationToken.None);
+                new GetWindowsHelloEnrollmentRequest(activeAccount.UserId),
+                cancellationToken);
             IsSupported = status != WindowsHelloEnrollmentStatus.Unavailable;
             IsEnabled = status == WindowsHelloEnrollmentStatus.Enrolled;
         }

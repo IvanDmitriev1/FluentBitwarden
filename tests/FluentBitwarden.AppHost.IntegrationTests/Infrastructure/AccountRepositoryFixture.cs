@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 
 public sealed class AccountRepositoryFixture
@@ -24,7 +26,9 @@ public sealed class AccountRepositoryTestDatabase : IDisposable
 
         try
         {
-            new SqliteInitializationService(_connectionFactory).Initialize();
+            new SqliteInitializationService(
+                _connectionFactory,
+                NullLogger<SqliteInitializationService>.Instance).Initialize();
         }
         catch
         {
