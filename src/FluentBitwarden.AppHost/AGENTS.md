@@ -19,7 +19,7 @@ An IPC handler implements the matching Contracts client interface and IIpcReques
 
 An unlocked-session lease captures the account selected when the lease is created and retains access to that vault lifetime. Locking removes the lifetime from active state immediately, so new leases wait, then requests vault disposal. Existing leases remain usable until each is disposed; the vault is disposed once the final lease is released. Switching accounts uses `LockAsync` followed by `Unlock`; a failed unlock leaves the previous account selected and locked.
 
-SQLite access uses Dapper.AOT. A UnitOfWork owns one transaction; call SaveChanges() to commit. Repositories contain raw SQL, mapping lives beside them, and encrypted columns stay encrypted until the workspace decrypts them with session keys. Add migrations under Infrastructure/Data/Migrations/ as YYYYMMDDNNNN_description.sql; never edit or rename a shipped script because DbUp tracks it by name.
+SQLite access uses Dapper.AOT. A UnitOfWork owns one transaction; call SaveChanges() to commit. Repositories contain raw SQL, mapping lives beside them, and encrypted columns stay encrypted until the workspace decrypts them with session keys. Add migrations under Infrastructure/Data/Migrations/ using the current numbered sequence, such as 006_description.sql; never edit or rename a shipped script because DbUp tracks it by name. Initialization repairs only the four exact historical timestamp-prefixed journal aliases for scripts 001 through 004 by adding their current names with the original Applied times and retaining the historical rows.
 
 ## Verification and completion
 

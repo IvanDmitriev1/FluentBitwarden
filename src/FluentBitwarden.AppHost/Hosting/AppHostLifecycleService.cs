@@ -55,10 +55,11 @@ internal sealed class AppHostLifecycleService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        Initialize();
+
         _messageLoopThread.Start();
         await _messageLoopStarted.Task.WaitAsync(cancellationToken);
 
-        Initialize();
         _activationHandler.HandleActivation(_initialActivationArguments);
     }
 
