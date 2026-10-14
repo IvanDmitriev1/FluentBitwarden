@@ -3,7 +3,6 @@ using FluentBitwarden.AppHost.Integrations.SshAgent.Services;
 using FluentBitwarden.Contracts.Integrations.Ssh;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Platform.Ipc.Abstractions;
-using NSubstitute;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Integrations.SshAgent;
 

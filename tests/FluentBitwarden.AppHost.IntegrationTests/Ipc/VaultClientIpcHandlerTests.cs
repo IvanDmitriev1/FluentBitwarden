@@ -5,7 +5,6 @@ using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Attachments;
 using FluentBitwarden.Platform.Ipc;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 

@@ -13,7 +13,7 @@ using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
+using static FluentBitwarden.AppHost.IntegrationTests.Modules.Account.AccountSessionAccessTokenProviderTestSupport;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Account;
 
@@ -202,20 +202,19 @@ public sealed class AccountSessionAccessTokenProviderTests
         using ServiceProvider services = CreateServices(accountService, vaultService);
         using IServiceScope scope = services.CreateScope();
         IAppSessionService sessionService = scope.ServiceProvider.GetRequiredService<IAppSessionService>();
-        Assert.IsType<SessionUnlockOutcome.Success>(sessionService.UnlockAsync(
-            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password")));
+        Assert.IsType<SessionUnlockOutcome.Success>(await sessionService.UnlockAsync(
+            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
+            TestContext.Current.CancellationToken));
         IBitwardenAccessTokenProvider provider = Provider(scope);
         Task<SessionAccessToken> refresh = GetToken(provider, accountContext, TestContext.Current.CancellationToken).AsTask();
         await WaitWithTimeoutAsync(refreshStarted.Task, TimeSpan.FromSeconds(5));
 
         Task lockTask = sessionService.LockAsync(TestContext.Current.CancellationToken);
-        Task winner = await Task.WhenAny(lockTask, DelayAsync(TimeSpan.FromMilliseconds(500)));
-        bool lockFinishedBeforeRefresh = winner == lockTask;
+        await lockTask.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        Assert.False(refresh.IsCompleted, "The refresh remains paused until its release signal.");
         releaseRefresh.TrySetResult();
         await refresh;
-        await lockTask;
 
-        Assert.True(lockFinishedBeforeRefresh, "Locking waited for the token refresh operation.");
         AppSessionState.Locked lockedState = Assert.IsType<AppSessionState.Locked>(sessionService.State);
         Assert.Equal(account, lockedState.Account);
         Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
@@ -252,50 +251,4 @@ public sealed class AccountSessionAccessTokenProviderTests
             secondScope.ServiceProvider.GetRequiredService<AccountTokenCache>());
     }
 
-    private static ServiceProvider CreateServices(IAccountService accountService, IVaultService? vaultService = null)
-    {
-        var services = new ServiceCollection();
-        services.AddAccountModule();
-        services.AddSingleton(Substitute.For<IIpcEventPublisher>());
-        services.AddScoped(_ => accountService);
-        services.AddScoped(_ => vaultService ?? Substitute.For<IVaultService>());
-        services.AddSingleton(Substitute.For<IAppHostTermination>());
-        services.AddAppSessionModule();
-        return services.BuildServiceProvider();
-    }
-
-    private static IBitwardenAccessTokenProvider Provider(IServiceScope scope) =>
-        scope.ServiceProvider.GetRequiredService<IBitwardenAccessTokenProvider>();
-
-    private static ValueTask<SessionAccessToken> GetToken(
-        IBitwardenAccessTokenProvider provider,
-        BitwardenAccountContext accountContext,
-        CancellationToken cancellationToken) =>
-        provider.GetAccessTokenAsync(accountContext, cancellationToken);
-
-    private static Task WaitWithTimeoutAsync(Task task, TimeSpan timeout) =>
-        task.WaitAsync(timeout, TestContext.Current.CancellationToken);
-
-    private static Task WaitWithCancellationAsync(Task task, CancellationToken cancellationToken) =>
-        task.WaitAsync(cancellationToken);
-
-    private static Task DelayAsync(TimeSpan delay) =>
-        Task.Delay(delay, TestContext.Current.CancellationToken);
-
-    private static Task DelayUntilCancelledAsync(CancellationToken cancellationToken) =>
-        Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
-
-    private static BitwardenAccountContext Context(string userId, BitwardenEnvironment? environment = null) =>
-        new(UserId.Parse(userId), environment ?? BitwardenEnvironment.UnitedStates);
-
-    private static AccountSessionTokens Tokens(
-        BitwardenAccountContext accountContext,
-        string suffix,
-        DateTimeOffset? expiresAt = null) =>
-        new(
-            accountContext.UserId,
-            new BitwardenClientContext(accountContext.Environment, default!),
-            SessionRefreshToken.Parse($"synthetic-refresh-{suffix}"),
-            SessionAccessToken.Parse($"synthetic-access-{suffix}"),
-            expiresAt ?? DateTimeOffset.UtcNow.AddHours(1));
 }

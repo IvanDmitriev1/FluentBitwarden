@@ -1,10 +1,8 @@
 using System.Buffers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using static FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultParserTestData;
 
@@ -100,6 +98,32 @@ public sealed partial class VaultDataParserTests
         Assert.Equal(string.Empty, parsed.Name);
         Assert.Null(parsed.Username);
         Assert.Null(parsed.Password);
+    }
+
+    [Fact]
+    public void Parses_collection_name_and_access_flags_with_the_supplied_key()
+    {
+        byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
+        using var key = new TestKey(keyBytes);
+        var dto = new VaultCollectionResponse
+        {
+            Id = CollectionId.Parse("synthetic-collection"),
+            OrganizationId = OrganizationId.Empty,
+            ReadOnly = true,
+            Manage = false,
+            HidePasswords = true,
+            Type = 2,
+            EncryptedName = EncString.Encrypt("Synthetic collection", keyBytes)
+        };
+
+        VaultCollection parsed = FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser
+            .ParseAndDecryptCollection(in dto, key);
+
+        Assert.Equal(dto.Id, parsed.Id);
+        Assert.Equal("Synthetic collection", parsed.Name);
+        Assert.True(parsed.HidePasswords);
+        Assert.True(parsed.ReadOnly);
+        Assert.False(parsed.Manage);
     }
 
     [Fact]
@@ -803,266 +827,5 @@ public sealed partial class VaultDataParserTests
         var error = Assert.ThrowsAny<Exception>(() =>
             ParseCipher(in malformedDto, malformedPayload, baseKey));
         Assert.DoesNotContain("private-payload-marker", error.ToString(), StringComparison.Ordinal);
-    }
-
 }
-
-internal static partial class VaultParserTestData
-{
-    internal static byte[] CreateLoginPayload(ReadOnlySpan<byte> key)
-    {
-        return WritePayload(key.ToArray(), static (writer, keyBytes) =>
-        {
-            writer.WriteStartObject();
-            WriteEncrypted(writer, "name", "Synthetic item", keyBytes);
-            WriteEncrypted(writer, "username", "synthetic-user", keyBytes);
-            WriteEncrypted(writer, "password", "synthetic-password", keyBytes);
-            writer.WriteEndObject();
-        });
-    }
-
-    internal static byte[] CreateLoginPayloadWithUriAndFido2(ReadOnlySpan<byte> key)
-    {
-        return WritePayload(key.ToArray(), static (writer, keyBytes) =>
-        {
-            writer.WriteStartObject();
-            WriteEncrypted(writer, "name", "Synthetic item", keyBytes);
-            writer.WritePropertyName("uris");
-            writer.WriteStartArray();
-            writer.WriteStartObject();
-            WriteEncrypted(writer, "uri", "https://example.com", keyBytes);
-            writer.WriteNumber("match", (int)LoginUri.MatchType.Domain);
-            writer.WriteEndObject();
-            writer.WriteEndArray();
-            writer.WritePropertyName("fido2Credentials");
-            writer.WriteStartArray();
-            WriteFido2Credential(writer, keyBytes, "12345678-1234-5678-9abc-def012345678");
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        });
-    }
-
-    internal static void WriteFido2Credential(
-        Utf8JsonWriter writer,
-        ReadOnlySpan<byte> key,
-        string credentialId,
-        bool uppercase = false,
-        bool includeCreationDate = true,
-        bool nullCredentialId = false,
-        bool nullCreationDate = false)
-    {
-        writer.WriteStartObject();
-        string credentialIdProperty = uppercase ? "CREDENTIALID" : "credentialId";
-        if (nullCredentialId)
-            writer.WriteNull(credentialIdProperty);
-        else
-            WriteEncrypted(writer, credentialIdProperty, credentialId, key);
-        WriteEncrypted(writer, uppercase ? "KEYTYPE" : "keyType", "public-key", key);
-        WriteEncrypted(writer, uppercase ? "KEYALGORITHM" : "keyAlgorithm", "ECDSA", key);
-        WriteEncrypted(writer, uppercase ? "KEYCURVE" : "keyCurve", "P-256", key);
-        WriteEncrypted(writer, uppercase ? "KEYVALUE" : "keyValue", "AQID", key);
-        WriteEncrypted(writer, uppercase ? "RPID" : "rpId", "example.com", key);
-        WriteEncrypted(writer, uppercase ? "RPNAME" : "rpName", "Example", key);
-        WriteEncrypted(writer, uppercase ? "USERHANDLE" : "userHandle", "AQID", key);
-        WriteEncrypted(writer, uppercase ? "USERNAME" : "userName", "user", key);
-        WriteEncrypted(writer, uppercase ? "USERDISPLAYNAME" : "userDisplayName", "User", key);
-        WriteEncrypted(writer, uppercase ? "COUNTER" : "counter", "0", key);
-        WriteEncrypted(writer, uppercase ? "DISCOVERABLE" : "discoverable", "false", key);
-        if (includeCreationDate)
-        {
-            string creationDateProperty = uppercase ? "CREATIONDATE" : "creationDate";
-            if (nullCreationDate)
-                writer.WriteNull(creationDateProperty);
-            else
-                writer.WriteString(creationDateProperty, "2026-09-30T12:00:00Z");
-        }
-        writer.WriteStartObject(uppercase ? "UNKNOWNMETADATA" : "unknownMetadata");
-        writer.WriteStartArray("nested");
-        writer.WriteNumberValue(1);
-        writer.WriteEndArray();
-        writer.WriteEndObject();
-        writer.WriteEndObject();
-    }
-
-    internal static void WriteLoginUri(Utf8JsonWriter writer, ReadOnlySpan<byte> key, string uri)
-    {
-        writer.WriteStartObject();
-        WriteEncrypted(writer, "uri", uri, key);
-        writer.WriteStartObject("unknownMetadata");
-        writer.WriteBoolean("unsupported", true);
-        writer.WriteEndObject();
-        writer.WriteEndObject();
-    }
-
-    internal static byte[] CreateUriMatchPayload(ReadOnlySpan<byte> key, Action<Utf8JsonWriter> writeMatch)
-        => WritePayload(key.ToArray(), (writer, keyBytes) =>
-        {
-            writer.WriteStartObject();
-            writer.WritePropertyName("uris");
-            writer.WriteStartArray();
-            writer.WriteStartObject();
-            WriteEncrypted(writer, "uri", "https://match.example", keyBytes);
-            writeMatch(writer);
-            writer.WriteEndObject();
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        });
-
-    internal static byte[] WritePayload(byte[] key, Action<Utf8JsonWriter, byte[]> write)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
-            write(writer, key);
-
-        return buffer.WrittenSpan.ToArray();
-    }
-
-    internal static VaultCipherResponse CreateDto(VaultCipherType type, byte[] payload) => new()
-    {
-        Id = CipherId.Parse("synthetic-cipher"),
-        FolderId = FolderId.Parse("synthetic-folder"),
-        VaultCipherType = type,
-        RevisionDate = DateTimeOffset.Parse("2026-09-30T12:00:00Z"),
-        CreationDate = DateTimeOffset.Parse("2026-09-29T12:00:00Z"),
-        Favorite = true,
-        Reprompt = false,
-        Edit = true,
-        ViewPassword = false,
-        Data = payload
-    };
-
-    internal static VaultCipherAttachmentDownloadResponse CreateAttachment(
-        string id,
-        string fileName,
-        long size,
-        ReadOnlySpan<byte> key) => new()
-    {
-        Id = AttachmentId.Parse(id),
-        Url = "https://example.invalid/attachment",
-        EncryptedFileName = EncString.Encrypt(fileName, key),
-        ProtectedAttachmentKey = EncString.Empty,
-        Size = BitwardenApi.Primitives.FileSize.FromBytes(size)
-    };
-
-    internal static VaultCipher ParseCipher(
-        ref readonly VaultCipherResponse dto,
-        ReadOnlySpan<byte> payload,
-        SymmetricCryptoKey baseKey)
-    {
-        var parser = new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser();
-        return parser.ParseAndDecryptCipher(in dto, payload, baseKey);
-    }
-
-    internal static long MeasureAllocatedBytes(
-        FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser parser,
-        in VaultCipherResponse dto,
-        byte[] payload,
-        SymmetricCryptoKey baseKey)
-    {
-        for (int i = 0; i < 32; i++)
-        {
-            _ = parser.ParseAndDecryptCipher(in dto, payload, baseKey);
-        }
-
-        const int iterations = 100;
-        long startingBytes = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-        {
-            _ = parser.ParseAndDecryptCipher(in dto, payload, baseKey);
-        }
-
-        return (GC.GetAllocatedBytesForCurrentThread() - startingBytes) / iterations;
-    }
-
-    internal static byte[] CreateEncryptedValuePayload(ReadOnlySpan<byte> key, string plaintext)
-        => WritePayload(key.ToArray(), (writer, keyBytes) =>
-        {
-            writer.WriteStartObject();
-            WriteEncrypted(writer, "value", plaintext, keyBytes);
-            writer.WriteEndObject();
-        });
-
-    internal static T ParseEncryptedValueInPlace<T>(
-        byte[] payload,
-        ReadOnlySpan<byte> key,
-        Span<byte> scratch,
-        EncryptedJsonValueReader.DecryptedJsonValueParser<T> parser)
-    {
-        var reader = new Utf8JsonReader(payload);
-        Assert.True(reader.Read());
-        Assert.True(reader.Read());
-        Assert.True(reader.Read());
-        return EncryptedJsonValueReader.ParseInPlace(ref reader, key, scratch, parser);
-    }
-
-    internal static List<LoginUri> ReadLoginUriArray(
-        LoginUrisJsonConverter converter,
-        ReadOnlySpan<byte> payload,
-        JsonSerializerOptions options)
-    {
-        var reader = new Utf8JsonReader(payload);
-        Assert.True(reader.Read());
-        return converter.Read(ref reader, typeof(List<LoginUri>), options);
-    }
-
-    internal static byte[] CreateDirtyScratch(int length) => Enumerable.Repeat((byte)0xA5, length).ToArray();
-
-    internal static void AssertScratchCleared(byte[] scratch)
-        => Assert.All(scratch, static value => Assert.Equal((byte)0, value));
-
-    internal static long MeasureConverterAllocations<T>(
-        DecryptedValueJsonConverter<T> converter,
-        byte[] payload,
-        JsonSerializerOptions options)
-    {
-        const int warmups = 32;
-        const int iterations = 100;
-        for (int i = 0; i < warmups; i++)
-            _ = ReadConverterValue(converter, payload, options);
-
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-            _ = ReadConverterValue(converter, payload, options);
-
-        return (GC.GetAllocatedBytesForCurrentThread() - start) / iterations;
-    }
-
-    internal static long MeasureUtf8StringAllocations(string plaintext)
-    {
-        byte[] utf8 = Encoding.UTF8.GetBytes(plaintext);
-        const int warmups = 32;
-        const int iterations = 100;
-        for (int i = 0; i < warmups; i++)
-            _ = Encoding.UTF8.GetString(utf8.AsSpan());
-
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-            _ = Encoding.UTF8.GetString(utf8.AsSpan());
-
-        return (GC.GetAllocatedBytesForCurrentThread() - start) / iterations;
-    }
-
-    private static T ReadConverterValue<T>(
-        DecryptedValueJsonConverter<T> converter,
-        byte[] payload,
-        JsonSerializerOptions options)
-    {
-        var reader = new Utf8JsonReader(payload);
-        reader.Read();
-        reader.Read();
-        reader.Read();
-        return converter.Read(ref reader, typeof(T), options);
-    }
-
-    internal static void WriteEncrypted(Utf8JsonWriter writer, string propertyName, string value, ReadOnlySpan<byte> key)
-    {
-        writer.WritePropertyName(propertyName);
-        JsonSerializer.Serialize(writer, EncString.Encrypt(value, key), VaultParserTestJsonContext.Default.EncString);
-    }
-
-    internal sealed class TestKey(byte[] keyBytes) : SymmetricCryptoKey(keyBytes);
-
-    [JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Metadata)]
-    [JsonSerializable(typeof(EncString))]
-    private partial class VaultParserTestJsonContext : JsonSerializerContext;
 }

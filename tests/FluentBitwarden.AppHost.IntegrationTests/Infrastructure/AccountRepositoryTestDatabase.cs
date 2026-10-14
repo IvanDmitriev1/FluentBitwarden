@@ -2,12 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 
-public sealed class AccountRepositoryFixture
-{
-    public AccountRepositoryTestDatabase CreateDatabase() => new();
-}
-
-public sealed class AccountRepositoryTestDatabase : IDisposable
+internal sealed class AccountRepositoryTestDatabase : IDisposable
 {
     private readonly string _directoryPath;
     private readonly SqliteConnectionFactory _connectionFactory;
@@ -45,7 +40,7 @@ public sealed class AccountRepositoryTestDatabase : IDisposable
         return new UnitOfWork(_connectionFactory);
     }
 
-    public SqliteConnection OpenConnection()
+    internal SqliteConnection OpenConnection()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         return _connectionFactory.OpenConnection();
@@ -58,7 +53,9 @@ public sealed class AccountRepositoryTestDatabase : IDisposable
 
         _disposed = true;
 
-        SqliteConnection.ClearAllPools();
+        using (SqliteConnection connection = _connectionFactory.OpenConnection())
+            SqliteConnection.ClearPool(connection);
+
         File.Delete(DatabasePath);
         File.Delete($"{DatabasePath}-wal");
         File.Delete($"{DatabasePath}-shm");

@@ -11,8 +11,7 @@ using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
-using NSubstitute;
-using Org.BouncyCastle.Crypto.Signers;
+using static FluentBitwarden.AppHost.IntegrationTests.Integrations.SshAgent.SshKeyProviderTestSupport;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Integrations.SshAgent;
 
@@ -203,7 +202,7 @@ public sealed class SshKeyProviderTests
             AccountTestData.SecondUserId,
             "other@example.test",
             "other");
-        fixture.SetActiveLease(ProviderFixture.CreateLease(otherAccount, fixture.Key.CreateCipher()));
+        fixture.SetActiveLease(CreateLease(otherAccount, fixture.Key.CreateCipher()));
         fixture.AssertPreApprovalLeaseDisposedBeforeDialog();
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
@@ -219,7 +218,7 @@ public sealed class SshKeyProviderTests
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
         SyntheticOpenSshKey replacementKey = SshAgentTestData.CreateKey(0x71);
-        fixture.SetActiveLease(ProviderFixture.CreateLease(fixture.Account, replacementKey.CreateCipher()));
+        fixture.SetActiveLease(CreateLease(fixture.Account, replacementKey.CreateCipher()));
         fixture.AssertPreApprovalLeaseDisposedBeforeDialog();
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
@@ -228,15 +227,6 @@ public sealed class SshKeyProviderTests
 
         Assert.Null(signature);
         fixture.ActiveLease.Received(1).Dispose();
-    }
-
-    private static void AssertSignature(SyntheticOpenSshKey key, byte[] data, SshAgentSignature signature)
-    {
-        Assert.Equal("ssh-ed25519", signature.Algorithm);
-        var verifier = new Ed25519Signer();
-        verifier.Init(false, key.PublicKey);
-        verifier.BlockUpdate(data, 0, data.Length);
-        Assert.True(verifier.VerifySignature(signature.Value));
     }
 
     private sealed class ProviderFixture
@@ -298,14 +288,5 @@ public sealed class SshKeyProviderTests
                     return Task.FromResult(UserActionDialogOutcome.Approved);
                 });
 
-        public static IUnlockedSessionLease CreateLease(AccountProfile account, params VaultCipher[] ciphers)
-        {
-            var vault = Substitute.For<IUnlockedVault>();
-            vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);
-            var lease = Substitute.For<IUnlockedSessionLease>();
-            lease.Account.Returns(account);
-            lease.Vault.Returns(vault);
-            return lease;
-        }
     }
 }

@@ -6,8 +6,6 @@ using FluentBitwarden.AppHost.Infrastructure.Tray;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Hosting;
 
@@ -18,7 +16,7 @@ public sealed class AppHostHostingTests
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
         var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
-        var handler = new AppActivationHandler(TestSupport.CreateActions(uiProcessLauncher, applicationLifetime));
+        var handler = new AppActivationHandler(AppHostHostingTestSupport.CreateActions(uiProcessLauncher, applicationLifetime));
 
         handler.Handle(new AppHostCliCommand.Start());
 
@@ -31,7 +29,7 @@ public sealed class AppHostHostingTests
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
         var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
-        var handler = new AppActivationHandler(TestSupport.CreateActions(uiProcessLauncher, applicationLifetime));
+        var handler = new AppActivationHandler(AppHostHostingTestSupport.CreateActions(uiProcessLauncher, applicationLifetime));
 
         handler.Handle(new AppHostCliCommand.Headless());
 
@@ -60,7 +58,7 @@ public sealed class AppHostHostingTests
         var services = new ServiceCollection();
         services.AddScoped<IAppSessionService>(_ => session);
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        var actions = TestSupport.CreateActions(
+        var actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
             Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>());
@@ -77,7 +75,7 @@ public sealed class AppHostHostingTests
     [Fact]
     public void Tray_menu_has_expected_labels_and_order()
     {
-        AppTray tray = TestSupport.CreateTray(new FakeUiProcessLauncher(), Substitute.For<IHostApplicationLifetime>());
+        AppTray tray = AppHostHostingTestSupport.CreateTray(new FakeUiProcessLauncher(), Substitute.For<IHostApplicationLifetime>());
 
         Assert.Collection(tray.CreateMenu(),
             item => Assert.Equal("Show", Assert.IsType<TrayMenuItem.Command>(item).Text),
@@ -91,7 +89,7 @@ public sealed class AppHostHostingTests
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
         var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
-        AppTray tray = TestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
+        AppTray tray = AppHostHostingTestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
 
         tray.Activate();
 
@@ -104,7 +102,7 @@ public sealed class AppHostHostingTests
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
         var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
-        AppTray tray = TestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
+        AppTray tray = AppHostHostingTestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
 
         Assert.IsType<TrayMenuItem.Command>(tray.CreateMenu()[0]).Execute();
 
@@ -117,7 +115,7 @@ public sealed class AppHostHostingTests
     {
         var uiProcessLauncher = new FakeUiProcessLauncher();
         var applicationLifetime = Substitute.For<IHostApplicationLifetime>();
-        AppTray tray = TestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
+        AppTray tray = AppHostHostingTestSupport.CreateTray(uiProcessLauncher, applicationLifetime);
 
         Assert.IsType<TrayMenuItem.Command>(tray.CreateMenu()[3]).Execute();
 
@@ -146,7 +144,7 @@ public sealed class AppHostHostingTests
         var services = new ServiceCollection();
         services.AddScoped<IAppSessionService>(_ => session);
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        var actions = TestSupport.CreateActions(
+        var actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
             Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>());
@@ -181,7 +179,7 @@ public sealed class AppHostHostingTests
             return session;
         });
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        AppHostActions actions = TestSupport.CreateActions(
+        AppHostActions actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
             Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>());
@@ -210,14 +208,16 @@ public sealed class AppHostHostingTests
         var services = new ServiceCollection();
         services.AddScoped<IAppSessionService>(_ => session);
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        AppHostActions actions = TestSupport.CreateActions(
+        AppHostActions actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
             Substitute.For<IHostApplicationLifetime>(),
             provider.GetRequiredService<IServiceScopeFactory>(),
             logger);
 
         actions.Lock();
-        RecordedLog log = await logger.CriticalLog.Task;
+        RecordedLog log = await logger.CriticalLog.Task.WaitAsync(
+            TimeSpan.FromSeconds(5),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(LogLevel.Critical, log.Level);
         Assert.Same(failure, log.Exception);
@@ -227,26 +227,26 @@ public sealed class AppHostHostingTests
     [Fact]
     public void Tray_menu_selection_id_zero_means_cancel()
     {
-        Assert.Null(TrayMenu.GetSelectedCommand(TestSupport.SelectionItems(static () => { }), 0));
+        Assert.Null(TrayMenu.GetSelectedCommand(AppHostHostingTestSupport.SelectionItems(static () => { }), 0));
     }
 
     [Fact]
     public void Tray_menu_selection_of_separator_returns_null()
     {
-        Assert.Null(TrayMenu.GetSelectedCommand(TestSupport.SelectionItems(static () => { }), 3));
+        Assert.Null(TrayMenu.GetSelectedCommand(AppHostHostingTestSupport.SelectionItems(static () => { }), 3));
     }
 
     [Fact]
     public void Tray_menu_selection_outside_items_returns_null()
     {
-        Assert.Null(TrayMenu.GetSelectedCommand(TestSupport.SelectionItems(static () => { }), uint.MaxValue));
+        Assert.Null(TrayMenu.GetSelectedCommand(AppHostHostingTestSupport.SelectionItems(static () => { }), uint.MaxValue));
     }
 
     [Fact]
     public void Tray_menu_selection_returns_command_without_executing_its_callback()
     {
         bool executed = false;
-        IReadOnlyList<TrayMenuItem> items = TestSupport.SelectionItems(() => executed = true);
+        IReadOnlyList<TrayMenuItem> items = AppHostHostingTestSupport.SelectionItems(() => executed = true);
         TrayMenuItem.Command expected = Assert.IsType<TrayMenuItem.Command>(items[3]);
 
         TrayMenuItem.Command? selected = TrayMenu.GetSelectedCommand(items, 4);
@@ -272,66 +272,4 @@ public sealed class AppHostHostingTests
         Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IHostedService));
     }
 
-    private sealed class FakeUiProcessLauncher : IUiProcessLauncher
-    {
-        public int ActivationCount { get; private set; }
-        public bool IsRunning => false;
-        public event Action ProcessExited { add { } remove { } }
-
-        public void Activate() { }
-        public void ActivateMainWindow() => ActivationCount++;
-        public void ActivateOverlay() { }
-        public void Exit() { }
-    }
-
-    private sealed class UnusedServiceScopeFactory : IServiceScopeFactory
-    {
-        public IServiceScope CreateScope() => throw new InvalidOperationException("This command should not create a scope.");
-    }
-
-    private sealed class RecordingLogger : ILogger<AppHostActions>
-    {
-        public TaskCompletionSource<RecordedLog> CriticalLog { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            if (logLevel == LogLevel.Critical)
-                CriticalLog.TrySetResult(new RecordedLog(logLevel, exception));
-        }
-    }
-
-    private sealed record RecordedLog(LogLevel Level, Exception? Exception);
-
-    private static class TestSupport
-    {
-        public static AppHostActions CreateActions(
-            FakeUiProcessLauncher uiProcessLauncher,
-            IHostApplicationLifetime applicationLifetime,
-            IServiceScopeFactory? scopeFactory = null,
-            ILogger<AppHostActions>? logger = null) =>
-            new(
-                uiProcessLauncher,
-                applicationLifetime,
-                scopeFactory ?? new UnusedServiceScopeFactory(),
-                logger ?? NullLogger<AppHostActions>.Instance);
-
-        public static AppTray CreateTray(FakeUiProcessLauncher uiProcessLauncher, IHostApplicationLifetime applicationLifetime) =>
-            new(CreateActions(uiProcessLauncher, applicationLifetime));
-
-        public static IReadOnlyList<TrayMenuItem> SelectionItems(Action execute) =>
-        [
-            new TrayMenuItem.Command("First", execute),
-            new TrayMenuItem.Command("Second", execute),
-            new TrayMenuItem.Separator(),
-            new TrayMenuItem.Command("Last", execute)
-        ];
-    }
 }

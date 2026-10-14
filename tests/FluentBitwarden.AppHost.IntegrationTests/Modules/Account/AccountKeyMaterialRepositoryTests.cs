@@ -2,8 +2,7 @@ using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Account;
 
-public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture fixture)
-    : IClassFixture<AccountRepositoryFixture>
+public sealed class AccountKeyMaterialRepositoryTests
 {
     [Fact]
     public void Upsert_round_trips_pbkdf2_material()
@@ -34,7 +33,7 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
     [Fact]
     public void Upsert_replaces_existing_material()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountTestData.Profile(
             AccountTestData.FirstUserId,
             "user@example.test",
@@ -49,19 +48,30 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
             "replacement");
 
         AccountRepositoryTestHelper.InsertAccount(database, account);
-        AccountRepositoryTestHelper.UpsertKeyMaterial(database, initial);
-        AccountRepositoryTestHelper.UpsertKeyMaterial(database, replacement);
+        using (var initialUnitOfWork = database.CreateUnitOfWork())
+        {
+            initialUnitOfWork.Begin();
+            new AccountKeyMaterialRepository(initialUnitOfWork).Upsert(initial);
+            initialUnitOfWork.Commit();
+        }
 
-        using var unitOfWork = database.CreateUnitOfWork();
+        using (var replacementUnitOfWork = database.CreateUnitOfWork())
+        {
+            replacementUnitOfWork.Begin();
+            new AccountKeyMaterialRepository(replacementUnitOfWork).Upsert(replacement);
+            replacementUnitOfWork.Commit();
+        }
+
+        using var readUnitOfWork = database.CreateUnitOfWork();
         Assert.Equal(
             replacement,
-            new AccountKeyMaterialRepository(unitOfWork).GetById(account.UserId));
+            new AccountKeyMaterialRepository(readUnitOfWork).GetById(account.UserId));
     }
 
     [Fact]
     public void Missing_material_returns_null_and_remove_is_idempotent()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var unitOfWork = database.CreateUnitOfWork();
         var repository = new AccountKeyMaterialRepository(unitOfWork);
         UserId missingUserId = UserId.Parse(AccountTestData.ThirdUserId);
@@ -76,7 +86,7 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
     [Fact]
     public void Remove_deletes_material()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountTestData.Profile(
             AccountTestData.FirstUserId,
             "user@example.test",
@@ -87,7 +97,12 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
             "remove");
 
         AccountRepositoryTestHelper.InsertAccount(database, account);
-        AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountKeyMaterialRepository(unitOfWork).Upsert(keyMaterial);
+            unitOfWork.Commit();
+        }
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -103,7 +118,7 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
     [Fact]
     public void Upsert_rejects_material_for_missing_profile()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var keyMaterial = AccountTestData.KeyMaterial(
             AccountTestData.ThirdUserId,
             new KdfConfig.Pbkdf2(600_000),
@@ -119,7 +134,7 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
     [Fact]
     public void Removing_profile_cascades_to_key_material()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountTestData.Profile(
             AccountTestData.FirstUserId,
             "user@example.test",
@@ -130,7 +145,12 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
             "cascade");
 
         AccountRepositoryTestHelper.InsertAccount(database, account);
-        AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountKeyMaterialRepository(unitOfWork).Upsert(keyMaterial);
+            unitOfWork.Commit();
+        }
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -145,15 +165,20 @@ public sealed class AccountKeyMaterialRepositoryTests(AccountRepositoryFixture f
 
     private AccountKeyMaterial RoundTrip(AccountKeyMaterial keyMaterial)
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         AccountRepositoryTestHelper.InsertAccount(database, AccountTestData.Profile(
             keyMaterial.UserId.ToString(),
             "user@example.test",
             "first"));
-        AccountRepositoryTestHelper.UpsertKeyMaterial(database, keyMaterial);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountKeyMaterialRepository(unitOfWork).Upsert(keyMaterial);
+            unitOfWork.Commit();
+        }
 
-        using var unitOfWork = database.CreateUnitOfWork();
-        return new AccountKeyMaterialRepository(unitOfWork).GetById(keyMaterial.UserId)!;
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        return new AccountKeyMaterialRepository(readUnitOfWork).GetById(keyMaterial.UserId)!;
     }
 
 }

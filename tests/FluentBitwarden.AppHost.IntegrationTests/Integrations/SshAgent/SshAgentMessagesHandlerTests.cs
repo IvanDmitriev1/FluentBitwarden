@@ -1,7 +1,6 @@
 using FluentBitwarden.AppHost.Integrations.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Services;
-using NSubstitute;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Integrations.SshAgent;
 

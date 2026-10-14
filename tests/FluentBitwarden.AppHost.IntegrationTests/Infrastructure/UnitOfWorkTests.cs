@@ -1,12 +1,11 @@
 namespace FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 
-public sealed class UnitOfWorkTests(AccountRepositoryFixture fixture)
-    : IClassFixture<AccountRepositoryFixture>
+public sealed class UnitOfWorkTests
 {
     [Fact]
     public void Commit_persists_transactional_repository_write()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountTestData.Profile(
             AccountTestData.FirstUserId,
             "committed@example.test",
@@ -26,7 +25,7 @@ public sealed class UnitOfWorkTests(AccountRepositoryFixture fixture)
     [Fact]
     public void Disposing_without_commit_rolls_back_transactional_repository_write()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountTestData.Profile(
             AccountTestData.FirstUserId,
             "rolled-back@example.test",

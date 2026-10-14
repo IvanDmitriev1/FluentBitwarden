@@ -8,3 +8,4 @@ global using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 global using FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
 global using FluentBitwarden.AppHost.Modules.Account.Persistance;
 global using Microsoft.Data.Sqlite;
+global using NSubstitute;

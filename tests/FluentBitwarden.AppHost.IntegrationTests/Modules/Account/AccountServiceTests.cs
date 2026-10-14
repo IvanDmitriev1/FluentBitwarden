@@ -1,24 +1,20 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using BitwardenApi.Identity;
 using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
-using FluentBitwarden.AppHost.Modules.Account.Services;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
-using NSubstitute;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Account;
 
-public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
-    : IClassFixture<AccountRepositoryFixture>
+public sealed class AccountServiceTests
 {
     [Fact]
     public void Account_reads_return_profiles_from_sqlite()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var zeta = AccountTestData.Profile(AccountTestData.FirstUserId, "zeta@example.test", "zeta");
         var alpha = AccountTestData.Profile(AccountTestData.SecondUserId, "alpha@example.test", "alpha");
@@ -33,7 +29,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public async Task AuthenticateAsync_when_identity_rejects_does_not_persist_account_material_or_token()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
@@ -54,9 +50,175 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     }
 
     [Fact]
+    public async Task AuthenticateAsync_when_identity_requires_device_verification_returns_that_outcome_without_persisting()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+            new SessionTokenRejection(
+                SessionTokenRejectionKind.DeviceVerificationRequired,
+                "Synthetic device verification required."));
+        context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
+                Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+
+        AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
+            CreateTwoFactorRequest(profile),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            new AccountAuthenticationOutcome.DeviceVerificationRequired("Synthetic device verification required."),
+            result);
+        Assert.Null(context.Service.GetAccount(profile.UserId));
+        Assert.Null(new AccountKeyMaterialRepository(context.UnitOfWork).GetById(profile.UserId));
+        Assert.Equal(SessionRefreshToken.Empty, new AccountBitwardenSessionTokenRepository(context.UnitOfWork).Get(profile.UserId));
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_when_password_login_requires_two_factor_preserves_the_challenge_and_password_context()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        var request = new AccountAuthenticationRequest.Password(
+            new BitwardenClientContext(
+                profile.Environment,
+                new DeviceInfo(
+                    DeviceIdentifier.Parse("synthetic-device-id"),
+                    DeviceName.Parse("synthetic-device-name"))),
+            profile.Email,
+            "synthetic-master-password");
+        var challenge = new IdentityTwoFactorChallenge(
+        [
+            new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Email),
+            new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Authenticator)
+        ]);
+        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+            new SessionTokenRejection(
+                SessionTokenRejectionKind.TwoFactorRequired,
+                "Synthetic two-factor challenge.",
+                challenge));
+        PasswordAuthenticationRequest? identityRequest = null;
+        context.IdentityApi.AuthenticateWithPasswordAsync(
+                Arg.Do<PasswordAuthenticationRequest>(value => identityRequest = value),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+
+        AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
+            request,
+            TestContext.Current.CancellationToken);
+
+        var twoFactor = Assert.IsType<AccountAuthenticationOutcome.TwoFactorRequired>(result);
+        Assert.Equal(challenge, twoFactor.Challenge);
+        Assert.Equal(request.Email, twoFactor.Email);
+        Assert.NotNull(identityRequest);
+        Assert.Equal(request.Context, identityRequest.Context);
+        Assert.Equal(request.Email, identityRequest.Email);
+        Assert.False(string.IsNullOrWhiteSpace(identityRequest.MasterPasswordHash));
+        Assert.Equal(identityRequest.MasterPasswordHash, twoFactor.ServerAuthorizationHash);
+        Assert.Null(context.Service.GetAccount(profile.UserId));
+        Assert.Null(new AccountKeyMaterialRepository(context.UnitOfWork).GetById(profile.UserId));
+        Assert.Equal(SessionRefreshToken.Empty, new AccountBitwardenSessionTokenRepository(context.UnitOfWork).Get(profile.UserId));
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_when_identity_requires_two_factor_without_a_challenge_does_not_persist()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+            new SessionTokenRejection(SessionTokenRejectionKind.TwoFactorRequired, "Synthetic missing challenge."));
+        context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
+                Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => context.Service.AuthenticateAsync(
+            CreateTwoFactorRequest(profile),
+            TestContext.Current.CancellationToken));
+
+        Assert.Null(context.Service.GetAccount(profile.UserId));
+        Assert.Null(new AccountKeyMaterialRepository(context.UnitOfWork).GetById(profile.UserId));
+        Assert.Equal(SessionRefreshToken.Empty, new AccountBitwardenSessionTokenRepository(context.UnitOfWork).Get(profile.UserId));
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_when_success_token_is_missing_the_subject_claim_does_not_persist()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        var keyMaterial = AccountTestData.KeyMaterial(profile.UserId.ToString(), new KdfConfig.Pbkdf2(600000), "missing-subject");
+        var validModel = CreateAuthenticatedModel(
+            profile.UserId,
+            profile.Email,
+            keyMaterial,
+            SessionRefreshToken.Parse("synthetic-auth-refresh-token"));
+        var tokenWithoutSubject = new JwtSecurityToken(claims:
+        [
+            new Claim(JwtRegisteredClaimNames.Email, profile.Email)
+        ]);
+        var malformedModel = validModel with
+        {
+            SessionAccessToken = SessionAccessToken.Parse(new JwtSecurityTokenHandler().WriteToken(tokenWithoutSubject))
+        };
+        context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
+                Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(
+                new SessionTokenResult<TokenAuthenticatedModel>.Success(malformedModel)));
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => context.Service.AuthenticateAsync(
+            CreateTwoFactorRequest(profile),
+            TestContext.Current.CancellationToken));
+
+        Assert.Null(context.Service.GetAccount(profile.UserId));
+        Assert.Null(new AccountKeyMaterialRepository(context.UnitOfWork).GetById(profile.UserId));
+        Assert.Equal(SessionRefreshToken.Empty, new AccountBitwardenSessionTokenRepository(context.UnitOfWork).Get(profile.UserId));
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_when_success_token_is_missing_the_email_claim_does_not_persist()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        var keyMaterial = AccountTestData.KeyMaterial(profile.UserId.ToString(), new KdfConfig.Pbkdf2(600000), "missing-email");
+        var validModel = CreateAuthenticatedModel(
+            profile.UserId,
+            profile.Email,
+            keyMaterial,
+            SessionRefreshToken.Parse("synthetic-auth-refresh-token"));
+        var tokenWithoutEmail = new JwtSecurityToken(claims:
+        [
+            new Claim(JwtRegisteredClaimNames.Sub, profile.UserId.ToString())
+        ]);
+        var malformedModel = validModel with
+        {
+            SessionAccessToken = SessionAccessToken.Parse(new JwtSecurityTokenHandler().WriteToken(tokenWithoutEmail))
+        };
+        context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
+                Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(
+                new SessionTokenResult<TokenAuthenticatedModel>.Success(malformedModel)));
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => context.Service.AuthenticateAsync(
+            CreateTwoFactorRequest(profile),
+            TestContext.Current.CancellationToken));
+
+        Assert.Null(context.Service.GetAccount(profile.UserId));
+        Assert.Null(new AccountKeyMaterialRepository(context.UnitOfWork).GetById(profile.UserId));
+        Assert.Equal(SessionRefreshToken.Empty, new AccountBitwardenSessionTokenRepository(context.UnitOfWork).Get(profile.UserId));
+    }
+
+    [Fact]
     public async Task AuthenticateAsync_when_identity_authenticates_persists_profile_key_material_and_refresh_token()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         const string email = "authenticated@example.test";
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, email, "first");
@@ -86,7 +248,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public async Task RefreshSessionTokens_rotates_the_stored_token_and_returns_the_new_session_tokens()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         SessionRefreshToken oldRefreshToken = SessionRefreshToken.Parse("synthetic-old-refresh-token");
@@ -120,7 +282,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public async Task RefreshSessionTokens_when_identity_rejects_preserves_the_stored_refresh_token()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         SessionRefreshToken oldRefreshToken = SessionRefreshToken.Parse("synthetic-existing-refresh-token");
@@ -144,7 +306,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public void UnlockKey_without_stored_material_requires_online_reauthentication()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         UserId userId = UserId.Parse(AccountTestData.FirstUserId);
 
@@ -158,7 +320,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public void UnlockKey_with_correct_master_password_returns_the_decrypted_user_key()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         const string password = "synthetic-master-password";
@@ -184,7 +346,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public void UnlockKey_with_wrong_master_password_returns_failure()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         const string password = "synthetic-master-password";
@@ -213,7 +375,7 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
     [Fact]
     public void UnlockKey_with_Windows_Hello_forwards_stored_material_and_owner_window()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var keyMaterial = AccountTestData.KeyMaterial(
             AccountTestData.FirstUserId,
@@ -304,30 +466,4 @@ public sealed class AccountServiceTests(AccountRepositoryFixture fixture)
         }
     }
 
-    private sealed class AccountServiceTestContext : IDisposable
-    {
-        public AccountServiceTestContext(AccountRepositoryTestDatabase database)
-        {
-            UnitOfWork = database.CreateUnitOfWork();
-            IdentityApi = Substitute.For<IIdentityApi>();
-            WebAuthnIdentityApi = Substitute.For<IWebAuthnIdentityApi>();
-            WindowsHelloService = Substitute.For<IAccountWindowsHelloService>();
-            Service = new AccountService(
-                UnitOfWork,
-                WindowsHelloService,
-                IdentityApi,
-                new AccountAuthenticatorService(IdentityApi, WebAuthnIdentityApi),
-                new AccountKeyMaterialRepository(UnitOfWork),
-                new AccountBitwardenSessionTokenRepository(UnitOfWork),
-                new AccountProfileRepository(UnitOfWork));
-        }
-
-        public UnitOfWork UnitOfWork { get; }
-        public IIdentityApi IdentityApi { get; }
-        public IWebAuthnIdentityApi WebAuthnIdentityApi { get; }
-        public IAccountWindowsHelloService WindowsHelloService { get; }
-        public AccountService Service { get; }
-
-        public void Dispose() => UnitOfWork.Dispose();
-    }
 }

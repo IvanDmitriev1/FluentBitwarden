@@ -2,19 +2,24 @@ using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Account;
 
-public sealed class AccountTpmUnlockKeyRepositoryTests(AccountRepositoryFixture fixture)
-    : IClassFixture<AccountRepositoryFixture>
+public sealed class AccountTpmUnlockKeyRepositoryTests
 {
     [Fact]
     public void Store_and_get_round_trip_protected_user_key_bytes()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
         byte[] expected = [0x00, 0x01, 0x7F, 0x80, 0xFE, 0xFF];
 
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, expected);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, expected);
+            unitOfWork.Commit();
+        }
 
-        byte[]? actual = AccountRepositoryTestHelper.GetKey(database, account.UserId);
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        byte[]? actual = new AccountTpmUnlockKeyRepository(readUnitOfWork).Get(account.UserId);
 
         Assert.Equal(expected, actual);
     }
@@ -22,60 +27,98 @@ public sealed class AccountTpmUnlockKeyRepositoryTests(AccountRepositoryFixture 
     [Fact]
     public void Store_replaces_existing_protected_user_key()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
         byte[] initial = [0x10, 0x20, 0x30];
         byte[] replacement = [0x40, 0x50, 0x60, 0x70];
 
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, initial);
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, replacement);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, initial);
+            unitOfWork.Commit();
+        }
 
-        Assert.Equal(replacement, AccountRepositoryTestHelper.GetKey(database, account.UserId));
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, replacement);
+            unitOfWork.Commit();
+        }
+
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        Assert.Equal(replacement, new AccountTpmUnlockKeyRepository(readUnitOfWork).Get(account.UserId));
     }
 
     [Fact]
     public void Get_returns_null_for_missing_key()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
 
-        Assert.Null(AccountRepositoryTestHelper.GetKey(database, account.UserId));
+        using var unitOfWork = database.CreateUnitOfWork();
+        Assert.Null(new AccountTpmUnlockKeyRepository(unitOfWork).Get(account.UserId));
     }
 
     [Fact]
     public void Exists_is_false_before_storage_and_true_after_storage()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
 
-        Assert.False(AccountRepositoryTestHelper.KeyExists(database, account.UserId));
+        using (var unitOfWork = database.CreateUnitOfWork())
+            Assert.False(new AccountTpmUnlockKeyRepository(unitOfWork).Exists(account.UserId));
 
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, [0x01, 0x02, 0x03]);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, [0x01, 0x02, 0x03]);
+            unitOfWork.Commit();
+        }
 
-        Assert.True(AccountRepositoryTestHelper.KeyExists(database, account.UserId));
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        Assert.True(new AccountTpmUnlockKeyRepository(readUnitOfWork).Exists(account.UserId));
     }
 
     [Fact]
     public void Remove_deletes_key_and_repeated_removal_is_harmless()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, [0x01, 0x02, 0x03]);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, [0x01, 0x02, 0x03]);
+            unitOfWork.Commit();
+        }
 
-        AccountRepositoryTestHelper.RemoveKey(database, account.UserId);
-        AccountRepositoryTestHelper.RemoveKey(database, account.UserId);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            var repository = new AccountTpmUnlockKeyRepository(unitOfWork);
+            repository.Remove(account.UserId);
+            repository.Remove(account.UserId);
+            unitOfWork.Commit();
+        }
 
-        Assert.False(AccountRepositoryTestHelper.KeyExists(database, account.UserId));
-        Assert.Null(AccountRepositoryTestHelper.GetKey(database, account.UserId));
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        var repositoryAfterRemoval = new AccountTpmUnlockKeyRepository(readUnitOfWork);
+        Assert.False(repositoryAfterRemoval.Exists(account.UserId));
+        Assert.Null(repositoryAfterRemoval.Get(account.UserId));
     }
 
     [Fact]
     public void Get_uses_case_insensitive_user_id_lookup()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
         byte[] expected = [0x01, 0x80, 0xFF];
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, expected);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, expected);
+            unitOfWork.Commit();
+        }
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -87,15 +130,14 @@ public sealed class AccountTpmUnlockKeyRepositoryTests(AccountRepositoryFixture 
             unitOfWork.Commit();
         }
 
-        Assert.Equal(
-            expected,
-            AccountRepositoryTestHelper.GetKey(database, account.UserId));
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        Assert.Equal(expected, new AccountTpmUnlockKeyRepository(readUnitOfWork).Get(account.UserId));
     }
 
     [Fact]
     public void Store_for_missing_account_fails_with_sqlite_foreign_key_error()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         UserId missingUserId = UserId.Parse(AccountTestData.ThirdUserId);
 
         using var unitOfWork = database.CreateUnitOfWork();
@@ -110,9 +152,14 @@ public sealed class AccountTpmUnlockKeyRepositoryTests(AccountRepositoryFixture 
     [Fact]
     public void Removing_account_profile_cascades_to_tpm_key()
     {
-        using var database = fixture.CreateDatabase();
+        using var database = new AccountRepositoryTestDatabase();
         var account = AccountRepositoryTestHelper.InsertAccount(database);
-        AccountRepositoryTestHelper.StoreKey(database, account.UserId, [0x01, 0x02, 0x03]);
+        using (var unitOfWork = database.CreateUnitOfWork())
+        {
+            unitOfWork.Begin();
+            new AccountTpmUnlockKeyRepository(unitOfWork).Store(account.UserId, [0x01, 0x02, 0x03]);
+            unitOfWork.Commit();
+        }
 
         using (var unitOfWork = database.CreateUnitOfWork())
         {
@@ -121,7 +168,9 @@ public sealed class AccountTpmUnlockKeyRepositoryTests(AccountRepositoryFixture 
             unitOfWork.Commit();
         }
 
-        Assert.False(AccountRepositoryTestHelper.KeyExists(database, account.UserId));
-        Assert.Null(AccountRepositoryTestHelper.GetKey(database, account.UserId));
+        using var readUnitOfWork = database.CreateUnitOfWork();
+        var repository = new AccountTpmUnlockKeyRepository(readUnitOfWork);
+        Assert.False(repository.Exists(account.UserId));
+        Assert.Null(repository.Get(account.UserId));
     }
 }
