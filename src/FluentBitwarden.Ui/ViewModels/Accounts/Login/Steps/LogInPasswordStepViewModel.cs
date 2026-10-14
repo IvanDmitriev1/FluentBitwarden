@@ -1,0 +1,63 @@
+using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
+
+namespace FluentBitwarden.ViewModels.Accounts.Login.Steps;
+
+[Microsoft.UI.Xaml.Data.Bindable]
+internal sealed partial class LogInPasswordStepViewModel(LogInFlowPageViewModel flow) : ObservableValidatorEx
+{
+    public string Email { get; } = flow.Context.Email;
+    public string ServerDisplayName { get; } = flow.Context.BitwardenContext.Environment.ToServerDisplayName();
+
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [StringLength(int.MaxValue, MinimumLength = 8, ErrorMessage = "Master password must be at least 8 characters long.")]
+    [Required(ErrorMessage = "Enter your master password.")]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
+    public partial string MasterPassword { get; set; } = string.Empty;
+
+
+    [field: AllowNull]
+    public ValidatableProperty MasterPasswordValidation
+        => field ??= ValidatableProperty.Create(this,
+            static x => x.MasterPassword);
+
+
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task LogInWithPasswordAsync(string password)
+    {
+        ClearAllManualErrors();
+        MasterPassword = password;
+
+        if (HasErrors)
+        {
+            return;
+        }
+
+        var outcome = await flow.AccountClient.AuthenticateAsync(
+            new AccountAuthenticationRequest.Password(flow.Context.BitwardenContext, flow.Context.Email, MasterPassword),
+            CancellationToken.None);
+
+        switch (outcome)
+        {
+            case AccountAuthenticationOutcome.Success success:
+                await flow.OnSuccessLogIn(success.Account);
+                return;
+            case AccountAuthenticationOutcome.InvalidCredentials e:
+                SetError(nameof(MasterPassword), e.Message);
+                return;
+
+            case AccountAuthenticationOutcome.TwoFactorRequired twoFactorRequired:
+                flow.Show2FStep(twoFactorRequired);
+                return;
+            default:
+                throw new InvalidOperationException("Unsupported password sign-in outcome.");
+        }
+    }
+}

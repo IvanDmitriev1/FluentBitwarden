@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
+  </PropertyGroup>
+
+  <Import Project="..\..\FluentBitwarden.Windows.props" />
+  <Import Project="..\..\FluentBitwarden.Tests.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FluentBitwarden.AppHost\FluentBitwarden.AppHost.csproj" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+
+</Project>

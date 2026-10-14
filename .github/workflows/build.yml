@@ -38,8 +38,18 @@ jobs:
         with:
           vs-version: '[18.0,19.0)'
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.nuget/packages
+            packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.wapproj', '**/packages.config', 'Directory.Packages.props', 'Directory.Build.props', 'Directory.Build.targets') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore native packages
-        run: nuget restore FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
+        run: nuget restore src\FluentBitwarden.ComServer\packages.config -PackagesDirectory packages -NonInteractive
 
       - name: Restore and build
         run: >
@@ -51,3 +61,30 @@ jobs:
           /p:AppxPackageSigningEnabled=false
           /p:GenerateAppxPackageOnBuild=false
           /v:minimal
+
+      - name: Run Api tests
+        run: >
+          dotnet test --project tests\BitwardenApi.Tests\BitwardenApi.Tests.csproj
+          --no-build
+          --configuration ${{ env.Configuration }}
+          --property:Platform=AnyCPU
+          --results-directory TestResults\BitwardenApi
+          --report-trx
+
+      - name: Run Platform tests
+        run: >
+          dotnet test --project tests\FluentBitwarden.Platform.Tests\FluentBitwarden.Platform.Tests.csproj
+          --no-build
+          --configuration ${{ env.Configuration }}
+          --property:Platform=${{ env.Platform }}
+          --results-directory TestResults\Platform
+          --report-trx
+
+      - name: Run AppHost integration tests
+        run: >
+          dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj
+          --no-build
+          --configuration ${{ env.Configuration }}
+          --property:Platform=${{ env.Platform }}
+          --results-directory TestResults\AppHostIntegration
+          --report-trx

@@ -1,0 +1,393 @@
+using FluentBitwarden.Platform.Ipc.Transport;
+using FluentBitwarden.Platform.Tests.Ipc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Platform.Ipc.Services;
+
+namespace FluentBitwarden.Platform.Tests.Ipc;
+
+public class PipeIpcServerTests
+{
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Rpc_shapes_round_trip_values_and_invoke_each_handler_once()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var state = new RpcShapesHandlerState();
+        await using var host = await IpcTestHostFactory.StartAsync<RpcShapesHandler>(
+            configureServices: services => services.AddSingleton(state),
+            cancellationToken: testCancellation);
+
+        EchoRequest request = new(73, "wire-value");
+        EchoResponse response = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            request,
+            testCancellation);
+        IpcVoid requestCommandResponse = await host.Client.SendAsync<CommandRequest, IpcVoid>(
+            new CommandRequest("sync", 12),
+            testCancellation);
+        EchoResponse commandResponse = await host.Client.SendAsync<EmptyCommandResponseRequest, EchoResponse>(
+            new EmptyCommandResponseRequest(),
+            testCancellation);
+        IpcVoid commandResult = await host.Client.SendAsync<EmptyCommandRequest, IpcVoid>(
+            new EmptyCommandRequest(),
+            testCancellation);
+
+        Assert.Equal(new EchoResponse(91, "response:wire-value", 407), response);
+        Assert.Equal(IpcVoid.Value, requestCommandResponse);
+        Assert.Equal(new EchoResponse(17, "command-response", 3), commandResponse);
+        Assert.Equal(IpcVoid.Value, commandResult);
+        Assert.Equal(request, state.LastEchoRequest);
+        Assert.Equal(new CommandRequest("sync", 12), state.LastCommandRequest);
+        Assert.Equal(1, state.EchoInvocationCount);
+        Assert.Equal(1, state.RequestCommandInvocationCount);
+        Assert.Equal(1, state.CommandResponseInvocationCount);
+        Assert.Equal(1, state.CommandInvocationCount);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Concurrent_calls_keep_responses_associated_when_released_in_reverse_order()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var handlerState = new BlockingEchoHandlerState();
+        await using var host = await IpcTestHostFactory.StartAsync<BlockingEchoHandler>(
+            configureServices: services => services.AddSingleton(handlerState),
+            cancellationToken: testCancellation);
+        var firstState = handlerState.StateFor(1);
+        var secondState = handlerState.StateFor(2);
+
+        Task<EchoResponse> first = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(1, "first"),
+            testCancellation);
+        Task<EchoResponse> second = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(2, "second"),
+            testCancellation);
+
+        await firstState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+        await secondState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        secondState.Release.TrySetResult(true);
+        Assert.Equal(
+            new EchoResponse(2, "handled:second", 1002),
+            await second.WaitAsync(IpcTestHost.Timeout, testCancellation));
+
+        firstState.Release.TrySetResult(true);
+        Assert.Equal(
+            new EchoResponse(1, "handled:first", 1001),
+            await first.WaitAsync(IpcTestHost.Timeout, testCancellation));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Cancelling_one_client_call_does_not_prevent_another_call_from_completing()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var handlerState = new BlockingEchoHandlerState();
+        await using var host = await IpcTestHostFactory.StartAsync<BlockingEchoHandler>(
+            configureServices: services => services.AddSingleton(handlerState),
+            cancellationToken: testCancellation);
+        var cancelledState = handlerState.StateFor(3);
+        var successfulState = handlerState.StateFor(4);
+        using var cancellation = new CancellationTokenSource();
+
+        Task<EchoResponse> cancelled = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(3, "cancelled"),
+            cancellation.Token);
+        Task<EchoResponse> successful = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(4, "successful"),
+            testCancellation);
+
+        try
+        {
+            await cancelledState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+            await successfulState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+            cancellation.Cancel();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+                await cancelled.WaitAsync(IpcTestHost.Timeout, testCancellation));
+
+            successfulState.Release.TrySetResult(true);
+            Assert.Equal(
+                new EchoResponse(4, "handled:successful", 1004),
+                await successful.WaitAsync(IpcTestHost.Timeout, testCancellation));
+        }
+        finally
+        {
+            cancelledState.Release.TrySetResult(true);
+            successfulState.Release.TrySetResult(true);
+            await cancelledState.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+            await successfulState.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+        }
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Normal_completion_does_not_observe_a_cancelled_handler_token()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var state = new ImmediateEchoHandlerState();
+        await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
+            configureServices: services => services.AddSingleton(state),
+            cancellationToken: testCancellation);
+
+        EchoResponse response = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(6, "complete"),
+            testCancellation);
+
+        await state.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        Assert.Equal(new EchoResponse(6, "complete", 6), response);
+        Assert.False(state.HandlerTokenWasCancelled);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Server_cancelled_request_is_reported_as_operation_canceled_to_client()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHostFactory.StartAsync<ServerCancellingHandler>(
+            cancellationToken: testCancellation);
+
+        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(9, "server-cancelled"),
+                testCancellation));
+
+        Assert.Equal(new OperationCanceledException().Message, exception.Message);
+        Assert.Null(exception.InnerException);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Handler_failures_return_generic_failure_for_all_rpc_shapes()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHostFactory.StartAsync<FailingRpcShapesHandler>(
+            cancellationToken: testCancellation);
+
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(51, "request-response"),
+            testCancellation));
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<CommandRequest, IpcVoid>(
+            new CommandRequest("request-command", 52),
+            testCancellation));
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EmptyCommandResponseRequest, EchoResponse>(
+            new EmptyCommandResponseRequest(),
+            testCancellation));
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EmptyCommandRequest, IpcVoid>(
+            new EmptyCommandRequest(),
+            testCancellation));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Locked_session_failure_round_trips_as_the_typed_exception()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHostFactory.StartAsync<LockedSessionHandler>(
+            cancellationToken: testCancellation);
+
+        UnlockedSessionRequiredException exception = await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(53, "locked-session"),
+                testCancellation));
+
+        Assert.Null(exception.InnerException);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Locked_session_failure_notifies_once_and_rethrows_the_same_exception()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        await using var host = await IpcTestHostFactory.StartAsync<LockedSessionHandler>(
+            cancellationToken: testCancellation);
+        var notifications = new List<UnlockedSessionRequiredException>();
+        IIpcExceptionNotifier notifier = host.Services.GetRequiredService<IIpcExceptionNotifier>();
+        notifier.UnlockedSessionRequired += notifications.Add;
+
+        UnlockedSessionRequiredException exception = await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(54, "locked-session-notification"),
+                testCancellation));
+
+        Assert.Same(exception, Assert.Single(notifications));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Exception_handler_failure_does_not_mask_the_remote_exception()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var handlerFailure = new InvalidOperationException("Notifier failure.");
+        var exceptionHandler = new RecordingIpcExceptionHandler(handlerFailure);
+        await using var host = await IpcTestHostFactory.StartAsync<LockedSessionHandler>(
+            configureServices: services => services.AddSingleton<IIpcExceptionHandler>(exceptionHandler),
+            cancellationToken: testCancellation);
+
+        UnlockedSessionRequiredException exception = await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
+            host.Client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(55, "handler-failure"),
+                testCancellation));
+
+        Assert.Same(exception, Assert.Single(exceptionHandler.Exceptions));
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Local_transport_failure_does_not_invoke_the_exception_handler()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var exceptionHandler = new RecordingIpcExceptionHandler();
+        var client = new PipeIpcClient($"FluentBitwarden.Tests.{Guid.NewGuid():N}", exceptionHandler);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(testCancellation);
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            client.SendAsync<EchoRequest, EchoResponse>(
+                new EchoRequest(56, "cancel-before-connect"),
+                cancellation.Token));
+
+        Assert.Empty(exceptionHandler.Exceptions);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Handler_failure_does_not_stop_the_listener_from_serving_subsequent_requests()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var state = new FailOnceHandlerState();
+        await using var host = await IpcTestHostFactory.StartAsync<FailOnceHandler>(
+            configureServices: services => services.AddSingleton(state),
+            cancellationToken: testCancellation);
+
+        await IpcTestAssertions.AssertGenericFailureAsync(() => host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(61, "fails-once"),
+            testCancellation));
+
+        EchoResponse response = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(62, "succeeds-next"),
+            testCancellation);
+
+        Assert.Equal(new EchoResponse(62, "succeeds-next", 62), response);
+        Assert.Equal(2, state.InvocationCount);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Failed_response_write_after_client_disconnect_does_not_stop_the_accept_loop()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var handlerState = new BlockingEchoHandlerState();
+        await using var host = await IpcTestHostFactory.StartAsync<BlockingEchoHandler>(
+            configureServices: services => services.AddSingleton(handlerState),
+            cancellationToken: testCancellation);
+        var state = handlerState.StateFor(7);
+        var afterDisconnectState = handlerState.StateFor(8);
+
+        await using var disconnectedClient = await RawIpcClient.ConnectAsync(
+            host.PipeName,
+            testCancellation);
+        await RawIpcClient.WriteRequestAsync(
+            disconnectedClient,
+            IpcConstants.ProtocolVersion,
+            TestMessageTypes.Echo,
+            MemoryPack.MemoryPackSerializer.Serialize(new EchoRequest(7, "disconnected")),
+            testCancellation);
+        await state.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        await disconnectedClient.DisposeAsync();
+        state.Release.TrySetResult(true);
+        await state.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        Task<EchoResponse> responseTask = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(8, "after-disconnect"),
+            testCancellation);
+
+        await afterDisconnectState.Started.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+        afterDisconnectState.Release.TrySetResult(true);
+
+        EchoResponse response = await responseTask.WaitAsync(TimeSpan.FromSeconds(1), testCancellation);
+
+        Assert.Equal(new EchoResponse(8, "handled:after-disconnect", 1008), response);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Requests_use_distinct_scoped_dependencies_and_dispose_each_after_response()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var probe = new ScopedLifetimeProbe();
+        await using var host = await IpcTestHostFactory.StartAsync<ScopedLifetimeHandler>(
+            configureServices: services =>
+            {
+                services.AddSingleton(probe);
+                services.AddScoped<ScopedRequestDependency>();
+            },
+            cancellationToken: testCancellation);
+
+        EchoResponse first = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(31, "first-scope"),
+            testCancellation);
+        await probe.DisposalFor(first.Count).WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        EchoResponse second = await host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(32, "second-scope"),
+            testCancellation);
+        await probe.DisposalFor(second.Count).WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        Assert.NotEqual(first.Count, second.Count);
+        Assert.Equal(2, probe.DisposalCount);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Cancelled_request_disposes_its_scoped_dependencies()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        using var requestCancellation = new CancellationTokenSource();
+        var probe = new ScopedLifetimeProbe();
+        var state = new ScopedRequestState();
+        await using var host = await IpcTestHostFactory.StartAsync<ScopedCancellationHandler>(
+            configureServices: services =>
+            {
+                services.AddSingleton(probe);
+                services.AddSingleton(state);
+                services.AddScoped<ScopedRequestDependency>();
+            },
+            cancellationToken: testCancellation);
+
+        Task<EchoResponse> request = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(41, "cancel-scope"),
+            requestCancellation.Token);
+        int instanceId = await state.Started.Task.WaitAsync(
+            IpcTestHost.Timeout,
+            testCancellation);
+
+        requestCancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await request.WaitAsync(IpcTestHost.Timeout, testCancellation));
+        await state.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+        await probe.DisposalFor(instanceId).WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        Assert.Equal(1, probe.DisposalCount);
+    }
+
+    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    public async Task Failed_request_disposes_its_scoped_dependencies()
+    {
+        CancellationToken testCancellation = TestContext.Current.CancellationToken;
+        var probe = new ScopedLifetimeProbe();
+        var state = new ScopedRequestState();
+        await using var host = await IpcTestHostFactory.StartAsync<ScopedThrowingHandler>(
+            configureServices: services =>
+            {
+                services.AddSingleton(probe);
+                services.AddSingleton(state);
+                services.AddScoped<ScopedRequestDependency>();
+            },
+            cancellationToken: testCancellation);
+
+        Task<EchoResponse> request = host.Client.SendAsync<EchoRequest, EchoResponse>(
+            new EchoRequest(42, "fail-scope"),
+            testCancellation);
+        int instanceId = await state.Started.Task.WaitAsync(
+            IpcTestHost.Timeout,
+            testCancellation);
+
+        await Assert.ThrowsAsync<IpcRemoteException>(async () =>
+            await request.WaitAsync(IpcTestHost.Timeout, testCancellation));
+        await state.Completed.Task.WaitAsync(IpcTestHost.Timeout, testCancellation);
+        await probe.DisposalFor(instanceId).WaitAsync(IpcTestHost.Timeout, testCancellation);
+
+        Assert.Equal(1, probe.DisposalCount);
+    }
+}

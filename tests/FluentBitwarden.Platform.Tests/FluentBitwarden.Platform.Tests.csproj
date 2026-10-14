@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup />
+
+  <Import Project="..\..\FluentBitwarden.Windows.props" />
+  <Import Project="..\..\FluentBitwarden.Tests.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

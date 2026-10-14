@@ -1,0 +1,83 @@
+using BitwardenApi.Identity.Contracts;
+using BitwardenApi.Infrastructure.Cryptography;
+using BitwardenApi.Infrastructure.Cryptography.Enc;
+using BitwardenApi.Vault.Cryptography;
+using FluentBitwarden.AppHost.Modules.Account.Contracts;
+
+namespace FluentBitwarden.AppHost.Modules.Account.Internal;
+
+internal sealed class AccountKeySession(
+    UnlockedUserKey userKey,
+    ProtectedPrivateKey protectedPrivateKey) : IAccountKeySession
+{
+    private readonly Dictionary<OrganizationId, OrganizationKey> _organizationKeysById = [];
+    private bool _disposed;
+
+    private PrivateKey PrivateKey { get; } = userKey.CreatePrivateKey(protectedPrivateKey);
+
+    public UserId UserId => UserKey.UserId;
+    public UnlockedUserKey UserKey { get; } = userKey;
+
+    public void UpdateOrganizations(IReadOnlyDictionary<OrganizationId, AsymmetricEncString> organizationKeys)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _organizationKeysById.Clear();
+
+        foreach ((OrganizationId organizationId, AsymmetricEncString protectedOrganizationKey) in organizationKeys)
+        {
+            if (protectedOrganizationKey.IsEmpty)
+            {
+                throw new InvalidOperationException(
+                    $"Organization '{organizationId}' does not include an encrypted organization key.");
+            }
+
+            var organizationKey = OrganizationKey.Create(
+                organizationId,
+                protectedOrganizationKey,
+                PrivateKey);
+
+            _organizationKeysById.Add(organizationId, organizationKey);
+        }
+    }
+
+    public SymmetricCryptoKey GetDecryptionKey(OrganizationId organizationId)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        if (organizationId.IsEmpty)
+            return UserKey;
+
+        if (_organizationKeysById.TryGetValue(organizationId, out var cachedKey))
+            return cachedKey;
+
+        throw new InvalidOperationException("No decrypted key found for the specified organization ID. Ensure that UpdateOrganizations has been called with the appropriate keys.");
+    }
+
+    public AttachmentKey CreateAttachmentKey(
+        OrganizationId organizationId,
+        EncString protectedCipherKey,
+        EncString protectedAttachmentKey)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        var cipherDecryptionKey = GetDecryptionKey(organizationId);
+        using var cipherKey = CipherKey.Create(protectedCipherKey, cipherDecryptionKey);
+        return AttachmentKey.Create(protectedAttachmentKey, cipherKey);
+    }
+
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, true))
+            return;
+
+        foreach (var key in _organizationKeysById.Values)
+        {
+            key.Dispose();
+        }
+
+        _organizationKeysById.Clear();
+        PrivateKey.Dispose();
+        UserKey.Dispose();
+    }
+}

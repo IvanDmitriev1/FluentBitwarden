@@ -1,0 +1,136 @@
+using CommunityToolkit.Mvvm.Input;
+using FluentBitwarden.ViewModels.Accounts.Login.Validation;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
+using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
+using FluentBitwarden.Infrastructure.Window;
+
+namespace FluentBitwarden.ViewModels.Accounts.Login.Steps;
+
+[Microsoft.UI.Xaml.Data.Bindable]
+internal sealed partial class LogInEmailStepViewModel : ObservableValidatorEx
+{
+    public LogInEmailStepViewModel(
+        LogInFlowPageViewModel flow,
+        IWindowManager windowManager)
+    {
+        _flow = flow;
+        _windowManager = windowManager;
+
+        Environments =
+        [
+            LogInEnvironmentOption.Us,
+            LogInEnvironmentOption.Eu,
+            new LogInEnvironmentOption("Custom", string.Empty),
+        ];
+
+        SelectedEnvironment = Environments[0];
+    }
+
+    private readonly LogInFlowPageViewModel _flow;
+    private readonly IWindowManager _windowManager;
+
+    public LogInEnvironmentOption[] Environments { get; }
+
+    [ObservableProperty]
+    public partial string? PasskeyErrorMessage { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCustomEnvironmentSelected))]
+    public partial LogInEnvironmentOption? SelectedEnvironment { get; set; }
+
+    public bool IsCustomEnvironmentSelected => SelectedEnvironment?.Title == "Custom";
+
+
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+    [Required(ErrorMessage = "Enter your Bitwarden email address.")]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification =
+            "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
+    public partial string Email { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [CustomServerUrl<LogInEmailStepViewModel>(shouldValidateMemberName: nameof(IsCustomEnvironmentSelected))]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Generated setter delegates to ObservableValidator.ValidateProperty, which is intentionally preserved for this trim-aware validation path.")]
+    public partial string CustomServerUrl { get; set; } = string.Empty;
+
+
+
+
+    [field: AllowNull]
+    public ValidatableProperty EmailValidation
+        => field ??= ValidatableProperty.Create(this,
+            static x => x.Email);
+
+    [field: AllowNull]
+    public ValidatableProperty CustomServerUrlValidation
+        => field ??= ValidatableProperty.Create(this,
+            static x => x.CustomServerUrl);
+
+
+    [RelayCommand]
+    private void Continue()
+    {
+        ValidateAllProperties();
+        if (HasErrors || SelectedEnvironment is null)
+            return;
+
+        _flow.Context.Email = Email;
+        _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
+        _flow.ShowPasswordStep();
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task LogInWithPasskeyAsync()
+    {
+        PasskeyErrorMessage = null;
+        ClearErrors(nameof(Email));
+        ValidateProperty(CustomServerUrl, nameof(CustomServerUrl));
+
+        if (SelectedEnvironment is null || HasValidationErrors(nameof(CustomServerUrl)))
+            return;
+
+        _flow.Context.Email = Email.Trim();
+        _flow.Context.ChangeEnvironment(SelectedEnvironment.Value.ToBitwardenEnvironment(CustomServerUrl));
+
+        var outcome = await _flow.AccountClient.AuthenticateAsync(
+            new AccountAuthenticationRequest.Passkey(
+                _flow.Context.BitwardenContext,
+                new NativeWindowHandle(_windowManager.WindowHandle.ToInt64())),
+            CancellationToken.None);
+
+        switch (outcome)
+        {
+            case AccountAuthenticationOutcome.Success success:
+                await _flow.OnSuccessLogIn(success.Account);
+                return;
+
+            case AccountAuthenticationOutcome.TwoFactorRequired:
+                PasskeyErrorMessage = "This account requires two-step verification. Sign in with your master password instead.";
+                return;
+
+            case AccountAuthenticationOutcome.DeviceVerificationRequired deviceVerificationRequired:
+                PasskeyErrorMessage = deviceVerificationRequired.Message;
+                return;
+
+            case AccountAuthenticationOutcome.InvalidCredentials invalidCredentials:
+                PasskeyErrorMessage = invalidCredentials.Message;
+                return;
+
+            default:
+                throw new InvalidOperationException("Unsupported passkey sign-in outcome.");
+        }
+    }
+
+    private bool HasValidationErrors(string propertyName) =>
+        GetErrors(propertyName).Cast<object>().Any();
+}
