@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup Condition="'$(UsingMicrosoftNETSdk)' == 'true'">
+    <PublishProtocol>FileSystem</PublishProtocol>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Release'">true</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Release'">false</PublishReadyToRun>
+  </PropertyGroup>
+</Project>
