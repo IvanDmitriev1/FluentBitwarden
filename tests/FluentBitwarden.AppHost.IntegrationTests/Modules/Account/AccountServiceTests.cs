@@ -91,7 +91,7 @@ public sealed class AccountServiceTests
             profile.Email,
             "synthetic-master-password");
         var challenge = new IdentityTwoFactorChallenge(
-        [
+        (IdentityTwoFactorProviderOption[])[
             new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Email),
             new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Authenticator)
         ]);
@@ -158,7 +158,7 @@ public sealed class AccountServiceTests
             keyMaterial,
             SessionRefreshToken.Parse("synthetic-auth-refresh-token"));
         var tokenWithoutSubject = new JwtSecurityToken(claims:
-        [
+        (Claim[])[
             new Claim(JwtRegisteredClaimNames.Email, profile.Email)
         ]);
         var malformedModel = validModel with
@@ -193,7 +193,7 @@ public sealed class AccountServiceTests
             keyMaterial,
             SessionRefreshToken.Parse("synthetic-auth-refresh-token"));
         var tokenWithoutEmail = new JwtSecurityToken(claims:
-        [
+        (Claim[])[
             new Claim(JwtRegisteredClaimNames.Sub, profile.UserId.ToString())
         ]);
         var malformedModel = validModel with
@@ -415,7 +415,7 @@ public sealed class AccountServiceTests
         SessionRefreshToken refreshToken)
     {
         var jwt = new JwtSecurityToken(claims:
-        [
+        (Claim[])[
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email)
         ]);

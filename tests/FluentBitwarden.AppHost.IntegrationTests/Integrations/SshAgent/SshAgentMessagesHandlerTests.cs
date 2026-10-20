@@ -11,7 +11,7 @@ public sealed class SshAgentMessagesHandlerTests
     {
         var keyProvider = Substitute.For<ISshKeyProvider>();
         var identity = new SshAgentIdentity(new byte[] { 0x01, 0x02 }, "key café");
-        keyProvider.GetIdentities().Returns([identity]);
+        keyProvider.GetIdentities().Returns((SshAgentIdentity[])[identity]);
         var handler = new SshAgentMessagesHandler(keyProvider);
 
         SshAgentMessage response = await handler.HandleAsync(
@@ -31,7 +31,7 @@ public sealed class SshAgentMessagesHandlerTests
     {
         var keyProvider = Substitute.For<ISshKeyProvider>();
         keyProvider.GetIdentities().Returns(
-            [new SshAgentIdentity(ReadOnlyMemory<byte>.Empty, new string('x', SshAgentMessage.MaxLength))]);
+            (SshAgentIdentity[])[new SshAgentIdentity(ReadOnlyMemory<byte>.Empty, new string('x', SshAgentMessage.MaxLength))]);
         var handler = new SshAgentMessagesHandler(keyProvider);
 
         SshAgentMessage response = await handler.HandleAsync(
