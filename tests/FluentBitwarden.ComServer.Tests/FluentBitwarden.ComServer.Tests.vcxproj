@@ -189,8 +189,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Infrastructure\HashingFunctionsTests.cpp" />
     <ClCompile Include="Ipc\IpcBinaryTests.cpp" />
     <ClCompile Include="Ipc\IpcProtocolTests.cpp" />
+    <ClCompile Include="Ipc\PipeWin32Tests.cpp" />
+    <ClCompile Include="Ipc\AppNamedPipeClientTests.cpp" />
     <ClCompile Include="Cbor\CborWriterTests.cpp" />
     <ClCompile Include="Passkey\PasskeyAssertionMessageTests.cpp" />
     <ClCompile Include="Passkey\PasskeyMakeCredentialMessageTests.cpp" />
@@ -199,6 +202,9 @@
     <ClCompile Include="Passkey\OperationRequestVerifierTests.cpp" />
     <ClCompile Include="Passkey\RequestDecoderTests.cpp" />
     <ClCompile Include="Passkey\ResponseEncoderTests.cpp" />
+    <ClCompile Include="Passkey\AppHostPasskeyClientTests.cpp" />
+    <ClCompile Include="Support\TestOperationSigningKey.cpp" />
+    <ClCompile Include="Support\TestWebAuthNEncoderApi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -207,6 +213,9 @@
   <ItemGroup>
     <ClInclude Include="Support\FakeAppHostLauncher.h" />
     <ClInclude Include="Support\FakePasskeyClient.h" />
+    <ClInclude Include="Support\PasskeyIpcFixtures.h" />
+    <ClInclude Include="Support\ScriptedNamedPipe.h" />
+    <ClInclude Include="Support\TestOperationSigningKey.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj">
@@ -232,6 +241,7 @@
       <Output TaskParameter="TargetOutputs" ItemName="_ComServerTestObjects" />
     </MSBuild>
     <ItemGroup>
+      <_ComServerTestObjects Remove="@(_ComServerTestObjects)" Condition="'%(_ComServerTestObjects.Filename)' == 'PluginRegistrationManager'" />
       <Link Include="@(_ComServerTestObjects)" />
     </ItemGroup>
   </Target>

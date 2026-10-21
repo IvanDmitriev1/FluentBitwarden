@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Infrastructure/Ipc/IpcProtocol.h"
 #include "Passkey/Models/PasskeyMakeCredentialMessage.h"
+#include "../Support/PasskeyIpcFixtures.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace FluentBitwarden::ComServer::WebAuthn;
@@ -12,21 +13,21 @@ namespace FluentBitwarden::ComServer::Tests
     public:
         TEST_METHOD(MakeCredentialRequestMatchesTheManagedMessageIdAndGoldenPayload)
         {
-            const PasskeyMakeCredentialRequest request = ValidRequest();
+            const PasskeyMakeCredentialRequest request = PasskeyIpcFixtures::MakeCredentialRequest();
 
             Assert::AreEqual<std::uint16_t>(51, PasskeyMakeCredentialRequest::MessageType);
-            Assert::IsTrue(request.ToPayload() == ExpectedRequestPayload());
+            Assert::IsTrue(request.ToPayload() == PasskeyIpcFixtures::MakeCredentialRequestPayload());
         }
 
         TEST_METHOD(MakeCredentialRequiresEachHashToBeExactlyThirtyTwoBytes)
         {
             for (const std::size_t length : { 0u, 31u, 32u, 33u })
             {
-                PasskeyMakeCredentialRequest rpIdHashCase = ValidRequest();
+                PasskeyMakeCredentialRequest rpIdHashCase = PasskeyIpcFixtures::MakeCredentialRequest();
                 rpIdHashCase.RpIdHash.resize(length, 0x33);
                 if (length == 32)
                 {
-                    Assert::IsTrue(rpIdHashCase.ToPayload() == ExpectedRequestPayload());
+                    Assert::IsTrue(rpIdHashCase.ToPayload() == PasskeyIpcFixtures::MakeCredentialRequestPayload());
                 }
                 else
                 {
@@ -34,11 +35,11 @@ namespace FluentBitwarden::ComServer::Tests
                         wil::ResultFromException([&] { (void)rpIdHashCase.ToPayload(); }));
                 }
 
-                PasskeyMakeCredentialRequest clientDataHashCase = ValidRequest();
+                PasskeyMakeCredentialRequest clientDataHashCase = PasskeyIpcFixtures::MakeCredentialRequest();
                 clientDataHashCase.ClientDataHash.resize(length, 0x33);
                 if (length == 32)
                 {
-                    Assert::IsTrue(clientDataHashCase.ToPayload() == ExpectedRequestPayload());
+                    Assert::IsTrue(clientDataHashCase.ToPayload() == PasskeyIpcFixtures::MakeCredentialRequestPayload());
                 }
                 else
                 {
@@ -50,57 +51,47 @@ namespace FluentBitwarden::ComServer::Tests
 
         TEST_METHOD(MakeCredentialResponseParsesAuthenticatorDataFromTheGoldenPayload)
         {
-            const std::vector<std::byte> payload{
-                std::byte{ 0x01 }, std::byte{ 0x01 },
-                std::byte{ 0x02 }, std::byte{ 0x00 }, std::byte{ 0x00 }, std::byte{ 0x00 },
-                std::byte{ 0x44 }, std::byte{ 0x55 }
-            };
+            const auto payload = PasskeyIpcFixtures::MakeCredentialResponsePayload();
 
             const PasskeyMakeCredentialResponse response = PasskeyMakeCredentialResponse::FromPayload(payload);
             Assert::IsTrue(response.AuthenticatorData == std::vector<std::uint8_t>{ 0x44, 0x55 });
         }
 
-    private:
-        static PasskeyMakeCredentialRequest ValidRequest()
+        TEST_METHOD(MakeCredentialResponseRejectsMalformedOuterInnerAndFieldBoundaries)
         {
-            return PasskeyMakeCredentialRequest{
-                .RpId = "r",
-                .RpName = "n",
-                .RpIdHash = std::vector<std::uint8_t>(32, 0x11),
-                .ClientDataHash = std::vector<std::uint8_t>(32, 0x22),
-                .UserId = { 0xab, 0x00 },
-                .UserName = "u",
-                .UserDisplayName = "d",
-                .RequireResidentKey = true,
-                .UserVerification = false
+            auto wrongOuterMemberCount = PasskeyIpcFixtures::MakeCredentialResponsePayload();
+            wrongOuterMemberCount[0] = std::byte{ 0x00 };
+            auto wrongInnerMemberCount = PasskeyIpcFixtures::MakeCredentialResponsePayload();
+            wrongInnerMemberCount[1] = std::byte{ 0x02 };
+            const std::array malformedPayloads{
+                wrongOuterMemberCount,
+                wrongInnerMemberCount,
+                std::vector<std::byte>{ std::byte{ 0x01 }, std::byte{ 0x01 }, std::byte{ 0x00 } },
+                std::vector<std::byte>{
+                    std::byte{ 0x01 }, std::byte{ 0x01 },
+                    std::byte{ 0x02 }, std::byte{ 0x00 }, std::byte{ 0x00 }, std::byte{ 0x00 }, std::byte{ 0x44 }
+                },
+                std::vector<std::byte>{
+                    std::byte{ 0x01 }, std::byte{ 0x01 },
+                    std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }
+                }
             };
+
+            for (const auto& payload : malformedPayloads)
+            {
+                Assert::ExpectException<std::runtime_error>([&]
+                {
+                    (void)PasskeyMakeCredentialResponse::FromPayload(payload);
+                });
+            }
+
+            auto trailingBytes = PasskeyIpcFixtures::MakeCredentialResponsePayload();
+            trailingBytes.push_back(std::byte{ 0x00 });
+            Assert::ExpectException<std::runtime_error>([&]
+            {
+                (void)PasskeyMakeCredentialResponse::FromPayload(trailingBytes);
+            });
         }
 
-        static std::vector<std::byte> ExpectedRequestPayload()
-        {
-            std::vector<std::byte> expected{
-                std::byte{ 0x09 },
-                std::byte{ 0xfe }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff },
-                std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0x72 },
-                std::byte{ 0xfe }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff },
-                std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0x6e },
-                std::byte{ 0x20 }, std::byte{ 0x00 }, std::byte{ 0x00 }, std::byte{ 0x00 }
-            };
-            expected.insert(expected.end(), 32, std::byte{ 0x11 });
-            expected.insert(expected.end(), {
-                std::byte{ 0x20 }, std::byte{ 0x00 }, std::byte{ 0x00 }, std::byte{ 0x00 }
-            });
-            expected.insert(expected.end(), 32, std::byte{ 0x22 });
-            expected.insert(expected.end(), {
-                std::byte{ 0x02 }, std::byte{ 0x00 }, std::byte{ 0x00 }, std::byte{ 0x00 },
-                std::byte{ 0xab }, std::byte{ 0x00 },
-                std::byte{ 0xfe }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff },
-                std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0x75 },
-                std::byte{ 0xfe }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff },
-                std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0xff }, std::byte{ 0x64 },
-                std::byte{ 0x01 }, std::byte{ 0x00 }
-            });
-            return expected;
-        }
     };
 }

@@ -25,15 +25,27 @@
     <Filter Include="Support">
       <UniqueIdentifier>{FE4C9E00-21F6-4E6D-A67B-6174B770DB3F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Infrastructure">
+      <UniqueIdentifier>{9FE4F323-8529-4A8B-B3B7-69EA9E1ACDF3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Infrastructure\HashingFunctionsTests.cpp">
+      <Filter>Infrastructure</Filter>
+    </ClCompile>
     <ClCompile Include="Ipc\IpcBinaryTests.cpp">
       <Filter>Ipc</Filter>
     </ClCompile>
     <ClCompile Include="Ipc\IpcProtocolTests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\PipeWin32Tests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\AppNamedPipeClientTests.cpp">
       <Filter>Ipc</Filter>
     </ClCompile>
     <ClCompile Include="Cbor\CborWriterTests.cpp">
@@ -60,6 +72,15 @@
     <ClCompile Include="Passkey\ResponseEncoderTests.cpp">
       <Filter>Passkey</Filter>
     </ClCompile>
+    <ClCompile Include="Passkey\AppHostPasskeyClientTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Support\TestOperationSigningKey.cpp">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="Support\TestWebAuthNEncoderApi.cpp">
+      <Filter>Support</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -69,6 +90,15 @@
       <Filter>Support</Filter>
     </ClInclude>
     <ClInclude Include="Support\FakePasskeyClient.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\PasskeyIpcFixtures.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\ScriptedNamedPipe.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\TestOperationSigningKey.h">
       <Filter>Support</Filter>
     </ClInclude>
   </ItemGroup>

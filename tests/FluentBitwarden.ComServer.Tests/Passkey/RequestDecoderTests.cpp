@@ -1,11 +1,19 @@
 #include "pch.h"
 #include "Passkey/WebAuthn/RequestDecoder.h"
+#include "Passkey/PluginAuthenticator.h"
+#include "../Support/FakeAppHostLauncher.h"
+#include "../Support/FakePasskeyClient.h"
+#include "../Support/TestOperationSigningKey.h"
 
 #include <array>
 #include <cstdint>
+#include <ncrypt.h>
+#include <string>
 #include <vector>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace FluentBitwarden::ComServer;
+using namespace FluentBitwarden::ComServer::Tests::Support;
 using namespace FluentBitwarden::ComServer::WebAuthn;
 
 namespace FluentBitwarden::ComServer::Tests
@@ -49,10 +57,95 @@ namespace FluentBitwarden::ComServer::Tests
             }
         }
 
+        struct SignedOperationRequest
+        {
+            std::vector<std::uint8_t> encodedRequest;
+            std::vector<std::uint8_t> signature;
+            WEBAUTHN_PLUGIN_OPERATION_REQUEST request{};
+
+            explicit SignedOperationRequest(std::vector<std::uint8_t> bytes)
+                : encodedRequest(std::move(bytes)),
+                  signature(TestOperationSigningKey::Sign(encodedRequest))
+            {
+                request.requestType = WEBAUTHN_PLUGIN_REQUEST_TYPE_CTAP2_CBOR;
+                request.cbEncodedRequest = static_cast<DWORD>(encodedRequest.size());
+                request.pbEncodedRequest = encodedRequest.data();
+                request.cbRequestSignature = static_cast<DWORD>(signature.size());
+                request.pbRequestSignature = signature.data();
+            }
+        };
+
+        struct PluginAuthenticatorHarness
+        {
+            std::vector<std::string> calls;
+            FakePasskeyClient* passkeyClient{};
+            FakeAppHostLauncher* appHostLauncher{};
+            winrt::com_ptr<IPluginAuthenticator> authenticator;
+
+            PluginAuthenticatorHarness()
+            {
+                auto clientDouble = std::make_unique<FakePasskeyClient>(calls);
+                auto launcherDouble = std::make_unique<FakeAppHostLauncher>(calls);
+                passkeyClient = clientDouble.get();
+                appHostLauncher = launcherDouble.get();
+                authenticator = winrt::make<PluginAuthenticator>(
+                    std::move(clientDouble),
+                    std::move(launcherDouble));
+            }
+        };
+
+        void SetSentinelResponse(
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE& response,
+            std::array<BYTE, 1>& sentinel)
+        {
+            sentinel[0] = 0x7a;
+            response.cbEncodedResponse = static_cast<DWORD>(sentinel.size());
+            response.pbEncodedResponse = sentinel.data();
+        }
+
+        void AssertResponseIsEmpty(const WEBAUTHN_PLUGIN_OPERATION_RESPONSE& response)
+        {
+            Assert::AreEqual(static_cast<DWORD>(0), response.cbEncodedResponse);
+            Assert::IsTrue(response.pbEncodedResponse == nullptr);
+        }
+
+        void ReplaceCborByteString(
+            std::vector<std::uint8_t>& encoded,
+            std::size_t headerOffset,
+            std::size_t previousLength,
+            std::size_t newLength)
+        {
+            std::vector<std::uint8_t> replacement;
+            if (newLength < 24)
+            {
+                replacement.push_back(static_cast<std::uint8_t>(0x40 | newLength));
+            }
+            else
+            {
+                replacement.insert(replacement.end(), { 0x58, static_cast<std::uint8_t>(newLength) });
+            }
+
+            for (std::size_t index = 0; index < newLength; ++index)
+            {
+                replacement.push_back(index < ClientDataHash.size()
+                    ? ClientDataHash[index]
+                    : std::uint8_t{ 0x20 });
+            }
+
+            encoded.erase(
+                encoded.begin() + static_cast<std::ptrdiff_t>(headerOffset),
+                encoded.begin() + static_cast<std::ptrdiff_t>(headerOffset + 2 + previousLength));
+            encoded.insert(
+                encoded.begin() + static_cast<std::ptrdiff_t>(headerOffset),
+                replacement.begin(),
+                replacement.end());
+        }
+
         std::vector<std::uint8_t> MakeCredentialCbor(
             bool includeOptions,
             std::uint8_t requireResidentKey,
-            std::uint8_t userVerification)
+            std::uint8_t userVerification,
+            std::size_t clientDataHashLength = ClientDataHash.size())
         {
             std::vector<std::uint8_t> encoded{
                 static_cast<std::uint8_t>(includeOptions ? 0xa6 : 0xa5),
@@ -76,6 +169,8 @@ namespace FluentBitwarden::ComServer::Tests
                 0x64, 0x74, 0x79, 0x70, 0x65, 0x6a, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x6b, 0x65, 0x79
             };
 
+            ReplaceCborByteString(encoded, 2, ClientDataHash.size(), clientDataHashLength);
+
             if (includeOptions)
             {
                 encoded.insert(encoded.end(), {
@@ -88,9 +183,9 @@ namespace FluentBitwarden::ComServer::Tests
             return encoded;
         }
 
-        std::vector<std::uint8_t> GetAssertionCbor()
+        std::vector<std::uint8_t> GetAssertionCbor(std::size_t clientDataHashLength = ClientDataHash.size())
         {
-            return {
+            std::vector<std::uint8_t> encoded{
                 0xa3,
                 0x01, 0x6b, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d,
                 0x02, 0x58, 0x20,
@@ -102,6 +197,8 @@ namespace FluentBitwarden::ComServer::Tests
                 0x62, 0x69, 0x64, 0x42, 0x01, 0x02,
                 0x64, 0x74, 0x79, 0x70, 0x65, 0x6a, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x6b, 0x65, 0x79
             };
+            ReplaceCborByteString(encoded, 15, ClientDataHash.size(), clientDataHashLength);
+            return encoded;
         }
     }
 
@@ -136,6 +233,22 @@ namespace FluentBitwarden::ComServer::Tests
             Assert::IsTrue(FAILED(result));
         }
 
+        TEST_METHOD(DecodeGetAssertionRejectsClientDataHashLengthsOutsideThirtyTwoBytes)
+        {
+            for (const std::size_t length : { 0u, 31u, 33u })
+            {
+                auto encoded = GetAssertionCbor(length);
+                const auto operationRequest = RequestFor(encoded);
+
+                const HRESULT result = CaptureResult([&]
+                {
+                    (void)RequestDecoder::DecodeGetAssertion(&operationRequest);
+                });
+
+                Assert::IsTrue(FAILED(result));
+            }
+        }
+
         TEST_METHOD(DecodeMakeCredentialMapsRpUserHashesAndOptionsFromLiteralCbor)
         {
             struct OptionCase
@@ -150,6 +263,8 @@ namespace FluentBitwarden::ComServer::Tests
             constexpr std::array cases{
                 OptionCase{ true, 0xf5, 0xf5, true, true },
                 OptionCase{ true, 0xf4, 0xf5, false, true },
+                OptionCase{ true, 0xf5, 0xf4, true, false },
+                OptionCase{ true, 0xf4, 0xf4, false, false },
                 OptionCase{ false, 0xf5, 0xf5, false, false }
             };
 
@@ -190,5 +305,218 @@ namespace FluentBitwarden::ComServer::Tests
 
             Assert::IsTrue(FAILED(result));
         }
+
+        TEST_METHOD(DecodeMakeCredentialRejectsClientDataHashLengthsOutsideThirtyTwoBytes)
+        {
+            for (const std::size_t length : { 0u, 31u, 33u })
+            {
+                auto encoded = MakeCredentialCbor(true, 0xf4, 0xf4, length);
+                const auto operationRequest = RequestFor(encoded);
+
+                const HRESULT result = CaptureResult([&]
+                {
+                    (void)RequestDecoder::DecodeMakeCredential(&operationRequest);
+                });
+
+                Assert::IsTrue(FAILED(result));
+            }
+        }
     };
+
+    TEST_CLASS(PluginAuthenticatorEndToEndTests)
+    {
+    public:
+        TEST_METHOD(ValidSignedRequestsReachTheClientAndEncodeBothResponses)
+        {
+            PluginAuthenticatorHarness makeHarness;
+            makeHarness.passkeyClient->makeCredentialResponse.AuthenticatorData = { 0x11, 0x22 };
+            SignedOperationRequest makeRequest{ MakeCredentialCbor(true, 0xf5, 0xf5) };
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE makeResponse{};
+
+            Assert::AreEqual(
+                S_OK,
+                makeHarness.authenticator->MakeCredential(&makeRequest.request, &makeResponse));
+            Assert::AreEqual(1U, makeHarness.passkeyClient->makeCredentialCallCount);
+            Assert::IsTrue(makeHarness.passkeyClient->lastMakeCredentialRequest.has_value());
+            const auto& decodedMakeRequest = *makeHarness.passkeyClient->lastMakeCredentialRequest;
+            Assert::AreEqual(std::string{ "example.com" }, decodedMakeRequest.RpId);
+            Assert::AreEqual(std::string{ "Example" }, decodedMakeRequest.RpName);
+            Assert::IsTrue(decodedMakeRequest.RpIdHash ==
+                std::vector<std::uint8_t>(ExampleRpIdHash.begin(), ExampleRpIdHash.end()));
+            Assert::IsTrue(decodedMakeRequest.ClientDataHash ==
+                std::vector<std::uint8_t>(ClientDataHash.begin(), ClientDataHash.end()));
+            Assert::IsTrue(decodedMakeRequest.UserId == std::vector<std::uint8_t>{ 0x01 });
+            Assert::AreEqual(std::string{ "alice" }, decodedMakeRequest.UserName);
+            Assert::AreEqual(std::string{ "Alice" }, decodedMakeRequest.UserDisplayName);
+            Assert::AreEqual(true, decodedMakeRequest.RequireResidentKey);
+            Assert::AreEqual(true, decodedMakeRequest.UserVerification);
+            Assert::IsTrue(makeHarness.calls == std::vector<std::string>{ "make-credential" });
+            Assert::AreEqual(static_cast<DWORD>(3), makeResponse.cbEncodedResponse);
+            Assert::IsTrue(std::vector<BYTE>(
+                makeResponse.pbEncodedResponse,
+                makeResponse.pbEncodedResponse + makeResponse.cbEncodedResponse) ==
+                std::vector<BYTE>{ 0x4d, 0x43, 0x01 });
+
+            PluginAuthenticatorHarness assertionHarness;
+            assertionHarness.passkeyClient->getAssertionResponse.CredentialId = { 0xa1, 0xa2 };
+            assertionHarness.passkeyClient->getAssertionResponse.UserId = { 0xb1 };
+            assertionHarness.passkeyClient->getAssertionResponse.AuthenticatorData = { 0x31, 0x32, 0x33 };
+            assertionHarness.passkeyClient->getAssertionResponse.Signature = { 0xd1, 0xd2 };
+            assertionHarness.passkeyClient->getAssertionResponse.UserName = "alice";
+            assertionHarness.passkeyClient->getAssertionResponse.UserDisplayName = "Alice";
+            SignedOperationRequest assertionRequest{ GetAssertionCbor() };
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE assertionResponse{};
+
+            Assert::AreEqual(
+                S_OK,
+                assertionHarness.authenticator->GetAssertion(&assertionRequest.request, &assertionResponse));
+            Assert::AreEqual(1U, assertionHarness.passkeyClient->getAssertionCallCount);
+            Assert::IsTrue(assertionHarness.passkeyClient->lastGetAssertionRequest.has_value());
+            const auto& decodedAssertionRequest = *assertionHarness.passkeyClient->lastGetAssertionRequest;
+            Assert::AreEqual(std::string{ "example.com" }, decodedAssertionRequest.RpId);
+            Assert::IsTrue(decodedAssertionRequest.RpIdHash ==
+                std::vector<std::uint8_t>(ExampleRpIdHash.begin(), ExampleRpIdHash.end()));
+            Assert::IsTrue(decodedAssertionRequest.ClientDataHash ==
+                std::vector<std::uint8_t>(ClientDataHash.begin(), ClientDataHash.end()));
+            Assert::IsTrue(assertionHarness.calls == std::vector<std::string>{ "get-assertion" });
+            Assert::AreEqual(static_cast<DWORD>(3), assertionResponse.cbEncodedResponse);
+            Assert::IsTrue(std::vector<BYTE>(
+                assertionResponse.pbEncodedResponse,
+                assertionResponse.pbEncodedResponse + assertionResponse.cbEncodedResponse) ==
+                std::vector<BYTE>{ 0x47, 0x41, 0x01 });
+        }
+
+        TEST_METHOD(InvalidSignaturesStopBothOperationsAndPreserveExistingResponses)
+        {
+            for (const bool getAssertion : { false, true })
+            {
+                for (const bool tamperRequest : { false, true })
+                {
+                    PluginAuthenticatorHarness harness;
+                    SignedOperationRequest request{ getAssertion ? GetAssertionCbor() :
+                        MakeCredentialCbor(true, 0xf4, 0xf4) };
+                    if (tamperRequest)
+                    {
+                        request.encodedRequest.front() ^= 0x01;
+                    }
+                    else
+                    {
+                        request.signature.front() ^= 0x01;
+                    }
+                    std::array<BYTE, 1> sentinel{};
+                    WEBAUTHN_PLUGIN_OPERATION_RESPONSE response{};
+                    SetSentinelResponse(response, sentinel);
+
+                    const HRESULT result = getAssertion
+                        ? harness.authenticator->GetAssertion(&request.request, &response)
+                        : harness.authenticator->MakeCredential(&request.request, &response);
+
+                    Assert::AreEqual(static_cast<HRESULT>(NTE_BAD_SIGNATURE), result);
+                    Assert::IsTrue(harness.calls.empty());
+                    Assert::AreEqual(0U, harness.passkeyClient->makeCredentialCallCount);
+                    Assert::AreEqual(0U, harness.passkeyClient->getAssertionCallCount);
+                    Assert::AreEqual(static_cast<DWORD>(1), response.cbEncodedResponse);
+                    Assert::IsTrue(response.pbEncodedResponse == sentinel.data());
+                }
+            }
+        }
+
+        TEST_METHOD(MalformedSignedCborReturnsDecoderErrorAndClearsOnlyGetAssertionResponse)
+        {
+            for (const bool getAssertion : { false, true })
+            {
+                PluginAuthenticatorHarness harness;
+                SignedOperationRequest request{ { 0xff } };
+                std::array<BYTE, 1> sentinel{};
+                WEBAUTHN_PLUGIN_OPERATION_RESPONSE response{};
+                SetSentinelResponse(response, sentinel);
+
+                const HRESULT result = getAssertion
+                    ? harness.authenticator->GetAssertion(&request.request, &response)
+                    : harness.authenticator->MakeCredential(&request.request, &response);
+
+                Assert::AreEqual(HRESULT_FROM_WIN32(ERROR_INVALID_DATA), result);
+                Assert::IsTrue(harness.calls.empty());
+                Assert::AreEqual(0U, harness.passkeyClient->makeCredentialCallCount);
+                Assert::AreEqual(0U, harness.passkeyClient->getAssertionCallCount);
+                if (getAssertion)
+                {
+                    AssertResponseIsEmpty(response);
+                }
+                else
+                {
+                    Assert::AreEqual(static_cast<DWORD>(1), response.cbEncodedResponse);
+                    Assert::IsTrue(response.pbEncodedResponse == sentinel.data());
+                }
+            }
+        }
+
+        TEST_METHOD(ClientFailuresPropagateAndRespectResponseInitialization)
+        {
+            PluginAuthenticatorHarness makeHarness;
+            makeHarness.passkeyClient->makeCredentialFailure = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
+            SignedOperationRequest makeRequest{ MakeCredentialCbor(true, 0xf5, 0xf5) };
+            std::array<BYTE, 1> sentinel{};
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE makeResponse{};
+            SetSentinelResponse(makeResponse, sentinel);
+
+            Assert::AreEqual(
+                HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
+                makeHarness.authenticator->MakeCredential(&makeRequest.request, &makeResponse));
+            Assert::AreEqual(1U, makeHarness.passkeyClient->makeCredentialCallCount);
+            Assert::IsTrue(makeHarness.passkeyClient->lastMakeCredentialRequest.has_value());
+            Assert::AreEqual(static_cast<DWORD>(1), makeResponse.cbEncodedResponse);
+            Assert::IsTrue(makeResponse.pbEncodedResponse == sentinel.data());
+
+            PluginAuthenticatorHarness assertionHarness;
+            assertionHarness.passkeyClient->getAssertionFailure = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
+            SignedOperationRequest assertionRequest{ GetAssertionCbor() };
+            std::array<BYTE, 1> assertionSentinel{};
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE assertionResponse{};
+            SetSentinelResponse(assertionResponse, assertionSentinel);
+
+            Assert::AreEqual(
+                HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
+                assertionHarness.authenticator->GetAssertion(&assertionRequest.request, &assertionResponse));
+            Assert::AreEqual(1U, assertionHarness.passkeyClient->getAssertionCallCount);
+            Assert::IsTrue(assertionHarness.passkeyClient->lastGetAssertionRequest.has_value());
+            AssertResponseIsEmpty(assertionResponse);
+        }
+
+        TEST_METHOD(EncoderFailuresPropagateWithoutPublishingPartialResponses)
+        {
+            PluginAuthenticatorHarness makeHarness;
+            makeHarness.passkeyClient->makeCredentialResponse.AuthenticatorData = { 0xee };
+            SignedOperationRequest makeRequest{ MakeCredentialCbor(true, 0xf5, 0xf5) };
+            std::array<BYTE, 1> sentinel{};
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE makeResponse{};
+            SetSentinelResponse(makeResponse, sentinel);
+
+            Assert::AreEqual(
+                E_ACCESSDENIED,
+                makeHarness.authenticator->MakeCredential(&makeRequest.request, &makeResponse));
+            Assert::AreEqual(1U, makeHarness.passkeyClient->makeCredentialCallCount);
+            Assert::AreEqual(static_cast<DWORD>(1), makeResponse.cbEncodedResponse);
+            Assert::IsTrue(makeResponse.pbEncodedResponse == sentinel.data());
+
+            PluginAuthenticatorHarness assertionHarness;
+            assertionHarness.passkeyClient->getAssertionResponse.CredentialId = { 0xa1, 0xa2 };
+            assertionHarness.passkeyClient->getAssertionResponse.UserId = { 0xb1 };
+            assertionHarness.passkeyClient->getAssertionResponse.AuthenticatorData = { 0x31, 0x32, 0x33 };
+            assertionHarness.passkeyClient->getAssertionResponse.Signature = { 0xee };
+            assertionHarness.passkeyClient->getAssertionResponse.UserName = "alice";
+            assertionHarness.passkeyClient->getAssertionResponse.UserDisplayName = "Alice";
+            SignedOperationRequest assertionRequest{ GetAssertionCbor() };
+            std::array<BYTE, 1> assertionSentinel{};
+            WEBAUTHN_PLUGIN_OPERATION_RESPONSE assertionResponse{};
+            SetSentinelResponse(assertionResponse, assertionSentinel);
+
+            Assert::AreEqual(
+                E_ACCESSDENIED,
+                assertionHarness.authenticator->GetAssertion(&assertionRequest.request, &assertionResponse));
+            Assert::AreEqual(1U, assertionHarness.passkeyClient->getAssertionCallCount);
+            AssertResponseIsEmpty(assertionResponse);
+        }
+    };
+
 }

@@ -1,16 +1,14 @@
 # COM server native tests
 
-These tests use the Visual Studio C++ native unit test framework. The test project references the COM server project and asks it for its compiled object inputs, excluding `WinMain`, so production objects stay aligned with the selected configuration and architecture.
+These tests use the Visual Studio C++ native unit test framework. The test project references the COM server project and asks it for its compiled object inputs, excluding `WinMain` and `PluginRegistrationManager`, so the remaining production objects stay aligned with the selected configuration and architecture.
 
 ## Structure
 
-- `Ipc/` contains protocol header and binary payload tests.
+- `Infrastructure/` contains SHA-256 known-answer tests.
+- `Ipc/` contains protocol header and binary payload tests, plus real local named-pipe tests for `PipeWin32` and `AppNamedPipeClient`.
 - `Cbor/` contains direct CBOR writer tests, including literal boundary bytes.
-- `Passkey/` contains direct passkey message tests and the authenticator GetInfo builder fixture.
-- `Support/` contains per-test doubles for the passkey client and AppHost launcher.
-
-The authenticator calls the real namespace verifier. Its tests cover pointer checks and malformed-request rejection before client calls or response writes. Decoder and encoder tests exercise payload handling separately. Successful signed requests through the authenticator require Windows-issued signatures and are not covered by this unit suite.
-
+- `Passkey/` contains passkey message and WebAuthn codec tests, the authenticator GetInfo builder fixture, and `AppHostPasskeyClient` tests against a scripted pipe server.
+- `Support/` contains per-test doubles, independent literal IPC fixtures, the test-owned named-pipe server, and fixed test-process substitutes for two external APIs.
 
 ## Build and run
 
