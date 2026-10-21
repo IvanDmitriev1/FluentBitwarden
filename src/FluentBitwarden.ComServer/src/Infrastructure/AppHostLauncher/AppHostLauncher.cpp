@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "Application/Activation/AppActivationLauncher.h"
+#include "Infrastructure/AppHostLauncher/AppHostLauncher.h"
 
-namespace FluentBitwarden::ComServer::AppActivationLauncher
+namespace FluentBitwarden::ComServer
 {
     namespace AppModel = winrt::Windows::ApplicationModel;
     using std::filesystem::path;
@@ -89,10 +89,10 @@ namespace FluentBitwarden::ComServer::AppActivationLauncher
         }
     }
 
-    void ActivateAppHost(std::wstring launchArguments)
+    void AppHostLauncher::ActivateHeadless() const
     {
         const auto appHostPath = GetAppHostPath();
-        auto commandLineArgs = MakeCommandLineArgs(appHostPath, launchArguments);
+        auto commandLineArgs = MakeCommandLineArgs(appHostPath, L"--headless");
 
         CreateAppHostProcess(appHostPath, commandLineArgs);
     }

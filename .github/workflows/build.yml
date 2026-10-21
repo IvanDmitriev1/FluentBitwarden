@@ -62,6 +62,21 @@ jobs:
           /p:GenerateAppxPackageOnBuild=false
           /v:minimal
 
+      - name: Run native COM server tests
+        shell: pwsh
+        timeout-minutes: 2
+        run: |
+          $vstest = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -find 'Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe' | Select-Object -First 1
+          & $vstest tests\FluentBitwarden.ComServer.Tests\bin\x64\Release\FluentBitwarden.ComServer.Tests.dll /Platform:x64 /Logger:trx /ResultsDirectory:TestResults\ComServerNative -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Upload native COM server test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Native COM server test results
+          path: TestResults/ComServerNative/*.trx
+          if-no-files-found: warn
+
       - name: Run Api tests
         run: >
           dotnet test --project tests\BitwardenApi.Tests\BitwardenApi.Tests.csproj

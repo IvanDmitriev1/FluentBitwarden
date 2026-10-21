@@ -15,10 +15,10 @@ using unique_ncrypt_key = wil::unique_any<
     decltype(&NCryptFreeObject),
     NCryptFreeObject>;
 
-namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
+namespace FluentBitwarden::ComServer::WebAuthn
 {
-    void VerifyOperationRequest(
-        const WEBAUTHN_PLUGIN_OPERATION_REQUEST& request)
+    void OperationRequestVerifier::Verify(
+        const WEBAUTHN_PLUGIN_OPERATION_REQUEST& request) const
     {
         THROW_HR_IF(
             E_INVALIDARG,

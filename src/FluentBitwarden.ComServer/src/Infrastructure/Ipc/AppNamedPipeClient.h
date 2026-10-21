@@ -9,7 +9,7 @@ namespace FluentBitwarden::ComServer::Ipc
 		std::chrono::milliseconds ConnectTimeout{ std::chrono::seconds{ 5 } };
 
 	public:
-		AppNamedPipeClient();
+		explicit AppNamedPipeClient(const std::wstring& pipePath);
 		~AppNamedPipeClient() = default;
 
 		AppNamedPipeClient(AppNamedPipeClient const&) = delete;

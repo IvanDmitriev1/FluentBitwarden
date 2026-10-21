@@ -5,8 +5,8 @@
 
 namespace FluentBitwarden::ComServer::Ipc
 {
-	AppNamedPipeClient::AppNamedPipeClient()
-		:m_pipe(PipeWin32::OpenOverlappedPipe(std::wstring{ Constants::PipePath }, ConnectTimeout))
+	AppNamedPipeClient::AppNamedPipeClient(const std::wstring& pipePath)
+		: m_pipe(PipeWin32::OpenOverlappedPipe(pipePath, ConnectTimeout))
 	{
 	}
 

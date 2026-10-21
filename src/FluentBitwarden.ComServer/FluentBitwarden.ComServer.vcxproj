@@ -123,9 +123,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Infrastructure\DebugUtils.h" />
     <ClInclude Include="src\Passkey\WebAuthn\RequestDecoder.h" />
     <ClInclude Include="src\Passkey\WebAuthn\ResponseEncoder.h" />
-    <ClInclude Include="src\Application\Activation\AppActivationLauncher.h" />
+    <ClInclude Include="src\Infrastructure\AppHostLauncher\AppHostLauncher.h" />
+    <ClInclude Include="src\Infrastructure\AppHostLauncher\IAppHostLauncher.h" />
     <ClInclude Include="src\Infrastructure\Cbor\CborWriter.h" />
     <ClInclude Include="src\Infrastructure\Cryptography\HashingFunctions.h" />
     <ClInclude Include="src\Infrastructure\Ipc\AppNamedPipeClient.h" />
@@ -133,23 +135,29 @@
     <ClInclude Include="src\Infrastructure\Ipc\IpcProtocol.h" />
     <ClInclude Include="src\Infrastructure\Ipc\PipeWin32.h" />
     <ClInclude Include="src\Passkey\PluginAuthenticator.h" />
+    <ClInclude Include="src\Passkey\Ipc\IPasskeyClient.h" />
+    <ClInclude Include="src\Passkey\Ipc\AppHostPasskeyClient.h" />
     <ClInclude Include="src\Passkey\Models\PasskeyAssertionMessage.h" />
     <ClInclude Include="src\Passkey\Models\PasskeyMakeCredentialMessage.h" />
     <ClInclude Include="src\Passkey\Registration\AuthenticatorInfoBuilder.h" />
     <ClInclude Include="src\Passkey\Registration\PluginRegistrationManager.h" />
     <ClInclude Include="src\Passkey\WebAuthn\OperationRequestVerifier.h" />
+    <ClInclude Include="src\Passkey\WebAuthn\IOperationRequestVerifier.h" />
     <ClInclude Include="src\Passkey\WebAuthn\WebAuthnPayload.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
+    <ClCompile Include="src\Infrastructure\DebugUtils.cpp" />
     <ClCompile Include="src\Passkey\WebAuthn\RequestDecoder.cpp" />
     <ClCompile Include="src\Passkey\WebAuthn\ResponseEncoder.cpp" />
-    <ClCompile Include="src\Application\Activation\AppActivationLauncher.cpp" />
+    <ClCompile Include="src\Infrastructure\AppHostLauncher\AppHostLauncher.cpp" />
     <ClCompile Include="src\Infrastructure\Cbor\CborWriter.cpp" />
     <ClCompile Include="src\Infrastructure\Cryptography\HashingFunctions.cpp" />
     <ClCompile Include="src\Infrastructure\Ipc\AppNamedPipeClient.cpp" />
     <ClCompile Include="src\Infrastructure\Ipc\IpcProtocol.cpp" />
     <ClCompile Include="src\Infrastructure\Ipc\PipeWin32.cpp" />
     <ClCompile Include="src\Passkey\PluginAuthenticator.cpp" />
+    <ClCompile Include="src\Passkey\PluginAuthenticatorFactory.cpp" />
+    <ClCompile Include="src\Passkey\Ipc\AppHostPasskeyClient.cpp" />
     <ClCompile Include="src\Passkey\Registration\AuthenticatorInfoBuilder.cpp" />
     <ClCompile Include="src\Passkey\Registration\PluginRegistrationManager.cpp" />
     <ClCompile Include="src\Passkey\WebAuthn\OperationRequestVerifier.cpp" />

@@ -1,23 +1,9 @@
 #include "pch.h"
 #include "Passkey/PluginAuthenticator.h"
 #include "Passkey/Registration/PluginRegistrationManager.h"
+#include "Infrastructure/DebugUtils.h"
 
-static void AttachDebugger()
-{
-    try
-    {
-        std::string cmd = "vsjitdebugger.exe -p " + std::to_string(GetCurrentProcessId());
-        system(cmd.c_str());
-
-        DebugBreak();
-    }
-    catch (...)
-    {
-
-    }
-}
-
-static HRESULT RunPluginComServer() noexcept
+HRESULT RunPluginComServer() noexcept
 {
     try
     {
@@ -72,12 +58,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR pCmdLine, int)
 {
     winrt::init_apartment(winrt::apartment_type::multi_threaded);
 
-    /*#ifdef _DEBUG
-            if (!IsDebuggerPresent())
-            {
-                FluentBitwarden::ComServer::AttachDebugger();
-            }
-    #endif*/
+    //FluentBitwarden::ComServer::DebugUtils::AttachDebugger();
 
     std::wstring args = pCmdLine ? pCmdLine : L"";
     if (args.find(L"-PluginActivated") != std::wstring::npos)
