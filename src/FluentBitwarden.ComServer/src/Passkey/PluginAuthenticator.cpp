@@ -1,16 +1,15 @@
 #include "pch.h"
 #include "Passkey/PluginAuthenticator.h"
+#include "Passkey/WebAuthn/OperationRequestVerifier.h"
 #include "Passkey/WebAuthn/RequestDecoder.h"
 #include "Passkey/WebAuthn/ResponseEncoder.h"
 
 namespace FluentBitwarden::ComServer
 {
 	PluginAuthenticator::PluginAuthenticator(
-		std::unique_ptr<IOperationRequestVerifier> operationRequestVerifier,
 		std::unique_ptr<IPasskeyClient> passkeyClient,
 		std::unique_ptr<IAppHostLauncher> appHostLauncher)
-		: m_operationRequestVerifier(std::move(operationRequestVerifier)),
-		  m_passkeyClient(std::move(passkeyClient)),
+		: m_passkeyClient(std::move(passkeyClient)),
 		  m_appHostLauncher(std::move(appHostLauncher))
 	{
 		
@@ -21,7 +20,7 @@ namespace FluentBitwarden::ComServer
 		try
 		{
 			RETURN_HR_IF(E_POINTER, request == nullptr || response == nullptr);
-			m_operationRequestVerifier->Verify(*request);
+			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
 
             auto ipcRequest = WebAuthn::RequestDecoder::DecodeMakeCredential(request);
 
@@ -38,7 +37,7 @@ namespace FluentBitwarden::ComServer
 		try
 		{
 			RETURN_HR_IF(E_POINTER, request == nullptr || response == nullptr);
-			m_operationRequestVerifier->Verify(*request);
+			WebAuthn::OperationRequestVerifier::VerifyOperationRequest(*request);
 			*response = {};
 
             auto ipcRequest = WebAuthn::RequestDecoder::DecodeGetAssertion(request);

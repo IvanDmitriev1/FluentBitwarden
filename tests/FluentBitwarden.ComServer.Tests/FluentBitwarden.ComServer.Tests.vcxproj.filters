@@ -13,15 +13,63 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Ipc">
+      <UniqueIdentifier>{C90C840D-4AC9-42DF-97AF-5151CF4B4811}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cbor">
+      <UniqueIdentifier>{CE1E3499-0362-4BB5-B005-0221DC3CF087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Passkey">
+      <UniqueIdentifier>{1511F31F-4BE1-4698-849B-7437C630D9CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Support">
+      <UniqueIdentifier>{FE4C9E00-21F6-4E6D-A67B-6174B770DB3F}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Ipc\IpcBinaryTests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\IpcProtocolTests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Cbor\CborWriterTests.cpp">
+      <Filter>Cbor</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\PasskeyAssertionMessageTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\PasskeyMakeCredentialMessageTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\AuthenticatorInfoBuilderTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\PluginAuthenticatorTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\OperationRequestVerifierTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\RequestDecoderTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\ResponseEncoderTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\FakeAppHostLauncher.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\FakePasskeyClient.h">
+      <Filter>Support</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

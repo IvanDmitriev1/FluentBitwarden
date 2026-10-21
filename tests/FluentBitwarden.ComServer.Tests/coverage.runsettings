@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0">
+        <Configuration>
+          <IncludeTestAssembly>True</IncludeTestAssembly>
+          <CodeCoverage>
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*[\\/]FluentBitwarden\.ComServer\.Tests\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
+            <Sources>
+              <Include>
+                <Source>.*[\\/]src[\\/]FluentBitwarden\.ComServer[\\/]src[\\/].*</Source>
+              </Include>
+            </Sources>
+            <EnableStaticNativeInstrumentation>True</EnableStaticNativeInstrumentation>
+            <EnableDynamicNativeInstrumentation>True</EnableDynamicNativeInstrumentation>
+            <EnableStaticNativeInstrumentationRestore>True</EnableStaticNativeInstrumentationRestore>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

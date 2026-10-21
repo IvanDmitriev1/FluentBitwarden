@@ -142,8 +142,6 @@
     <ClInclude Include="src\Passkey\Registration\AuthenticatorInfoBuilder.h" />
     <ClInclude Include="src\Passkey\Registration\PluginRegistrationManager.h" />
     <ClInclude Include="src\Passkey\WebAuthn\OperationRequestVerifier.h" />
-    <ClInclude Include="src\Passkey\WebAuthn\IOperationRequestVerifier.h" />
-    <ClInclude Include="src\Passkey\WebAuthn\WebAuthnPayload.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="resource.h" />
     <ClCompile Include="src\Infrastructure\DebugUtils.cpp" />
@@ -188,5 +186,11 @@
   <Target Name="GenerateWebAuthNPluginImportLibrary" BeforeTargets="Link" Inputs="$(WebAuthNPluginDefFile)" Outputs="$(WebAuthNPluginImportLibrary)" Condition="Exists('$(WebAuthNPluginDefFile)') and '$(WebAuthNPluginMachine)' != ''">
     <MakeDir Directories="$(WebAuthNPluginImportLibraryDir)" />
     <Exec Command="&quot;$(WebAuthNPluginLibTool)&quot; /NOLOGO /DEF:&quot;$(WebAuthNPluginDefFile)&quot; /MACHINE:$(WebAuthNPluginMachine) /NAME:webauthn.dll /OUT:&quot;$(WebAuthNPluginImportLibrary)&quot;" />
+  </Target>
+  <Target Name="GetComServerTestObjectFiles" DependsOnTargets="ComputeCLOutputs" Returns="@(ComServerTestObject)">
+    <ItemGroup>
+      <ComServerTestObject Include="@(Obj-&gt;WithMetadataValue('LinkCompiled', 'true')-&gt;ClearMetadata())" />
+      <ComServerTestObject Remove="@(ComServerTestObject)" Condition="'%(ComServerTestObject.Filename)' == 'WinMain'" />
+    </ItemGroup>
   </Target>
 </Project>

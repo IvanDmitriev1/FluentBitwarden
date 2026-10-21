@@ -80,11 +80,10 @@ namespace FluentBitwarden::ComServer::WebAuthn::ResponseEncoder
         attestation.cbAuthenticatorData = static_cast<DWORD>(credential.AuthenticatorData.size());
         attestation.pbAuthenticatorData = const_cast<PBYTE>(credential.AuthenticatorData.data());
 
-        // //Self attestation
+        //Self attestation
         attestation.pwszFormatType = WEBAUTHN_ATTESTATION_TYPE_NONE; 
         attestation.cbAttestation = 0;
         attestation.pbAttestation = nullptr;
-
 
         DWORD encodedSize = 0;
         BYTE* encodedResponse = nullptr;

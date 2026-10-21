@@ -4,7 +4,6 @@
 #include "Infrastructure/AppHostLauncher/AppHostLauncher.h"
 #include "Infrastructure/Ipc/IpcProtocol.h"
 #include "Passkey/Ipc/AppHostPasskeyClient.h"
-#include "Passkey/WebAuthn/OperationRequestVerifier.h"
 
 namespace FluentBitwarden::ComServer
 {
@@ -16,12 +15,10 @@ namespace FluentBitwarden::ComServer
 
 		try
 		{
-			auto verifier = std::make_unique<WebAuthn::OperationRequestVerifier>();
 			auto passkeyClient = std::make_unique<AppHostPasskeyClient>(std::wstring{ Ipc::Constants::PipePath });
 			auto appHostLauncher = std::make_unique<AppHostLauncher>();
 
 			auto obj = winrt::make<PluginAuthenticator>(
-				std::move(verifier),
 				std::move(passkeyClient),
 				std::move(appHostLauncher));
 

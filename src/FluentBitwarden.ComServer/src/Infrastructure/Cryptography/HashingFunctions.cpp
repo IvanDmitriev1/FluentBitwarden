@@ -3,14 +3,13 @@
 
 #include <bcrypt.h>
 
+using unique_bcrypt_hash = wil::unique_any<
+    BCRYPT_HASH_HANDLE,
+    decltype(&BCryptDestroyHash),
+    BCryptDestroyHash>;
+
 namespace FluentBitwarden::ComServer::Utils
 {
-	using unique_bcrypt_hash = wil::unique_any<
-		BCRYPT_HASH_HANDLE,
-		decltype(&BCryptDestroyHash),
-		BCryptDestroyHash>;
-
-
 	std::vector<std::uint8_t> ComputeSha256(std::span<const std::uint8_t> data)
 	{
 		DWORD objectLength = 0;

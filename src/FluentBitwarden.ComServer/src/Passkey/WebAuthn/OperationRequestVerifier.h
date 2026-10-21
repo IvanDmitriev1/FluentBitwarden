@@ -1,12 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "Passkey/WebAuthn/IOperationRequestVerifier.h"
 
-namespace FluentBitwarden::ComServer::WebAuthn
+namespace FluentBitwarden::ComServer::WebAuthn::OperationRequestVerifier
 {
-	class OperationRequestVerifier final : public IOperationRequestVerifier
-	{
-	public:
-		void Verify(const WEBAUTHN_PLUGIN_OPERATION_REQUEST& request) const override;
-	};
+	void VerifyOperationRequest(const WEBAUTHN_PLUGIN_OPERATION_REQUEST& request);
 }
