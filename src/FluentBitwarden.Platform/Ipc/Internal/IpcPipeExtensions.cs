@@ -7,6 +7,10 @@ namespace FluentBitwarden.Platform.Ipc.Internal;
 
 internal static class IpcPipeExtensions
 {
+    public static bool HasDisconnectedOrUnexpectedData(this NamedPipeServerStream pipe) =>
+        !PInvoke.PeekNamedPipe(pipe.SafePipeHandle, Span<byte>.Empty, out _, out uint available, out _)
+        || available != 0;
+
     public static uint GetClientProcessId(this NamedPipeServerStream pipe)
     {
         return !PInvoke.GetNamedPipeClientProcessId(

@@ -6,11 +6,13 @@ internal readonly record struct IpcMessageHeader(
     ushort MessageType,
     int PayloadLength)
 {
-    private const int HeaderSize = 2 * sizeof(ushort) + sizeof(int); // ProtocolVersion + MessageType + PayloadLength
+    public const int HeaderSize = 2 * sizeof(ushort) + sizeof(int); // ProtocolVersion + MessageType + PayloadLength
 
     private const int VersionOffset = 0;
     private const int MessageTypeOffset = sizeof(ushort);
     private const int PayloadLengthOffset = sizeof(ushort) * 2;
+
+    public bool IsValid => MessageType != 0 && PayloadLength >= 0;
 
     public async Task WriteAsync(Stream stream, CancellationToken cancellationToken = default)
     {
@@ -33,19 +35,34 @@ internal readonly record struct IpcMessageHeader(
 
     public static async Task<IpcMessageHeader> ReadAsync(
         Stream stream,
+        Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
-        byte[] header = new byte[HeaderSize];
-        await stream.ReadExactlyAsync(header, cancellationToken);
+        if (buffer.Length != HeaderSize)
+            throw new InvalidDataException($"An IPC request header must be {HeaderSize} bytes, got {buffer.Length}.");
+
+        int bytesRead = await stream.ReadAtLeastAsync(
+            buffer,
+            HeaderSize,
+            throwOnEndOfStream: false,
+            cancellationToken: cancellationToken);
+
+        return bytesRead == HeaderSize ? Parse(buffer.Span) : default;
+    }
+
+    public static IpcMessageHeader Parse(ReadOnlySpan<byte> header)
+    {
+        if (header.Length != HeaderSize)
+            throw new InvalidDataException($"An IPC request header must be {HeaderSize} bytes, got {header.Length}.");
 
         var version = BinaryPrimitives.ReadUInt16LittleEndian(
-            header.AsSpan(VersionOffset, sizeof(ushort)));
+            header[VersionOffset..MessageTypeOffset]);
 
         var messageType = BinaryPrimitives.ReadUInt16LittleEndian(
-            header.AsSpan(MessageTypeOffset, sizeof(ushort)));
+            header[MessageTypeOffset..PayloadLengthOffset]);
 
         int payloadLength = BinaryPrimitives.ReadInt32LittleEndian(
-            header.AsSpan(PayloadLengthOffset, sizeof(int)));
+            header[PayloadLengthOffset..]);
 
         if (version != IpcConstants.ProtocolVersion)
         {
