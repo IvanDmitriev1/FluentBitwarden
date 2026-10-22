@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <wil/cppwinrt.h>
 #include <wil/resource.h>
