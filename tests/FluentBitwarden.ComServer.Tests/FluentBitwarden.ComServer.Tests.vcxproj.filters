@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Ipc">
+      <UniqueIdentifier>{C90C840D-4AC9-42DF-97AF-5151CF4B4811}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cbor">
+      <UniqueIdentifier>{CE1E3499-0362-4BB5-B005-0221DC3CF087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Passkey">
+      <UniqueIdentifier>{1511F31F-4BE1-4698-849B-7437C630D9CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Support">
+      <UniqueIdentifier>{FE4C9E00-21F6-4E6D-A67B-6174B770DB3F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Infrastructure">
+      <UniqueIdentifier>{9FE4F323-8529-4A8B-B3B7-69EA9E1ACDF3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Infrastructure\HashingFunctionsTests.cpp">
+      <Filter>Infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\IpcBinaryTests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\IpcProtocolTests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\PipeWin32Tests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\AppNamedPipeClientTests.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="Cbor\CborWriterTests.cpp">
+      <Filter>Cbor</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\PasskeyAssertionMessageTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\PasskeyMakeCredentialMessageTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\AuthenticatorInfoBuilderTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\PluginAuthenticatorTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\OperationRequestVerifierTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\RequestDecoderTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\ResponseEncoderTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Passkey\AppHostPasskeyClientTests.cpp">
+      <Filter>Passkey</Filter>
+    </ClCompile>
+    <ClCompile Include="Support\TestOperationSigningKey.cpp">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="Support\TestWebAuthNEncoderApi.cpp">
+      <Filter>Support</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\FakeAppHostLauncher.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\FakePasskeyClient.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\PasskeyIpcFixtures.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\ScriptedNamedPipe.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="Support\TestOperationSigningKey.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natstepfilter" />
+  </ItemGroup>
+</Project>

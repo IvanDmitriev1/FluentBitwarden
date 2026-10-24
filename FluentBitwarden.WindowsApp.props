@@ -1,12 +1,15 @@
 <Project>
   <Import Project="$(MSBuildThisFileDirectory)FluentBitwarden.Windows.props" />
 
-  <PropertyGroup Label="Windows Application Defaults">
+  <PropertyGroup Label="Windows Application Defaults" Condition="'$(UsingMicrosoftNETSdk)' == 'true'">
     <OutputType>WinExe</OutputType>
     <SelfContained>false</SelfContained>
     <PublishSelfContained>false</PublishSelfContained>
     <PublishTrimmed>false</PublishTrimmed>
+    <PublishAot>false</PublishAot>
+    <PublishSingleFile>false</PublishSingleFile>
     <PublishReadyToRun>false</PublishReadyToRun>
     <PublishReadyToRunComposite>false</PublishReadyToRunComposite>
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
   </PropertyGroup>
 </Project>

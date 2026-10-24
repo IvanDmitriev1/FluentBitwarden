@@ -45,7 +45,15 @@ dotnet test --project tests\FluentBitwarden.Platform.Tests\FluentBitwarden.Platf
 dotnet test --project tests\FluentBitwarden.AppHost.IntegrationTests\FluentBitwarden.AppHost.IntegrationTests.csproj --configuration Release --arch x64 --results-directory TestResults\AppHostIntegration --report-trx
 ```
 
-CI runs all three projects after the solution build.
+The native C++ COM server has a Visual Studio native unit-test project. Build and run it from a Visual Studio Developer PowerShell:
+
+```powershell
+msbuild tests\FluentBitwarden.ComServer.Tests\FluentBitwarden.ComServer.Tests.vcxproj /p:Configuration=Debug /p:Platform=x64 /v:minimal
+vstest.console.exe tests\FluentBitwarden.ComServer.Tests\bin\x64\Debug\FluentBitwarden.ComServer.Tests.dll /Platform:x64 /Logger:trx /ResultsDirectory:TestResults\ComServerNative
+msbuild tests\FluentBitwarden.ComServer.Tests\FluentBitwarden.ComServer.Tests.vcxproj /p:Configuration=Release /p:Platform=ARM64 /v:minimal
+```
+
+CI runs the native x64 Release test DLL after the full solution build, uploads its TRX result, then runs all three managed test projects.
 
 ## Global workflow and cross-project changes
 

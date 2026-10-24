@@ -1,24 +1,18 @@
 #include "pch.h"
 #include "Passkey/PluginAuthenticator.h"
-#include "Application/Activation/AppActivationLauncher.h"
-#include "Infrastructure/Ipc/AppNamedPipeClient.h"
-
 #include "Passkey/WebAuthn/OperationRequestVerifier.h"
 #include "Passkey/WebAuthn/RequestDecoder.h"
 #include "Passkey/WebAuthn/ResponseEncoder.h"
 
 namespace FluentBitwarden::ComServer
 {
-	IFACEMETHODIMP PluginAuthenticatorFactory::CreateInstance(IUnknown* outer, REFIID iid, void** result) noexcept
+	PluginAuthenticator::PluginAuthenticator(
+		std::unique_ptr<IPasskeyClient> passkeyClient,
+		std::unique_ptr<IAppHostLauncher> appHostLauncher)
+		: m_passkeyClient(std::move(passkeyClient)),
+		  m_appHostLauncher(std::move(appHostLauncher))
 	{
-		RETURN_HR_IF(CLASS_E_NOAGGREGATION, outer != nullptr);
-		RETURN_HR_IF_NULL(E_POINTER, result);
-		*result = nullptr;
-
-		auto obj = winrt::make<PluginAuthenticator>();
-		RETURN_IF_FAILED(obj->QueryInterface(iid, result));
-
-		return S_OK;
+		
 	}
 
 	IFACEMETHODIMP PluginAuthenticator::MakeCredential(PCWEBAUTHN_PLUGIN_OPERATION_REQUEST request, PWEBAUTHN_PLUGIN_OPERATION_RESPONSE response) noexcept
@@ -30,8 +24,7 @@ namespace FluentBitwarden::ComServer
 
             auto ipcRequest = WebAuthn::RequestDecoder::DecodeMakeCredential(request);
 
-            Ipc::AppNamedPipeClient m_pipeClient;
-            auto credential = m_pipeClient.SendAsync<WebAuthn::PasskeyMakeCredentialRequest, WebAuthn::PasskeyMakeCredentialResponse>(std::move(ipcRequest)).get();
+            auto credential = m_passkeyClient->MakeCredential(std::move(ipcRequest)).get();
             WebAuthn::ResponseEncoder::EncodeMakeCredential(credential, response);
 
 			RETURN_HR(S_OK);
@@ -49,8 +42,7 @@ namespace FluentBitwarden::ComServer
 
             auto ipcRequest = WebAuthn::RequestDecoder::DecodeGetAssertion(request);
 
-            Ipc::AppNamedPipeClient m_pipeClient;
-			auto assertion = m_pipeClient.SendAsync<WebAuthn::PasskeyGetAssertionRequest, WebAuthn::PasskeyAssertionResponse>(std::move(ipcRequest)).get();
+			auto assertion = m_passkeyClient->GetAssertion(std::move(ipcRequest)).get();
 			WebAuthn::ResponseEncoder::EncodeGetAssertion(assertion, response);
 
 			return S_OK;
@@ -71,7 +63,7 @@ namespace FluentBitwarden::ComServer
 		{
 			RETURN_HR_IF_NULL(E_POINTER, lockStatus);
 
-			AppActivationLauncher::ActivateAppHost(L"--headless");
+			m_appHostLauncher->ActivateHeadless();
 
 			*lockStatus = PluginLocked;
 			return S_OK;

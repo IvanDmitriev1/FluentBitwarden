@@ -3,22 +3,31 @@
 #include "Passkey/Registration/PluginRegistrationManager.h"
 #include "Passkey/Registration/AuthenticatorInfoBuilder.h"
 
-namespace FluentBitwarden::ComServer
+namespace FluentBitwarden::ComServer::PluginRegistrationManager
 {
+    using unique_add_auth_response =
+        wil::unique_any<
+        PWEBAUTHN_PLUGIN_ADD_AUTHENTICATOR_RESPONSE,
+        decltype(&WebAuthNPluginFreeAddAuthenticatorResponse),
+        WebAuthNPluginFreeAddAuthenticatorResponse>;
 
-	using unique_add_auth_response =
-		wil::unique_any<
-		PWEBAUTHN_PLUGIN_ADD_AUTHENTICATOR_RESPONSE,
-		decltype(&WebAuthNPluginFreeAddAuthenticatorResponse),
-		WebAuthNPluginFreeAddAuthenticatorResponse>;
+    using unique_public_key =
+        wil::unique_any<
+        PBYTE,
+        decltype(&WebAuthNPluginFreePublicKeyResponse),
+        WebAuthNPluginFreePublicKeyResponse>;
 
-	using unique_public_key =
-		wil::unique_any<
-		PBYTE,
-		decltype(&WebAuthNPluginFreePublicKeyResponse),
-		WebAuthNPluginFreePublicKeyResponse>;
+	namespace
+	{
+		constexpr std::wstring_view kPluginName = L"FluentBitwarden";
+		constexpr std::wstring_view kPluginRpId = L"fluentbitwarden.app";
 
-	void PluginRegistrationManager::EnsureRegistered()
+		void RegisterNew();
+		void UpdateExisting();
+		bool IsRegistered();
+	}
+
+	void EnsureRegistered()
 	{
 		if (!IsRegistered())
 		{
@@ -29,12 +38,12 @@ namespace FluentBitwarden::ComServer
 		UpdateExisting();
 	}
 
-	void PluginRegistrationManager::Unregister()
+	void Unregister()
 	{
 		THROW_IF_FAILED(WebAuthNPluginRemoveAuthenticator(PluginAuthenticator::CLSID));
 	}
 
-	std::vector<std::uint8_t> PluginRegistrationManager::GetOperationSigningPublicKey()
+	std::vector<std::uint8_t> GetOperationSigningPublicKey()
 	{
 		DWORD cbKey = 0;
 		PBYTE rawKey = nullptr;
@@ -53,56 +62,59 @@ namespace FluentBitwarden::ComServer
 		return publicKey;
 	}
 
-	void PluginRegistrationManager::RegisterNew()
+	namespace
 	{
-		auto authenticatorInfo = PasskeyPlugin::Registration::BuildAuthenticatorGetInfoCbor();
-
-		WEBAUTHN_PLUGIN_ADD_AUTHENTICATOR_OPTIONS options
+		void RegisterNew()
 		{
-			.pwszAuthenticatorName = kPluginName.data(),
-			.rclsid = PluginAuthenticator::CLSID,
-			.pwszPluginRpId = kPluginRpId.data(),
-			.pwszLightThemeLogoSvg = nullptr,
-			.pwszDarkThemeLogoSvg = nullptr,
-			.cbAuthenticatorInfo = static_cast<DWORD>(authenticatorInfo.size()),
-			.pbAuthenticatorInfo = authenticatorInfo.data(),
-			.cSupportedRpIds = 0,
-			.ppwszSupportedRpIds = nullptr,
-		};
+			auto authenticatorInfo = PasskeyPlugin::Registration::BuildAuthenticatorGetInfoCbor();
 
-		PWEBAUTHN_PLUGIN_ADD_AUTHENTICATOR_RESPONSE rawResponse = nullptr;
-		THROW_IF_FAILED(WebAuthNPluginAddAuthenticator(&options, &rawResponse));
-		unique_add_auth_response response{ rawResponse };
-	}
+			WEBAUTHN_PLUGIN_ADD_AUTHENTICATOR_OPTIONS options
+			{
+				.pwszAuthenticatorName = kPluginName.data(),
+				.rclsid = PluginAuthenticator::CLSID,
+				.pwszPluginRpId = kPluginRpId.data(),
+				.pwszLightThemeLogoSvg = nullptr,
+				.pwszDarkThemeLogoSvg = nullptr,
+				.cbAuthenticatorInfo = static_cast<DWORD>(authenticatorInfo.size()),
+				.pbAuthenticatorInfo = authenticatorInfo.data(),
+				.cSupportedRpIds = 0,
+				.ppwszSupportedRpIds = nullptr,
+			};
 
-	void PluginRegistrationManager::UpdateExisting()
-	{
-		auto authenticatorInfo = PasskeyPlugin::Registration::BuildAuthenticatorGetInfoCbor();
+			PWEBAUTHN_PLUGIN_ADD_AUTHENTICATOR_RESPONSE rawResponse = nullptr;
+			THROW_IF_FAILED(WebAuthNPluginAddAuthenticator(&options, &rawResponse));
+			unique_add_auth_response response{ rawResponse };
+		}
 
-		WEBAUTHN_PLUGIN_UPDATE_AUTHENTICATOR_DETAILS details
+		void UpdateExisting()
 		{
-			.pwszAuthenticatorName = kPluginName.data(),
-			.rclsid = PluginAuthenticator::CLSID,
-			.rclsidNew = PluginAuthenticator::CLSID,
-			.pwszLightThemeLogoSvg = nullptr,
-			.pwszDarkThemeLogoSvg = nullptr,
-			.cbAuthenticatorInfo = static_cast<DWORD>(authenticatorInfo.size()),
-			.pbAuthenticatorInfo = authenticatorInfo.data(),
-			.cSupportedRpIds = 0,
-			.ppwszSupportedRpIds = nullptr,
-		};
+			auto authenticatorInfo = PasskeyPlugin::Registration::BuildAuthenticatorGetInfoCbor();
 
-		THROW_IF_FAILED(WebAuthNPluginUpdateAuthenticatorDetails(&details));
-	}
+			WEBAUTHN_PLUGIN_UPDATE_AUTHENTICATOR_DETAILS details
+			{
+				.pwszAuthenticatorName = kPluginName.data(),
+				.rclsid = PluginAuthenticator::CLSID,
+				.rclsidNew = PluginAuthenticator::CLSID,
+				.pwszLightThemeLogoSvg = nullptr,
+				.pwszDarkThemeLogoSvg = nullptr,
+				.cbAuthenticatorInfo = static_cast<DWORD>(authenticatorInfo.size()),
+				.pbAuthenticatorInfo = authenticatorInfo.data(),
+				.cSupportedRpIds = 0,
+				.ppwszSupportedRpIds = nullptr,
+			};
 
-	bool PluginRegistrationManager::IsRegistered()
-	{
-		AUTHENTICATOR_STATE state{};
-		const HRESULT hr = WebAuthNPluginGetAuthenticatorState(
-			PluginAuthenticator::CLSID,
-			&state);
+			THROW_IF_FAILED(WebAuthNPluginUpdateAuthenticatorDetails(&details));
+		}
 
-		return SUCCEEDED(hr);
+		bool IsRegistered()
+		{
+			AUTHENTICATOR_STATE state{};
+			const HRESULT hr = WebAuthNPluginGetAuthenticatorState(
+				PluginAuthenticator::CLSID,
+				&state);
+
+			return SUCCEEDED(hr);
+		}
 	}
 
 }

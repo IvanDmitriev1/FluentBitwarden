@@ -63,7 +63,7 @@ internal static class AppHostHostingTestSupport
         new(CreateActions(uiProcessLauncher, applicationLifetime));
 
     internal static IReadOnlyList<TrayMenuItem> SelectionItems(Action execute) =>
-    [
+    (TrayMenuItem[])[
         new TrayMenuItem.Command("First", execute),
         new TrayMenuItem.Command("Second", execute),
         new TrayMenuItem.Separator(),

@@ -1,3 +1,5 @@
+using System.IO.Pipes;
+
 namespace FluentBitwarden.Platform.Ipc.Models;
 
 internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
@@ -8,18 +10,27 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
 
     public async Task<IpcRpcInvocationResult> InvokeAsync(
         IServiceProvider requestServices,
-        Stream stream,
+        NamedPipeServerStream stream,
         byte[] payload,
         CancellationToken cancellationToken)
     {
         using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var disconnectTask = stream.MonitorDisconnectAsync(requestCts);
+        Task<bool>? disconnectTask = null;
         IpcRpcInvocationResult result;
 
         try
         {
-            result = IpcRpcInvocationResult.Success(
-                await InvokeCoreAsync(requestServices, stream, payload, requestCts.Token));
+            if (stream.HasDisconnectedOrUnexpectedData())
+                return IpcRpcInvocationResult.NoResponse;
+
+            Task<byte[]> invocation = InvokeCoreAsync(requestServices, stream, payload, requestCts.Token);
+            if (!invocation.IsCompleted)
+                disconnectTask = stream.MonitorDisconnectAsync(requestCts);
+
+            result = IpcRpcInvocationResult.Success(await invocation);
+
+            if (disconnectTask is null && stream.HasDisconnectedOrUnexpectedData())
+                result = IpcRpcInvocationResult.NoResponse;
         }
         catch (OperationCanceledException) when (
             cancellationToken.IsCancellationRequested || requestCts.IsCancellationRequested)
@@ -33,7 +44,7 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
         finally
         {
             requestCts.Cancel();
-            if (await disconnectTask && !cancellationToken.IsCancellationRequested)
+            if (disconnectTask is not null && await disconnectTask && !cancellationToken.IsCancellationRequested)
                 result = IpcRpcInvocationResult.NoResponse;
         }
 
@@ -45,26 +56,4 @@ internal abstract class IpcRpcEndpoint(IpcRpcHandlerMethodDescriptor descriptor)
         Stream stream,
         byte[] payload,
         CancellationToken cancellationToken);
-}
-
-internal readonly record struct IpcRpcInvocationResult(
-    IpcRpcInvocationStatus Status,
-    byte[]? ResponsePayload,
-    Exception? Exception)
-{
-    public static IpcRpcInvocationResult Success(byte[] responsePayload) =>
-        new(IpcRpcInvocationStatus.Success, responsePayload, null);
-
-    public static IpcRpcInvocationResult Failure(Exception exception) =>
-        new(IpcRpcInvocationStatus.Failure, null, exception);
-
-    public static IpcRpcInvocationResult NoResponse =>
-        new(IpcRpcInvocationStatus.NoResponse, null, null);
-}
-
-internal enum IpcRpcInvocationStatus
-{
-    Success,
-    Failure,
-    NoResponse,
 }

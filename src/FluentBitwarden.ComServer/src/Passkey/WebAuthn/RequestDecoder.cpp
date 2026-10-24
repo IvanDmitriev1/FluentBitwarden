@@ -102,8 +102,8 @@ namespace FluentBitwarden::ComServer::WebAuthn::RequestDecoder
 
         if (rawRequest->pAuthenticatorOptions != nullptr)
         {
-            requireResidentKey = rawRequest->pAuthenticatorOptions->lRequireResidentKey;
-            userVerification =rawRequest->pAuthenticatorOptions->lUv;
+            requireResidentKey = rawRequest->pAuthenticatorOptions->lRequireResidentKey > 0;
+            userVerification = rawRequest->pAuthenticatorOptions->lUv > 0;
         }
 
         return PasskeyMakeCredentialRequest

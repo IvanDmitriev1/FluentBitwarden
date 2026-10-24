@@ -4,7 +4,6 @@
   <PropertyGroup>
     <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
     <!-- Source generation sees inherited VaultCipher.Attachments.FileSize, but the parser removes
          attachments from its cipher JSON contract and maps them from DTOs after deserialization. -->
@@ -24,19 +23,14 @@
 
   <ItemGroup>
     <PackageReference Include="AsyncAwaitBestPractices" />
-    <PackageReference Include="ConfigureAwait.Fody" PrivateAssets="all" ExcludeAssets="runtime">
-      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="ConfigureAwait.Fody" />
     <PackageReference Include="Dapper" />
     <PackageReference Include="Dapper.AOT" />
     <PackageReference Include="dbup-sqlite" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Windows.CsWin32">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Windows.CsWin32" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="NsDepCop">
       <PrivateAssets>all</PrivateAssets>

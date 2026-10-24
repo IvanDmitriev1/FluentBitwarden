@@ -4,7 +4,7 @@ namespace FluentBitwarden.AppHost.Hosting;
 
 internal sealed class AppTray(AppHostActions actions)
 {
-    public IReadOnlyList<TrayMenuItem> CreateMenu() =>
+    public IReadOnlyList<TrayMenuItem> CreateMenu() => (TrayMenuItem[])
     [
         new TrayMenuItem.Command("Show", actions.ShowMainWindow),
         new TrayMenuItem.Command("Lock", actions.Lock),

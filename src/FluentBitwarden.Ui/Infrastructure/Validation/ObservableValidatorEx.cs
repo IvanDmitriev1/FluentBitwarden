@@ -49,7 +49,7 @@ internal abstract class ObservableValidatorEx : ObservableValidator, INotifyData
 
         _manualErrors[propertyName] = new ValidationResult(
             errorMessage,
-            [propertyName]);
+            new[] { propertyName });
 
         RaiseErrorsChanged(propertyName);
 

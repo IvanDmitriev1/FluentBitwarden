@@ -5,8 +5,8 @@
   <PropertyGroup Label="Shared Package Versions">
     <CommunityToolkitVersion>8.4.2</CommunityToolkitVersion>
     <CommunityToolkitWinUIVersion>8.2.251219</CommunityToolkitWinUIVersion>
-    <NetPackageVersion>10.0.12</NetPackageVersion>
-    <WindowsAppSdkVersion>2.4.0</WindowsAppSdkVersion>
+    <NetPackageVersion>10.0.13</NetPackageVersion>
+    <WindowsAppSdkVersion>2.5.1</WindowsAppSdkVersion>
   </PropertyGroup>
   <ItemGroup Label="Shared Dependencies">
     <PackageVersion Include="AsyncAwaitBestPractices" Version="10.0.0" />
@@ -18,7 +18,7 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.333" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.363" />
     <PackageVersion Include="NsDepCop" Version="3.1.0" />
     <PackageVersion Include="SourceGear.sqlite3" Version="3.50.4.5" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
@@ -29,7 +29,7 @@
   <ItemGroup Label="API Dependencies">
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
     <PackageVersion Include="Otp.NET" Version="1.4.1" />
     <PackageVersion Include="StronglyTypedId" Version="1.0.0-beta08" />
     <PackageVersion Include="Utf8JsonStreamReader" Version="4.0.1" />
@@ -60,7 +60,7 @@
   </ItemGroup>
   <ItemGroup Label="Command Palette Dependencies">
     <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.11.260520004" />
-    <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
     <PackageVersion Include="Shmuelie.WinRTServer" Version="2.2.1" />
   </ItemGroup>
   <ItemGroup Label="Test Dependencies">

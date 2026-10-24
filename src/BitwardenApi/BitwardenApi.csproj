@@ -5,9 +5,7 @@
 
   <ItemGroup>
 	  <PackageReference Include="BouncyCastle.Cryptography" />
-    <PackageReference Include="ConfigureAwait.Fody" PrivateAssets="all" ExcludeAssets="runtime">
-      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="ConfigureAwait.Fody" />
     <PackageReference Include="MemoryPack" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />

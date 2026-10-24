@@ -8,23 +8,7 @@
 	  <WarningsNotAsErrors>$(WarningsNotAsErrors);AD0001</WarningsNotAsErrors>
 	  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
-	  <IsAotCompatible>true</IsAotCompatible>
 	  <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
 	  <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
   </PropertyGroup>
-
-  <PropertyGroup Label="Windows App Project Configurations" Condition="'$(UsingMicrosoftNETSdk)' == 'true' and Exists('$(MSBuildProjectDirectory)\app.manifest')">
-    <Configurations Condition="'$(Configurations)' == ''">Debug;Release</Configurations>
-  </PropertyGroup>
-
-	<PropertyGroup Condition="'$(UsingMicrosoftNETSdk)' == 'true' and '$(Configuration)' == 'Debug'">
-		<PublishTrimmed>false</PublishTrimmed>
-		<EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-		<EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
-		<EnableAotAnalyzer>true</EnableAotAnalyzer>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(UsingMicrosoftNETSdk)' == 'true' and '$(Configuration)' != 'Debug'">
-		<ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
-	</PropertyGroup>
 </Project>
