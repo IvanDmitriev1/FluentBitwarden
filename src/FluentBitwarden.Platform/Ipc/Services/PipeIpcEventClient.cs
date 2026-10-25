@@ -80,10 +80,17 @@ internal sealed class PipeIpcEventClient(string pipeName, ILogger<PipeIpcEventCl
             try
             {
                 await pipe.ConnectAsync(stoppingToken);
+                byte[] headerBuffer = new byte[IpcMessageHeader.HeaderSize];
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
+                    var header = await IpcMessageHeader.ReadAsync(pipe, headerBuffer, stoppingToken);
+                    if (!header.IsValid)
+                    {
+                        logger.EventConnectionClosed();
+                        break;
+                    }
+
                     byte[] buffer = new byte[header.PayloadLength];
                     await pipe.ReadExactlyAsync(buffer, stoppingToken);
 

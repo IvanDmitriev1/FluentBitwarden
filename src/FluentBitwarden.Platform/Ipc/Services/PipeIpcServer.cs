@@ -76,7 +76,14 @@ internal sealed class PipeIpcServer(
                 return;
             }
 
-            var header = await IpcMessageHeader.ReadAsync(pipe, stoppingToken);
+            byte[] headerBuffer = new byte[IpcMessageHeader.HeaderSize];
+            var header = await IpcMessageHeader.ReadAsync(pipe, headerBuffer, stoppingToken);
+            if (!header.IsValid)
+            {
+                logger.ClientDisconnected();
+                return;
+            }
+
             if (!endpoints.TryGetValue(header.MessageType, out var endpoint))
             {
                 logger.UnknownMessageTypeRejected(header.MessageType);
@@ -90,7 +97,17 @@ internal sealed class PipeIpcServer(
             }*/
 
             byte[] payload = new byte[header.PayloadLength];
-            await pipe.ReadExactlyAsync(payload, 0, payload.Length, stoppingToken);
+            int bytesRead = await pipe.ReadAtLeastAsync(
+                payload,
+                payload.Length,
+                throwOnEndOfStream: false,
+                cancellationToken: stoppingToken);
+
+            if (bytesRead != payload.Length)
+            {
+                logger.ClientDisconnected();
+                return;
+            }
 
             IpcRpcInvocationResult result;
             try

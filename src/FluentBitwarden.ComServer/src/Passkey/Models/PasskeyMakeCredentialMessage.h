@@ -1,5 +1,5 @@
 #pragma once
-#include "Passkey/WebAuthn/WebAuthnPayload.h"
+#include <pch.h>
 #include "Infrastructure/Ipc/IpcBinary.h"
 #include "Infrastructure/Ipc/IpcProtocol.h"
 
@@ -25,8 +25,8 @@ namespace FluentBitwarden::ComServer::WebAuthn
             const auto clientDataHash = std::span<const std::uint8_t>{ ClientDataHash.data(), ClientDataHash.size() };
             const auto userId = std::span<const std::uint8_t>{ UserId.data(),UserId.size() };
 
-            Payload::ValidateSha256Hash(rpIdHash,"RpIdHash");
-            Payload::ValidateSha256Hash(clientDataHash,"ClientDataHash");
+            THROW_HR_IF_MSG(E_INVALIDARG, rpIdHash.size() != 32, "RpIdHash must be 32 bytes.");
+            THROW_HR_IF_MSG(E_INVALIDARG, clientDataHash.size() != 32, "ClientDataHash must be 32 bytes.");
 
             Ipc::Binary::PayloadWriter writer;
             writer.WriteObjectHeader(MemberCount);

@@ -8,6 +8,10 @@ public class IpcPayloadValidationTests
     public static TheoryData<string, byte[]> ServerRejectedRequests => new()
     {
         {
+            "zero message id",
+            RawIpcClient.RequestHeader(IpcConstants.ProtocolVersion, messageType: 0, payloadLength: 0)
+        },
+        {
             "unsupported protocol version",
             RawIpcClient.RequestHeader(
                 (ushort)(IpcConstants.ProtocolVersion + 1),
@@ -32,6 +36,7 @@ public class IpcPayloadValidationTests
 
     public static TheoryData<string, byte[]> IncompleteRequests => new()
     {
+        { "no header", [] },
         {
             "truncated header",
             RawIpcClient.RequestHeader(

@@ -33,9 +33,17 @@ namespace FluentBitwarden::ComServer
 
     void CborWriter::WriteInteger(std::int64_t value)
     {
-        m_size += CborLite::encodeInteger(
+        if (value < 0)
+        {
+            m_size += CborLite::encodeNegative(
+                m_buffer,
+                static_cast<std::uint64_t>(-(value + 1)));
+            return;
+        }
+
+        m_size += CborLite::encodeUnsigned(
             m_buffer,
-            static_cast<std::int64_t>(value));
+            static_cast<std::uint64_t>(value));
     }
 
     void CborWriter::WriteBool(bool value)

@@ -28,7 +28,7 @@ public sealed class AccountProfileRepositoryTests
         var accounts = new AccountProfileRepository(readUnitOfWork).GetAccounts();
 
         Assert.Equal(
-            ["alpha@example.test", "zeta@example.test"],
+            (string[])["alpha@example.test", "zeta@example.test"],
             accounts.Select(account => account.Email));
     }
 

@@ -502,7 +502,7 @@ public sealed class SqliteInitializationServiceTests
         using var database = new TemporarySqliteDatabase();
         using var connection = database.OpenConnection();
         CreateJournal(connection);
-        InsertJournalEntries(connection, [existingFutureJournalName]);
+        InsertJournalEntries(connection, (string[])[existingFutureJournalName]);
         connection.Execute(scriptSql);
         connection.Execute("INSERT INTO future_migration_data (value) VALUES ('kept');");
 
