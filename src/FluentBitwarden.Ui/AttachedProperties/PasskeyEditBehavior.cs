@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 namespace FluentBitwarden.AttachedProperties;
 
 /// <summary>
-/// Removes the passkey from the bound <see cref="LoginVaultCipher"/> when the attached button is
+/// Removes the passkey from the bound <see cref="LoginCipher"/> when the attached button is
 /// clicked, and collapses the given row. The contract type raises no change notification, so the
 /// row is hidden imperatively rather than through a binding.
 /// </summary>
@@ -25,7 +25,7 @@ public static partial class PasskeyEditBehavior
     {
         var button = (ButtonBase)sender;
 
-        if (button.DataContext is LoginVaultCipher login)
+        if (button.DataContext is LoginCipher login)
             login.Fido2Credential = null;
 
         if (GetRemovePanel(button) is { } panel)

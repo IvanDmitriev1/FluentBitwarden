@@ -1,5 +1,4 @@
-using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Items.Contracts;
+using BitwardenApi.Client;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Persistance.Mappers;

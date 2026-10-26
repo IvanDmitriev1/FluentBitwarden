@@ -1,3 +1,4 @@
+
 using System.Buffers.Binary;
 using System.Text;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -98,7 +99,7 @@ internal sealed record SyntheticOpenSshKey(
     byte[] PublicKeyBlob,
     Ed25519PublicKeyParameters PublicKey)
 {
-    public SshKeyVaultCipher CreateCipher(string name = "synthetic key") => new()
+    public SshKeyCipher CreateCipher(string name = "synthetic key") => new()
     {
         Id = CipherId.Empty,
         Name = name,

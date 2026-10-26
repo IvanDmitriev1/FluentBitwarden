@@ -2,7 +2,6 @@ using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
-using BitwardenApi.Vault.Cryptography;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 

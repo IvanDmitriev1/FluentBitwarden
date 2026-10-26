@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <UserControl
     x:Class="FluentBitwarden.Controls.VaultCiphers.VaultCipherDetailView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:contracts="using:BitwardenApi.Vault.Items.Contracts"
+    xmlns:contracts="using:BitwardenApi.Vault.Folders.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:metadataTimeline="using:FluentBitwarden.Controls.Shared.MetadataTimeline"
@@ -42,10 +42,10 @@
                             SelectedValue="{x:Bind SelectedCipher.FolderId, Mode=TwoWay, Converter={StaticResource FolderIdSelectedValueConverter}}"
                             SelectedValuePath="Id">
                             <shared:ComboBoxEx.NoneItem>
-                                <contracts:VaultFolder Name="No Folder" />
+                                <contracts:Folder Name="No Folder" />
                             </shared:ComboBoxEx.NoneItem>
                             <shared:ComboBoxEx.ItemTemplate>
-                                <DataTemplate x:DataType="contracts:VaultFolder">
+                                <DataTemplate x:DataType="contracts:Folder">
                                     <TextBlock Text="{x:Bind Name}" />
                                 </DataTemplate>
                             </shared:ComboBoxEx.ItemTemplate>

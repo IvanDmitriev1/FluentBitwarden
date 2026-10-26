@@ -1,4 +1,4 @@
-using BitwardenApi.Primitives;
+using BitwardenApi.Client;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Contracts;

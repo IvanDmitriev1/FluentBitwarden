@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
@@ -17,7 +16,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public VaultCipher? GetCipher(CipherId id)
+    public Cipher? GetCipher(CipherId id)
     {
         lock (_lock)
         {
@@ -25,7 +24,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public VaultCipher[] GetCiphers(VaultCipherQuery query)
+    public Cipher[] GetCiphers(VaultCipherQuery query)
     {
         lock (_lock)
         {
@@ -33,7 +32,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public VaultFolder[] GetFolders()
+    public Folder[] GetFolders()
     {
         lock (_lock)
         {
@@ -41,7 +40,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public void ReplaceContents(List<VaultCipher> ciphers, List<VaultFolder> folders, List<VaultCollection> collections)
+    public void ReplaceContents(List<Cipher> ciphers, List<Folder> folders, List<Collection> collections)
     {
         lock (_lock)
         {
@@ -51,7 +50,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public void UpsertCipher(VaultCipher cipher)
+    public void UpsertCipher(Cipher cipher)
     {
         lock (_lock)
         {

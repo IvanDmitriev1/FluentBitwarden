@@ -1,4 +1,3 @@
-using BitwardenApi.Infrastructure.Cryptography.Enc;
 using BitwardenApi.Vault.Attachments;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
@@ -7,7 +6,7 @@ using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
 
 internal sealed class VaultCipherAttachmentService(
-    IVaultCipherAttachmentApi attachmentApi,
+    IAttachmentsApi attachmentApi,
     VaultReaderRepository vaultReaderRepository) : IVaultCipherAttachmentService
 {
     public Task DownloadAsync(
@@ -31,7 +30,7 @@ internal sealed class VaultCipherAttachmentService(
                 await using var destinationFileStream = File.Create(destinationPath, 4096,
                     FileOptions.Asynchronous | FileOptions.SequentialScan);
 
-                await EncFile.DecryptToAsync(decryptionKey, stream, destinationFileStream, cancellationToken);
+                await AttachmentDecryptor.DecryptToAsync(decryptionKey, stream, destinationFileStream, cancellationToken);
             }, cancellationToken
         );
 }

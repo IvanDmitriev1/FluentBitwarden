@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Cryptography;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Contracts;
 

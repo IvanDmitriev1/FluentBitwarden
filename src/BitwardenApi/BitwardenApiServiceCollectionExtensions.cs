@@ -1,10 +1,13 @@
 using BitwardenApi.Identity;
 using BitwardenApi.Vault.Attachments;
-using BitwardenApi.Vault.Items;
+using BitwardenApi.Vault.Sync;
+using BitwardenApi.Vault.Ciphers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using System.Net;
+using System.Net.Http.Headers;
+using BitwardenApi.Client.Http;
 
 namespace BitwardenApi;
 
@@ -12,27 +15,28 @@ public static class BitwardenApiServiceCollectionExtensions
 {
     public static IServiceCollection AddBitwardenApi(this IServiceCollection services)
     {
-        services.AddTransient<BitwardenRequiredHeadersHandler>();
-        services.AddTransient<BitwardenAuthorizationHandler>();
+        services.AddTransient<AuthorizationHandler>();
 
-        services.AddHttpClient("BitwardenApiIdentityHttpClient", static client =>
+        services.AddHttpClient(HttpClientNames.Identity, static client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("Bitwarden-Client-Version", "2026.2.1");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
             .AddBitwardenReadRetry();
 
-        services.AddHttpClient("BitwardenApiVaultHttpClient", static client =>
+        services.AddHttpClient(HttpClientNames.Vault, static client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("Bitwarden-Client-Version", "2026.2.1");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddHttpMessageHandler<BitwardenRequiredHeadersHandler>()
-            .AddHttpMessageHandler<BitwardenAuthorizationHandler>()
+            .AddHttpMessageHandler<AuthorizationHandler>()
             .AddBitwardenReadRetry();
 
         // The blob download targets pre-signed third-party storage URLs. It deliberately carries no
         // Bitwarden authorization header or client headers so the access token is never disclosed.
-        services.AddHttpClient("BitwardenApiAttachmentDownloadHttpClient", static client =>
+        services.AddHttpClient(HttpClientNames.AttachmentDownload, static client =>
             {
                 client.Timeout = Timeout.InfiniteTimeSpan;
                 client.DefaultRequestVersion = HttpVersion.Version20;
@@ -42,10 +46,11 @@ public static class BitwardenApiServiceCollectionExtensions
 
         services.AddSingleton<IIdentityApi, IdentityApi>();
         services.AddSingleton<IWebAuthnIdentityApi, WebAuthnIdentityApi>();
-        services.AddSingleton<IVaultItemsApi, VaultItemsApi>();
-        services.AddSingleton<IVaultCipherAttachmentApi, VaultCipherAttachmentApi>();
+        services.AddSingleton<IVaultSyncApi, VaultSyncApi>();
+        services.AddSingleton<ICiphersApi, CiphersApi>();
+        services.AddSingleton<IAttachmentsApi, AttachmentsApi>();
 
-        //services.AddSingleton<IBitwardenNotificationsApi, BitwardenNotificationsApi>();
+        //services.AddSingleton<INotificationsApi, NotificationsApi>();
 
         return services;
     }

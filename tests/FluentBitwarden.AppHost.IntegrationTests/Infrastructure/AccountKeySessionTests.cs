@@ -1,6 +1,6 @@
+using BitwardenApi.Vault.Attachments;
 using System.Security.Cryptography;
 using System.Text;
-using BitwardenApi.Vault.Cryptography;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 
@@ -119,7 +119,7 @@ public sealed class AccountKeySessionTests
             using var source = new MemoryStream(encryptedFile);
             using var destination = new MemoryStream();
 
-            await EncFile.DecryptToAsync(attachmentKey, source, destination, TestContext.Current.CancellationToken);
+            await AttachmentDecryptor.DecryptToAsync(attachmentKey, source, destination, TestContext.Current.CancellationToken);
 
             Assert.Equal(plaintext, destination.ToArray());
 
@@ -128,7 +128,7 @@ public sealed class AccountKeySessionTests
                 context.Session.Dispose();
                 using var retainedKeySource = new MemoryStream(encryptedFile);
                 using var retainedKeyDestination = new MemoryStream();
-                await EncFile.DecryptToAsync(
+                await AttachmentDecryptor.DecryptToAsync(
                     attachmentKey,
                     retainedKeySource,
                     retainedKeyDestination,

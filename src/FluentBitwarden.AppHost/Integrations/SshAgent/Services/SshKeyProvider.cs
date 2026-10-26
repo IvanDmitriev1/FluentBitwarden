@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
@@ -20,7 +19,7 @@ internal sealed class SshKeyProvider(
     ISshUserActionDialogClient dialogClient,
     ISettingsStore settingsStore) : ISshKeyProvider
 {
-    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = VaultCipherType.SshKey };
+    private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
     public IReadOnlyList<SshAgentIdentity> GetIdentities()
     {
@@ -29,7 +28,7 @@ internal sealed class SshKeyProvider(
 
         using var lease = appSessionService.RequireUnlockedSessionLease();
 
-        var data = lease.Vault.GetCiphers(SshCipherQuery).OfType<SshKeyVaultCipher>()
+        var data = lease.Vault.GetCiphers(SshCipherQuery).OfType<SshKeyCipher>()
             .Select(static c => new SshAgentIdentity(c.PublicKey.KeyBlob, c.Name))
             .ToList();
 
@@ -90,8 +89,8 @@ internal sealed class SshKeyProvider(
         }
     }
 
-    private static SshKeyVaultCipher? GetCipher(IUnlockedVault vault, ReadOnlyMemory<byte> publicKeyBlob) =>
+    private static SshKeyCipher? GetCipher(IUnlockedVault vault, ReadOnlyMemory<byte> publicKeyBlob) =>
         vault.GetCiphers(SshCipherQuery)
-            .OfType<SshKeyVaultCipher>()
+            .OfType<SshKeyCipher>()
             .FirstOrDefault(c => c.PublicKey.KeyBlob.SequenceEqual(publicKeyBlob.Span));
 }

@@ -14,11 +14,11 @@ public sealed partial class VaultCipherTemplateSelector : DataTemplateSelector
     protected override DataTemplate? SelectTemplateCore(object item) =>
         item switch
         {
-            LoginVaultCipher => LoginTemplate,
-            SecureNoteVaultCipher => SecureNoteTemplate,
-            CardVaultCipher => CardTemplate,
-            IdentityVaultCipher => IdentityTemplate,
-            SshKeyVaultCipher => SshKeyTemplate,
+            LoginCipher => LoginTemplate,
+            SecureNoteCipher => SecureNoteTemplate,
+            CardCipher => CardTemplate,
+            IdentityCipher => IdentityTemplate,
+            SshKeyCipher => SshKeyTemplate,
             _ => FallbackTemplate ?? base.SelectTemplateCore(item),
         };
 

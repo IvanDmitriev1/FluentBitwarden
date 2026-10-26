@@ -1,6 +1,4 @@
-using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Items.Contracts;
-using Dapper;
+﻿using Dapper;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
 using Microsoft.Data.Sqlite;
 
@@ -41,7 +39,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
-    public void WriteFolders(UserId userId, ReadOnlySpan<VaultFolderResponse> folders)
+    public void WriteFolders(UserId userId, ReadOnlySpan<FolderResponse> folders)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;",
@@ -60,7 +58,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
-    public void WriteCollections(UserId userId, ReadOnlySpan<VaultCollectionResponse> collections)
+    public void WriteCollections(UserId userId, ReadOnlySpan<CollectionResponse> collections)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;",
@@ -95,7 +93,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
-    public void WriteCiphers(UserId userId, ReadOnlySpan<VaultCipherResponse> ciphers)
+    public void WriteCiphers(UserId userId, ReadOnlySpan<CipherResponse> ciphers)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;",
@@ -115,7 +113,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
     /// enabled on the connection, so their old child rows are cleared before the insert re-adds
     /// them; other cached ciphers are untouched.
     /// </summary>
-    public void UpsertCipher(UserId userId, ref readonly VaultCipherResponse dto)
+    public void UpsertCipher(UserId userId, ref readonly CipherResponse dto)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute(
@@ -126,7 +124,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         InsertCipher(userIdStr, in dto);
     }
 
-    private void InsertCipher(string userIdStr, ref readonly VaultCipherResponse dto)
+    private void InsertCipher(string userIdStr, ref readonly CipherResponse dto)
     {
         var cipherId = dto.Id.ToString();
         var rowId = dbSession.Connection.ExecuteScalar<long>(
@@ -171,7 +169,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         WriteCipherAttachments(userIdStr, cipherId, dto.Attachments);
     }
 
-    private void WriteCipherAttachments(string userIdStr, string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)
+    private void WriteCipherAttachments(string userIdStr, string cipherId, ReadOnlySpan<AttachmentDownloadResponse> attachments)
     {
         if (attachments.Length == 0)
             return;

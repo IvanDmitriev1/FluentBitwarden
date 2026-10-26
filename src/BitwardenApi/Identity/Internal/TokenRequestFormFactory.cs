@@ -1,5 +1,7 @@
 using System.Globalization;
 
+using BitwardenApi.Client;
+using BitwardenApi.Identity.Models;
 namespace BitwardenApi.Identity.Internal;
 
 internal static class TokenRequestFormFactory

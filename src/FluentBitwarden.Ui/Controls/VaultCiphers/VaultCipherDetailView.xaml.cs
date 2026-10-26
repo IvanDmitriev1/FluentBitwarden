@@ -3,9 +3,9 @@ using System.Collections.ObjectModel;
 
 namespace FluentBitwarden.Controls.VaultCiphers;
 
-[DependencyProperty<VaultCipher>("SelectedCipher")]
+[DependencyProperty<Cipher>("SelectedCipher")]
 [DependencyProperty<bool>("IsEditing")]
-[DependencyProperty<ObservableCollection<VaultFolder>>("Folders")]
+[DependencyProperty<ObservableCollection<Folder>>("Folders")]
 public sealed partial class VaultCipherDetailView : UserControl
 {
     public VaultCipherDetailView()
@@ -24,6 +24,6 @@ public sealed partial class VaultCipherDetailView : UserControl
         }
     }
 
-    private static VaultCipher Clone(VaultCipher cipher) =>
-        MemoryPackSerializer.Deserialize<VaultCipher>(MemoryPackSerializer.Serialize(cipher))!;
+    private static Cipher Clone(Cipher cipher) =>
+        MemoryPackSerializer.Deserialize<Cipher>(MemoryPackSerializer.Serialize(cipher))!;
 }

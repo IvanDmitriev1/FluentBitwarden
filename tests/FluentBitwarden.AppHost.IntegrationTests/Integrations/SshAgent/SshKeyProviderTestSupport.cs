@@ -17,7 +17,7 @@ internal static class SshKeyProviderTestSupport
         Assert.True(verifier.VerifySignature(signature.Value));
     }
 
-    internal static IUnlockedSessionLease CreateLease(AccountProfile account, params VaultCipher[] ciphers)
+    internal static IUnlockedSessionLease CreateLease(AccountProfile account, params Cipher[] ciphers)
     {
         var vault = Substitute.For<IUnlockedVault>();
         vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);

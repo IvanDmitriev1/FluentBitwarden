@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
@@ -13,21 +12,21 @@ internal sealed class VaultCipherIpcHandler(
     IVaultService vaultService,
     IVaultCipherAttachmentService cipherAttachmentService) : IVaultCipherClient, IIpcRequestsHandler
 {
-    public Task<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
+    public Task<Cipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
         using var lease = appSessionService.RequireUnlockedSessionLease();
 
         return Task.FromResult(lease.Vault.GetCiphers(query));
     }
 
-    public Task<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default)
+    public Task<Cipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
         using var lease = appSessionService.RequireUnlockedSessionLease();
 
         return Task.FromResult(lease.Vault.GetCipher(request.CipherId));
     }
 
-    public async Task<VaultCipher> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default)
+    public async Task<Cipher> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
         using var lease = appSessionService.RequireUnlockedSessionLease();
 

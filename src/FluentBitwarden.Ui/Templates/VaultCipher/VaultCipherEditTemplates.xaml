@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
     x:Class="FluentBitwarden.Templates.Vault.VaultCipherEditTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -6,14 +6,14 @@
     xmlns:behaviors="using:FluentBitwarden.AttachedProperties"
     xmlns:controls="using:FluentBitwarden.Controls.Shared"
     xmlns:extensions11="using:FluentBitwarden.ViewModels.Vault.Models"
-    xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
+    xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
     xmlns:vault1="using:FluentBitwarden.Templates.Vault">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ms-appx:///Templates/VaultCipher/VaultCipherFieldStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate x:Key="VaultCipherLoginEditTemplate" x:DataType="models:LoginVaultCipher">
+    <DataTemplate x:Key="VaultCipherLoginEditTemplate" x:DataType="models:LoginCipher">
         <StackPanel Spacing="12">
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>
@@ -117,7 +117,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherSecureNoteEditTemplate" x:DataType="models:SecureNoteVaultCipher">
+    <DataTemplate x:Key="VaultCipherSecureNoteEditTemplate" x:DataType="models:SecureNoteCipher">
         <controls:DividedCardItemsControl>
             <controls:DividedCardItemsControl.Items>
                 <StackPanel Padding="12">
@@ -131,7 +131,7 @@
         </controls:DividedCardItemsControl>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherCardEditTemplate" x:DataType="models:CardVaultCipher">
+    <DataTemplate x:Key="VaultCipherCardEditTemplate" x:DataType="models:CardCipher">
         <StackPanel Spacing="12">
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>
@@ -180,7 +180,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherIdentityEditTemplate" x:DataType="models:IdentityVaultCipher">
+    <DataTemplate x:Key="VaultCipherIdentityEditTemplate" x:DataType="models:IdentityCipher">
         <StackPanel Spacing="12">
             <Grid ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
@@ -300,7 +300,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherSshKeyEditTemplate" x:DataType="models:SshKeyVaultCipher">
+    <DataTemplate x:Key="VaultCipherSshKeyEditTemplate" x:DataType="models:SshKeyCipher">
         <StackPanel Spacing="12">
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>

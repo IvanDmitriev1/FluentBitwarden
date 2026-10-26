@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.IntegrationTests.AppSession;

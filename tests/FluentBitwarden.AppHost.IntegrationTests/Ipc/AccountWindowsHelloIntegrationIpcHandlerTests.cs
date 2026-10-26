@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using static FluentBitwarden.AppHost.IntegrationTests.Ipc.AccountWindowsHelloIntegrationIpcTestSupport;

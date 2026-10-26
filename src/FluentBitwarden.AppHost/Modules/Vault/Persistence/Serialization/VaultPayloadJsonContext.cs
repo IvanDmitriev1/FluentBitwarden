@@ -1,17 +1,17 @@
 using System.Text.Json.Serialization;
+
 using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Items.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 [JsonSourceGenerationOptions(
     GenerationMode = JsonSourceGenerationMode.Metadata,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
-[JsonSerializable(typeof(LoginVaultCipher))]
-[JsonSerializable(typeof(SecureNoteVaultCipher))]
-[JsonSerializable(typeof(CardVaultCipher))]
-[JsonSerializable(typeof(IdentityVaultCipher))]
-[JsonSerializable(typeof(SshKeyVaultCipher))]
+[JsonSerializable(typeof(LoginCipher))]
+[JsonSerializable(typeof(SecureNoteCipher))]
+[JsonSerializable(typeof(CardCipher))]
+[JsonSerializable(typeof(IdentityCipher))]
+[JsonSerializable(typeof(SshKeyCipher))]
 [JsonSerializable(typeof(LoginUri))]
 [JsonSerializable(typeof(List<LoginUri>))]
 [JsonSerializable(typeof(Fido2Credential))]

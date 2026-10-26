@@ -1,6 +1,6 @@
 using BitwardenApi.Identity;
-using BitwardenApi.Identity.Contracts;
-using BitwardenApi.Primitives;
+using BitwardenApi.Identity.Models;
+using BitwardenApi.Client;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Persistance;
@@ -44,10 +44,10 @@ internal sealed class AccountService(
     {
         var refreshToken = accountBitwardenSessionTokenRepository.Get(accountContext.UserId);
         var result = await identityApi.RefreshAuthenticationAsync(new RefreshAuthenticationRequest(new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo), refreshToken), cancellationToken);
-        if (result is SessionTokenResult<TokenRefreshSessionModel>.Rejected rejected)
+        if (result is SessionTokenResult<RefreshedSession>.Rejected rejected)
             throw new AccountSessionRefreshException(rejected);
 
-        var success = (SessionTokenResult<TokenRefreshSessionModel>.Success)result;
+        var success = (SessionTokenResult<RefreshedSession>.Success)result;
         var sessionRefreshModel = success.Value;
 
         unitOfWork.Begin();

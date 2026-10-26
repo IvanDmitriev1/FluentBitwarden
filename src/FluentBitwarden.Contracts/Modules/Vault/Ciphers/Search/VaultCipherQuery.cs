@@ -14,7 +14,7 @@ public sealed partial class VaultCipherQuery : IIpcRequestMessage
 
     public string SearchText { get; init; } = string.Empty;
 
-    public VaultCipherType? CipherType { get; init; }
+    public CipherType? CipherType { get; init; }
 
     [StronglyTypedIdFormatter<FolderId>]
     public FolderId FolderId { get; init; } = FolderId.Empty;

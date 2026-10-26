@@ -1,6 +1,5 @@
-using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Items;
-using BitwardenApi.Vault.Items.Contracts;
+using BitwardenApi.Client;
+using BitwardenApi.Vault.Sync;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
@@ -15,7 +14,8 @@ internal sealed class VaultService(
     VaultReaderRepository vaultReaderRepository,
     VaultWriterRepository vaultWriterRepository,
     VaultSyncStateRepository vaultSyncStateRepository,
-    IVaultItemsApi vaultApiClient,
+    IVaultSyncApi vaultSyncApi,
+    ICiphersApi ciphersApi,
     IUnitOfWork unitOfWork,
     INetworkStatus networkStatus) : IVaultService
 {
@@ -46,13 +46,13 @@ internal sealed class VaultService(
             if (!networkStatus.HasInternetAccess)
                 return VaultSyncResult.SkippedOffline;
 
-            var revisionDate = await vaultApiClient.GetRevisionDateAsync(accountContext, cancellationToken);
+            var revisionDate = await vaultSyncApi.GetRevisionDateAsync(accountContext, cancellationToken);
             var userId = lease.Account.UserId;
             var lastSync = vaultSyncStateRepository.GetServerRevisionDate(userId);
             if (lastSync is not null && lastSync.Value >= revisionDate)
                 return VaultSyncResult.NoChanges;
 
-            var response = await vaultApiClient.GetSyncAsync(accountContext, cancellationToken);
+            var response = await vaultSyncApi.GetSyncAsync(accountContext, cancellationToken);
             if (response.Profile.Id != userId)
                 throw new InvalidDataException("Sync profile user id did not match the unlocked account.");
 
@@ -80,9 +80,9 @@ internal sealed class VaultService(
         }
     }
 
-    public async Task<VaultCipher> SaveCipherAsync(
+    public async Task<Cipher> SaveCipherAsync(
         IUnlockedSessionLease lease,
-        VaultCipher cipher,
+        Cipher cipher,
         CancellationToken cancellationToken)
     {
         IUnlockedVault vault = lease.Vault;
@@ -92,10 +92,10 @@ internal sealed class VaultService(
         if (lease.Account.UserId != keySession.UserId)
             throw new InvalidOperationException("The unlocked account and account key must have the same user ID.");
 
-        var request = VaultCipherRequestFactory.BuildRequest(keySession.UserKey, cipher);
-        VaultCipherResponse savedDto = cipher.Id.IsEmpty
-            ? await vaultApiClient.CreateCipherAsync(accountContext, request, cancellationToken)
-            : await vaultApiClient.UpdateCipherAsync(accountContext, cipher.Id, request, cancellationToken);
+        var request = CipherRequestFactory.BuildRequest(keySession.UserKey, cipher);
+        CipherResponse savedDto = cipher.Id.IsEmpty
+            ? await ciphersApi.CreateCipherAsync(accountContext, request, cancellationToken)
+            : await ciphersApi.UpdateCipherAsync(accountContext, cipher.Id, request, cancellationToken);
 
         var savedCipher = VaultDataLoader.DecryptSavedCipher(in savedDto, keySession);
 

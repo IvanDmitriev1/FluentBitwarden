@@ -1,4 +1,9 @@
 using System.Net.Http.Json;
+using BitwardenApi.Identity.Internal;
+
+using BitwardenApi.Client;
+using BitwardenApi.Identity.Models;
+using BitwardenApi.Client.Http;
 
 namespace BitwardenApi.Identity;
 
@@ -8,7 +13,7 @@ internal sealed class WebAuthnIdentityApi(IHttpClientFactory httpClientFactory) 
         BitwardenClientContext context,
         CancellationToken cancellationToken = default)
     {
-        using var httpClient = httpClientFactory.CreateIdentityClient();
+        using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Identity);
         Uri endpoint = new(context.Environment.IdentityBase, "/accounts/webauthn/assertion-options");
 
         using var response = await httpClient.GetAsync(endpoint, cancellationToken);

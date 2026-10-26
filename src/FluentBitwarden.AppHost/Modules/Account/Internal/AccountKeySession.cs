@@ -1,7 +1,3 @@
-using BitwardenApi.Identity.Contracts;
-using BitwardenApi.Infrastructure.Cryptography;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Internal;
@@ -13,7 +9,7 @@ internal sealed class AccountKeySession(
     private readonly Dictionary<OrganizationId, OrganizationKey> _organizationKeysById = [];
     private bool _disposed;
 
-    private PrivateKey PrivateKey { get; } = userKey.CreatePrivateKey(protectedPrivateKey);
+    private RsaPrivateKey PrivateKey { get; } = userKey.CreatePrivateKey(protectedPrivateKey);
 
     public UserId UserId => UserKey.UserId;
     public UnlockedUserKey UserKey { get; } = userKey;

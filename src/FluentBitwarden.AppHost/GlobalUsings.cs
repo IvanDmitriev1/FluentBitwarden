@@ -1,4 +1,4 @@
-global using System;
+﻿global using System;
 global using System.ComponentModel;
 global using System.Diagnostics;
 global using System.IO;
@@ -14,3 +14,17 @@ global using BitwardenApi.Primitives.Ids;
 global using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 global using FluentBitwarden.AppHost.Infrastructure.Extensions;
 global using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+global using BitwardenApi.Cryptography.Keys;
+global using BitwardenApi.Cryptography.KeyDerivation;
+global using BitwardenApi.Cryptography.Encryption;
+
+global using BitwardenApi.Vault.Ciphers;
+global using BitwardenApi.Vault.Ciphers.Models;
+global using BitwardenApi.Vault.Ciphers.Responses;
+global using BitwardenApi.Vault.Folders.Models;
+global using BitwardenApi.Vault.Folders.Responses;
+global using BitwardenApi.Vault.Collections.Models;
+global using BitwardenApi.Vault.Collections.Responses;
+global using BitwardenApi.Vault.Sync.Responses;
+global using BitwardenApi.Vault.Attachments.Responses;
+global using BitwardenApi.Vault.Attachments.Models;

@@ -1,5 +1,5 @@
-using BitwardenApi.Vault.Cryptography;
-using BitwardenApi.Vault.Items;
+using BitwardenApi.Vault.Sync;
+using BitwardenApi.Vault.Ciphers;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
@@ -24,7 +24,8 @@ internal sealed class VaultManagerTestContext : IDisposable
         _unitOfWork = _database.CreateUnitOfWork();
         _vaultWriterRepository = new VaultWriterRepository(_unitOfWork);
         _vaultSyncStateRepository = new VaultSyncStateRepository(_unitOfWork);
-        Api = Substitute.For<IVaultItemsApi>();
+        SyncApi = Substitute.For<IVaultSyncApi>();
+        CiphersApi = Substitute.For<ICiphersApi>();
         NetworkStatus = Substitute.For<INetworkStatus>();
         NetworkStatus.HasInternetAccess.Returns(true);
 
@@ -33,14 +34,16 @@ internal sealed class VaultManagerTestContext : IDisposable
             VaultReaderRepository,
             _vaultWriterRepository,
             _vaultSyncStateRepository,
-            Api,
+            SyncApi,
+            CiphersApi,
             _unitOfWork,
             NetworkStatus);
     }
 
     public AccountProfile Account { get; }
     public BitwardenAccountContext AccountContext => Account.BitwardenAccountContext;
-    public IVaultItemsApi Api { get; }
+    public IVaultSyncApi SyncApi { get; }
+    public ICiphersApi CiphersApi { get; }
     public INetworkStatus NetworkStatus { get; }
     public VaultReaderRepository VaultReaderRepository { get; }
     public VaultService VaultService { get; }
@@ -63,11 +66,11 @@ internal sealed class VaultManagerTestContext : IDisposable
     }
 
     public void SeedCache(
-        VaultCipherResponse[]? ciphers = null,
-        VaultFolderResponse[]? folders = null,
+        CipherResponse[]? ciphers = null,
+        FolderResponse[]? folders = null,
         DateTimeOffset? serverRevisionDate = null,
         VaultOrganizationResponse[]? organizations = null,
-        VaultCollectionResponse[]? collections = null)
+        CollectionResponse[]? collections = null)
     {
         _unitOfWork.Begin();
         _vaultWriterRepository.WriteOrganizations(AccountContext.UserId, organizations ?? []);

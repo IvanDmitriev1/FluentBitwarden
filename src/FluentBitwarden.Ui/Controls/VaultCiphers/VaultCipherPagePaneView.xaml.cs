@@ -7,8 +7,8 @@ using Microsoft.UI.Xaml;
 namespace FluentBitwarden.Controls.VaultCiphers;
 
 [DependencyProperty<string>("SearchText")]
-[DependencyProperty<VaultCipher>("SelectedCipher")]
-[DependencyProperty<ObservableCollection<VaultCipher>>("FilteredCiphers", DefaultValueExpression = "CreateCipherCollection()")]
+[DependencyProperty<Cipher>("SelectedCipher")]
+[DependencyProperty<ObservableCollection<Cipher>>("FilteredCiphers", DefaultValueExpression = "CreateCipherCollection()")]
 [DependencyProperty<bool>("IsSearchFieldOpen")]
 [DependencyProperty<VaultCipherQuery>("Query")]
 [DependencyProperty<CipherId>("RequestedCipherId")]
@@ -16,7 +16,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
 {
     public static readonly DependencyProperty SelectedCipherTypeProperty = DependencyProperty.Register(
         nameof(SelectedCipherType),
-        typeof(VaultCipherType?),
+        typeof(CipherType?),
         typeof(VaultCipherPagePaneView),
         new PropertyMetadata(null, OnSelectedCipherTypePropertyChanged));
 
@@ -41,9 +41,9 @@ public sealed partial class VaultCipherPagePaneView : UserControl
     private static void OnCipherSortDirectionPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((VaultCipherPagePaneView)d).RaiseFiltersChanged();
 
-    public VaultCipherType? SelectedCipherType
+    public CipherType? SelectedCipherType
     {
-        get => (VaultCipherType?)GetValue(SelectedCipherTypeProperty);
+        get => (CipherType?)GetValue(SelectedCipherTypeProperty);
         set
         {
             if (Equals(value, SelectedCipherType))
@@ -83,7 +83,7 @@ public sealed partial class VaultCipherPagePaneView : UserControl
     private CancellationTokenSource? _queryCancellationTokenSource;
     private int _queryRequestId;
 
-    private static ObservableCollection<VaultCipher> CreateCipherCollection() => [];
+    private static ObservableCollection<Cipher> CreateCipherCollection() => [];
 
     public VaultCipherPagePaneView()
     {

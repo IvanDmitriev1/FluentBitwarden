@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Infrastructure.WindowsHelloIntegration;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;

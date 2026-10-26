@@ -1,8 +1,7 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using BitwardenApi.Vault.Attachments.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 using static FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultParserTestData;
 
@@ -22,11 +21,11 @@ public sealed partial class VaultDataParserTests
         byte[] payload = CreateLoginPayload(keyBytes);
         DateTimeOffset revisionDate = DateTimeOffset.Parse("2026-09-30T12:00:00Z");
         DateTimeOffset creationDate = DateTimeOffset.Parse("2026-09-29T12:00:00Z");
-        var dto = new VaultCipherResponse
+        var dto = new CipherResponse
         {
             Id = CipherId.Parse("synthetic-cipher"),
             FolderId = FolderId.Parse("synthetic-folder"),
-            VaultCipherType = VaultCipherType.Login,
+            VaultCipherType = CipherType.Login,
             RevisionDate = revisionDate,
             CreationDate = creationDate,
             Favorite = true,
@@ -36,7 +35,7 @@ public sealed partial class VaultDataParserTests
             Data = payload
         };
 
-        var parsed = Assert.IsType<LoginVaultCipher>(ParseCipher(in dto, payload, baseKey));
+        var parsed = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("Synthetic item", parsed.Name);
         Assert.Equal("synthetic-user", parsed.Username);
@@ -71,9 +70,9 @@ public sealed partial class VaultDataParserTests
             writer.WriteEndObject();
             writer.WriteEndObject();
         });
-        var dto = CreateDto(VaultCipherType.Login, payload);
+        var dto = CreateDto(CipherType.Login, payload);
 
-        var parsed = Assert.IsType<LoginVaultCipher>(
+        var parsed = Assert.IsType<LoginCipher>(
             ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("Synthetic item", parsed.Name);
@@ -90,9 +89,9 @@ public sealed partial class VaultDataParserTests
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(keyBytes);
         byte[] payload = "{}"u8.ToArray();
-        var dto = CreateDto(VaultCipherType.Login, payload);
+        var dto = CreateDto(CipherType.Login, payload);
 
-        var parsed = Assert.IsType<LoginVaultCipher>(
+        var parsed = Assert.IsType<LoginCipher>(
             ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal(string.Empty, parsed.Name);
@@ -105,7 +104,7 @@ public sealed partial class VaultDataParserTests
     {
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var key = new TestKey(keyBytes);
-        var dto = new VaultCollectionResponse
+        var dto = new CollectionResponse
         {
             Id = CollectionId.Parse("synthetic-collection"),
             OrganizationId = OrganizationId.Empty,
@@ -116,7 +115,7 @@ public sealed partial class VaultDataParserTests
             EncryptedName = EncString.Encrypt("Synthetic collection", keyBytes)
         };
 
-        VaultCollection parsed = FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser
+        Collection parsed = FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser
             .ParseAndDecryptCollection(in dto, key);
 
         Assert.Equal(dto.Id, parsed.Id);
@@ -140,7 +139,7 @@ public sealed partial class VaultDataParserTests
                 writer.WriteNull(requiredProperty);
                 writer.WriteEndObject();
             });
-            var dto = CreateDto(VaultCipherType.Login, payload);
+            var dto = CreateDto(CipherType.Login, payload);
 
             Assert.Throws<JsonException>(() => ParseCipher(in dto, payload, baseKey));
         }
@@ -154,13 +153,13 @@ public sealed partial class VaultDataParserTests
         byte[] notePayload = "{\"notes\":null}"u8.ToArray();
         byte[] cardPayload = "{\"cardholderName\":null,\"number\":null}"u8.ToArray();
         byte[] identityPayload = "{\"firstName\":null,\"phone\":null}"u8.ToArray();
-        var noteDto = CreateDto(VaultCipherType.SecureNote, notePayload);
-        var cardDto = CreateDto(VaultCipherType.Card, cardPayload);
-        var identityDto = CreateDto(VaultCipherType.Identity, identityPayload);
+        var noteDto = CreateDto(CipherType.SecureNote, notePayload);
+        var cardDto = CreateDto(CipherType.Card, cardPayload);
+        var identityDto = CreateDto(CipherType.Identity, identityPayload);
 
-        var note = Assert.IsType<SecureNoteVaultCipher>(ParseCipher(in noteDto, notePayload, baseKey));
-        var card = Assert.IsType<CardVaultCipher>(ParseCipher(in cardDto, cardPayload, baseKey));
-        var identity = Assert.IsType<IdentityVaultCipher>(ParseCipher(in identityDto, identityPayload, baseKey));
+        var note = Assert.IsType<SecureNoteCipher>(ParseCipher(in noteDto, notePayload, baseKey));
+        var card = Assert.IsType<CardCipher>(ParseCipher(in cardDto, cardPayload, baseKey));
+        var identity = Assert.IsType<IdentityCipher>(ParseCipher(in identityDto, identityPayload, baseKey));
 
         Assert.Null(note.Notes);
         Assert.Null(card.CardholderName);
@@ -184,8 +183,8 @@ public sealed partial class VaultDataParserTests
 
         foreach (byte[] payload in new[] { nullPayload, invalidPayload })
         {
-            var dto = CreateDto(VaultCipherType.Login, payload);
-            var login = Assert.IsType<LoginVaultCipher>(ParseCipher(in dto, payload, baseKey));
+            var dto = CreateDto(CipherType.Login, payload);
+            var login = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
             Assert.Null(login.Totp);
         }
     }
@@ -200,11 +199,11 @@ public sealed partial class VaultDataParserTests
         long setupBytes = GC.GetAllocatedBytesForCurrentThread() - setupStart;
 
         byte[] loginPayload = CreateLoginPayload(keyBytes);
-        var loginDto = CreateDto(VaultCipherType.Login, loginPayload);
+        var loginDto = CreateDto(CipherType.Login, loginPayload);
         long loginBytes = MeasureAllocatedBytes(parser, in loginDto, loginPayload, baseKey);
 
         byte[] complexPayload = CreateLoginPayloadWithUriAndFido2(keyBytes);
-        var complexDto = CreateDto(VaultCipherType.Login, complexPayload);
+        var complexDto = CreateDto(CipherType.Login, complexPayload);
         long complexBytes = MeasureAllocatedBytes(parser, in complexDto, complexPayload, baseKey);
 
         byte[] notePayload = WritePayload(keyBytes, static (writer, key) =>
@@ -214,7 +213,7 @@ public sealed partial class VaultDataParserTests
             WriteEncrypted(writer, "notes", new string('x', 4096), key);
             writer.WriteEndObject();
         });
-        var noteDto = CreateDto(VaultCipherType.SecureNote, notePayload);
+        var noteDto = CreateDto(CipherType.SecureNote, notePayload);
         long noteBytes = MeasureAllocatedBytes(parser, in noteDto, notePayload, baseKey);
 
         _output.WriteLine($"Parser instance setup allocation (source-generated resolver already initialized): {setupBytes} B.");
@@ -236,9 +235,9 @@ public sealed partial class VaultDataParserTests
             WriteEncrypted(writer, "Username", "Pascal user", key);
             writer.WriteEndObject();
         });
-        var dto = CreateDto(VaultCipherType.Login, payload);
+        var dto = CreateDto(CipherType.Login, payload);
 
-        var parsed = Assert.IsType<LoginVaultCipher>(
+        var parsed = Assert.IsType<LoginCipher>(
             ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("Pascal item", parsed.Name);
@@ -257,8 +256,8 @@ public sealed partial class VaultDataParserTests
             WriteEncrypted(writer, "totp", "JBSWY3DPEHPK3PXP", key);
             writer.WriteEndObject();
         });
-        var loginDto = CreateDto(VaultCipherType.Login, loginPayload);
-        var login = Assert.IsType<LoginVaultCipher>(
+        var loginDto = CreateDto(CipherType.Login, loginPayload);
+        var login = Assert.IsType<LoginCipher>(
             ParseCipher(in loginDto, loginPayload, baseKey));
 
         byte[] sshPayload = WritePayload(keyBytes, static (writer, key) =>
@@ -268,8 +267,8 @@ public sealed partial class VaultDataParserTests
             WriteEncrypted(writer, "publicKey", "ssh-ed25519 AQID", key);
             writer.WriteEndObject();
         });
-        var sshDto = CreateDto(VaultCipherType.SshKey, sshPayload);
-        var ssh = Assert.IsType<SshKeyVaultCipher>(
+        var sshDto = CreateDto(CipherType.SshKey, sshPayload);
+        var ssh = Assert.IsType<SshKeyCipher>(
             ParseCipher(in sshDto, sshPayload, baseKey));
 
         Assert.NotNull(login.Totp);
@@ -282,17 +281,17 @@ public sealed partial class VaultDataParserTests
     {
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(keyBytes);
-        VaultCipherResponse[] cases =
+        CipherResponse[] cases =
         [
-            CreateDto(VaultCipherType.Login, CreateLoginPayload(keyBytes)),
-            CreateDto(VaultCipherType.SecureNote, WritePayload(keyBytes, static (writer, key) =>
+            CreateDto(CipherType.Login, CreateLoginPayload(keyBytes)),
+            CreateDto(CipherType.SecureNote, WritePayload(keyBytes, static (writer, key) =>
             {
                 writer.WriteStartObject();
                 WriteEncrypted(writer, "name", "note", key);
                 WriteEncrypted(writer, "notes", "note body", key);
                 writer.WriteEndObject();
             })),
-            CreateDto(VaultCipherType.Card, WritePayload(keyBytes, static (writer, key) =>
+            CreateDto(CipherType.Card, WritePayload(keyBytes, static (writer, key) =>
             {
                 writer.WriteStartObject();
                 WriteEncrypted(writer, "name", "card", key);
@@ -304,7 +303,7 @@ public sealed partial class VaultDataParserTests
                 WriteEncrypted(writer, "code", "code", key);
                 writer.WriteEndObject();
             })),
-            CreateDto(VaultCipherType.Identity, WritePayload(keyBytes, static (writer, key) =>
+            CreateDto(CipherType.Identity, WritePayload(keyBytes, static (writer, key) =>
             {
                 writer.WriteStartObject();
                 WriteEncrypted(writer, "name", "identity", key);
@@ -328,7 +327,7 @@ public sealed partial class VaultDataParserTests
                 WriteEncrypted(writer, "licenseNumber", "license", key);
                 writer.WriteEndObject();
             })),
-            CreateDto(VaultCipherType.SshKey, WritePayload(keyBytes, static (writer, key) =>
+            CreateDto(CipherType.SshKey, WritePayload(keyBytes, static (writer, key) =>
             {
                 writer.WriteStartObject();
                 WriteEncrypted(writer, "name", "ssh", key);
@@ -352,19 +351,19 @@ public sealed partial class VaultDataParserTests
         var parsed = cases.Select(dto =>
             ParseCipher(in dto, dto.Data, baseKey)).ToArray();
 
-        Assert.IsType<LoginVaultCipher>(parsed[0]);
-        Assert.Equal("note body", Assert.IsType<SecureNoteVaultCipher>(parsed[1]).Notes);
-        var card = Assert.IsType<CardVaultCipher>(parsed[2]);
+        Assert.IsType<LoginCipher>(parsed[0]);
+        Assert.Equal("note body", Assert.IsType<SecureNoteCipher>(parsed[1]).Notes);
+        var card = Assert.IsType<CardCipher>(parsed[2]);
         Assert.Equal(("holder", "brand", "number", "month", "year", "code"),
             (card.CardholderName, card.Brand, card.Number, card.ExpMonth, card.ExpYear, card.Code));
-        var identity = Assert.IsType<IdentityVaultCipher>(parsed[3]);
+        var identity = Assert.IsType<IdentityCipher>(parsed[3]);
         Assert.Equal(("title", "first", "middle", "last", "address1", "address2", "address3", "city", "state", "postal", "country", "company", "email", "phone", "ssn", "username", "passport", "license"),
             (identity.Title, identity.FirstName, identity.MiddleName, identity.LastName, identity.Address1, identity.Address2, identity.Address3, identity.City, identity.State, identity.PostalCode, identity.Country, identity.Company, identity.Email, identity.Phone, identity.Ssn, identity.Username, identity.PassportNumber, identity.LicenseNumber));
-        var ssh = Assert.IsType<SshKeyVaultCipher>(parsed[4]);
+        var ssh = Assert.IsType<SshKeyCipher>(parsed[4]);
         Assert.Equal(("private", "legacy public key", "fingerprint"), (ssh.PrivateKey, ssh.PublicKey.RawKey, ssh.KeyFingerprint));
         for (int i = 0; i < parsed.Length; i++)
         {
-            VaultCipher cipher = parsed[i];
+            Cipher cipher = parsed[i];
             Assert.Equal(cases[0].Id, cipher.Id);
             Assert.Equal(cases[0].FolderId, cipher.FolderId);
             Assert.Equal(cases[0].Favorite, cipher.Favorite);
@@ -372,7 +371,7 @@ public sealed partial class VaultDataParserTests
             Assert.Equal(cases[0].RevisionDate, cipher.RevisionDate);
             Assert.Equal(cases[0].CreationDate, cipher.CreationDate);
             Assert.Equal(deletedDate, cipher.DeletedDate);
-            VaultCipherAttachment attachment = Assert.Single(cipher.Attachments);
+            CipherAttachment attachment = Assert.Single(cipher.Attachments);
             Assert.Equal(cases[i].Attachments![0].Id, attachment.Id);
             Assert.Equal(cipher.Id, attachment.CipherId);
             Assert.Equal($"file-{i}.txt", attachment.FileName);
@@ -387,7 +386,7 @@ public sealed partial class VaultDataParserTests
         byte[] cipherKeyBytes = Enumerable.Range(65, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(baseKeyBytes);
         byte[] payload = CreateLoginPayload(cipherKeyBytes);
-        var dto = CreateDto(VaultCipherType.Login, payload) with
+        var dto = CreateDto(CipherType.Login, payload) with
         {
             ProtectedCipherKey = EncString.Encrypt(cipherKeyBytes, baseKeyBytes),
             Attachments =
@@ -403,11 +402,11 @@ public sealed partial class VaultDataParserTests
             ]
         };
 
-        var parsed = Assert.IsType<LoginVaultCipher>(
+        var parsed = Assert.IsType<LoginCipher>(
             ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("synthetic-password", parsed.Password);
-        VaultCipherAttachment attachment = Assert.Single(parsed.Attachments);
+        CipherAttachment attachment = Assert.Single(parsed.Attachments);
         Assert.Equal(AttachmentId.Parse("synthetic-attachment"), attachment.Id);
         Assert.Equal(parsed.Id, attachment.CipherId);
         Assert.Equal("synthetic.txt", attachment.FileName);
@@ -437,9 +436,9 @@ public sealed partial class VaultDataParserTests
             writer.WriteEndArray();
             writer.WriteEndObject();
         });
-        var dto = CreateDto(VaultCipherType.Login, payload);
+        var dto = CreateDto(CipherType.Login, payload);
 
-        var parsed = Assert.IsType<LoginVaultCipher>(
+        var parsed = Assert.IsType<LoginCipher>(
             ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("https://example.com", Assert.Single(parsed.Uris).Value);
@@ -481,9 +480,9 @@ public sealed partial class VaultDataParserTests
             writer.WriteEndArray();
             writer.WriteEndObject();
         });
-        var dto = CreateDto(VaultCipherType.Login, payload);
+        var dto = CreateDto(CipherType.Login, payload);
 
-        var parsed = Assert.IsType<LoginVaultCipher>(ParseCipher(in dto, payload, baseKey));
+        var parsed = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("https://uppercase.example", Assert.Single(parsed.Uris).Value);
         Assert.Equal(LoginUri.MatchType.Domain, parsed.Uris[0].Match);
@@ -509,9 +508,9 @@ public sealed partial class VaultDataParserTests
             writer.WriteEndArray();
             writer.WriteEndObject();
         });
-        var dto = CreateDto(VaultCipherType.Login, payload);
+        var dto = CreateDto(CipherType.Login, payload);
 
-        var parsed = Assert.IsType<LoginVaultCipher>(ParseCipher(in dto, payload, baseKey));
+        var parsed = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
 
         Assert.Equal("https://retained.example", Assert.Single(parsed.Uris).Value);
     }
@@ -559,7 +558,7 @@ public sealed partial class VaultDataParserTests
 
         foreach (byte[] payload in payloads)
         {
-            var dto = CreateDto(VaultCipherType.Login, payload);
+            var dto = CreateDto(CipherType.Login, payload);
             Assert.ThrowsAny<Exception>(() => ParseCipher(in dto, payload, baseKey));
         }
     }
@@ -573,8 +572,8 @@ public sealed partial class VaultDataParserTests
 
         foreach (byte[] payload in payloads)
         {
-            var dto = CreateDto(VaultCipherType.Login, payload);
-            var parsed = Assert.IsType<LoginVaultCipher>(ParseCipher(in dto, payload, baseKey));
+            var dto = CreateDto(CipherType.Login, payload);
+            var parsed = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
             Assert.Null(parsed.Fido2Credential);
         }
     }
@@ -606,7 +605,7 @@ public sealed partial class VaultDataParserTests
         });
         foreach (byte[] payload in new[] { invalidFirstPayload, missingRequiredPayload })
         {
-            var dto = CreateDto(VaultCipherType.Login, payload);
+            var dto = CreateDto(CipherType.Login, payload);
             Assert.ThrowsAny<Exception>(() => ParseCipher(in dto, payload, baseKey));
         }
     }
@@ -646,7 +645,7 @@ public sealed partial class VaultDataParserTests
 
         foreach (byte[] payload in new[] { nullCredentialIdPayload, nullCreationDatePayload, missingCreationDatePayload })
         {
-            var dto = CreateDto(VaultCipherType.Login, payload);
+            var dto = CreateDto(CipherType.Login, payload);
             Assert.ThrowsAny<Exception>(() => ParseCipher(in dto, payload, baseKey));
         }
     }
@@ -660,7 +659,7 @@ public sealed partial class VaultDataParserTests
 
         foreach (byte[] payload in payloads)
         {
-            var dto = CreateDto(VaultCipherType.Login, payload);
+            var dto = CreateDto(CipherType.Login, payload);
             Assert.Throws<JsonException>(() => ParseCipher(in dto, payload, baseKey));
         }
     }
@@ -674,7 +673,7 @@ public sealed partial class VaultDataParserTests
         using var baseKey = new TestKey(baseKeyBytes);
         var parser = new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser();
         byte[] invalidPayload = CreateLoginPayload(secondCipherKey);
-        var invalidDto = CreateDto(VaultCipherType.Login, invalidPayload) with
+        var invalidDto = CreateDto(CipherType.Login, invalidPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(firstCipherKey, baseKeyBytes)
         };
@@ -682,19 +681,19 @@ public sealed partial class VaultDataParserTests
         Assert.ThrowsAny<Exception>(() => parser.ParseAndDecryptCipher(in invalidDto, invalidPayload, baseKey));
 
         byte[] validPayload = CreateLoginPayload(secondCipherKey);
-        var validDto = CreateDto(VaultCipherType.Login, validPayload) with
+        var validDto = CreateDto(CipherType.Login, validPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(secondCipherKey, baseKeyBytes)
         };
-        var recovered = Assert.IsType<LoginVaultCipher>(parser.ParseAndDecryptCipher(in validDto, validPayload, baseKey));
+        var recovered = Assert.IsType<LoginCipher>(parser.ParseAndDecryptCipher(in validDto, validPayload, baseKey));
         Assert.Equal("Synthetic item", recovered.Name);
 
         byte[] otherPayload = CreateLoginPayload(firstCipherKey);
-        var otherDto = CreateDto(VaultCipherType.Login, otherPayload) with
+        var otherDto = CreateDto(CipherType.Login, otherPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(firstCipherKey, baseKeyBytes)
         };
-        var isolated = Assert.IsType<LoginVaultCipher>(
+        var isolated = Assert.IsType<LoginCipher>(
             new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser()
                 .ParseAndDecryptCipher(in otherDto, otherPayload, baseKey));
         Assert.Equal("Synthetic item", isolated.Name);
@@ -710,11 +709,11 @@ public sealed partial class VaultDataParserTests
         var parser = new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser();
 
         byte[] loginPayload = CreateLoginPayload(loginKeyBytes);
-        var loginDto = CreateDto(VaultCipherType.Login, loginPayload) with
+        var loginDto = CreateDto(CipherType.Login, loginPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(loginKeyBytes, baseKeyBytes)
         };
-        var login = Assert.IsType<LoginVaultCipher>(parser.ParseAndDecryptCipher(in loginDto, loginPayload, baseKey));
+        var login = Assert.IsType<LoginCipher>(parser.ParseAndDecryptCipher(in loginDto, loginPayload, baseKey));
 
         byte[] notePayload = WritePayload(noteKeyBytes, static (writer, key) =>
         {
@@ -723,11 +722,11 @@ public sealed partial class VaultDataParserTests
             WriteEncrypted(writer, "notes", "second key body", key);
             writer.WriteEndObject();
         });
-        var noteDto = CreateDto(VaultCipherType.SecureNote, notePayload) with
+        var noteDto = CreateDto(CipherType.SecureNote, notePayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(noteKeyBytes, baseKeyBytes)
         };
-        var note = Assert.IsType<SecureNoteVaultCipher>(parser.ParseAndDecryptCipher(in noteDto, notePayload, baseKey));
+        var note = Assert.IsType<SecureNoteCipher>(parser.ParseAndDecryptCipher(in noteDto, notePayload, baseKey));
 
         Assert.Equal("synthetic-password", login.Password);
         Assert.Equal("Second key note", note.Name);
@@ -818,12 +817,12 @@ public sealed partial class VaultDataParserTests
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(keyBytes);
         byte[] nullNamePayload = "{\"name\":null}"u8.ToArray();
-        var nullNameDto = CreateDto(VaultCipherType.Login, nullNamePayload);
+        var nullNameDto = CreateDto(CipherType.Login, nullNamePayload);
         Assert.Throws<JsonException>(() =>
             ParseCipher(in nullNameDto, nullNamePayload, baseKey));
 
         byte[] malformedPayload = "{\"name\":\"private-payload-marker\"}"u8.ToArray();
-        var malformedDto = CreateDto(VaultCipherType.Login, malformedPayload);
+        var malformedDto = CreateDto(CipherType.Login, malformedPayload);
         var error = Assert.ThrowsAny<Exception>(() =>
             ParseCipher(in malformedDto, malformedPayload, baseKey));
         Assert.DoesNotContain("private-payload-marker", error.ToString(), StringComparison.Ordinal);

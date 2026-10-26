@@ -1,5 +1,4 @@
-using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Items.Contracts;
+using BitwardenApi.Client;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Operations;
@@ -14,8 +13,8 @@ public interface IVaultService
         IUnlockedSessionLease lease,
         CancellationToken cancellationToken);
 
-    Task<VaultCipher> SaveCipherAsync(
+    Task<Cipher> SaveCipherAsync(
         IUnlockedSessionLease lease,
-        VaultCipher cipher,
+        Cipher cipher,
         CancellationToken cancellationToken);
 }

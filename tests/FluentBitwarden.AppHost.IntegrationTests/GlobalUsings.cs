@@ -1,11 +1,22 @@
-global using BitwardenApi.Identity.Contracts;
-global using BitwardenApi.Infrastructure.Cryptography;
-global using BitwardenApi.Infrastructure.Cryptography.Enc;
-global using BitwardenApi.Primitives;
+﻿global using BitwardenApi.Identity.Models;
+global using BitwardenApi.Cryptography.Encryption;
+global using BitwardenApi.Client;
 global using BitwardenApi.Primitives.Ids;
-global using BitwardenApi.Vault.Items.Contracts;
 global using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 global using FluentBitwarden.AppHost.Infrastructure.Data.Implementations;
 global using FluentBitwarden.AppHost.Modules.Account.Persistance;
 global using Microsoft.Data.Sqlite;
 global using NSubstitute;
+global using BitwardenApi.Primitives;
+global using BitwardenApi.Cryptography.Keys;
+global using BitwardenApi.Cryptography.KeyDerivation;
+
+global using BitwardenApi.Vault.Ciphers.Models;
+global using BitwardenApi.Vault.Ciphers.Requests;
+global using BitwardenApi.Vault.Ciphers.Responses;
+global using BitwardenApi.Vault.Folders.Responses;
+global using BitwardenApi.Vault.Collections.Models;
+global using BitwardenApi.Vault.Collections.Responses;
+global using BitwardenApi.Vault.Sync.Responses;
+global using BitwardenApi.Vault.Attachments.Models;
+global using BitwardenApi.Vault.Attachments.Responses;

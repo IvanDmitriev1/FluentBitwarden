@@ -1,5 +1,4 @@
-using BitwardenApi.Infrastructure.Transport;
-using BitwardenApi.Primitives;
+using BitwardenApi.Client;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 
@@ -7,7 +6,7 @@ namespace FluentBitwarden.AppHost.Modules.Account.Services;
 
 internal sealed class AccountSessionAccessTokenProvider(
     IAccountService accountService,
-    AccountTokenCache tokenCache) : IBitwardenAccessTokenProvider
+    AccountTokenCache tokenCache) : IAccessTokenProvider
 {
     public async ValueTask<SessionAccessToken> GetAccessTokenAsync(
         BitwardenAccountContext context,

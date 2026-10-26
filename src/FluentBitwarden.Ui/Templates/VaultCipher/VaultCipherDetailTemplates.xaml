@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
     x:Class="FluentBitwarden.Templates.Vault.VaultCipherDetailTemplates"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:contracts="using:BitwardenApi.Vault.Attachments.Contracts"
+    xmlns:contracts="using:BitwardenApi.Vault.Attachments.Models"
     xmlns:controls="using:FluentBitwarden.Controls.Shared"
     xmlns:extensions1="using:FluentBitwarden.ViewModels.Vault.Models"
-    xmlns:models="using:BitwardenApi.Vault.Items.Contracts"
+    xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
     xmlns:vault="using:FluentBitwarden.Controls.VaultCiphers"
     xmlns:vault1="using:FluentBitwarden.Templates.Vault">
 
@@ -30,7 +30,7 @@
         <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
 
-    <DataTemplate x:Key="VaultCipherLoginDetailsTemplate" x:DataType="models:LoginVaultCipher">
+    <DataTemplate x:Key="VaultCipherLoginDetailsTemplate" x:DataType="models:LoginCipher">
         <StackPanel Spacing="12">
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>
@@ -58,14 +58,14 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherSecureNoteDetailsTemplate" x:DataType="models:SecureNoteVaultCipher">
+    <DataTemplate x:Key="VaultCipherSecureNoteDetailsTemplate" x:DataType="models:SecureNoteCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Contents" />
             <TextBox Style="{StaticResource ReadOnlyMultiLineTextBoxStyle}" Text="{x:Bind Notes}" />
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherCardDetailsTemplate" x:DataType="models:CardVaultCipher">
+    <DataTemplate x:Key="VaultCipherCardDetailsTemplate" x:DataType="models:CardCipher">
         <StackPanel>
             <TextBlock Style="{StaticResource FieldLabelTextBlockStyle}" Text="Cardholder name" />
             <TextBlock Style="{StaticResource FieldValueTextBlockStyle}" Text="{x:Bind CardholderName}" />
@@ -87,7 +87,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherIdentityDetailsTemplate" x:DataType="models:IdentityVaultCipher">
+    <DataTemplate x:Key="VaultCipherIdentityDetailsTemplate" x:DataType="models:IdentityCipher">
         <StackPanel>
             <Grid ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
@@ -156,7 +156,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="VaultCipherSshKeyDetailsTemplate" x:DataType="models:SshKeyVaultCipher">
+    <DataTemplate x:Key="VaultCipherSshKeyDetailsTemplate" x:DataType="models:SshKeyCipher">
         <StackPanel>
             <controls:DividedCardItemsControl>
                 <controls:DividedCardItemsControl.Items>

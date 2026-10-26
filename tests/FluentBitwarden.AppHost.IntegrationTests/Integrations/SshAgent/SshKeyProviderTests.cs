@@ -33,7 +33,7 @@ public sealed class SshKeyProviderTests
     public void GetIdentities_returns_ssh_keys_from_an_unlocked_vault()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
-        VaultCipher login = VaultCipher.CreateBlankCipher(VaultCipherType.Login);
+        Cipher login = Cipher.CreateBlankCipher(CipherType.Login);
         fixture.ConfigureVault(fixture.Key.CreateCipher("work key"), login);
 
         IReadOnlyList<SshAgentIdentity> identities = fixture.Provider.GetIdentities();
@@ -264,7 +264,7 @@ public sealed class SshKeyProviderTests
         public SshAgentSignRequest CreateRequest(byte[]? data = null) =>
             new(Key.PublicKeyBlob, data ?? [0x01, 0x02], SshAgentSignatureFlags.None);
 
-        public void ConfigureVault(params VaultCipher[] ciphers)
+        public void ConfigureVault(params Cipher[] ciphers)
         {
             var vault = Substitute.For<IUnlockedVault>();
             vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);

@@ -1,4 +1,4 @@
-using BitwardenApi.Infrastructure.Transport;
+
 using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account;
@@ -23,11 +23,11 @@ internal static class AccountSessionAccessTokenProviderTestSupport
         return services.BuildServiceProvider();
     }
 
-    internal static IBitwardenAccessTokenProvider Provider(IServiceScope scope) =>
-        scope.ServiceProvider.GetRequiredService<IBitwardenAccessTokenProvider>();
+    internal static IAccessTokenProvider Provider(IServiceScope scope) =>
+        scope.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
 
     internal static ValueTask<SessionAccessToken> GetToken(
-        IBitwardenAccessTokenProvider provider,
+        IAccessTokenProvider provider,
         BitwardenAccountContext accountContext,
         CancellationToken cancellationToken) =>
         provider.GetAccessTokenAsync(accountContext, cancellationToken);

@@ -5,8 +5,8 @@ namespace FluentBitwarden.Infrastructure.Clients;
 
 internal sealed class RemoteVaultFolderClient(IIpcClient client) : IVaultFolderClient
 {
-    public Task<VaultFolder[]> GetFoldersAsync(
+    public Task<Folder[]> GetFoldersAsync(
         GetVaultFoldersRequest request,
         CancellationToken cancellationToken = default) =>
-        client.SendAsync<GetVaultFoldersRequest, VaultFolder[]>(request, cancellationToken);
+        client.SendAsync<GetVaultFoldersRequest, Folder[]>(request, cancellationToken);
 }

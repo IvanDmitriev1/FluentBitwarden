@@ -1,9 +1,8 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using BitwardenApi.Identity;
-using BitwardenApi.Identity.Contracts;
-using BitwardenApi.Infrastructure.Cryptography;
-using BitwardenApi.Primitives;
+using BitwardenApi.Identity.Models;
+using BitwardenApi.Client;
 using FluentBitwarden.AppHost.Infrastructure.WebAuthn;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 
@@ -122,19 +121,19 @@ internal sealed class AccountAuthenticatorService(
     }
 
     private static Result MapAuthenticationResult(
-        SessionTokenResult<TokenAuthenticatedModel> result,
+        SessionTokenResult<AuthenticatedSession> result,
         BitwardenEnvironment environment,
         string? email = null,
         string? serverAuthorizationHash = null)
     {
         return result switch
         {
-            SessionTokenResult<TokenAuthenticatedModel>.Success success =>
+            SessionTokenResult<AuthenticatedSession>.Success success =>
                 CreateAuthenticatedResult(
                     success.Value,
                     environment),
 
-            SessionTokenResult<TokenAuthenticatedModel>.Rejected rejected =>
+            SessionTokenResult<AuthenticatedSession>.Rejected rejected =>
                 Reject(
                     MapRejection(
                         rejected.Error,
@@ -181,7 +180,7 @@ internal sealed class AccountAuthenticatorService(
     }
 
     private static Result.Authenticated CreateAuthenticatedResult(
-        TokenAuthenticatedModel model,
+        AuthenticatedSession model,
         BitwardenEnvironment environment)
     {
         var jwt = new JwtSecurityTokenHandler()

@@ -1,7 +1,6 @@
 using System.Buffers;
 using System.Security.Cryptography;
 using System.Text.Json;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 

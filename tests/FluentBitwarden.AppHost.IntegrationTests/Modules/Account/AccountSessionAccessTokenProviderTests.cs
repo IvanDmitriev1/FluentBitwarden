@@ -1,5 +1,4 @@
-using BitwardenApi.Infrastructure.Transport;
-using BitwardenApi.Vault.Cryptography;
+
 using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
@@ -54,7 +53,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         accountService.RefreshSessionTokens(europeanAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(europeanTokens));
         using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
-        IBitwardenAccessTokenProvider provider = Provider(scope);
+        IAccessTokenProvider provider = Provider(scope);
 
         Assert.Equal(firstTokens.AccessToken, await GetToken(provider, firstAccount, TestContext.Current.CancellationToken));
         Assert.Equal(secondTokens.AccessToken, await GetToken(provider, secondAccount, TestContext.Current.CancellationToken));
@@ -77,7 +76,7 @@ public sealed class AccountSessionAccessTokenProviderTests
             .Returns(_ => Task.FromResult(Interlocked.Increment(ref refreshCount) == 1 ? expiredTokens : replacementTokens));
         using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
-        IBitwardenAccessTokenProvider provider = Provider(scope);
+        IAccessTokenProvider provider = Provider(scope);
 
         Assert.Equal(expiredTokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
         Assert.Equal(replacementTokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
@@ -131,7 +130,7 @@ public sealed class AccountSessionAccessTokenProviderTests
                 : Task.FromResult(tokens));
         using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
-        IBitwardenAccessTokenProvider provider = Provider(scope);
+        IAccessTokenProvider provider = Provider(scope);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
@@ -160,7 +159,7 @@ public sealed class AccountSessionAccessTokenProviderTests
             });
         using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
-        IBitwardenAccessTokenProvider provider = Provider(scope);
+        IAccessTokenProvider provider = Provider(scope);
         using var cancellation = new CancellationTokenSource();
 
         Task<SessionAccessToken> cancelledRequest = GetToken(provider, accountContext, cancellation.Token).AsTask();
@@ -205,7 +204,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         Assert.IsType<SessionUnlockOutcome.Success>(await sessionService.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
-        IBitwardenAccessTokenProvider provider = Provider(scope);
+        IAccessTokenProvider provider = Provider(scope);
         Task<SessionAccessToken> refresh = GetToken(provider, accountContext, TestContext.Current.CancellationToken).AsTask();
         await WaitWithTimeoutAsync(refreshStarted.Task, TimeSpan.FromSeconds(5));
 
@@ -237,8 +236,8 @@ public sealed class AccountSessionAccessTokenProviderTests
         using IServiceScope secondScope = provider.CreateScope();
         IAppSessionService firstSession = firstScope.ServiceProvider.GetRequiredService<IAppSessionService>();
         IAppSessionService secondSession = secondScope.ServiceProvider.GetRequiredService<IAppSessionService>();
-        IBitwardenAccessTokenProvider firstTokenProvider = Provider(firstScope);
-        IBitwardenAccessTokenProvider secondTokenProvider = Provider(secondScope);
+        IAccessTokenProvider firstTokenProvider = Provider(firstScope);
+        IAccessTokenProvider secondTokenProvider = Provider(secondScope);
 
         Assert.IsType<AppSessionService>(firstSession);
         Assert.NotSame(firstSession, secondSession);

@@ -9,20 +9,20 @@ namespace FluentBitwarden.Infrastructure.Clients;
 [Fody.ConfigureAwait(false)]
 internal sealed class RemoteVaultCipherClient(IIpcClient client, ISiteIconCache iconCache, INetworkStatus networkStatus) : IVaultCipherClient
 {
-    public async Task<VaultCipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
+    public async Task<Cipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
-        var result = await client.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
+        var result = await client.SendAsync<VaultCipherQuery, Cipher[]>(query, cancellationToken);
         if (networkStatus.HasInternetAccess)
             PreloadSiteIconsAsync(result).SafeFireAndForget();
 
         return result;
     }
 
-    public Task<VaultCipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default) =>
-        client.SendAsync<GetVaultCipherRequest, VaultCipher?>(request, cancellationToken);
+    public Task<Cipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default) =>
+        client.SendAsync<GetVaultCipherRequest, Cipher?>(request, cancellationToken);
 
-    public Task<VaultCipher> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default) =>
-        client.SendAsync<SaveVaultCipherRequest, VaultCipher>(request, cancellationToken);
+    public Task<Cipher> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default) =>
+        client.SendAsync<SaveVaultCipherRequest, Cipher>(request, cancellationToken);
 
     public async Task DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,
@@ -31,10 +31,10 @@ internal sealed class RemoteVaultCipherClient(IIpcClient client, ISiteIconCache 
         _ = await client.SendAsync<DownloadVaultCipherAttachmentRequest, IpcVoid>(request, cancellationToken);
     }
 
-    private Task PreloadSiteIconsAsync(VaultCipher[] ciphers)
+    private Task PreloadSiteIconsAsync(Cipher[] ciphers)
     {
         var urls = ciphers
-            .OfType<LoginVaultCipher>()
+            .OfType<LoginCipher>()
             .SelectMany(static c => c.Uris)
             .Select(static u => u.TryGetWebUri(out var uri) ? uri : null)
             .Where(static uri => uri is not null)

@@ -1,6 +1,4 @@
 using System.Globalization;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
@@ -12,7 +10,7 @@ internal class VaultFolderMapper
         long RevisionDateUnixMs,
         byte[] EncryptedName);
 
-    public static VaultFolderResponse ToDomain(in FolderRow row) => new()
+    public static FolderResponse ToDomain(in FolderRow row) => new()
     {
         Id = FolderId.Parse(row.FolderId, CultureInfo.InvariantCulture),
         RevisionDate = row.RevisionDateUnixMs.ToDateTimeOffsetFromUnixMs(),
@@ -25,7 +23,7 @@ internal class VaultFolderMapper
         long RevisionDateUnixMs,
         byte[] EncryptedName);
 
-    public static FolderInsertParameters ToInsertParameters(string userId, in VaultFolderResponse dto) => new(
+    public static FolderInsertParameters ToInsertParameters(string userId, in FolderResponse dto) => new(
         UserId: userId,
         FolderId: dto.Id.ToString(),
         RevisionDateUnixMs: dto.RevisionDate.ToUnixMs(),

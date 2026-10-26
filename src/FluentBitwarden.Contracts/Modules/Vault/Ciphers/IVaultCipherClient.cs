@@ -4,15 +4,15 @@ namespace FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 
 public interface IVaultCipherClient
 {
-    Task<VaultCipher[]> SearchCiphersAsync(
+    Task<Cipher[]> SearchCiphersAsync(
         VaultCipherQuery query,
         CancellationToken cancellationToken = default);
 
-    Task<VaultCipher?> GetCipherAsync(
+    Task<Cipher?> GetCipherAsync(
         GetVaultCipherRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<VaultCipher> SaveCipherAsync(
+    Task<Cipher> SaveCipherAsync(
         SaveVaultCipherRequest request,
         CancellationToken cancellationToken = default);
 
