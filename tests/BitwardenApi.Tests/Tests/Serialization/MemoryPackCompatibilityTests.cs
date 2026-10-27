@@ -5,6 +5,22 @@ namespace BitwardenApi.Tests.Tests;
 public sealed class MemoryPackCompatibilityTests
 {
     [Fact]
+    public void Login_cipher_without_totp_preserves_absence_across_memorypack()
+    {
+        var login = (LoginCipher)Cipher.CreateBlankCipher(CipherType.Login);
+        login.Id = CipherId.Parse("11111111-1111-1111-1111-111111111111");
+        login.Name = "without OTP";
+
+        byte[] bytes = MemoryPackSerializer.Serialize<Cipher>(login);
+        var restored = Assert.IsType<LoginCipher>(MemoryPackSerializer.Deserialize<Cipher>(bytes));
+
+        Assert.Null(restored.Totp);
+        Assert.Equal(login.Id, restored.Id);
+        Assert.Equal("without OTP", restored.Name);
+        Assert.Equal(bytes, MemoryPackSerializer.Serialize<Cipher>(restored));
+    }
+
+    [Fact]
     public void Legacy_cipher_bytes_decode_and_reserialize_identically()
     {
         // Captured from the pre-refactor MemoryPackSerializer before any production edits.

@@ -9,7 +9,8 @@ namespace BitwardenApi.Notifications;
 
 internal sealed class NotificationsApi(
     IAccessTokenProvider accessTokenProvider,
-    IServiceProvider serviceProvider)
+    IServiceProvider serviceProvider,
+    Action<IHubConnectionBuilder>? configureConnection = null)
     : INotificationsApi
 {
     private HubConnection? _connection;
@@ -57,7 +58,7 @@ internal sealed class NotificationsApi(
         Uri hubEndpoint,
         BitwardenAccountContext accountContext)
     {
-        HubConnection connection = new HubConnectionBuilder()
+        IHubConnectionBuilder builder = new HubConnectionBuilder()
             .WithUrl(hubEndpoint, options =>
             {
                 options.AccessTokenProvider = async () =>
@@ -73,8 +74,10 @@ internal sealed class NotificationsApi(
             {
                 options.PayloadSerializerOptions = NotificationsJsonContext.ConfiguredDefault.Options;
             })
-            .WithAutomaticReconnect()
-            .Build();
+            .WithAutomaticReconnect();
+
+        configureConnection?.Invoke(builder);
+        HubConnection connection = builder.Build();
 
         connection.On<NotificationEnvelope>("ReceiveMessage", DispatchAsync);
 

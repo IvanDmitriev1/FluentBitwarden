@@ -72,6 +72,93 @@ public sealed class IdentityApiTests
     }
 
     [Fact]
+    public async Task Refresh_rejects_a_null_success_payload()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("null"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => provider.GetRequiredService<IIdentityApi>()
+            .RefreshAuthenticationAsync(
+                new RefreshAuthenticationRequest(TestApiSupport.ClientContext, SessionRefreshToken.Parse("refresh-token")),
+                TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Authentication_rejects_a_null_error_payload()
+    {
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
+            TestApiSupport.GetPasswordLoginRejectionAsync("null"));
+    }
+
+    [Fact]
+    public async Task Authentication_maps_argon2_unlock_settings_and_optional_two_factor_token()
+    {
+        string payload = AuthenticatedPayload
+            .Replace("\"refresh_token\": \"refresh-token\",", "\"refresh_token\": \"refresh-token\",\n  \"twoFactorToken\": \"remember-token\",")
+            .Replace("\"kdfType\": 0, \"iterations\": 600000", "\"kdfType\": 1, \"iterations\": 3, \"memory\": 64, \"parallelism\": 4");
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(payload));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        SessionTokenResult<AuthenticatedSession> result = await provider.GetRequiredService<IIdentityApi>()
+            .AuthenticateWithPasswordAsync(
+                new PasswordAuthenticationRequest(TestApiSupport.ClientContext, "user@example.test", "password-hash"),
+                TestContext.Current.CancellationToken);
+
+        var success = Assert.IsType<SessionTokenResult<AuthenticatedSession>.Success>(result);
+        Assert.Equal(TwoFactorToken.Parse("remember-token"), success.Value.TwoFactorToken);
+        Assert.Equal(new KdfConfig.Argon2Id(3, 64, 4), success.Value.MasterPasswordUnlockModel.KdfConfig);
+    }
+
+    [Fact]
+    public async Task Authentication_rejects_an_unsupported_kdf_type()
+    {
+        string payload = AuthenticatedPayload.Replace("\"kdfType\": 0", "\"kdfType\": 99");
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(payload));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => provider.GetRequiredService<IIdentityApi>()
+            .AuthenticateWithPasswordAsync(
+                new PasswordAuthenticationRequest(TestApiSupport.ClientContext, "user@example.test", "password-hash"),
+                TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Authentication_rejects_a_null_success_payload()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("null"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => provider.GetRequiredService<IIdentityApi>()
+            .AuthenticateWithPasswordAsync(
+                new PasswordAuthenticationRequest(TestApiSupport.ClientContext, "user@example.test", "password-hash"),
+                TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Authentication_throws_for_non_bad_request_error_status()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("{\"error\":\"server_error\"}", HttpStatusCode.ServiceUnavailable));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        HttpRequestException exception = await Assert.ThrowsAsync<HttpRequestException>(() => provider
+            .GetRequiredService<IIdentityApi>()
+            .AuthenticateWithPasswordAsync(
+                new PasswordAuthenticationRequest(TestApiSupport.ClientContext, "user@example.test", "password-hash"),
+                TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
     public async Task Bad_request_with_device_verification_flag_maps_to_device_rejection()
     {
         SessionTokenRejection rejection = await TestApiSupport.GetPasswordLoginRejectionAsync(
@@ -93,6 +180,45 @@ public sealed class IdentityApiTests
         Assert.Equal(
             [IdentityTwoFactorProviderType.Authenticator, IdentityTwoFactorProviderType.Email],
             rejection.TwoFactorChallenge!.Value.Providers.Select(provider => provider.Provider));
+    }
+
+    [Fact]
+    public async Task Bad_request_ignores_unknown_providers_and_skips_provider_metadata()
+    {
+        SessionTokenRejection rejection = await TestApiSupport.GetPasswordLoginRejectionAsync(
+            "{\"error\":\"invalid_grant\",\"error_description\":\"Use supported methods\",\"twoFactorProviders2\":{\"0\":{\"name\":\"Authenticator\"},\"7\":null,\"x\":null,\"5\":{}}}");
+
+        Assert.Equal(SessionTokenRejectionKind.TwoFactorRequired, rejection.Kind);
+        Assert.Equal(
+            [IdentityTwoFactorProviderType.Authenticator, IdentityTwoFactorProviderType.Remember],
+            rejection.TwoFactorChallenge!.Value.Providers.Select(provider => provider.Provider));
+    }
+
+    [Fact]
+    public async Task Bad_request_with_device_flag_and_providers_requires_device_verification()
+    {
+        SessionTokenRejection rejection = await TestApiSupport.GetPasswordLoginRejectionAsync(
+            "{\"error\":\"invalid_grant\",\"error_description\":\"Verify device first\",\"deviceVerificationRequest\":true,\"twoFactorProviders2\":{\"0\":null}}");
+
+        Assert.Equal(SessionTokenRejectionKind.DeviceVerificationRequired, rejection.Kind);
+        Assert.Equal("Verify device first", rejection.Message);
+        Assert.Null(rejection.TwoFactorChallenge);
+    }
+
+    [Fact]
+    public async Task Bad_request_with_malformed_provider_container_is_rejected_as_invalid_json()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse(
+                "{\"error\":\"invalid_grant\",\"error_description\":\"bad response\",\"twoFactorProviders2\":[]}",
+                HttpStatusCode.BadRequest));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.GetRequiredService<IIdentityApi>().AuthenticateWithPasswordAsync(
+            new PasswordAuthenticationRequest(TestApiSupport.ClientContext, "user@example.test", "password-hash"),
+            TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
     }
 
     [Fact]
@@ -141,10 +267,65 @@ public sealed class IdentityApiTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(new byte[] { 1, 2, 3 }, result.Options.Challenge);
+        Assert.Equal(60_000u, result.Options.TimeoutMilliseconds);
         Assert.Equal("bitwarden.test", result.Options.RpId);
         Assert.Equal(WebAuthnLoginAssertionOptionsToken.Parse("assertion-token"), result.Token);
         Assert.Equal(HttpMethod.Get, handler.Requests.Single().Method);
         Assert.Equal("/accounts/webauthn/assertion-options", handler.Requests.Single().RequestUri.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task WebAuthn_options_failure_preserves_operation_status_body_and_request_uri()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("service unavailable", HttpStatusCode.ServiceUnavailable));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        BitwardenApiException exception = await Assert.ThrowsAsync<BitwardenApiException>(() => provider
+            .GetRequiredService<IWebAuthnIdentityApi>()
+            .GetAuthenticationAssertionOptionsAsync(
+                TestApiSupport.ClientContext,
+                TestContext.Current.CancellationToken));
+
+        Assert.Equal("Identity get WebAuthn assertion options", exception.Operation);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
+        Assert.Equal("service unavailable", exception.ResponseBody);
+        Assert.Equal("https://identity.bitwarden.test/accounts/webauthn/assertion-options", exception.RequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task WebAuthn_options_failure_with_empty_body_keeps_an_empty_response_body()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse(string.Empty, HttpStatusCode.NotFound));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        BitwardenApiException exception = await Assert.ThrowsAsync<BitwardenApiException>(() => provider
+            .GetRequiredService<IWebAuthnIdentityApi>()
+            .GetAuthenticationAssertionOptionsAsync(
+                TestApiSupport.ClientContext,
+                TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(string.Empty, exception.ResponseBody);
+        Assert.Equal(
+            "Identity get WebAuthn assertion options failed with HTTP 404 (NotFound).",
+            exception.Message);
+    }
+
+    [Fact]
+    public async Task WebAuthn_options_reject_a_null_success_payload()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("null"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => provider
+            .GetRequiredService<IWebAuthnIdentityApi>()
+            .GetAuthenticationAssertionOptionsAsync(
+                TestApiSupport.ClientContext,
+                TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
     }
 
     private const string EncodedPrivateKey = "2.AAAAAAAAAAAAAAAAAAAAAA==|AQ==|AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";

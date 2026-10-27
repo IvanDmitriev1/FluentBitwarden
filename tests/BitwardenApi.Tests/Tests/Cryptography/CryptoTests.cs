@@ -27,6 +27,7 @@ public sealed class CryptoTests
 
         // Python hashlib.pbkdf2_hmac("sha256", b"password", b"user@example.test", 2, 32), then auth PBKDF2(1).
         Assert.Equal("mrEkdfLXzlATl6Z6iTHwBgSsWzgciEl5qHNHkg2axaI=", hash.Value);
+        Assert.Equal(hash.Value, hash.ToString());
     }
 
     [Fact]
@@ -52,6 +53,59 @@ public sealed class CryptoTests
 
         // Independently calculated with Python hashlib.pbkdf2_hmac, then HMAC-SHA256(PRK, "enc"/"mac" + 0x01).
         Assert.Equal("084940AB1E126A3076FE05692CC9546589E79007774C25505F639456D605D29FF8E279E1613F9020128E7937C5E9B8F6E960E21C9F02C8DEAC83E265AA61BCEA", Convert.ToHexString(stretchedKey.Span));
+    }
+
+    [Fact]
+    public void Pbkdf2_char_and_utf8_byte_inputs_match_the_same_fixed_reference_vector()
+    {
+        byte[] charPasswordOutput = new byte[32];
+        byte[] bytePasswordOutput = new byte[32];
+
+        Pbkdf2Kdf.Derive("password", "salt", 1, charPasswordOutput);
+        Pbkdf2Kdf.Derive(System.Text.Encoding.UTF8.GetBytes("password"), "salt", 1, bytePasswordOutput);
+
+        const string expected = "120FB6CFFCF8B32C43E7225256C4F837A86548C92CCC35480805987CB70BE17B";
+        Assert.Equal(expected, Convert.ToHexString(charPasswordOutput));
+        Assert.Equal(expected, Convert.ToHexString(bytePasswordOutput));
+    }
+
+    [Fact]
+    public void Hkdf_expand_matches_rfc_5869_test_case_three()
+    {
+        byte[] pseudorandomKey = Convert.FromHexString("19EF24A32C717B167F33A91D6F648BDF96596776AFDB6377AC434C1C293CCB04");
+        Span<byte> output = stackalloc byte[42];
+
+        Hkdf.Expand(pseudorandomKey, "", output);
+
+        Assert.Equal(
+            "8DA4E775A563C18F715F802A063C5A31B8A11F5C5EE1879EC3454E5F3C738D2D9D201395FAA4B61A96C8",
+            Convert.ToHexString(output));
+    }
+
+    [Fact]
+    public void Master_key_rejects_an_unknown_kdf_configuration()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => MasterKey.Derive("password", "salt", new UnknownKdf()));
+    }
+
+    [Fact]
+    public void Master_key_rejects_zero_pbkdf2_iterations()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => MasterKey.Derive("password", "salt", new KdfConfig.Pbkdf2(0)));
+    }
+
+    [Fact]
+    public void Disposing_a_stretched_key_zeros_its_borrowed_material()
+    {
+        using MasterKey masterKey = MasterKey.Derive("password", "salt", new KdfConfig.Pbkdf2(1));
+        StretchedMasterKey stretchedKey = masterKey.Stretch();
+        ReadOnlySpan<byte> borrowedMaterial = stretchedKey.Span;
+
+        stretchedKey.Dispose();
+        stretchedKey.Dispose();
+
+        Assert.Equal(new byte[64], borrowedMaterial.ToArray());
     }
 
     [Fact]
@@ -84,6 +138,7 @@ public sealed class CryptoTests
         EncString value = TestApiSupport.ParseEncString("3.AQ==");
 
         Assert.Throws<CryptographicException>(() => value.Decode(TestKey));
+        Assert.Throws<CryptographicException>(() => value.DecodeToArray(TestKey));
     }
 
     [Fact]
@@ -95,5 +150,7 @@ public sealed class CryptoTests
     }
 
     private static readonly byte[] TestKey = [.. Enumerable.Range(0, 64).Select(static value => (byte)value)];
+
+    private sealed record UnknownKdf : KdfConfig;
 
 }

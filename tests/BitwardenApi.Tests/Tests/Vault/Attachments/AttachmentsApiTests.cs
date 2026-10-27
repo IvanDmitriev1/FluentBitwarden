@@ -79,4 +79,94 @@ public sealed class AttachmentsApiTests
         Assert.Empty(blobHandler.Requests);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Download_attachment_rejects_an_empty_id_before_sending_any_request(bool emptyCipherId)
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("{}"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        CipherId cipherId = emptyCipherId ? default : CipherId.Parse("cipher-id");
+        AttachmentId attachmentId = emptyCipherId ? AttachmentId.Parse("attachment-id") : default;
+
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.GetRequiredService<IAttachmentsApi>()
+            .DownloadToAsync(
+                TestApiSupport.AccountContext,
+                cipherId,
+                attachmentId,
+                static (_, _) => Task.CompletedTask,
+                TestContext.Current.CancellationToken));
+
+        Assert.Empty(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Download_attachment_stops_at_the_failed_metadata_or_blob_request(bool failBlobRequest)
+    {
+        const string encoded = "2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=";
+        using var vaultHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse(
+                $$"""
+                { "id": "attachment-id", "url": "https://blob.bitwarden.test/file", "fileName": "{{encoded}}", "key": "{{encoded}}", "size": 4 }
+                """,
+                failBlobRequest ? HttpStatusCode.OK : HttpStatusCode.NotFound));
+        using var blobHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("storage access denied", HttpStatusCode.Forbidden));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: vaultHandler, attachmentHandler: blobHandler);
+
+        BitwardenApiException exception = await Assert.ThrowsAsync<BitwardenApiException>(() => provider
+            .GetRequiredService<IAttachmentsApi>()
+            .DownloadToAsync(
+                TestApiSupport.AccountContext,
+                CipherId.Parse("cipher-id"),
+                AttachmentId.Parse("attachment-id"),
+                static (_, _) => Task.CompletedTask,
+                TestContext.Current.CancellationToken));
+
+        Assert.Equal(failBlobRequest ? HttpStatusCode.Forbidden : HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Single(vaultHandler.Requests);
+        Assert.Equal(["Bearer vault-access-token"], vaultHandler.Requests[0].Headers["Authorization"]);
+        Assert.Equal(failBlobRequest ? 1 : 0, blobHandler.Requests.Count);
+        if (failBlobRequest)
+            Assert.DoesNotContain("Authorization", blobHandler.Requests[0].Headers.Keys, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Download_attachment_propagates_cancellation_from_the_stream_handler()
+    {
+        const string encoded = "2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=";
+        using var vaultHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse(
+                $$"""
+                { "id": "attachment-id", "url": "https://blob.bitwarden.test/file", "fileName": "{{encoded}}", "key": "{{encoded}}", "size": 4 }
+                """));
+        using var blockingStream = new AttachmentBlockingReadStream();
+        using var blobHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(blockingStream) });
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: vaultHandler, attachmentHandler: blobHandler);
+        using var cancellation = new CancellationTokenSource();
+        int streamHandlerCalls = 0;
+        Task download = provider.GetRequiredService<IAttachmentsApi>().DownloadToAsync(
+            TestApiSupport.AccountContext,
+            CipherId.Parse("cipher-id"),
+            AttachmentId.Parse("attachment-id"),
+            async (stream, _) =>
+            {
+                Interlocked.Increment(ref streamHandlerCalls);
+                await stream.CopyToAsync(Stream.Null, cancellation.Token);
+            },
+            cancellation.Token);
+
+        await blockingStream.ReadStarted.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => download);
+        Assert.Equal(1, streamHandlerCalls);
+        Assert.Single(vaultHandler.Requests);
+        Assert.Single(blobHandler.Requests);
+    }
+
 }

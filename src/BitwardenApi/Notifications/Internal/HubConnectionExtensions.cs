@@ -9,7 +9,8 @@ internal static class HubConnectionExtensions
         Justification = "Infinite retry-with-backoff loop by design; must catch any transient connection failure to keep retrying.")]
     public static async Task StartWithRetryAsync(
         this HubConnection connection,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        TimeProvider? timeProvider = null)
     {
         var delay = TimeSpan.FromSeconds(2);
         var maxDelay = TimeSpan.FromSeconds(30);
@@ -25,7 +26,7 @@ internal static class HubConnectionExtensions
             }
             catch when (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(delay, timeProvider ?? TimeProvider.System, cancellationToken).ConfigureAwait(false);
 
                 var nextSeconds = Math.Min(delay.TotalSeconds * 2, maxDelay.TotalSeconds);
                 delay = TimeSpan.FromSeconds(nextSeconds);
