@@ -1,4 +1,4 @@
-namespace BitwardenApi.Notifications.Models;
+namespace BitwardenApi.Notifications.Abstractions;
 
 public enum NotificationType : byte
 {
@@ -29,4 +29,7 @@ public enum NotificationType : byte
     ProviderBankAccountVerified = 24,
     SyncPolicy = 25,
     AutoConfirmMember = 26,
+    PremiumStatusChanged = 27,
+    RefreshApproverInbox = 28,
+    RefreshAccessRequest = 29,
 }

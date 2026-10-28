@@ -1,13 +1,16 @@
-using BitwardenApi.Identity;
-using BitwardenApi.Vault.Attachments;
-using BitwardenApi.Vault.Sync;
-using BitwardenApi.Vault.Ciphers;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
-using Polly;
 using System.Net;
 using System.Net.Http.Headers;
 using BitwardenApi.Client.Http;
+using BitwardenApi.Identity;
+using BitwardenApi.Notifications;
+using BitwardenApi.Notifications.Abstractions;
+using BitwardenApi.Vault.Attachments;
+using BitwardenApi.Vault.Ciphers;
+using BitwardenApi.Vault.Sync;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 
 namespace BitwardenApi;
 
@@ -15,6 +18,7 @@ public static class BitwardenApiServiceCollectionExtensions
 {
     public static IServiceCollection AddBitwardenApi(this IServiceCollection services)
     {
+        services.TryAddSingleton(TimeProvider.System);
         services.AddTransient<AuthorizationHandler>();
 
         services.AddHttpClient(HttpClientNames.Identity, static client =>
@@ -50,7 +54,7 @@ public static class BitwardenApiServiceCollectionExtensions
         services.AddSingleton<ICiphersApi, CiphersApi>();
         services.AddSingleton<IAttachmentsApi, AttachmentsApi>();
 
-        //services.AddSingleton<INotificationsApi, NotificationsApi>();
+        services.AddSingleton<IServerNotificationsClientFactory, ServerNotificationsClientFactory>();
 
         return services;
     }

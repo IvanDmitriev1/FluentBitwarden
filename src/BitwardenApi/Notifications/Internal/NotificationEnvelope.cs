@@ -1,4 +1,4 @@
-using BitwardenApi.Notifications.Models;
+using BitwardenApi.Notifications.Abstractions;
 
 namespace BitwardenApi.Notifications.Internal;
 

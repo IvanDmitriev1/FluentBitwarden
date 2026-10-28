@@ -10,6 +10,15 @@ namespace BitwardenApi.Notifications.Internal;
 [JsonSerializable(typeof(CipherChangedNotification))]
 [JsonSerializable(typeof(FolderChangedNotification))]
 [JsonSerializable(typeof(VaultSyncRequestedNotification))]
+[JsonSerializable(typeof(SyncSendNotification))]
+[JsonSerializable(typeof(AuthRequestPushNotification))]
+[JsonSerializable(typeof(OrganizationStatusPushNotification))]
+[JsonSerializable(typeof(OrganizationCollectionSettingChangedPushNotification))]
+[JsonSerializable(typeof(OrganizationBankAccountVerifiedPushNotification))]
+[JsonSerializable(typeof(ProviderBankAccountVerifiedPushNotification))]
+[JsonSerializable(typeof(LogOutNotification))]
+[JsonSerializable(typeof(AutoConfirmMemberNotification))]
+[JsonSerializable(typeof(PremiumStatusChangedNotification))]
 internal sealed partial class NotificationsJsonContext : JsonSerializerContext
 {
     public static NotificationsJsonContext ConfiguredDefault { get; } = new(CreateOptions());
@@ -21,6 +30,9 @@ internal sealed partial class NotificationsJsonContext : JsonSerializerContext
         options.Converters.Add(new CipherId.CipherIdSystemTextJsonConverter());
         options.Converters.Add(new FolderId.FolderIdSystemTextJsonConverter());
         options.Converters.Add(new UserId.UserIdSystemTextJsonConverter());
+        options.Converters.Add(new OrganizationId.OrganizationIdSystemTextJsonConverter());
+        options.Converters.Add(new CollectionId.CollectionIdSystemTextJsonConverter());
+        options.Converters.Add(new AuthRequestId.AuthRequestIdSystemTextJsonConverter());
         return options;
     }
 }

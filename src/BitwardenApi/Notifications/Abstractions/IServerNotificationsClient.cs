@@ -1,7 +1,7 @@
 using BitwardenApi.Client;
-namespace BitwardenApi.Notifications;
+namespace BitwardenApi.Notifications.Abstractions;
 
-public interface INotificationsApi : IAsyncDisposable
+public interface IServerNotificationsClient : IAsyncDisposable
 {
     Task ConnectAsync(
         BitwardenAccountContext accountContext,
