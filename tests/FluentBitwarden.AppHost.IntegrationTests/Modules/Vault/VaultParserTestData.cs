@@ -219,11 +219,18 @@ internal static partial class VaultParserTestData
         for (int i = 0; i < warmups; i++)
             _ = ReadConverterValue(converter, payload, options);
 
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-            _ = ReadConverterValue(converter, payload, options);
+        // Shared-pool refills can contaminate a batch; measure steady-state allocations.
+        long minimumBytes = long.MaxValue;
+        for (int sample = 0; sample < 5; sample++)
+        {
+            long start = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+                _ = ReadConverterValue(converter, payload, options);
 
-        return (GC.GetAllocatedBytesForCurrentThread() - start) / iterations;
+            minimumBytes = Math.Min(minimumBytes, GC.GetAllocatedBytesForCurrentThread() - start);
+        }
+
+        return minimumBytes / iterations;
     }
 
     internal static long MeasureUtf8StringAllocations(string plaintext)
@@ -234,11 +241,17 @@ internal static partial class VaultParserTestData
         for (int i = 0; i < warmups; i++)
             _ = Encoding.UTF8.GetString(utf8.AsSpan());
 
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-            _ = Encoding.UTF8.GetString(utf8.AsSpan());
+        long minimumBytes = long.MaxValue;
+        for (int sample = 0; sample < 5; sample++)
+        {
+            long start = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+                _ = Encoding.UTF8.GetString(utf8.AsSpan());
 
-        return (GC.GetAllocatedBytesForCurrentThread() - start) / iterations;
+            minimumBytes = Math.Min(minimumBytes, GC.GetAllocatedBytesForCurrentThread() - start);
+        }
+
+        return minimumBytes / iterations;
     }
 
     private static T ReadConverterValue<T>(

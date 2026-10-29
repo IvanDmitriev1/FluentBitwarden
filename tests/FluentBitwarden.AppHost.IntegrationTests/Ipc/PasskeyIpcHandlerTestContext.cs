@@ -25,7 +25,7 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
         Session = new SessionTestContext();
 
         var services = new ServiceCollection();
-        services.AddSingleton<IAppSessionService>(Session.Service);
+        services.AddSingleton<IAppSessionOperations>(Session.Operations);
         services.AddSingleton<IPasskeyDialogClient>(Dialog);
         services.AddTransient<PasskeyIpcHandler>();
         _services = services.BuildServiceProvider(new ServiceProviderOptions
@@ -68,7 +68,7 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
 
     public async Task<SessionUnlockOutcome> UnlockAsync(AccountProfile account, CancellationToken cancellationToken)
     {
-        if (Session.Service.State is AppSessionState.Unlocked)
+        if (Session.Store.State is AppSessionStateSnapshot.Unlocked)
         {
             throw new InvalidOperationException("Lock the current test session before unlocking another test session.");
         }
@@ -84,7 +84,7 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
 
         try
         {
-            SessionUnlockOutcome outcome = await Session.Service.UnlockAsync(
+            SessionUnlockOutcome outcome = await Session.Operations.UnlockAsync(
                 new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-passkey-test"),
                 cancellationToken);
 
@@ -97,7 +97,7 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
         }
         catch
         {
-            if (Session.Service.State is not AppSessionState.Unlocked)
+            if (Session.Store.State is not AppSessionStateSnapshot.Unlocked)
             {
                 keySession.Dispose();
             }
@@ -115,9 +115,9 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
     {
         try
         {
-            if (Session.Service.State is AppSessionState.Unlocked)
+            if (Session.Store.State is AppSessionStateSnapshot.Unlocked)
             {
-                await Session.Service.LockAsync(CancellationToken.None);
+                await Session.Operations.LockAsync(CancellationToken.None);
             }
         }
         finally

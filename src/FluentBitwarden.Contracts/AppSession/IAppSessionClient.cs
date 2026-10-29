@@ -13,7 +13,7 @@ namespace FluentBitwarden.Contracts.AppSession;
 /// </summary>
 public interface IAppSessionClient
 {
-    Task<AppSessionState> GetStateAsync(
+    Task<AppSessionStateSnapshot> GetStateAsync(
         GetAppSessionStateRequest request,
         CancellationToken cancellationToken = default);
 

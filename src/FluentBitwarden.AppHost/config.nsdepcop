@@ -16,14 +16,19 @@
   <Allowed From="FluentBitwarden.*" To="FluentBitwarden.Platform.*" />
   <Allowed From="FluentBitwarden.*" To="FluentBitwarden.Contracts.*" />
 
-  <!-- Hosting owns its implementation details and may compose Infrastructure services. -->
+  <!-- Application owns its implementation details and may compose Infrastructure services. -->
   <Allowed
-    From="FluentBitwarden.AppHost.Hosting.*"
-    To="FluentBitwarden.AppHost.Hosting.*" />
+    From="FluentBitwarden.AppHost.Application.*"
+    To="FluentBitwarden.AppHost.Application.*" />
 
   <Allowed
-    From="FluentBitwarden.AppHost.Hosting.*"
+    From="FluentBitwarden.AppHost.Application.*"
     To="FluentBitwarden.AppHost.Infrastructure.*" />
+
+  <!-- Application-wide capabilities are available through abstractions only. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.*"
+    To="FluentBitwarden.AppHost.Application.Abstractions.*" />
 
   <!-- Infrastructure may use its own implementation details. -->
   <Allowed
@@ -68,18 +73,30 @@
     To="FluentBitwarden.AppHost.AppSession.Contracts.*" />
 
 
-  <!-- The AppHost composition root may register Hosting and Infrastructure services. -->
+  <!-- The composition root and lifecycle coordinator compose Application and Infrastructure services. -->
   <Allowed
     From="FluentBitwarden.AppHost"
-    To="FluentBitwarden.AppHost.Hosting" />
+    To="FluentBitwarden.AppHost.Application" />
 
   <Allowed
     From="FluentBitwarden.AppHost"
-    To="FluentBitwarden.AppHost.Hosting.Activation" />
+    To="FluentBitwarden.AppHost.Application.Activation" />
 
   <Allowed
     From="FluentBitwarden.AppHost"
     To="FluentBitwarden.AppHost.Infrastructure" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Infrastructure.Data.Abstractions" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Infrastructure.Processes" />
+
+  <Allowed
+    From="FluentBitwarden.AppHost"
+    To="FluentBitwarden.AppHost.Infrastructure.Tray" />
 
   <Allowed
     From="FluentBitwarden.AppHost"

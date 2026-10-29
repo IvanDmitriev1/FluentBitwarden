@@ -1,17 +1,9 @@
-using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 
 namespace FluentBitwarden.AppHost.AppSession.Contracts;
 
-public interface IAppSessionService
+public interface IAppSessionOperations
 {
-    AppSessionState State { get; }
-
-    IUnlockedSessionLease RequireUnlockedSessionLease();
-
-    ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken);
-
     Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken);
-
     Task LockAsync(CancellationToken cancellationToken);
 }

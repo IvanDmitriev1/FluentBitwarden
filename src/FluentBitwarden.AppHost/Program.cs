@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using BitwardenApi;
+using FluentBitwarden.AppHost.Application;
+using FluentBitwarden.AppHost.Application.Activation;
 using FluentBitwarden.AppHost.AppSession;
-using FluentBitwarden.AppHost.Hosting;
-using FluentBitwarden.AppHost.Hosting.Activation;
 using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Integrations.SshAgent;
 using FluentBitwarden.AppHost.Ipc;
@@ -51,7 +51,7 @@ internal static class Program
             }));
 #endif
 
-        builder.Services.AddAppHostHosting();
+        builder.Services.AddApplicationServices();
         builder.Services.AddAppLogging("apphost");
         builder.Services.AddSingleton<ISettingsStore>(_ => SettingsStore.Instance);
 
@@ -71,6 +71,8 @@ internal static class Program
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
 
         builder.Services.AddSingleton<IPasskeyDialogClient, PasskeyDialogClient>();
+
+        builder.Services.AddHostedService<AppHostLifecycleService>();
 
         var host = builder.Build();
 

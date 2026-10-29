@@ -1,10 +1,9 @@
+using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
-using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
 
@@ -14,19 +13,37 @@ internal sealed class SessionTestContext
     {
         AccountService = Substitute.For<IAccountService>();
         VaultService = Substitute.For<IVaultService>();
-        ActiveSessionManager = new ActiveSessionManager(Substitute.For<IIpcEventPublisher>());
+        Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
         AppHostTermination = Substitute.For<IAppHostTermination>();
-        Service = new AppSessionService(AccountService, VaultService, ActiveSessionManager, AppHostTermination);
+        Operations = new AppSessionOperations(AccountService, VaultService, AppHostTermination, Store);
     }
 
     public IAccountService AccountService { get; }
     public IVaultService VaultService { get; }
-    public ActiveSessionManager ActiveSessionManager { get; }
+    public AppSessionStore Store { get; }
     public IAppHostTermination AppHostTermination { get; }
-    public AppSessionService Service { get; }
+    public AppSessionOperations Operations { get; }
+
+    public IAppSessionAccessor RequireUnlockedSessionLease()
+    {
+        var lease = Store.CreateLease();
+        try
+        {
+            _ = lease.RequireUnlockedState();
+            return lease;
+        }
+        catch
+        {
+            lease.Dispose();
+            throw;
+        }
+    }
 
     public void ConfigureAccount(AccountProfile account, AccountKeyUnlockResult unlockResult, IUnlockedVault? vault = null)
     {
+        if (Store.State is AppSessionStateSnapshot.NotAuthenticated)
+            Store.AuthenticateAsync(account, CancellationToken.None).GetAwaiter().GetResult();
+
         AccountService.GetAccount(account.UserId).Returns(account);
         AccountService.UnlockKey(account.UserId, Arg.Any<AccountUnlockMethod>()).Returns(unlockResult);
 
@@ -41,10 +58,10 @@ internal sealed class SessionTestContext
 
 internal static class AppSessionTestSupport
 {
-    public static AccountProfile? GetAccount(AppSessionState state) => state switch
+    public static AccountProfile? GetAccount(AppSessionStateSnapshot stateSnapshot) => stateSnapshot switch
     {
-        AppSessionState.Locked locked => locked.Account,
-        AppSessionState.Unlocked unlocked => unlocked.Account,
+        AppSessionStateSnapshot.Locked locked => locked.Account,
+        AppSessionStateSnapshot.Unlocked unlocked => unlocked.Account,
         _ => null
     };
 }

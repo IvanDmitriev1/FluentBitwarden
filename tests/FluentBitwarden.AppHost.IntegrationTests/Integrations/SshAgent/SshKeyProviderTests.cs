@@ -1,11 +1,9 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Services;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
-using FluentBitwarden.AppHost.Modules.Vault.Contracts;
-using FluentBitwarden.Contracts.AppSession;
-using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.Integrations.Ssh;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
@@ -18,15 +16,52 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Integrations.SshAgent;
 public sealed class SshKeyProviderTests
 {
     [Fact]
+    public async Task GetIdentities_observes_unlock_on_an_existing_connection()
+    {
+        var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await store.AuthenticateAsync(fixture.Account, cancellationToken);
+        var provider = new SshKeyProvider(
+            store, fixture.UiProcessLauncher, fixture.DialogClient, fixture.SettingsStore);
+        Assert.Empty(provider.GetIdentities());
+
+        await store.UnlockAsync(fixture.BeforeApprovalLease.RequireUnlockedState());
+
+        SshAgentIdentity identity = Assert.Single(provider.GetIdentities());
+        Assert.Equal(fixture.Key.PublicKeyBlob, identity.PublicKeyBlob.ToArray());
+        await store.LockAsync(cancellationToken);
+    }
+
+    [Fact]
+    public async Task GetIdentities_stops_exposing_keys_when_the_session_locks_on_an_existing_connection()
+    {
+        var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var state = fixture.BeforeApprovalLease.RequireUnlockedState();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await store.AuthenticateAsync(fixture.Account, cancellationToken);
+        await store.UnlockAsync(state);
+        var provider = new SshKeyProvider(
+            store, fixture.UiProcessLauncher, fixture.DialogClient, fixture.SettingsStore);
+        Assert.Single(provider.GetIdentities());
+
+        await store.LockAsync(cancellationToken);
+
+        Assert.Empty(provider.GetIdentities());
+    }
+
+    [Fact]
     public void GetIdentities_returns_no_keys_while_the_session_is_locked()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
-        fixture.Session.State.Returns(new AppSessionState.Locked(fixture.Account));
+        fixture.Accessor.AppSessionState.Returns(new AppSessionState.Locked(fixture.Account));
 
         IReadOnlyList<SshAgentIdentity> identities = fixture.Provider.GetIdentities();
 
         Assert.Empty(identities);
-        _ = fixture.Session.DidNotReceive().RequireUnlockedSessionLease();
+        _ = fixture.Session.Received(1).CreateLease();
+        fixture.Accessor.Received(1).Dispose();
     }
 
     [Fact]
@@ -47,7 +82,7 @@ public sealed class SshKeyProviderTests
     public async Task GetSignature_returns_no_key_when_not_authenticated()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
-        fixture.Session.State.Returns(new AppSessionState.NotAuthenticated());
+        fixture.Accessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
             fixture.CreateRequest(),
@@ -61,11 +96,11 @@ public sealed class SshKeyProviderTests
     public async Task GetSignature_waits_for_a_locked_session_to_unlock_before_signing()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
-        fixture.Session.State.Returns(new AppSessionState.Locked(fixture.Account));
-        var leaseSource = new TaskCompletionSource<IUnlockedSessionLease>(
+        fixture.Accessor.AppSessionState.Returns(new AppSessionState.Locked(fixture.Account));
+        var leaseSource = new TaskCompletionSource<IAppSessionAccessor>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Session.WaitUntilUnlockedAsync(Arg.Any<CancellationToken>())
-            .Returns(_ => new ValueTask<IUnlockedSessionLease>(leaseSource.Task));
+            .Returns(_ => new ValueTask<IAppSessionAccessor>(leaseSource.Task));
         byte[] data = "locked signing input"u8.ToArray();
 
         Task<SshAgentSignature?> signingTask = fixture.Provider.GetSignatureAsync(
@@ -86,11 +121,11 @@ public sealed class SshKeyProviderTests
     public async Task GetSignature_propagates_cancellation_while_waiting_for_unlock()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
-        fixture.Session.State.Returns(new AppSessionState.Locked(fixture.Account));
-        var leaseSource = new TaskCompletionSource<IUnlockedSessionLease>(
+        fixture.Accessor.AppSessionState.Returns(new AppSessionState.Locked(fixture.Account));
+        var leaseSource = new TaskCompletionSource<IAppSessionAccessor>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Session.WaitUntilUnlockedAsync(Arg.Any<CancellationToken>())
-            .Returns(call => new ValueTask<IUnlockedSessionLease>(
+            .Returns(call => new ValueTask<IAppSessionAccessor>(
                 leaseSource.Task.WaitAsync(call.Arg<CancellationToken>())));
         using var cancellation = new CancellationTokenSource();
 
@@ -175,8 +210,9 @@ public sealed class SshKeyProviderTests
     public async Task GetSignature_returns_no_signature_if_the_session_relocks_during_approval()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
-        fixture.Session.RequireUnlockedSessionLease()
-            .Returns(_ => throw new UnlockedSessionRequiredException());
+        var lockedLease = Substitute.For<IAppSessionAccessor>();
+        lockedLease.AppSessionState.Returns(new AppSessionState.Locked(fixture.Account));
+        fixture.SetActiveLease(lockedLease);
         fixture.DialogClient.ShowSshDialogAsync(
                 Arg.Any<SshUserActionRequest>(),
                 Arg.Any<CancellationToken>())
@@ -239,10 +275,12 @@ public sealed class SshKeyProviderTests
                 "first");
             BeforeApprovalLease = CreateLease(Account, Key.CreateCipher());
             ActiveLease = CreateLease(Account, Key.CreateCipher());
-            Session.State.Returns(new AppSessionState.Unlocked(Account));
+            var state = BeforeApprovalLease.AppSessionState;
+            Accessor.AppSessionState.Returns(state);
             Session.WaitUntilUnlockedAsync(Arg.Any<CancellationToken>())
-                .Returns(new ValueTask<IUnlockedSessionLease>(BeforeApprovalLease));
-            Session.RequireUnlockedSessionLease().Returns(ActiveLease);
+                .Returns(new ValueTask<IAppSessionAccessor>(BeforeApprovalLease));
+            var leaseAcquisitions = 0;
+            Session.CreateLease().Returns(_ => leaseAcquisitions++ == 0 ? Accessor : ActiveLease);
             SettingsStore.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey).Returns(policy);
             DialogClient.ShowSshDialogAsync(
                     Arg.Any<SshUserActionRequest>(),
@@ -253,9 +291,10 @@ public sealed class SshKeyProviderTests
 
         public SyntheticOpenSshKey Key { get; } = SshAgentTestData.CreateKey();
         public AccountProfile Account { get; }
-        public IUnlockedSessionLease BeforeApprovalLease { get; }
-        public IUnlockedSessionLease ActiveLease { get; private set; }
-        public IAppSessionService Session { get; } = Substitute.For<IAppSessionService>();
+        public IAppSessionAccessor BeforeApprovalLease { get; }
+        public IAppSessionAccessor ActiveLease { get; private set; }
+        public IAppSessionLeaseProvider Session { get; } = Substitute.For<IAppSessionLeaseProvider>();
+        public IAppSessionAccessor Accessor { get; } = Substitute.For<IAppSessionAccessor>();
         public IUiProcessLauncher UiProcessLauncher { get; } = Substitute.For<IUiProcessLauncher>();
         public ISshUserActionDialogClient DialogClient { get; } = Substitute.For<ISshUserActionDialogClient>();
         public ISettingsStore SettingsStore { get; } = Substitute.For<ISettingsStore>();
@@ -266,16 +305,13 @@ public sealed class SshKeyProviderTests
 
         public void ConfigureVault(params Cipher[] ciphers)
         {
-            var vault = Substitute.For<IUnlockedVault>();
-            vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);
-            BeforeApprovalLease.Vault.Returns(vault);
-            ActiveLease.Vault.Returns(vault);
+            BeforeApprovalLease.RequireUnlockedState().Vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);
+            ActiveLease.RequireUnlockedState().Vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);
         }
 
-        public void SetActiveLease(IUnlockedSessionLease lease)
+        public void SetActiveLease(IAppSessionAccessor lease)
         {
             ActiveLease = lease;
-            Session.RequireUnlockedSessionLease().Returns(lease);
         }
 
         public void AssertPreApprovalLeaseDisposedBeforeDialog() =>
@@ -284,6 +320,7 @@ public sealed class SshKeyProviderTests
                     Arg.Any<CancellationToken>())
                 .Returns(_ =>
                 {
+                    Accessor.Received(1).Dispose();
                     BeforeApprovalLease.Received(1).Dispose();
                     return Task.FromResult(UserActionDialogOutcome.Approved);
                 });

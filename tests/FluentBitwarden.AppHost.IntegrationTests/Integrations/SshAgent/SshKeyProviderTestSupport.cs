@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
@@ -17,13 +18,15 @@ internal static class SshKeyProviderTestSupport
         Assert.True(verifier.VerifySignature(signature.Value));
     }
 
-    internal static IUnlockedSessionLease CreateLease(AccountProfile account, params Cipher[] ciphers)
+    internal static IAppSessionAccessor CreateLease(AccountProfile account, params Cipher[] ciphers)
     {
         var vault = Substitute.For<IUnlockedVault>();
         vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);
-        var lease = Substitute.For<IUnlockedSessionLease>();
-        lease.Account.Returns(account);
-        lease.Vault.Returns(vault);
+        var lease = Substitute.For<IAppSessionAccessor>();
+        var key = Substitute.For<IAccountKeySession>();
+        key.UserId.Returns(account.UserId);
+        var state = new AppSessionState.Unlocked(account, vault, key);
+        lease.AppSessionState.Returns(state);
         return lease;
     }
 }

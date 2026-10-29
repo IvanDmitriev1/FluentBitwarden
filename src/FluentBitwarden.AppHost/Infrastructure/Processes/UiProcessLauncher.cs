@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.ProcessManager;
 using FluentBitwarden.Platform.Settings;

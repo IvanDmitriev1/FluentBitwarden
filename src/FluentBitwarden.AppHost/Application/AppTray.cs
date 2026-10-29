@@ -1,6 +1,6 @@
 using FluentBitwarden.AppHost.Infrastructure.Tray;
 
-namespace FluentBitwarden.AppHost.Hosting;
+namespace FluentBitwarden.AppHost.Application;
 
 internal sealed class AppTray(AppHostActions actions)
 {

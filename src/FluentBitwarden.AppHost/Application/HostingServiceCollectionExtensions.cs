@@ -1,17 +1,15 @@
-using FluentBitwarden.AppHost.Hosting.Activation;
+using FluentBitwarden.AppHost.Application.Activation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentBitwarden.AppHost.Hosting;
+namespace FluentBitwarden.AppHost.Application;
 
 internal static class HostingServiceCollectionExtensions
 {
-    public static IServiceCollection AddAppHostHosting(this IServiceCollection services)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddSingleton<AppHostActions>();
         services.AddSingleton<AppActivationHandler>();
         services.AddSingleton<AppTray>();
-
-        services.AddHostedService<AppHostLifecycleService>();
 
         return services;
     }

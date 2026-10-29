@@ -1,7 +1,7 @@
 
+using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account;
@@ -200,24 +200,26 @@ public sealed class AccountSessionAccessTokenProviderTests
 
         using ServiceProvider services = CreateServices(accountService, vaultService);
         using IServiceScope scope = services.CreateScope();
-        IAppSessionService sessionService = scope.ServiceProvider.GetRequiredService<IAppSessionService>();
-        Assert.IsType<SessionUnlockOutcome.Success>(await sessionService.UnlockAsync(
+        IAppSessionOperations sessionOperations = scope.ServiceProvider.GetRequiredService<IAppSessionOperations>();
+        var sessionStore = scope.ServiceProvider.GetRequiredService<AppSessionStore>();
+        await sessionStore.AuthenticateAsync(account, TestContext.Current.CancellationToken);
+        Assert.IsType<SessionUnlockOutcome.Success>(await sessionOperations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
         IAccessTokenProvider provider = Provider(scope);
         Task<SessionAccessToken> refresh = GetToken(provider, accountContext, TestContext.Current.CancellationToken).AsTask();
         await WaitWithTimeoutAsync(refreshStarted.Task, TimeSpan.FromSeconds(5));
 
-        Task lockTask = sessionService.LockAsync(TestContext.Current.CancellationToken);
+        Task lockTask = sessionOperations.LockAsync(TestContext.Current.CancellationToken);
         await lockTask.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         Assert.False(refresh.IsCompleted, "The refresh remains paused until its release signal.");
         releaseRefresh.TrySetResult();
         await refresh;
 
-        AppSessionState.Locked lockedState = Assert.IsType<AppSessionState.Locked>(sessionService.State);
+        AppSessionStateSnapshot.Locked lockedState = Assert.IsType<AppSessionStateSnapshot.Locked>(sessionStore.State);
         Assert.Equal(account, lockedState.Account);
         Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
-        Assert.Equal(lockedState, sessionService.State);
+        Assert.Equal(lockedState, sessionStore.State);
     }
 
     [Fact]
@@ -234,17 +236,17 @@ public sealed class AccountSessionAccessTokenProviderTests
         using ServiceProvider provider = services.BuildServiceProvider();
         using IServiceScope firstScope = provider.CreateScope();
         using IServiceScope secondScope = provider.CreateScope();
-        IAppSessionService firstSession = firstScope.ServiceProvider.GetRequiredService<IAppSessionService>();
-        IAppSessionService secondSession = secondScope.ServiceProvider.GetRequiredService<IAppSessionService>();
+        IAppSessionOperations firstSession = firstScope.ServiceProvider.GetRequiredService<IAppSessionOperations>();
+        IAppSessionOperations secondSession = secondScope.ServiceProvider.GetRequiredService<IAppSessionOperations>();
         IAccessTokenProvider firstTokenProvider = Provider(firstScope);
         IAccessTokenProvider secondTokenProvider = Provider(secondScope);
 
-        Assert.IsType<AppSessionService>(firstSession);
+        Assert.IsType<AppSessionOperations>(firstSession);
         Assert.NotSame(firstSession, secondSession);
         Assert.NotSame(firstTokenProvider, secondTokenProvider);
         Assert.Same(
-            firstScope.ServiceProvider.GetRequiredService<ActiveSessionManager>(),
-            secondScope.ServiceProvider.GetRequiredService<ActiveSessionManager>());
+            firstScope.ServiceProvider.GetRequiredService<AppSessionStore>(),
+            secondScope.ServiceProvider.GetRequiredService<AppSessionStore>());
         Assert.Same(
             firstScope.ServiceProvider.GetRequiredService<AccountTokenCache>(),
             secondScope.ServiceProvider.GetRequiredService<AccountTokenCache>());

@@ -1,4 +1,4 @@
-namespace FluentBitwarden.AppHost.AppSession.Contracts;
+namespace FluentBitwarden.AppHost.Application.Abstractions;
 
 internal interface IAppHostTermination
 {

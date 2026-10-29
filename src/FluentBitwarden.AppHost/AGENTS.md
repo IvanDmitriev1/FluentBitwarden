@@ -6,7 +6,7 @@ Root instructions apply. This headless, long-running process owns the unlocked s
 
 ## Local architecture
 
-- Hosting/ coordinates activation, tray, and application lifetime. Activation/ contains command parsing and activation handling; Tray/ contains the native tray window, menu, icon, and command handling.
+- AppHostLifecycleService.cs coordinates startup and shutdown at the root. Application/ owns activation and tray coordination; Application/Abstractions/ exposes application-wide capabilities such as termination. Infrastructure/Tray/ contains the native tray window, menu, and icon.
 - Modules/<feature>/ owns feature behavior. Siblings may use only another module's Abstractions/ and Models/ namespaces.
 - Infrastructure/ is a leaf for data access and shared host services. Modules must not reach into Infrastructure.Data.Implementations.
 - [config.nsdepcop](config.nsdepcop) enforces these rules. Disallowed rules take precedence; do not widen the documented Infrastructure.Data exception, which exists only for UnitOfWork composition.

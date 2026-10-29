@@ -48,14 +48,14 @@ public sealed class VaultCipherAttachmentServiceTests
             Attachments = [VaultParserTestData.CreateAttachment(attachmentId.ToString(), "encrypted.txt", plaintext.Length, cipherKey)]
         };
         context.SeedCache([cipher], organizations: [organization]);
-        IUnlockedSessionLease session = Substitute.For<IUnlockedSessionLease>();
-        session.Account.Returns(context.Account);
-        session.AccountKeySession.Returns(accountKeys.Session);
+        IAppSessionAccessor session = Substitute.For<IAppSessionAccessor>();
+        var state = new AppSessionState.Unlocked(context.Account, Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>(), accountKeys.Session);
+        session.AppSessionState.Returns(state);
         IAttachmentsApi api = Substitute.For<IAttachmentsApi>();
         ConfigureDownload(api, encryptedFile, protectedAttachmentKey);
-        var service = new VaultCipherAttachmentService(api, context.VaultReaderRepository);
+        var service = new VaultCipherAttachmentService(session, api, context.VaultReaderRepository);
 
-        await service.DownloadAsync(session, cipherId, attachmentId, destination.FilePath, CancellationToken.None);
+        await service.DownloadAsync(cipherId, attachmentId, destination.FilePath, CancellationToken.None);
 
         Assert.Equal(plaintext, File.ReadAllBytes(destination.FilePath));
         await api.Received(1).DownloadToAsync(
@@ -73,18 +73,17 @@ public sealed class VaultCipherAttachmentServiceTests
         using var destination = new TemporaryVaultAttachmentFile();
         byte[] userKey = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var accountKeys = new AccountKeySessionTestContext(userKey);
-        IUnlockedSessionLease session = Substitute.For<IUnlockedSessionLease>();
-        session.Account.Returns(context.Account);
-        session.AccountKeySession.Returns(accountKeys.Session);
+        IAppSessionAccessor session = Substitute.For<IAppSessionAccessor>();
+        var state = new AppSessionState.Unlocked(context.Account, Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>(), accountKeys.Session);
+        session.AppSessionState.Returns(state);
         IAttachmentsApi api = Substitute.For<IAttachmentsApi>();
         ConfigureDownload(
             api,
             VaultCipherAttachmentTestData.EncryptEncFile("payload"u8, Enumerable.Repeat((byte)3, 64).ToArray()),
             EncString.Encrypt(Enumerable.Repeat((byte)4, 64).ToArray(), Enumerable.Repeat((byte)3, 64).ToArray()));
-        var service = new VaultCipherAttachmentService(api, context.VaultReaderRepository);
+        var service = new VaultCipherAttachmentService(session, api, context.VaultReaderRepository);
 
         InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DownloadAsync(
-            session,
             CipherId.Parse("missing-cipher"),
             AttachmentId.Parse("missing-attachment"),
             destination.FilePath,
@@ -100,9 +99,9 @@ public sealed class VaultCipherAttachmentServiceTests
         using var destination = new TemporaryVaultAttachmentFile();
         byte[] userKey = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var accountKeys = new AccountKeySessionTestContext(userKey);
-        IUnlockedSessionLease session = Substitute.For<IUnlockedSessionLease>();
-        session.Account.Returns(context.Account);
-        session.AccountKeySession.Returns(accountKeys.Session);
+        IAppSessionAccessor session = Substitute.For<IAppSessionAccessor>();
+        var state = new AppSessionState.Unlocked(context.Account, Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>(), accountKeys.Session);
+        session.AppSessionState.Returns(state);
         IAttachmentsApi api = Substitute.For<IAttachmentsApi>();
         api.DownloadToAsync(
                 Arg.Any<BitwardenAccountContext>(),
@@ -111,10 +110,9 @@ public sealed class VaultCipherAttachmentServiceTests
                 Arg.Any<AttachmentStreamHandler>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromException(new InvalidOperationException("Attachment request failed.")));
-        var service = new VaultCipherAttachmentService(api, context.VaultReaderRepository);
+        var service = new VaultCipherAttachmentService(session, api, context.VaultReaderRepository);
 
         InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DownloadAsync(
-            session,
             CipherId.Parse("failed-cipher"),
             AttachmentId.Parse("failed-attachment"),
             destination.FilePath,
@@ -144,15 +142,14 @@ public sealed class VaultCipherAttachmentServiceTests
             api,
             VaultCipherAttachmentTestData.EncryptEncFile("payload"u8, attachmentKey),
             EncString.Encrypt(attachmentKey, cipherKey));
-        IUnlockedSessionLease session = Substitute.For<IUnlockedSessionLease>();
-        session.Account.Returns(context.Account);
-        session.AccountKeySession.Returns(accountKeys.Session);
-        var service = new VaultCipherAttachmentService(api, context.VaultReaderRepository);
+        IAppSessionAccessor session = Substitute.For<IAppSessionAccessor>();
+        var state = new AppSessionState.Unlocked(context.Account, Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>(), accountKeys.Session);
+        session.AppSessionState.Returns(state);
+        var service = new VaultCipherAttachmentService(session, api, context.VaultReaderRepository);
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.DownloadAsync(
-            session,
             cipherId,
             attachmentId,
             destination.FilePath,
@@ -179,13 +176,12 @@ public sealed class VaultCipherAttachmentServiceTests
         encryptedFile[^1] ^= 1;
         IAttachmentsApi api = Substitute.For<IAttachmentsApi>();
         ConfigureDownload(api, encryptedFile, EncString.Encrypt(attachmentKey, cipherKey));
-        IUnlockedSessionLease session = Substitute.For<IUnlockedSessionLease>();
-        session.Account.Returns(context.Account);
-        session.AccountKeySession.Returns(accountKeys.Session);
-        var service = new VaultCipherAttachmentService(api, context.VaultReaderRepository);
+        IAppSessionAccessor session = Substitute.For<IAppSessionAccessor>();
+        var state = new AppSessionState.Unlocked(context.Account, Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>(), accountKeys.Session);
+        session.AppSessionState.Returns(state);
+        var service = new VaultCipherAttachmentService(session, api, context.VaultReaderRepository);
 
         await Assert.ThrowsAsync<CryptographicException>(() => service.DownloadAsync(
-            session,
             cipherId,
             attachmentId,
             destination.FilePath,

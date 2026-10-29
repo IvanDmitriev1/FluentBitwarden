@@ -1,7 +1,7 @@
-using Microsoft.Windows.AppLifecycle;
 using Windows.ApplicationModel.Activation;
+using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.AppHost.Hosting.Activation;
+namespace FluentBitwarden.AppHost.Application.Activation;
 
 internal abstract record AppHostCliCommand
 {

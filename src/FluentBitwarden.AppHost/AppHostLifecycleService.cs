@@ -1,5 +1,6 @@
 using AsyncAwaitBestPractices;
-using FluentBitwarden.AppHost.Hosting.Activation;
+using FluentBitwarden.AppHost.Application;
+using FluentBitwarden.AppHost.Application.Activation;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Infrastructure.Tray;
 using FluentBitwarden.Contracts.Settings;
@@ -8,9 +9,9 @@ using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.AppHost.Hosting;
+namespace FluentBitwarden.AppHost;
 
-internal sealed class AppHostLifecycleService : IHostedService
+internal sealed class AppHostLifecycleService : IHostedLifecycleService
 {
     private readonly TaskCompletionSource<TrayWindow> _messageLoopStarted =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -53,14 +54,41 @@ internal sealed class AppHostLifecycleService : IHostedService
         _messageLoopThread.SetApartmentState(ApartmentState.STA);
     }
 
+    public Task StartingAsync(CancellationToken cancellationToken)
+    {
+        _databaseInitializationService.Initialize();
+
+        if (SettingsStore.Instance.Get(AppSettingKeys.App.SetupCompletedKey))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (PasskeyPluginSetupService.IsSupported())
+        {
+            PasskeyPluginSetupService.EnsureRegisteredAsync().SafeFireAndForget();
+
+            SettingsStore.Instance.Set(AppSettingKeys.Passkeys.PluginEnabledKey, true);
+        }
+
+        SettingsStore.Instance.Set(AppSettingKeys.App.SetupCompletedKey, true);
+        return Task.CompletedTask;
+    }
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        Initialize();
-
         _messageLoopThread.Start();
         await _messageLoopStarted.Task.WaitAsync(cancellationToken);
+    }
 
+    public Task StartedAsync(CancellationToken cancellationToken)
+    {
         _activationHandler.HandleActivation(_initialActivationArguments);
+        return Task.CompletedTask;
+    }
+
+    public Task StoppingAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -71,6 +99,12 @@ internal sealed class AppHostLifecycleService : IHostedService
         await _messageLoopStopped.Task.WaitAsync(cancellationToken);
 
         _uiProcessLauncher.Exit();
+    }
+
+
+    public Task StoppedAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
     private void MessageLoopThread()
@@ -90,28 +124,5 @@ internal sealed class AppHostLifecycleService : IHostedService
 
             _applicationLifetime.StopApplication();
         }
-    }
-
-    public void Initialize()
-    {
-        _databaseInitializationService.Initialize();
-
-        if (SettingsStore.Instance.Get(AppSettingKeys.App.SetupCompletedKey))
-        {
-            return;
-        }
-
-        if (PasskeyPluginSetupService.IsSupported())
-        {
-            PasskeyPluginSetupService.EnsureRegisteredAsync().SafeFireAndForget();
-
-            SettingsStore.Instance.Set(
-                AppSettingKeys.Passkeys.PluginEnabledKey,
-                true);
-        }
-
-        SettingsStore.Instance.Set(
-            AppSettingKeys.App.SetupCompletedKey,
-            true);
     }
 }

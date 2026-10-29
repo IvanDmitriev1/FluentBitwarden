@@ -1,33 +1,24 @@
+using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
-using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
-internal sealed class AppSessionService(
+internal sealed class AppSessionOperations(
     IAccountService accountService,
     IVaultService vaultService,
-    ActiveSessionManager activeSessionManager,
-    IAppHostTermination appHostTermination) : IAppSessionService
+    IAppHostTermination appHostTermination,
+    AppSessionStore appSessionStore) : IAppSessionOperations
 {
-    public AppSessionState State => activeSessionManager.State;
-
-    public IUnlockedSessionLease RequireUnlockedSessionLease() =>
-        activeSessionManager.TryAcquireUnlockedSessionLease()
-        ?? throw new UnlockedSessionRequiredException();
-
-    public ValueTask<IUnlockedSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
-        => activeSessionManager.WaitUntilUnlockedAsync(cancellationToken);
-
     public async Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken)
     {
-        using var sessionTransitionGate = await activeSessionManager.EnterTransition(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        if (activeSessionManager.State is AppSessionState.Unlocked unlocked)
+        if (appSessionStore.State is AppSessionStateSnapshot.Unlocked unlocked)
         {
             return unlocked.Account.UserId == request.UserId
                 ? new SessionUnlockOutcome.Success()
@@ -53,11 +44,11 @@ internal sealed class AppSessionService(
         if (keyResult is not AccountKeyUnlockResult.Success { AccountKeySession: { } accountKey })
             return SessionUnlockOutcomeExtensions.ConvertFailure(keyResult, request);
 
-        UnlockedVaultLifetime unlockedVaultLifetime;
+        AppSessionState.Unlocked unlockedState;
         try
         {
             IUnlockedVault unlockedVault = vaultService.Open(account.BitwardenAccountContext, accountKey);
-            unlockedVaultLifetime = new UnlockedVaultLifetime(account, unlockedVault, accountKey);
+            unlockedState = new AppSessionState.Unlocked(account, unlockedVault, accountKey);
         }
         catch
         {
@@ -65,13 +56,12 @@ internal sealed class AppSessionService(
             throw;
         }
 
-        await sessionTransitionGate.UnlockAsync(unlockedVaultLifetime);
+        await appSessionStore.UnlockAsync(unlockedState);
         return new SessionUnlockOutcome.Success();
     }
 
     public async Task LockAsync(CancellationToken cancellationToken = default)
     {
-        using var transition = await activeSessionManager.EnterTransition(cancellationToken);
-        await transition.LockAsync();
+        await appSessionStore.LockAsync(cancellationToken);
     }
 }

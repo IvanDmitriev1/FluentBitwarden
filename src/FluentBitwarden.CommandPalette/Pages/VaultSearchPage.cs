@@ -107,8 +107,8 @@ internal sealed partial class VaultSearchPage : DynamicListPage, IDisposable
         {
             await Task.Delay(SearchDebounce, cancellationToken);
 
-            AppSessionState state = await _appSessionClient.GetStateAsync(new(), cancellationToken);
-            if (state is not AppSessionState.Unlocked)
+            AppSessionStateSnapshot stateSnapshot = await _appSessionClient.GetStateAsync(new(), cancellationToken);
+            if (stateSnapshot is not AppSessionStateSnapshot.Unlocked)
             {
                 PublishLockedItems(generation);
                 return;

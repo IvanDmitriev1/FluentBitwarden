@@ -11,6 +11,7 @@ using FluentBitwarden.Platform.Infrastructure.Connectivity;
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
 
 internal sealed class VaultService(
+    IAppSessionAccessor appSessionAccessor,
     VaultReaderRepository vaultReaderRepository,
     VaultWriterRepository vaultWriterRepository,
     VaultSyncStateRepository vaultSyncStateRepository,
@@ -30,15 +31,12 @@ internal sealed class VaultService(
         return new UnlockedVault(data);
     }
 
-    public async Task<VaultSyncResult> SyncAsync(
-        IUnlockedSessionLease lease,
-        CancellationToken cancellationToken)
+    public async Task<VaultSyncResult> SyncAsync(CancellationToken cancellationToken)
     {
-        IUnlockedVault vault = lease.Vault;
-        IAccountKeySession keySession = lease.AccountKeySession;
-        BitwardenAccountContext accountContext = lease.Account.BitwardenAccountContext;
+        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession) = appSessionAccessor.RequireUnlockedState();
+        BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
 
-        if (lease.Account.UserId != keySession.UserId)
+        if (accountProfile.UserId != keySession.UserId)
             return VaultSyncResult.Failed;
 
         try
@@ -47,7 +45,7 @@ internal sealed class VaultService(
                 return VaultSyncResult.SkippedOffline;
 
             var revisionDate = await vaultSyncApi.GetRevisionDateAsync(accountContext, cancellationToken);
-            var userId = lease.Account.UserId;
+            var userId = accountProfile.UserId;
             var lastSync = vaultSyncStateRepository.GetServerRevisionDate(userId);
             if (lastSync is not null && lastSync.Value >= revisionDate)
                 return VaultSyncResult.NoChanges;
@@ -81,15 +79,13 @@ internal sealed class VaultService(
     }
 
     public async Task<Cipher> SaveCipherAsync(
-        IUnlockedSessionLease lease,
         Cipher cipher,
         CancellationToken cancellationToken)
     {
-        IUnlockedVault vault = lease.Vault;
-        IAccountKeySession keySession = lease.AccountKeySession;
-        BitwardenAccountContext accountContext = lease.Account.BitwardenAccountContext;
+        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession) = appSessionAccessor.RequireUnlockedState();
+        BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
 
-        if (lease.Account.UserId != keySession.UserId)
+        if (accountProfile.UserId != keySession.UserId)
             throw new InvalidOperationException("The unlocked account and account key must have the same user ID.");
 
         var request = CipherRequestFactory.BuildRequest(keySession.UserKey, cipher);
@@ -100,7 +96,7 @@ internal sealed class VaultService(
         var savedCipher = VaultDataLoader.DecryptSavedCipher(in savedDto, keySession);
 
         unitOfWork.Begin();
-        vaultWriterRepository.UpsertCipher(lease.Account.UserId, in savedDto);
+        vaultWriterRepository.UpsertCipher(accountProfile.UserId, in savedDto);
         unitOfWork.Commit();
 
         vault.UpsertCipher(savedCipher);

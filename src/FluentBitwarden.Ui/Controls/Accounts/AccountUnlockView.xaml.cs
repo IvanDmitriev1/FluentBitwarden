@@ -63,11 +63,11 @@ public sealed partial class AccountUnlockView : UserControl
         int version = Interlocked.Increment(ref _accountChangeVersion);
         WindowsHelloButton.Visibility = Visibility.Collapsed;
 
-        AppSessionState state = await _appSessionClient.GetStateAsync(new());
-        AccountProfile activeAccount = state switch
+        AppSessionStateSnapshot stateSnapshot = await _appSessionClient.GetStateAsync(new());
+        AccountProfile activeAccount = stateSnapshot switch
         {
-            AppSessionState.Locked locked => locked.Account,
-            AppSessionState.Unlocked unlocked => unlocked.Account,
+            AppSessionStateSnapshot.Locked locked => locked.Account,
+            AppSessionStateSnapshot.Unlocked unlocked => unlocked.Account,
             _ => account
         };
 

@@ -1,6 +1,6 @@
 using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.AppHost.Hosting.Activation;
+namespace FluentBitwarden.AppHost.Application.Activation;
 
 internal sealed class AppActivationHandler(AppHostActions actions)
 {

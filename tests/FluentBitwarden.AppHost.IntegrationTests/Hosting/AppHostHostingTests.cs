@@ -1,6 +1,6 @@
+using FluentBitwarden.AppHost.Application;
+using FluentBitwarden.AppHost.Application.Activation;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.Hosting;
-using FluentBitwarden.AppHost.Hosting.Activation;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Infrastructure.Tray;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,7 +43,7 @@ public sealed class AppHostHostingTests
         var lockStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
         var lockCompletion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var scopeDisposed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var session = Substitute.For<IAppSessionService, IAsyncDisposable>();
+        var session = Substitute.For<IAppSessionOperations, IAsyncDisposable>();
         session.LockAsync(Arg.Any<CancellationToken>()).Returns(callInfo =>
         {
             lockStarted.TrySetResult(callInfo.Arg<CancellationToken>());
@@ -56,7 +56,7 @@ public sealed class AppHostHostingTests
         });
 
         var services = new ServiceCollection();
-        services.AddScoped<IAppSessionService>(_ => session);
+        services.AddScoped<IAppSessionOperations>(_ => session);
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
@@ -129,7 +129,7 @@ public sealed class AppHostHostingTests
         var lockStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
         var lockCompletion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var scopeDisposed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var session = Substitute.For<IAppSessionService, IAsyncDisposable>();
+        var session = Substitute.For<IAppSessionOperations, IAsyncDisposable>();
         session.LockAsync(Arg.Any<CancellationToken>()).Returns(callInfo =>
         {
             lockStarted.TrySetResult(callInfo.Arg<CancellationToken>());
@@ -142,7 +142,7 @@ public sealed class AppHostHostingTests
         });
 
         var services = new ServiceCollection();
-        services.AddScoped<IAppSessionService>(_ => session);
+        services.AddScoped<IAppSessionOperations>(_ => session);
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
@@ -161,13 +161,13 @@ public sealed class AppHostHostingTests
     [Fact]
     public async Task Each_lock_request_uses_a_fresh_session_scope()
     {
-        var sessions = new List<IAppSessionService>();
+        var sessions = new List<IAppSessionOperations>();
         var scopeDisposals = new List<TaskCompletionSource>();
         var services = new ServiceCollection();
-        services.AddScoped<IAppSessionService>(_ =>
+        services.AddScoped<IAppSessionOperations>(_ =>
         {
             var disposed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var session = Substitute.For<IAppSessionService, IAsyncDisposable>();
+            var session = Substitute.For<IAppSessionOperations, IAsyncDisposable>();
             session.LockAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
             ((IAsyncDisposable)session).DisposeAsync().Returns(_ =>
             {
@@ -198,7 +198,7 @@ public sealed class AppHostHostingTests
         var failure = new InvalidOperationException("Synthetic lock failure.");
         var scopeDisposed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var logger = new RecordingLogger();
-        var session = Substitute.For<IAppSessionService, IAsyncDisposable>();
+        var session = Substitute.For<IAppSessionOperations, IAsyncDisposable>();
         session.LockAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(failure));
         ((IAsyncDisposable)session).DisposeAsync().Returns(_ =>
         {
@@ -206,7 +206,7 @@ public sealed class AppHostHostingTests
             return ValueTask.CompletedTask;
         });
         var services = new ServiceCollection();
-        services.AddScoped<IAppSessionService>(_ => session);
+        services.AddScoped<IAppSessionOperations>(_ => session);
         await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         AppHostActions actions = AppHostHostingTestSupport.CreateActions(
             new FakeUiProcessLauncher(),
@@ -256,20 +256,20 @@ public sealed class AppHostHostingTests
     }
 
     [Fact]
-    public void Hosting_services_resolve_app_tray_as_a_singleton_with_one_hosted_lifecycle_registration()
+    public void Application_services_resolve_singletons_without_registering_the_root_lifecycle()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IUiProcessLauncher>(new FakeUiProcessLauncher());
         services.AddSingleton(Substitute.For<IHostApplicationLifetime>());
         services.AddLogging();
-        services.AddAppHostHosting();
+        services.AddApplicationServices();
 
         using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
 
         Assert.Same(provider.GetRequiredService<AppHostActions>(), provider.GetRequiredService<AppHostActions>());
         Assert.Same(provider.GetRequiredService<AppActivationHandler>(), provider.GetRequiredService<AppActivationHandler>());
         Assert.Same(provider.GetRequiredService<AppTray>(), provider.GetRequiredService<AppTray>());
-        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IHostedService));
+        Assert.DoesNotContain(services, descriptor => descriptor.ServiceType == typeof(IHostedService));
     }
 
 }
