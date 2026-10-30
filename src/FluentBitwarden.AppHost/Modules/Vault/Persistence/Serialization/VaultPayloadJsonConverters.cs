@@ -3,8 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+
 using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Items.Contracts;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 

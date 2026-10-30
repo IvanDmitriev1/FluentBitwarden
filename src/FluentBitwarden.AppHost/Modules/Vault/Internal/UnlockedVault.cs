@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
@@ -17,15 +16,15 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public VaultCipher? GetCipher(CipherId id)
+    public Cipher? GetCipher(CipherId id)
     {
         lock (_lock)
         {
-            return _data.Ciphers.FirstOrDefault(cipher => cipher.Id == id);
+            return _data.Ciphers.FirstOrDefault(c => c.Id == id);
         }
     }
 
-    public VaultCipher[] GetCiphers(VaultCipherQuery query)
+    public Cipher[] GetCiphers(VaultCipherQuery query)
     {
         lock (_lock)
         {
@@ -33,7 +32,15 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public VaultFolder[] GetFolders()
+    public Folder? GetFolder(FolderId id)
+    {
+        lock (_lock)
+        {
+            return _data.Folders.FirstOrDefault(f => f.Id == id);
+        }
+    }
+
+    public Folder[] GetFolders()
     {
         lock (_lock)
         {
@@ -41,7 +48,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public void ReplaceContents(List<VaultCipher> ciphers, List<VaultFolder> folders, List<VaultCollection> collections)
+    public void ReplaceContents(List<Cipher> ciphers, List<Folder> folders, List<Collection> collections)
     {
         lock (_lock)
         {
@@ -51,7 +58,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
-    public void UpsertCipher(VaultCipher cipher)
+    public void UpsertCipher(Cipher cipher)
     {
         lock (_lock)
         {
@@ -60,6 +67,34 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
                 _data.Ciphers.Add(cipher);
             else
                 _data.Ciphers[index] = cipher;
+        }
+    }
+
+    public void UpsertFolder(Folder folder)
+    {
+        lock (_lock)
+        {
+            int index = _data.Folders.FindIndex(f => f.Id == folder.Id);
+            if (index < 0)
+                _data.Folders.Add(folder);
+            else
+                _data.Folders[index] = folder;
+        }
+    }
+
+    public void RemoveCipher(CipherId id)
+    {
+        lock (_lock)
+            _data.Ciphers.RemoveAll(cipher => cipher.Id == id);
+    }
+
+    public void RemoveFolder(FolderId id)
+    {
+        lock (_lock)
+        {
+            _data.Folders.RemoveAll(folder => folder.Id == id);
+            foreach (Cipher cipher in _data.Ciphers.Where(cipher => cipher.FolderId == id))
+                cipher.FolderId = FolderId.Empty;
         }
     }
 

@@ -1,4 +1,3 @@
-using BitwardenApi.Infrastructure.Cryptography;
 
 namespace FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 

@@ -24,7 +24,7 @@ public sealed partial class UnlockPageViewModel(
         UnlockPageParameter param,
         CancellationToken cancellationToken)
     {
-        SelectedAccount = param.FavoriteAccountProfile;
+        SelectedAccount = param.SelectedAccount;
         appCoordinator.SessionStateApplied += OnSessionStateApplied;
 
         return ValueTask.CompletedTask;

@@ -1,4 +1,4 @@
-using FluentBitwarden.AppHost.Hosting;
+using FluentBitwarden.AppHost.Application;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Infrastructure.Tray;
 using Microsoft.Extensions.DependencyInjection;

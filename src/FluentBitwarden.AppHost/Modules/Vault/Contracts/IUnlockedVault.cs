@@ -1,17 +1,19 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Contracts;
 
 public interface IUnlockedVault : IDisposable
 {
-    VaultCipher? GetCipher(CipherId id);
+    Cipher? GetCipher(CipherId id);
+    Cipher[] GetCiphers(VaultCipherQuery query);
 
-    VaultCipher[] GetCiphers(VaultCipherQuery query);
+    Folder? GetFolder(FolderId id);
+    Folder[] GetFolders();
 
-    VaultFolder[] GetFolders();
+    void ReplaceContents(List<Cipher> ciphers, List<Folder> folders, List<Collection> collections);
 
-    void ReplaceContents(List<VaultCipher> ciphers, List<VaultFolder> folders, List<VaultCollection> collections);
-
-    void UpsertCipher(VaultCipher cipher);
+    void UpsertCipher(Cipher cipher);
+    void UpsertFolder(Folder folder);
+    void RemoveCipher(CipherId id);
+    void RemoveFolder(FolderId id);
 }

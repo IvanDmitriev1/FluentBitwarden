@@ -60,14 +60,14 @@ public sealed class VaultCipherQueryTests
             vault.GetCiphers(new VaultCipherQuery { FolderId = folderA }).Select(static cipher => cipher.Id.ToString()));
         Assert.Equal(
             new[] { "favorite-card" },
-            vault.GetCiphers(new VaultCipherQuery { CipherType = VaultCipherType.Card }).Select(static cipher => cipher.Id.ToString()));
+            vault.GetCiphers(new VaultCipherQuery { CipherType = CipherType.Card }).Select(static cipher => cipher.Id.ToString()));
         Assert.Equal(
             new[] { "favorite-a" },
             vault.GetCiphers(new VaultCipherQuery
             {
                 FavoritesOnly = true,
                 FolderId = folderA,
-                CipherType = VaultCipherType.Login
+                CipherType = CipherType.Login
             }).Select(static cipher => cipher.Id.ToString()));
     }
 

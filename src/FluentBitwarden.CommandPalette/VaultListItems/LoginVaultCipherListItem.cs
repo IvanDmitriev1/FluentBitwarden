@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 using FluentBitwarden.Platform.SiteIcons;
 
@@ -7,7 +6,7 @@ namespace FluentBitwarden.CommandPalette.VaultListItems;
 internal sealed partial class LoginVaultCipherListItem : ListItem
 {
     public LoginVaultCipherListItem(
-        LoginVaultCipher cipher,
+        LoginCipher cipher,
         ISiteIconCache siteIconCache,
         IUiProcessManager uiProcessManager)
     {
@@ -32,7 +31,7 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
             MoreCommands = moreCommands;
     }
 
-    private static List<ICommand> CreateCommands(LoginVaultCipher cipher, IUiProcessManager uiProcessManager)
+    private static List<ICommand> CreateCommands(LoginCipher cipher, IUiProcessManager uiProcessManager)
     {
         var commands = new List<ICommand>(4);
 
@@ -64,7 +63,7 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
         return [.. contextItems];
     }
 
-    private static IconInfo GetIcon(LoginVaultCipher cipher, ISiteIconCache siteIconCache)
+    private static IconInfo GetIcon(LoginCipher cipher, ISiteIconCache siteIconCache)
     {
         foreach (var loginUri in cipher.Uris)
         {

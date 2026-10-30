@@ -1,16 +1,15 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Folders;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class VaultFolderIpcHandler(IAppSessionService appSessionService) : IVaultFolderClient, IIpcRequestsHandler
+internal sealed class VaultFolderIpcHandler(IAppSessionAccessor appSessionAccessor) : IVaultFolderClient, IIpcRequestsHandler
 {
-    public Task<VaultFolder[]> GetFoldersAsync(GetVaultFoldersRequest request, CancellationToken cancellationToken = default)
+    public Task<Folder[]> GetFoldersAsync(GetVaultFoldersRequest request, CancellationToken cancellationToken = default)
     {
-        using var lease = appSessionService.RequireUnlockedSessionLease();
+        var unlocked = appSessionAccessor.RequireUnlockedState();
 
-        return Task.FromResult(lease.Vault.GetFolders());
+        return Task.FromResult(unlocked.Vault.GetFolders());
     }
 }

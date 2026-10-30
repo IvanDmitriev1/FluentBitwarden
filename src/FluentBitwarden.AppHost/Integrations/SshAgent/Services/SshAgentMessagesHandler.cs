@@ -11,7 +11,7 @@ internal sealed class SshAgentMessagesHandler(ISshKeyProvider keyProvider) : ISs
     {
         SshAgentMessage response = message.Type switch
         {
-            SshAgentMessageType.RequestIdentities => HandleRequestIdentities(),
+            SshAgentMessageType.RequestIdentities => await HandleRequestIdentitiesAsync(),
             SshAgentMessageType.SignRequest => await HandleSignRequestAsync(message.Payload, cancellationToken),
             SshAgentMessageType.Extension => HandleExtensionRequest(message.Payload),
             _ => SshAgentMessage.Failure
@@ -20,9 +20,9 @@ internal sealed class SshAgentMessagesHandler(ISshKeyProvider keyProvider) : ISs
         return response;
     }
 
-    private SshAgentMessage HandleRequestIdentities()
+    private async Task<SshAgentMessage> HandleRequestIdentitiesAsync()
     {
-        var identities = keyProvider.GetIdentities();
+        var identities = await keyProvider.GetIdentitiesAsync();
         long payloadLength = sizeof(uint) + identities.Sum(static i => i.BlobLength);
 
         if (payloadLength + 1 > SshAgentMessage.MaxLength)

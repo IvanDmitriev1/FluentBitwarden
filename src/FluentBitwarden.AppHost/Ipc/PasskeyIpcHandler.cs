@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Infrastructure.WebAuthn;
 using FluentBitwarden.Contracts.Integrations.Passkey;

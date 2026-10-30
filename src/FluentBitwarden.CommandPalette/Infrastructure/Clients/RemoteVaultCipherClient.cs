@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Attachments;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
@@ -9,20 +8,20 @@ namespace FluentBitwarden.CommandPalette.Infrastructure.Clients;
 
 internal sealed class RemoteVaultCipherClient(IIpcClient ipcClient) : IVaultCipherClient
 {
-    public Task<VaultCipher[]> SearchCiphersAsync(
+    public Task<Cipher[]> SearchCiphersAsync(
         VaultCipherQuery query,
         CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<VaultCipherQuery, VaultCipher[]>(query, cancellationToken);
+        ipcClient.SendAsync<VaultCipherQuery, Cipher[]>(query, cancellationToken);
 
-    public Task<VaultCipher?> GetCipherAsync(
+    public Task<Cipher?> GetCipherAsync(
         GetVaultCipherRequest request,
         CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<GetVaultCipherRequest, VaultCipher?>(request, cancellationToken);
+        ipcClient.SendAsync<GetVaultCipherRequest, Cipher?>(request, cancellationToken);
 
-    public Task<VaultCipher> SaveCipherAsync(
+    public Task<Cipher> SaveCipherAsync(
         SaveVaultCipherRequest request,
         CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<SaveVaultCipherRequest, VaultCipher>(request, cancellationToken);
+        ipcClient.SendAsync<SaveVaultCipherRequest, Cipher>(request, cancellationToken);
 
     public async Task DownloadCipherAttachmentAsync(
         DownloadVaultCipherAttachmentRequest request,

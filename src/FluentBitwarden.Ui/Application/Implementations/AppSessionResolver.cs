@@ -1,35 +1,23 @@
 using FluentBitwarden.Application.Abstractions;
 using FluentBitwarden.Application.Models;
 using FluentBitwarden.Contracts.AppSession;
-using AppSessionState = FluentBitwarden.Contracts.AppSession.State.AppSessionState;
-using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
+using FluentBitwarden.Contracts.AppSession.State;
 
 namespace FluentBitwarden.Application.Implementations;
 
 internal sealed class AppSessionResolver(
-    IAccountClient accountClient,
     IAppSessionClient appSessionClient) : IAppSessionResolver
 {
     public async Task<AppSessionResolution> ResolveAsync()
     {
-        var accounts = await accountClient.GetAccountsAsync(new());
-        AppSessionState state = await appSessionClient.GetStateAsync(new());
+        var snapshot = await appSessionClient.GetStateAsync(new());
 
-        if (state is AppSessionState.Unlocked unlocked)
+        return snapshot switch
         {
-            return new AppSessionResolution.UnlockedResolution(unlocked.Account);
-        }
-
-        if (state is AppSessionState.NotAuthenticated && accounts.Length == 0)
-        {
-            return new AppSessionResolution.LoggedOutResolution();
-        }
-
-        AccountProfile selectedAccount = state is AppSessionState.Locked locked
-            ? locked.Account
-            : accounts[0];
-
-        return new AppSessionResolution.LockedResolution(accounts, selectedAccount);
+            AppSessionStateSnapshot.NotAuthenticated => new AppSessionResolution.LoggedOutResolution(),
+            AppSessionStateSnapshot.Locked locked => new AppSessionResolution.LockedResolution(locked.Account),
+            AppSessionStateSnapshot.Unlocked unlocked => new AppSessionResolution.UnlockedResolution(unlocked.Account),
+            _ => throw new InvalidOperationException("Unexpected app session state.")
+        };
     }
 }

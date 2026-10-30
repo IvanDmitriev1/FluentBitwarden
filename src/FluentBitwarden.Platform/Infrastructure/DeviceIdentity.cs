@@ -1,4 +1,4 @@
-using BitwardenApi.Primitives;
+using BitwardenApi.Client;
 using BitwardenApi.Primitives.Ids;
 using System.Security.Cryptography;
 using System.Text;

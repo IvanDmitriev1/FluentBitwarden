@@ -2,7 +2,7 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
 
 internal static class VaultQueryTestData
 {
-    internal static VaultCipherResponse Login(
+    internal static CipherResponse Login(
         string id,
         ReadOnlySpan<byte> key,
         string name,
@@ -22,10 +22,10 @@ internal static class VaultQueryTestData
             writer.WriteEndObject();
         });
 
-        return CreateResponse(id, VaultCipherType.Login, payload, folderId, favorite, creationDate, revisionDate, deletedDate);
+        return CreateResponse(id, CipherType.Login, payload, folderId, favorite, creationDate, revisionDate, deletedDate);
     }
 
-    internal static VaultCipherResponse Card(
+    internal static CipherResponse Card(
         string id,
         ReadOnlySpan<byte> key,
         string name,
@@ -45,10 +45,10 @@ internal static class VaultQueryTestData
             writer.WriteEndObject();
         });
 
-        return CreateResponse(id, VaultCipherType.Card, payload, folderId, favorite);
+        return CreateResponse(id, CipherType.Card, payload, folderId, favorite);
     }
 
-    internal static VaultCipherResponse Identity(
+    internal static CipherResponse Identity(
         string id,
         ReadOnlySpan<byte> key,
         string name,
@@ -64,12 +64,12 @@ internal static class VaultQueryTestData
             writer.WriteEndObject();
         });
 
-        return CreateResponse(id, VaultCipherType.Identity, payload);
+        return CreateResponse(id, CipherType.Identity, payload);
     }
 
-    private static VaultCipherResponse CreateResponse(
+    private static CipherResponse CreateResponse(
         string id,
-        VaultCipherType type,
+        CipherType type,
         byte[] payload,
         FolderId folderId = default,
         bool favorite = true,
@@ -77,7 +77,7 @@ internal static class VaultQueryTestData
         DateTimeOffset? revisionDate = null,
         DateTimeOffset? deletedDate = null)
     {
-        VaultCipherResponse template = VaultParserTestData.CreateDto(type, payload);
+        CipherResponse template = VaultParserTestData.CreateDto(type, payload);
         return template with
         {
             Id = CipherId.Parse(id),

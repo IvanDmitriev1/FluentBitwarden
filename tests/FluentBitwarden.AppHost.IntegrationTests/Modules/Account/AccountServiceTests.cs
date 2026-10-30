@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
@@ -32,12 +31,12 @@ public sealed class AccountServiceTests
         using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+        var rejected = new SessionTokenResult<AuthenticatedSession>.Rejected(
             new SessionTokenRejection(SessionTokenRejectionKind.InvalidCredentials, "Synthetic rejection."));
         context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
                 Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(rejected));
 
         var result = await context.Service.AuthenticateAsync(
             CreateTwoFactorRequest(profile),
@@ -55,14 +54,14 @@ public sealed class AccountServiceTests
         using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+        var rejected = new SessionTokenResult<AuthenticatedSession>.Rejected(
             new SessionTokenRejection(
                 SessionTokenRejectionKind.DeviceVerificationRequired,
                 "Synthetic device verification required."));
         context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
                 Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(rejected));
 
         AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
             CreateTwoFactorRequest(profile),
@@ -95,7 +94,7 @@ public sealed class AccountServiceTests
             new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Email),
             new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Authenticator)
         ]);
-        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+        var rejected = new SessionTokenResult<AuthenticatedSession>.Rejected(
             new SessionTokenRejection(
                 SessionTokenRejectionKind.TwoFactorRequired,
                 "Synthetic two-factor challenge.",
@@ -104,7 +103,7 @@ public sealed class AccountServiceTests
         context.IdentityApi.AuthenticateWithPasswordAsync(
                 Arg.Do<PasswordAuthenticationRequest>(value => identityRequest = value),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(rejected));
 
         AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
             request,
@@ -129,12 +128,12 @@ public sealed class AccountServiceTests
         using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var rejected = new SessionTokenResult<TokenAuthenticatedModel>.Rejected(
+        var rejected = new SessionTokenResult<AuthenticatedSession>.Rejected(
             new SessionTokenRejection(SessionTokenRejectionKind.TwoFactorRequired, "Synthetic missing challenge."));
         context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
                 Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(rejected));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(rejected));
 
         await Assert.ThrowsAsync<InvalidDataException>(() => context.Service.AuthenticateAsync(
             CreateTwoFactorRequest(profile),
@@ -168,8 +167,8 @@ public sealed class AccountServiceTests
         context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
                 Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(
-                new SessionTokenResult<TokenAuthenticatedModel>.Success(malformedModel)));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(
+                new SessionTokenResult<AuthenticatedSession>.Success(malformedModel)));
 
         await Assert.ThrowsAsync<InvalidDataException>(() => context.Service.AuthenticateAsync(
             CreateTwoFactorRequest(profile),
@@ -203,8 +202,8 @@ public sealed class AccountServiceTests
         context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
                 Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(
-                new SessionTokenResult<TokenAuthenticatedModel>.Success(malformedModel)));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(
+                new SessionTokenResult<AuthenticatedSession>.Success(malformedModel)));
 
         await Assert.ThrowsAsync<InvalidDataException>(() => context.Service.AuthenticateAsync(
             CreateTwoFactorRequest(profile),
@@ -227,12 +226,12 @@ public sealed class AccountServiceTests
             new KdfConfig.Pbkdf2(600000),
             "authenticated");
         SessionRefreshToken refreshToken = SessionRefreshToken.Parse("synthetic-auth-refresh-token");
-        TokenAuthenticatedModel model = CreateAuthenticatedModel(profile.UserId, email, keyMaterial, refreshToken);
+        AuthenticatedSession model = CreateAuthenticatedModel(profile.UserId, email, keyMaterial, refreshToken);
         context.IdentityApi.AuthenticateWithPasswordAndTwoFactorAsync(
                 Arg.Any<PasswordTwoFactorAuthenticationRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenAuthenticatedModel>>(
-                new SessionTokenResult<TokenAuthenticatedModel>.Success(model)));
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(
+                new SessionTokenResult<AuthenticatedSession>.Success(model)));
 
         AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
             CreateTwoFactorRequest(profile),
@@ -258,13 +257,11 @@ public sealed class AccountServiceTests
         AccountRepositoryTestHelper.InsertAccount(database, profile);
         AccountRepositoryTestHelper.StoreToken(database, profile.UserId, oldRefreshToken);
         context.IdentityApi.RefreshAuthenticationAsync(Arg.Any<RefreshAuthenticationRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenRefreshSessionModel>>(
-                new SessionTokenResult<TokenRefreshSessionModel>.Success(
-                    new TokenRefreshSessionModel(accessToken, newRefreshToken, default, expiresAt))));
+            .Returns(Task.FromResult<SessionTokenResult<RefreshedSession>>(
+                new SessionTokenResult<RefreshedSession>.Success(
+                    new RefreshedSession(accessToken, newRefreshToken, default, expiresAt))));
 
-        AccountSessionTokens result = await context.Service.RefreshSessionTokens(
-            profile.BitwardenAccountContext,
-            TestContext.Current.CancellationToken);
+        AccountSessionTokens result = await context.Service.RefreshSessionTokensAsync(profile.BitwardenAccountContext);
 
         Assert.Equal(profile.UserId, result.UserId);
         Assert.Equal(newRefreshToken, result.RefreshToken);
@@ -286,17 +283,15 @@ public sealed class AccountServiceTests
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         SessionRefreshToken oldRefreshToken = SessionRefreshToken.Parse("synthetic-existing-refresh-token");
-        var rejected = new SessionTokenResult<TokenRefreshSessionModel>.Rejected(
+        var rejected = new SessionTokenResult<RefreshedSession>.Rejected(
             new SessionTokenRejection(SessionTokenRejectionKind.InvalidCredentials, "Synthetic rejection."));
         AccountRepositoryTestHelper.InsertAccount(database, profile);
         AccountRepositoryTestHelper.StoreToken(database, profile.UserId, oldRefreshToken);
         context.IdentityApi.RefreshAuthenticationAsync(Arg.Any<RefreshAuthenticationRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<SessionTokenResult<TokenRefreshSessionModel>>(rejected));
+            .Returns(Task.FromResult<SessionTokenResult<RefreshedSession>>(rejected));
 
         AccountSessionRefreshException exception = await Assert.ThrowsAsync<AccountSessionRefreshException>(
-            () => context.Service.RefreshSessionTokens(
-                profile.BitwardenAccountContext,
-                TestContext.Current.CancellationToken));
+            () => context.Service.RefreshSessionTokensAsync(profile.BitwardenAccountContext));
 
         using var persistedReadUnitOfWork = database.CreateUnitOfWork();
         Assert.Equal(rejected, exception.Outcome);
@@ -408,7 +403,7 @@ public sealed class AccountServiceTests
         "synthetic-server-authorization-hash",
         new IdentityTwoFactorProof("123456", IdentityTwoFactorProviderType.Authenticator));
 
-    private TokenAuthenticatedModel CreateAuthenticatedModel(
+    private AuthenticatedSession CreateAuthenticatedModel(
         UserId userId,
         string email,
         AccountKeyMaterial keyMaterial,
@@ -421,13 +416,13 @@ public sealed class AccountServiceTests
         ]);
         string accessTokenValue = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-        return new TokenAuthenticatedModel(
+        return new AuthenticatedSession(
             SessionAccessToken.Parse(accessTokenValue),
             refreshToken,
             default,
             new DateTimeOffset(2035, 1, 2, 3, 4, 5, TimeSpan.Zero),
             keyMaterial.ProtectedPrivateKey,
-            new MasterPasswordUnlockModel(
+            new MasterPasswordUnlockData(
                 keyMaterial.KdfConfig,
                 keyMaterial.Salt,
                 keyMaterial.ProtectedUserKey));

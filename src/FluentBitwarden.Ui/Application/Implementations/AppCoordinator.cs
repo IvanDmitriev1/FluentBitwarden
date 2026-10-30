@@ -54,7 +54,7 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
         set
         {
             /*Debug.Assert(
-                SessionState == AppSessionState.Unknown || value == AppSessionState.Unknown,
+                SessionState == AppSessionStateSnapshot.Unknown || value == AppSessionStateSnapshot.Unknown,
                 $"Application session transition '{SessionState}' to '{value}' must pass through Unknown.");
                 */
 
@@ -136,7 +136,6 @@ internal sealed class AppCoordinator : IAppCoordinator, IDisposable
                 SessionState = AppSessionState.Locked;
                 var lockedResolution = (AppSessionResolution.LockedResolution)resolution;
                 unlockParameter = new UnlockPageParameter(
-                    lockedResolution.Accounts,
                     lockedResolution.SelectedAccount);
                 break;
             case AppSessionResolution.UnlockedResolution:

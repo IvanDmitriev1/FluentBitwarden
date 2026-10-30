@@ -15,4 +15,13 @@
     <PackageReference Include="StronglyTypedId" PrivateAssets="all" ExcludeAssets="runtime" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="Primitives/StronglyTypedIdTemplates/*.typedid" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BitwardenApi.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
 </Project>

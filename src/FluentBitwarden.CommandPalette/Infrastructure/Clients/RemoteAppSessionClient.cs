@@ -9,10 +9,10 @@ namespace FluentBitwarden.CommandPalette.Infrastructure.Clients;
 
 internal sealed class RemoteAppSessionClient(IIpcClient ipcClient) : IAppSessionClient
 {
-    public Task<AppSessionState> GetStateAsync(
+    public Task<AppSessionStateSnapshot> GetStateAsync(
         GetAppSessionStateRequest request,
         CancellationToken cancellationToken = default) =>
-        ipcClient.SendAsync<GetAppSessionStateRequest, AppSessionState>(request, cancellationToken);
+        ipcClient.SendAsync<GetAppSessionStateRequest, AppSessionStateSnapshot>(request, cancellationToken);
 
     public Task<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request,

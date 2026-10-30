@@ -1,6 +1,4 @@
 using System.Globalization;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
@@ -16,7 +14,7 @@ internal static class VaultCollectionMapper
         int CollectionType,
         byte[] EncryptedName);
 
-    public static VaultCollectionResponse ToDomain(in CollectionRow row) => new()
+    public static CollectionResponse ToDomain(in CollectionRow row) => new()
     {
         Id = CollectionId.Parse(row.CollectionId, CultureInfo.InvariantCulture),
         OrganizationId = SqliteConversions.ParseOrEmpty(row.OrganizationId, OrganizationId.Parse, OrganizationId.Empty),
@@ -37,7 +35,7 @@ internal static class VaultCollectionMapper
         int CollectionType,
         byte[] EncryptedName);
 
-    public static CollectionInsertParameters ToInsertParameters(string userId, in VaultCollectionResponse dto) => new(
+    public static CollectionInsertParameters ToInsertParameters(string userId, in CollectionResponse dto) => new(
         UserId: userId,
         CollectionId: dto.Id.ToString(),
         OrganizationId: dto.OrganizationId.IsEmpty

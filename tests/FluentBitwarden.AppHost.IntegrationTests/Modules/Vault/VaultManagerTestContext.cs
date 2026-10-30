@@ -1,5 +1,7 @@
-using BitwardenApi.Vault.Cryptography;
-using BitwardenApi.Vault.Items;
+using BitwardenApi.Notifications.Abstractions;
+using BitwardenApi.Vault.Sync;
+using BitwardenApi.Vault.Ciphers;
+using BitwardenApi.Vault.Folders;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
@@ -7,6 +9,8 @@ using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Services;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
+using FluentBitwarden.Platform.Ipc.Abstractions;
+using Dapper;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
 
@@ -24,36 +28,45 @@ internal sealed class VaultManagerTestContext : IDisposable
         _unitOfWork = _database.CreateUnitOfWork();
         _vaultWriterRepository = new VaultWriterRepository(_unitOfWork);
         _vaultSyncStateRepository = new VaultSyncStateRepository(_unitOfWork);
-        Api = Substitute.For<IVaultItemsApi>();
+        SyncApi = Substitute.For<IVaultSyncApi>();
+        CiphersApi = Substitute.For<ICiphersApi>();
+        FoldersApi = Substitute.For<IFoldersApi>();
+        EventPublisher = Substitute.For<IIpcEventPublisher>();
         NetworkStatus = Substitute.For<INetworkStatus>();
         NetworkStatus.HasInternetAccess.Returns(true);
 
         VaultReaderRepository = new VaultReaderRepository(_unitOfWork);
         VaultService = new VaultService(
+            SessionAccessor,
             VaultReaderRepository,
             _vaultWriterRepository,
             _vaultSyncStateRepository,
-            Api,
+            SyncApi,
+            CiphersApi,
+            FoldersApi,
             _unitOfWork,
-            NetworkStatus);
+            NetworkStatus,
+            EventPublisher);
     }
 
+    public IAppSessionAccessor SessionAccessor { get; } = Substitute.For<IAppSessionAccessor>();
     public AccountProfile Account { get; }
     public BitwardenAccountContext AccountContext => Account.BitwardenAccountContext;
-    public IVaultItemsApi Api { get; }
+    public IVaultSyncApi SyncApi { get; }
+    public ICiphersApi CiphersApi { get; }
+    public IFoldersApi FoldersApi { get; }
+    public IIpcEventPublisher EventPublisher { get; }
     public INetworkStatus NetworkStatus { get; }
     public VaultReaderRepository VaultReaderRepository { get; }
     public VaultService VaultService { get; }
 
     public VaultManagerTestKeySession CreateKeySession() => new(AccountContext.UserId);
 
-    public IUnlockedSessionLease CreateLease(IUnlockedVault vault, IAccountKeySession keySession)
+    public IAppSessionAccessor CreateLease(IUnlockedVault vault, IAccountKeySession keySession)
     {
-        IUnlockedSessionLease lease = Substitute.For<IUnlockedSessionLease>();
-        lease.Account.Returns(Account);
-        lease.Vault.Returns(vault);
-        lease.AccountKeySession.Returns(keySession);
-        return lease;
+        var state = new AppSessionState.Unlocked(Account, vault, keySession, Substitute.For<IServerNotificationsDispatcher>());
+        SessionAccessor.AppSessionState.Returns(state);
+        return SessionAccessor;
     }
 
     public IUnlockedVault OpenVault()
@@ -62,12 +75,28 @@ internal sealed class VaultManagerTestContext : IDisposable
         return VaultService.Open(AccountContext, keySession);
     }
 
+    public IUnlockedVault OpenVaultFromFreshConnection(IAccountKeySession keySession)
+    {
+        using var unitOfWork = _database.CreateUnitOfWork();
+        return new VaultService(
+            SessionAccessor,
+            new VaultReaderRepository(unitOfWork),
+            _vaultWriterRepository,
+            _vaultSyncStateRepository,
+            SyncApi,
+            CiphersApi,
+            FoldersApi,
+            unitOfWork,
+            NetworkStatus,
+            EventPublisher).Open(AccountContext, keySession);
+    }
+
     public void SeedCache(
-        VaultCipherResponse[]? ciphers = null,
-        VaultFolderResponse[]? folders = null,
+        CipherResponse[]? ciphers = null,
+        FolderResponse[]? folders = null,
         DateTimeOffset? serverRevisionDate = null,
         VaultOrganizationResponse[]? organizations = null,
-        VaultCollectionResponse[]? collections = null)
+        CollectionResponse[]? collections = null)
     {
         _unitOfWork.Begin();
         _vaultWriterRepository.WriteOrganizations(AccountContext.UserId, organizations ?? []);
@@ -81,6 +110,23 @@ internal sealed class VaultManagerTestContext : IDisposable
 
     public DateTimeOffset? GetServerRevisionDate() =>
         _vaultSyncStateRepository.GetServerRevisionDate(AccountContext.UserId);
+
+    public DateTimeOffset? GetServerRevisionDateFromFreshConnection()
+    {
+        using var unitOfWork = _database.CreateUnitOfWork();
+        return new VaultSyncStateRepository(unitOfWork).GetServerRevisionDate(AccountContext.UserId);
+    }
+
+    public void FailCheckpointWrites()
+    {
+        using var connection = _database.OpenConnection();
+        connection.Execute("""
+            CREATE TRIGGER fail_checkpoint_writes BEFORE UPDATE ON vault_sync_state
+            BEGIN SELECT RAISE(ABORT, 'synthetic checkpoint persistence failure'); END;
+            """);
+    }
+
+    public void CloseUnitOfWork() => _unitOfWork.Dispose();
 
     public void Dispose()
     {

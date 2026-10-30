@@ -2,7 +2,7 @@ namespace FluentBitwarden.Contracts.Modules.Vault.Folders;
 
 public interface IVaultFolderClient
 {
-    Task<VaultFolder[]> GetFoldersAsync(
+    Task<Folder[]> GetFoldersAsync(
         GetVaultFoldersRequest request,
         CancellationToken cancellationToken = default);
 }

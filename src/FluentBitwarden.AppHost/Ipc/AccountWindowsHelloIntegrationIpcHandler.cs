@@ -9,7 +9,7 @@ namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class AccountWindowsHelloIntegrationIpcHandler(
     IAccountWindowsHelloService accountWindowsHelloService,
-    IAppSessionService sessionService) : IAccountWindowsHelloIntegrationClient, IIpcRequestsHandler
+    IAppSessionAccessor appSessionAccessor) : IAccountWindowsHelloIntegrationClient, IIpcRequestsHandler
 {
     public async Task<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(GetWindowsHelloEnrollmentRequest request, CancellationToken cancellationToken = default)
     {
@@ -27,14 +27,15 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
     {
         try
         {
-            using var lease = sessionService.RequireUnlockedSessionLease();
+            var state = appSessionAccessor.RequireUnlockedState();
+
             if (!await accountWindowsHelloService.IsSupportedAsync())
                 return WindowsHelloEnrollmentOutcome.Unavailable;
 
-            if (accountWindowsHelloService.IsEnabled(lease.Account.UserId))
+            if (accountWindowsHelloService.IsEnabled(state.Account.UserId))
                 return WindowsHelloEnrollmentOutcome.Enrolled;
 
-            accountWindowsHelloService.Enable(lease.AccountKeySession.UserKey, request.OwnerWindow);
+            accountWindowsHelloService.Enable(state.AccountKeySession.UserKey, request.OwnerWindow);
             return WindowsHelloEnrollmentOutcome.Enrolled;
         }
         catch (OperationCanceledException)
@@ -51,11 +52,12 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
 
     public async Task DisableAsync(DisableWindowsHelloEnrollmentRequest request, CancellationToken cancellationToken = default)
     {
-        using var lease = sessionService.RequireUnlockedSessionLease();
+        var state = appSessionAccessor.RequireUnlockedState();
+
         if (!await accountWindowsHelloService.IsSupportedAsync())
             return;
 
-        if (accountWindowsHelloService.IsEnabled(lease.Account.UserId))
-            accountWindowsHelloService.Disable(lease.Account.UserId);
+        if (accountWindowsHelloService.IsEnabled(state.Account.UserId))
+            accountWindowsHelloService.Disable(state.Account.UserId);
     }
 }

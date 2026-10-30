@@ -11,10 +11,10 @@ public sealed partial class VaultPageViewModel(
     IVaultFolderClient folderClient) : ObservableObject, INavigationAware, INavigationAware<VaultCipherNavigationIntent>
 {
     [ObservableProperty]
-    public partial VaultCipher? SelectedCipher { get; set; }
+    public partial Cipher? SelectedCipher { get; set; }
 
     [ObservableProperty]
-    public partial VaultCipher? EditingCipher { get; set; }
+    public partial Cipher? EditingCipher { get; set; }
 
     [ObservableProperty]
     public partial bool IsEditing { get; private set; }
@@ -26,11 +26,11 @@ public sealed partial class VaultPageViewModel(
     public partial CipherId RequestedCipherId { get; set; } = CipherId.Empty;
 
     [ObservableProperty]
-    public partial ObservableCollection<VaultFolder> Folders { get; set; } = [];
+    public partial ObservableCollection<Folder> Folders { get; set; } = [];
 
     private bool _hasInitialized;
 
-    partial void OnSelectedCipherChanged(VaultCipher? value)
+    partial void OnSelectedCipherChanged(Cipher? value)
     {
         var composite = value is null
             ? VaultBrowseState.Default
@@ -94,9 +94,9 @@ public sealed partial class VaultPageViewModel(
     }
 
     [RelayCommand]
-    private void BeginCreateCipher(VaultCipherType type)
+    private void BeginCreateCipher(CipherType type)
     {
-        EditingCipher = VaultCipher.CreateBlankCipher(type);
+        EditingCipher = Cipher.CreateBlankCipher(type);
         IsEditing = true;
     }
 
@@ -170,7 +170,7 @@ public sealed partial class VaultPageViewModel(
     private async Task SyncVault(CancellationToken cancellationToken)
     {
         var result = await operationsClient.SyncAsync(new(), cancellationToken);
-        Folders = new ObservableCollection<VaultFolder>(
+        Folders = new ObservableCollection<Folder>(
             await folderClient.GetFoldersAsync(new(), cancellationToken));
 
         if (result != VaultSyncResult.Synced)

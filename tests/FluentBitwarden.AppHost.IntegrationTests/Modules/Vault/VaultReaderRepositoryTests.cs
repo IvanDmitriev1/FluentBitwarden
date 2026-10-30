@@ -1,5 +1,4 @@
-using BitwardenApi.Vault.Attachments.Contracts;
-using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
+﻿using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
@@ -42,7 +41,7 @@ public sealed class VaultReaderRepositoryTests
             AccessSecretsManager = true,
             ProtectedOrganizationKey = protectedOrganizationKey
         };
-        var collectionB = new VaultCollectionResponse
+        var collectionB = new CollectionResponse
         {
             Id = collectionBId,
             OrganizationId = organizationId,
@@ -52,7 +51,7 @@ public sealed class VaultReaderRepositoryTests
             Type = 2,
             EncryptedName = EncString.Encrypt("Collection B", organizationKey)
         };
-        var collectionA = new VaultCollectionResponse
+        var collectionA = new CollectionResponse
         {
             Id = collectionAId,
             OrganizationId = organizationId,
@@ -73,13 +72,13 @@ public sealed class VaultReaderRepositoryTests
             Enabled = true,
             ProtectedOrganizationKey = otherProtectedOrganizationKey
         };
-        var otherCollectionA = new VaultCollectionResponse
+        var otherCollectionA = new CollectionResponse
         {
             Id = collectionAId,
             OrganizationId = organizationId,
             EncryptedName = EncString.Encrypt("Other collection A", otherOrganizationKey)
         };
-        var otherCollectionB = new VaultCollectionResponse
+        var otherCollectionB = new CollectionResponse
         {
             Id = collectionBId,
             OrganizationId = organizationId,
@@ -94,7 +93,7 @@ public sealed class VaultReaderRepositoryTests
         var attachmentA = VaultParserTestData.CreateAttachment("attachment-a", "first.txt", 5, cipherKey);
         var otherAttachmentA = VaultParserTestData.CreateAttachment("attachment-a", "other-first.txt", 11, otherCipherKey);
         var otherAttachmentB = VaultParserTestData.CreateAttachment("attachment-b", "other-second.txt", 13, otherCipherKey);
-        VaultCipherResponse cipher = VaultManagerTestData.Cipher("shared-cipher", cipherKey) with
+        CipherResponse cipher = VaultManagerTestData.Cipher("shared-cipher", cipherKey) with
         {
             OrganizationId = organizationId,
             FolderId = folderId,
@@ -102,7 +101,7 @@ public sealed class VaultReaderRepositoryTests
             CollectionIds = [collectionBId, collectionAId],
             Attachments = [attachmentB, attachmentA]
         };
-        VaultCipherResponse otherUserCipher = VaultManagerTestData.Cipher("shared-cipher", otherCipherKey, "Other user cipher") with
+        CipherResponse otherUserCipher = VaultManagerTestData.Cipher("shared-cipher", otherCipherKey, "Other user cipher") with
         {
             OrganizationId = organizationId,
             FolderId = folderId,
@@ -141,7 +140,7 @@ public sealed class VaultReaderRepositoryTests
         var otherOrganizationKeys = reader.LoadOrganizationKeys(otherAccount.UserId);
         Assert.Equal(new[] { organizationId }, otherOrganizationKeys.Keys);
         Assert.Equal(otherProtectedOrganizationKey, otherOrganizationKeys[organizationId]);
-        VaultCollectionResponse[] collections = reader.GetAllCollections(account.UserId);
+        CollectionResponse[] collections = reader.GetAllCollections(account.UserId);
         Assert.Equal(new[] { collectionBId, collectionAId }, collections.Select(static item => item.Id));
         Assert.Equal(collectionB.EncryptedName, collections[0].EncryptedName);
         Assert.Equal(collectionA.EncryptedName, collections[1].EncryptedName);
@@ -153,20 +152,20 @@ public sealed class VaultReaderRepositoryTests
         Assert.True(collections[1].Manage);
         Assert.False(collections[1].HidePasswords);
         Assert.Equal(1, collections[1].Type);
-        VaultCollectionResponse[] otherCollections = reader.GetAllCollections(otherAccount.UserId);
+        CollectionResponse[] otherCollections = reader.GetAllCollections(otherAccount.UserId);
         Assert.Equal(new[] { collectionAId, collectionBId }, otherCollections.Select(static item => item.Id));
         Assert.Equal(new[] { otherCollectionA.EncryptedName, otherCollectionB.EncryptedName },
             otherCollections.Select(static item => item.EncryptedName));
         Assert.Equal(new[] { 0, 3 }, otherCollections.Select(static item => item.Type));
-        VaultFolderResponse reopenedFolder = Assert.Single(reader.GetAllFolders(account.UserId));
+        FolderResponse reopenedFolder = Assert.Single(reader.GetAllFolders(account.UserId));
         Assert.Equal(folder.Id, reopenedFolder.Id);
         Assert.Equal(folder.RevisionDate, reopenedFolder.RevisionDate);
         Assert.Equal(folder.EncryptedName, reopenedFolder.EncryptedName);
-        VaultFolderResponse reopenedOtherFolder = Assert.Single(reader.GetAllFolders(otherAccount.UserId));
+        FolderResponse reopenedOtherFolder = Assert.Single(reader.GetAllFolders(otherAccount.UserId));
         Assert.Equal(otherFolder.Id, reopenedOtherFolder.Id);
         Assert.Equal(otherFolder.EncryptedName, reopenedOtherFolder.EncryptedName);
 
-        (VaultCipherResponse Response, byte[] Payload) reopenedCipher = Assert.Single(
+        (CipherResponse Response, byte[] Payload) reopenedCipher = Assert.Single(
             VaultRepositoryTestData.ReadCiphers(reader, account.UserId));
         Assert.Equal(sharedCipherId, reopenedCipher.Response.Id);
         Assert.Equal(organizationId, reopenedCipher.Response.OrganizationId);
@@ -176,7 +175,7 @@ public sealed class VaultReaderRepositoryTests
         Assert.Equal(
             new[] { collectionAId, collectionBId },
             reopenedCipher.Response.CollectionIds);
-        VaultCipherAttachmentDownloadResponse[] reopenedAttachments = reopenedCipher.Response.Attachments
+        AttachmentDownloadResponse[] reopenedAttachments = reopenedCipher.Response.Attachments
             ?? throw new InvalidOperationException("The persisted cipher lost its attachments.");
         Assert.Equal(new[] { "attachment-b", "attachment-a" }, reopenedAttachments.Select(static item => item.Id.ToString()));
         Assert.Equal(
@@ -184,7 +183,7 @@ public sealed class VaultReaderRepositoryTests
             reopenedAttachments.Select(static item => item.EncryptedFileName));
         Assert.Equal(new[] { 8L, 5L }, reopenedAttachments.Select(static item => item.Size.Bytes));
 
-        (VaultCipherResponse Response, byte[] Payload) reopenedOtherCipher = Assert.Single(
+        (CipherResponse Response, byte[] Payload) reopenedOtherCipher = Assert.Single(
             VaultRepositoryTestData.ReadCiphers(reader, otherAccount.UserId));
         Assert.Equal(sharedCipherId, reopenedOtherCipher.Response.Id);
         Assert.Equal(organizationId, reopenedOtherCipher.Response.OrganizationId);
@@ -192,7 +191,7 @@ public sealed class VaultReaderRepositoryTests
         Assert.Equal(otherEncryptedCipherKey, reopenedOtherCipher.Response.ProtectedCipherKey);
         Assert.NotEqual(reopenedCipher.Payload, reopenedOtherCipher.Payload);
         Assert.Equal(new[] { collectionAId }, reopenedOtherCipher.Response.CollectionIds);
-        VaultCipherAttachmentDownloadResponse[] reopenedOtherAttachments = reopenedOtherCipher.Response.Attachments
+        AttachmentDownloadResponse[] reopenedOtherAttachments = reopenedOtherCipher.Response.Attachments
             ?? throw new InvalidOperationException("The other user's persisted cipher lost its attachments.");
         Assert.Equal(new[] { "attachment-a", "attachment-b" },
             reopenedOtherAttachments.Select(static item => item.Id.ToString()));
@@ -261,13 +260,13 @@ public sealed class VaultReaderRepositoryTests
             AccessSecretsManager = true,
             ProtectedOrganizationKey = protectedOrganizationKey
         };
-        var oldCollection = new VaultCollectionResponse
+        var oldCollection = new CollectionResponse
         {
             Id = oldCollectionId,
             OrganizationId = organizationId,
             EncryptedName = EncString.Encrypt("Old collection", organizationKey)
         };
-        var newCollection = new VaultCollectionResponse
+        var newCollection = new CollectionResponse
         {
             Id = newCollectionId,
             OrganizationId = organizationId,
@@ -283,13 +282,13 @@ public sealed class VaultReaderRepositoryTests
             Enabled = true,
             ProtectedOrganizationKey = otherProtectedOrganizationKey
         };
-        var otherOldCollection = new VaultCollectionResponse
+        var otherOldCollection = new CollectionResponse
         {
             Id = oldCollectionId,
             OrganizationId = organizationId,
             EncryptedName = EncString.Encrypt("Other old collection", otherOrganizationKey)
         };
-        var otherNewCollection = new VaultCollectionResponse
+        var otherNewCollection = new CollectionResponse
         {
             Id = newCollectionId,
             OrganizationId = organizationId,
@@ -299,7 +298,7 @@ public sealed class VaultReaderRepositoryTests
         var newFolder = VaultManagerTestData.Folder("new-folder", "New folder", userKey);
         var otherOldFolder = VaultManagerTestData.Folder("old-folder", "Other old folder", otherUserKey);
         var otherNewFolder = VaultManagerTestData.Folder("new-folder", "Other new folder", otherUserKey);
-        VaultCipherResponse original = VaultManagerTestData.Cipher("shared-cipher", firstCipherKey, "Original") with
+        CipherResponse original = VaultManagerTestData.Cipher("shared-cipher", firstCipherKey, "Original") with
         {
             OrganizationId = organizationId,
             FolderId = oldFolderId,
@@ -307,7 +306,7 @@ public sealed class VaultReaderRepositoryTests
             CollectionIds = [oldCollectionId],
             Attachments = [VaultParserTestData.CreateAttachment("old-attachment", "old.txt", 3, firstCipherKey)]
         };
-        VaultCipherResponse otherUserCipher = VaultManagerTestData.Cipher("shared-cipher", otherCipherKey, "Other user") with
+        CipherResponse otherUserCipher = VaultManagerTestData.Cipher("shared-cipher", otherCipherKey, "Other user") with
         {
             OrganizationId = organizationId,
             FolderId = oldFolderId,
@@ -318,7 +317,7 @@ public sealed class VaultReaderRepositoryTests
                 VaultParserTestData.CreateAttachment("new-attachment-a", "other-new-a.txt", 19, otherCipherKey)
             ]
         };
-        VaultCipherResponse updated = VaultManagerTestData.Cipher("shared-cipher", updatedCipherKey, "Updated") with
+        CipherResponse updated = VaultManagerTestData.Cipher("shared-cipher", updatedCipherKey, "Updated") with
         {
             OrganizationId = organizationId,
             FolderId = newFolderId,
@@ -329,7 +328,7 @@ public sealed class VaultReaderRepositoryTests
                 VaultParserTestData.CreateAttachment("new-attachment-a", "new-a.txt", 7, updatedCipherKey)
             ]
         };
-        VaultCipherResponse unrelatedCipher = VaultManagerTestData.Cipher("unrelated-cipher", userKey);
+        CipherResponse unrelatedCipher = VaultManagerTestData.Cipher("unrelated-cipher", userKey);
 
         using (UnitOfWork unitOfWork = database.CreateUnitOfWork())
         {
@@ -355,21 +354,21 @@ public sealed class VaultReaderRepositoryTests
 
         using var reopenedUnitOfWork = database.CreateUnitOfWork();
         var reader = new VaultReaderRepository(reopenedUnitOfWork);
-        List<(VaultCipherResponse Response, byte[] Payload)> ownerCiphers = VaultRepositoryTestData.ReadCiphers(reader, account.UserId);
+        List<(CipherResponse Response, byte[] Payload)> ownerCiphers = VaultRepositoryTestData.ReadCiphers(reader, account.UserId);
         Assert.Equal(2, ownerCiphers.Count);
-        (VaultCipherResponse Response, byte[] Payload) reopenedUpdated = Assert.Single(
+        (CipherResponse Response, byte[] Payload) reopenedUpdated = Assert.Single(
             ownerCiphers,
             item => item.Response.Id == cipherId);
         Assert.Equal(updated.Data, reopenedUpdated.Payload);
         Assert.Equal(newFolderId, reopenedUpdated.Response.FolderId);
         Assert.Equal(updated.ProtectedCipherKey, reopenedUpdated.Response.ProtectedCipherKey);
         Assert.Equal(new[] { newCollectionId }, reopenedUpdated.Response.CollectionIds);
-        VaultCipherAttachmentDownloadResponse[] updatedAttachments = reopenedUpdated.Response.Attachments
+        AttachmentDownloadResponse[] updatedAttachments = reopenedUpdated.Response.Attachments
             ?? throw new InvalidOperationException("The updated cipher lost its attachments.");
         Assert.Equal(
             new[] { "new-attachment-b", "new-attachment-a" },
             updatedAttachments.Select(static item => item.Id.ToString()));
-        (VaultCipherResponse Response, byte[] Payload) retainedCipher = Assert.Single(
+        (CipherResponse Response, byte[] Payload) retainedCipher = Assert.Single(
             ownerCiphers,
             item => item.Response.Id != cipherId);
         Assert.Equal(unrelatedCipher.Id, retainedCipher.Response.Id);
@@ -381,26 +380,26 @@ public sealed class VaultReaderRepositoryTests
         var otherOrganizationKeys = reader.LoadOrganizationKeys(otherAccount.UserId);
         Assert.Equal(new[] { organizationId }, otherOrganizationKeys.Keys);
         Assert.Equal(otherProtectedOrganizationKey, otherOrganizationKeys[organizationId]);
-        VaultFolderResponse[] ownerFolders = reader.GetAllFolders(account.UserId);
+        FolderResponse[] ownerFolders = reader.GetAllFolders(account.UserId);
         Assert.Equal(new[] { oldFolderId, newFolderId }, ownerFolders.Select(static item => item.Id));
         Assert.Equal(new[] { oldFolder.EncryptedName, newFolder.EncryptedName },
             ownerFolders.Select(static item => item.EncryptedName));
-        VaultFolderResponse[] otherFolders = reader.GetAllFolders(otherAccount.UserId);
+        FolderResponse[] otherFolders = reader.GetAllFolders(otherAccount.UserId);
         Assert.Equal(new[] { oldFolderId, newFolderId }, otherFolders.Select(static item => item.Id));
         Assert.Equal(new[] { otherOldFolder.EncryptedName, otherNewFolder.EncryptedName },
             otherFolders.Select(static item => item.EncryptedName));
-        VaultCollectionResponse[] ownerCollections = reader.GetAllCollections(account.UserId);
+        CollectionResponse[] ownerCollections = reader.GetAllCollections(account.UserId);
         Assert.Equal(new[] { oldCollectionId, newCollectionId }, ownerCollections.Select(static item => item.Id));
         Assert.Equal(new[] { oldCollection.EncryptedName, newCollection.EncryptedName },
             ownerCollections.Select(static item => item.EncryptedName));
-        VaultCollectionResponse[] otherCollections = reader.GetAllCollections(otherAccount.UserId);
+        CollectionResponse[] otherCollections = reader.GetAllCollections(otherAccount.UserId);
         Assert.Equal(new[] { oldCollectionId, newCollectionId }, otherCollections.Select(static item => item.Id));
         Assert.Equal(new[] { otherOldCollection.EncryptedName, otherNewCollection.EncryptedName },
             otherCollections.Select(static item => item.EncryptedName));
         Assert.NotEqual(oldCollection.EncryptedName, otherOldCollection.EncryptedName);
         Assert.NotEqual(oldFolder.EncryptedName, otherOldFolder.EncryptedName);
 
-        (VaultCipherResponse Response, byte[] Payload) otherUserReopened = Assert.Single(
+        (CipherResponse Response, byte[] Payload) otherUserReopened = Assert.Single(
             VaultRepositoryTestData.ReadCiphers(reader, otherAccount.UserId));
         Assert.Equal(cipherId, otherUserReopened.Response.Id);
         Assert.Equal(organizationId, otherUserReopened.Response.OrganizationId);
@@ -411,7 +410,7 @@ public sealed class VaultReaderRepositoryTests
         Assert.Equal(otherUserCipher.Data, otherUserReopened.Payload);
         Assert.NotEqual(updated.Data, otherUserReopened.Payload);
         Assert.Equal(otherUserCipher.ProtectedCipherKey, otherUserReopened.Response.ProtectedCipherKey);
-        VaultCipherAttachmentDownloadResponse[] otherAttachments = otherUserReopened.Response.Attachments
+        AttachmentDownloadResponse[] otherAttachments = otherUserReopened.Response.Attachments
             ?? throw new InvalidOperationException("The other user's cipher lost its attachments after the update.");
         Assert.Equal(new[] { "old-attachment", "new-attachment-a" },
             otherAttachments.Select(static item => item.Id.ToString()));
@@ -450,7 +449,7 @@ public sealed class VaultReaderRepositoryTests
             Enabled = true,
             ProtectedOrganizationKey = protectedOwnerOrganizationKey
         };
-        var ownerCollection = new VaultCollectionResponse
+        var ownerCollection = new CollectionResponse
         {
             Id = ownerCollectionId,
             OrganizationId = ownerOrganizationId,
@@ -466,7 +465,7 @@ public sealed class VaultReaderRepositoryTests
             Enabled = true,
             ProtectedOrganizationKey = protectedOtherOrganizationKey
         };
-        var otherCollection = new VaultCollectionResponse
+        var otherCollection = new CollectionResponse
         {
             Id = ownerCollectionId,
             OrganizationId = ownerOrganizationId,
@@ -474,14 +473,14 @@ public sealed class VaultReaderRepositoryTests
         };
         var ownerFolder = VaultManagerTestData.Folder("owner-folder", "Owner folder", ownerKey);
         var otherFolder = VaultManagerTestData.Folder("owner-folder", "Other folder", otherUserKey);
-        VaultCipherResponse ownerCipher = VaultManagerTestData.Cipher("owner-cipher", ownerKey) with
+        CipherResponse ownerCipher = VaultManagerTestData.Cipher("owner-cipher", ownerKey) with
         {
             OrganizationId = ownerOrganizationId,
             FolderId = ownerFolder.Id,
             CollectionIds = [ownerCollectionId],
             Attachments = [VaultParserTestData.CreateAttachment("owner-attachment", "owner.txt", 4, ownerKey)]
         };
-        VaultCipherResponse otherCipher = VaultManagerTestData.Cipher("owner-cipher", otherCipherKey, "Other owner cipher") with
+        CipherResponse otherCipher = VaultManagerTestData.Cipher("owner-cipher", otherCipherKey, "Other owner cipher") with
         {
             OrganizationId = ownerOrganizationId,
             FolderId = ownerFolder.Id,
@@ -530,20 +529,20 @@ public sealed class VaultReaderRepositoryTests
         var otherOrganizationKeys = reader.LoadOrganizationKeys(otherAccount.UserId);
         Assert.Equal(new[] { ownerOrganizationId }, otherOrganizationKeys.Keys);
         Assert.Equal(protectedOtherOrganizationKey, otherOrganizationKeys[ownerOrganizationId]);
-        VaultFolderResponse reopenedOtherFolder = Assert.Single(reader.GetAllFolders(otherAccount.UserId));
+        FolderResponse reopenedOtherFolder = Assert.Single(reader.GetAllFolders(otherAccount.UserId));
         Assert.Equal(otherFolder.Id, reopenedOtherFolder.Id);
         Assert.Equal(otherFolder.EncryptedName, reopenedOtherFolder.EncryptedName);
-        VaultCollectionResponse reopenedOtherCollection = Assert.Single(reader.GetAllCollections(otherAccount.UserId));
+        CollectionResponse reopenedOtherCollection = Assert.Single(reader.GetAllCollections(otherAccount.UserId));
         Assert.Equal(ownerCollectionId, reopenedOtherCollection.Id);
         Assert.Equal(otherCollection.EncryptedName, reopenedOtherCollection.EncryptedName);
-        (VaultCipherResponse Response, byte[] Payload) reopenedOtherCipher = Assert.Single(
+        (CipherResponse Response, byte[] Payload) reopenedOtherCipher = Assert.Single(
             VaultRepositoryTestData.ReadCiphers(reader, otherAccount.UserId));
         Assert.Equal(ownerCipher.Id, reopenedOtherCipher.Response.Id);
         Assert.Equal(otherCipher.Data, reopenedOtherCipher.Payload);
         Assert.Equal(ownerOrganizationId, reopenedOtherCipher.Response.OrganizationId);
         Assert.Equal(ownerFolder.Id, reopenedOtherCipher.Response.FolderId);
         Assert.Equal(new[] { ownerCollectionId }, reopenedOtherCipher.Response.CollectionIds);
-        VaultCipherAttachmentDownloadResponse[] otherAttachments = reopenedOtherCipher.Response.Attachments
+        AttachmentDownloadResponse[] otherAttachments = reopenedOtherCipher.Response.Attachments
             ?? throw new InvalidOperationException("The other user's cipher lost its attachment after snapshot removal.");
         Assert.Equal(new[] { "owner-attachment" }, otherAttachments.Select(static item => item.Id.ToString()));
         Assert.Equal(otherCipher.Attachments![0].EncryptedFileName, otherAttachments[0].EncryptedFileName);
@@ -558,7 +557,7 @@ public sealed class VaultReaderRepositoryTests
         using var database = new AccountRepositoryTestDatabase();
         AccountRepositoryTestHelper.InsertAccount(database, account);
         byte[] key = Enumerable.Repeat((byte)7, 64).ToArray();
-        VaultCipherResponse original = VaultManagerTestData.Cipher("persisted-cipher", key, "Persisted");
+        CipherResponse original = VaultManagerTestData.Cipher("persisted-cipher", key, "Persisted");
 
         using (UnitOfWork unitOfWork = database.CreateUnitOfWork())
         {

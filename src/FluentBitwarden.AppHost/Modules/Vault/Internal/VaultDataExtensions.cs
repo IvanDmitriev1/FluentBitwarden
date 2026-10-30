@@ -1,13 +1,12 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Internal;
 
 internal static class VaultDataExtensions
 {
-    public static VaultCipher[] FilterCiphers(this VaultData data, VaultCipherQuery query)
+    public static Cipher[] FilterCiphers(this VaultData data, VaultCipherQuery query)
     {
-        IEnumerable<VaultCipher> result = data.Ciphers;
+        IEnumerable<Cipher> result = data.Ciphers;
 
         if (query.FavoritesOnly)
             result = result.Where(static x => x.Favorite);
@@ -38,8 +37,8 @@ internal static class VaultDataExtensions
         return result.ToArray();
     }
 
-    private static IEnumerable<VaultCipher> ApplySort(
-        this IEnumerable<VaultCipher> source,
+    private static IEnumerable<Cipher> ApplySort(
+        this IEnumerable<Cipher> source,
         VaultCipherSortField sortField,
         VaultCipherSortDirection sortDirection) => (sortField, sortDirection) switch
         {
@@ -65,7 +64,7 @@ internal static class VaultDataExtensions
                 source.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
         };
 
-    private static bool MatchesSearchText(this VaultCipher cipher, string? searchText)
+    private static bool MatchesSearchText(this Cipher cipher, string? searchText)
     {
         searchText = searchText?.Trim();
 
@@ -74,13 +73,13 @@ internal static class VaultDataExtensions
 
         return cipher.Name.ContainsSearchText(searchText) || cipher switch
         {
-            LoginVaultCipher login => login.Username.ContainsSearchText(searchText),
+            LoginCipher login => login.Username.ContainsSearchText(searchText),
 
 
-            CardVaultCipher card => card.CardholderName.ContainsSearchText(searchText)
+            CardCipher card => card.CardholderName.ContainsSearchText(searchText)
                                     || card.Brand.ContainsSearchText(searchText),
 
-            IdentityVaultCipher identity => identity.Title.ContainsSearchText(searchText)
+            IdentityCipher identity => identity.Title.ContainsSearchText(searchText)
                                             || identity.FirstName.ContainsSearchText(searchText)
                                             || identity.MiddleName.ContainsSearchText(searchText)
                                             || identity.LastName.ContainsSearchText(searchText)

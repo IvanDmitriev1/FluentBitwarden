@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Infrastructure;

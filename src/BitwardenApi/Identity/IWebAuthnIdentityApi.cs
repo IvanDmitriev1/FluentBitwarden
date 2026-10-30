@@ -1,3 +1,5 @@
+using BitwardenApi.Client;
+using BitwardenApi.Identity.Models;
 namespace BitwardenApi.Identity;
 
 public interface IWebAuthnIdentityApi

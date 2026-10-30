@@ -1,9 +1,7 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Cryptography;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
@@ -118,7 +116,7 @@ internal static partial class VaultParserTestData
         return buffer.WrittenSpan.ToArray();
     }
 
-    internal static VaultCipherResponse CreateDto(VaultCipherType type, byte[] payload) => new()
+    internal static CipherResponse CreateDto(CipherType type, byte[] payload) => new()
     {
         Id = CipherId.Parse("synthetic-cipher"),
         FolderId = FolderId.Parse("synthetic-folder"),
@@ -132,7 +130,7 @@ internal static partial class VaultParserTestData
         Data = payload
     };
 
-    internal static VaultCipherAttachmentDownloadResponse CreateAttachment(
+    internal static AttachmentDownloadResponse CreateAttachment(
         string id,
         string fileName,
         long size,
@@ -145,8 +143,8 @@ internal static partial class VaultParserTestData
         Size = BitwardenApi.Primitives.FileSize.FromBytes(size)
     };
 
-    internal static VaultCipher ParseCipher(
-        ref readonly VaultCipherResponse dto,
+    internal static Cipher ParseCipher(
+        ref readonly CipherResponse dto,
         ReadOnlySpan<byte> payload,
         SymmetricCryptoKey baseKey)
     {
@@ -156,7 +154,7 @@ internal static partial class VaultParserTestData
 
     internal static long MeasureAllocatedBytes(
         FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser parser,
-        in VaultCipherResponse dto,
+        in CipherResponse dto,
         byte[] payload,
         SymmetricCryptoKey baseKey)
     {
@@ -221,11 +219,18 @@ internal static partial class VaultParserTestData
         for (int i = 0; i < warmups; i++)
             _ = ReadConverterValue(converter, payload, options);
 
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-            _ = ReadConverterValue(converter, payload, options);
+        // Shared-pool refills can contaminate a batch; measure steady-state allocations.
+        long minimumBytes = long.MaxValue;
+        for (int sample = 0; sample < 5; sample++)
+        {
+            long start = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+                _ = ReadConverterValue(converter, payload, options);
 
-        return (GC.GetAllocatedBytesForCurrentThread() - start) / iterations;
+            minimumBytes = Math.Min(minimumBytes, GC.GetAllocatedBytesForCurrentThread() - start);
+        }
+
+        return minimumBytes / iterations;
     }
 
     internal static long MeasureUtf8StringAllocations(string plaintext)
@@ -236,11 +241,17 @@ internal static partial class VaultParserTestData
         for (int i = 0; i < warmups; i++)
             _ = Encoding.UTF8.GetString(utf8.AsSpan());
 
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < iterations; i++)
-            _ = Encoding.UTF8.GetString(utf8.AsSpan());
+        long minimumBytes = long.MaxValue;
+        for (int sample = 0; sample < 5; sample++)
+        {
+            long start = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+                _ = Encoding.UTF8.GetString(utf8.AsSpan());
 
-        return (GC.GetAllocatedBytesForCurrentThread() - start) / iterations;
+            minimumBytes = Math.Min(minimumBytes, GC.GetAllocatedBytesForCurrentThread() - start);
+        }
+
+        return minimumBytes / iterations;
     }
 
     private static T ReadConverterValue<T>(

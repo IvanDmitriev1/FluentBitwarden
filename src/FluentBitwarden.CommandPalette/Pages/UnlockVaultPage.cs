@@ -105,15 +105,15 @@ internal sealed partial class UnlockVaultPage : ContentPage
             if (accounts.Length == 0)
                 return BuildNoAccountsTemplateJson();
 
-            AppSessionState state = _appSessionClient
+            AppSessionStateSnapshot stateSnapshot = _appSessionClient
                 .GetStateAsync(new(), CancellationToken.None)
                 .GetAwaiter()
                 .GetResult();
 
-            AccountProfile? currentAccount = state switch
+            AccountProfile? currentAccount = stateSnapshot switch
             {
-                AppSessionState.Locked locked => locked.Account,
-                AppSessionState.Unlocked unlocked => unlocked.Account,
+                AppSessionStateSnapshot.Locked locked => locked.Account,
+                AppSessionStateSnapshot.Unlocked unlocked => unlocked.Account,
                 _ => null
             };
             AccountProfile selectedAccount = currentAccount is { } activeAccount

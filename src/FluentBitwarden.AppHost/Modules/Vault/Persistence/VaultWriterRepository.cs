@@ -1,6 +1,4 @@
-using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Items.Contracts;
-using Dapper;
+﻿using Dapper;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
 using Microsoft.Data.Sqlite;
 
@@ -41,7 +39,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
-    public void WriteFolders(UserId userId, ReadOnlySpan<VaultFolderResponse> folders)
+    public void WriteFolders(UserId userId, ReadOnlySpan<FolderResponse> folders)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute("DELETE FROM vault_folder WHERE user_id = @UserId;",
@@ -60,7 +58,26 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
-    public void WriteCollections(UserId userId, ReadOnlySpan<VaultCollectionResponse> collections)
+    public void UpdateFolder(UserId userId, ref readonly FolderResponse dto)
+    {
+        dbSession.Connection.Execute(
+            """
+            INSERT INTO vault_folder (user_id, folder_id, revision_date_unix_ms, encrypted_name)
+            VALUES (@UserId, @FolderId, @RevisionDateUnixMs, @EncryptedName)
+            ON CONFLICT (user_id, folder_id) DO UPDATE SET
+                revision_date_unix_ms = excluded.revision_date_unix_ms,
+                encrypted_name = excluded.encrypted_name;
+            """,
+            VaultFolderMapper.ToInsertParameters(userId.ToString(), in dto),
+            transaction: dbSession.RequiredTransaction);
+    }
+
+    public void DeleteFolder(UserId userId, FolderId folderId) => dbSession.Connection.Execute(
+        "DELETE FROM vault_folder WHERE user_id = @UserId AND folder_id = @FolderId;",
+        new { UserId = userId.ToString(), FolderId = folderId.ToString() },
+        transaction: dbSession.RequiredTransaction);
+
+    public void WriteCollections(UserId userId, ReadOnlySpan<CollectionResponse> collections)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute("DELETE FROM vault_collection WHERE user_id = @UserId;",
@@ -95,7 +112,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
-    public void WriteCiphers(UserId userId, ReadOnlySpan<VaultCipherResponse> ciphers)
+    public void WriteCiphers(UserId userId, ReadOnlySpan<CipherResponse> ciphers)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute("DELETE FROM vault_cipher WHERE user_id = @UserId;",
@@ -115,7 +132,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
     /// enabled on the connection, so their old child rows are cleared before the insert re-adds
     /// them; other cached ciphers are untouched.
     /// </summary>
-    public void UpsertCipher(UserId userId, ref readonly VaultCipherResponse dto)
+    public void UpsertCipher(UserId userId, ref readonly CipherResponse dto)
     {
         var userIdStr = userId.ToString();
         dbSession.Connection.Execute(
@@ -126,7 +143,12 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         InsertCipher(userIdStr, in dto);
     }
 
-    private void InsertCipher(string userIdStr, ref readonly VaultCipherResponse dto)
+    public void DeleteCipher(UserId userId, CipherId cipherId) => dbSession.Connection.Execute(
+        "DELETE FROM vault_cipher WHERE user_id = @UserId AND cipher_id = @CipherId;",
+        new { UserId = userId.ToString(), CipherId = cipherId.ToString() },
+        transaction: dbSession.RequiredTransaction);
+
+    private void InsertCipher(string userIdStr, ref readonly CipherResponse dto)
     {
         var cipherId = dto.Id.ToString();
         var rowId = dbSession.Connection.ExecuteScalar<long>(
@@ -171,7 +193,7 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         WriteCipherAttachments(userIdStr, cipherId, dto.Attachments);
     }
 
-    private void WriteCipherAttachments(string userIdStr, string cipherId, ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachments)
+    private void WriteCipherAttachments(string userIdStr, string cipherId, ReadOnlySpan<AttachmentDownloadResponse> attachments)
     {
         if (attachments.Length == 0)
             return;

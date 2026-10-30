@@ -1,6 +1,4 @@
 using System.Globalization;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;

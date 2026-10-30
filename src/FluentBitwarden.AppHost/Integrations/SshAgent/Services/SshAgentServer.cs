@@ -70,6 +70,10 @@ internal sealed class SshAgentServer(
 
                 await server.WaitForConnectionAsync(cancellationToken);
             }
+            catch (UnauthorizedAccessException)
+            {
+                break;
+            }
             catch (IOException e) when (server is not null && !cancellationToken.IsCancellationRequested)
             {
                 server.Dispose();

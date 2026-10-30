@@ -1,62 +1,65 @@
 using System.Net;
 using System.Net.Http.Json;
 using BitwardenApi.Identity.Internal;
+using BitwardenApi.Client;
+using BitwardenApi.Identity.Models;
+using BitwardenApi.Client.Http;
 
 namespace BitwardenApi.Identity;
 
 internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdentityApi
 {
-    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithPasswordAsync(
+    public Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithPasswordAsync(
         PasswordAuthenticationRequest request,
         CancellationToken cancellationToken = default)
         => SendAuthenticatedTokenRequestAsync(
             request.Context, request.CreatePasswordGrant(), cancellationToken);
 
-    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithPasswordAndTwoFactorAsync(
+    public Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithPasswordAndTwoFactorAsync(
         PasswordTwoFactorAuthenticationRequest request,
         CancellationToken cancellationToken = default)
         => SendAuthenticatedTokenRequestAsync(
             request.Context, request.CreatePasswordWithTwoFactorGrant(), cancellationToken);
 
-    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithWebAuthnAsync(
+    public Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithWebAuthnAsync(
         WebAuthnAuthenticationRequest request,
         CancellationToken cancellationToken = default)
         => SendAuthenticatedTokenRequestAsync(
             request.Context, request.CreateWebAuthnGrant(), cancellationToken);
 
-    public Task<SessionTokenResult<TokenRefreshSessionModel>> RefreshAuthenticationAsync(
+    public Task<SessionTokenResult<RefreshedSession>> RefreshAuthenticationAsync(
         RefreshAuthenticationRequest request,
         CancellationToken cancellationToken = default)
         => SendRefreshTokenRequestAsync(
             request.Context, request.CreateRefreshTokenGrant(), cancellationToken);
 
-    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithDeviceAsync(
+    public Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithDeviceAsync(
         DeviceAuthenticationRequest request,
         CancellationToken cancellationToken = default)
         => SendAuthenticatedTokenRequestAsync(
             request.Context, request.CreateDeviceGrant(), cancellationToken);
 
-    public Task<SessionTokenResult<TokenAuthenticatedModel>> AuthenticateWithAuthorizationCodeAsync(
+    public Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithAuthorizationCodeAsync(
         AuthorizationCodeLoginRequest request,
         CancellationToken cancellationToken = default)
         => SendAuthenticatedTokenRequestAsync(
             request.Context, request.CreateAuthorizationCodeGrant(), cancellationToken);
 
-    private Task<SessionTokenResult<TokenAuthenticatedModel>> SendAuthenticatedTokenRequestAsync(
+    private Task<SessionTokenResult<AuthenticatedSession>> SendAuthenticatedTokenRequestAsync(
         BitwardenClientContext context,
         IReadOnlyDictionary<string, string> form,
         CancellationToken cancellationToken)
         => SendTokenRequestAsync(
             context, form, ReadAuthenticatedTokenAsync, cancellationToken);
 
-    private Task<SessionTokenResult<TokenRefreshSessionModel>> SendRefreshTokenRequestAsync(
+    private Task<SessionTokenResult<RefreshedSession>> SendRefreshTokenRequestAsync(
         BitwardenClientContext context,
         IReadOnlyDictionary<string, string> form,
         CancellationToken cancellationToken)
         => SendTokenRequestAsync(
             context, form, ReadRefreshTokenAsync, cancellationToken);
 
-    private static async Task<TokenAuthenticatedModel> ReadAuthenticatedTokenAsync(
+    private static async Task<AuthenticatedSession> ReadAuthenticatedTokenAsync(
         HttpContent content,
         CancellationToken cancellationToken)
     {
@@ -70,7 +73,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
         return payload.ToTokenResponse();
     }
 
-    private static async Task<TokenRefreshSessionModel> ReadRefreshTokenAsync(
+    private static async Task<RefreshedSession> ReadRefreshTokenAsync(
         HttpContent content,
         CancellationToken cancellationToken)
     {
@@ -90,7 +93,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
         Func<HttpContent, CancellationToken, Task<TResult>> readSuccessAsync,
         CancellationToken cancellationToken)
     {
-        using var httpClient = httpClientFactory.CreateIdentityClient();
+        using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Identity);
         Uri tokenEndpoint = new(context.Environment.IdentityBase, "/connect/token");
 
         using var content = new FormUrlEncodedContent(form);

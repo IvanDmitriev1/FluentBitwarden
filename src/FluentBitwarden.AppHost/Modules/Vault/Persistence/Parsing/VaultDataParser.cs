@@ -1,10 +1,8 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+
 using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Cryptography;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
@@ -30,7 +28,7 @@ internal sealed partial class VaultDataParser
     private readonly LoginUrisJsonConverter _loginUrisConverter;
     private readonly FirstFido2CredentialJsonConverter _firstFido2CredentialConverter;
 
-    private VaultCipher? _activeCipher;
+    private Cipher? _activeCipher;
 
     public VaultDataParser()
     {
@@ -72,15 +70,15 @@ internal sealed partial class VaultDataParser
         _loginUrisConverter = new LoginUrisJsonConverter(GetActiveLoginUris, loginUriTypeInfo);
     }
 
-    public VaultCipher ParseAndDecryptCipher(
-        ref readonly VaultCipherResponse dto,
+    public Cipher ParseAndDecryptCipher(
+        ref readonly CipherResponse dto,
         ReadOnlySpan<byte> payload,
         SymmetricCryptoKey baseKey)
     {
         if (_activeCipher is not null)
             throw new InvalidOperationException("Vault payload parsing is sequential and non-reentrant.");
 
-        VaultCipher cipher = VaultCipher.CreateBlankCipher(dto.VaultCipherType);
+        Cipher cipher = Cipher.CreateBlankCipher(dto.VaultCipherType);
         cipher.Id = dto.Id;
         cipher.FolderId = dto.FolderId;
         cipher.Favorite = dto.Favorite;
@@ -98,7 +96,7 @@ internal sealed partial class VaultDataParser
         _activeCipher = cipher;
         try
         {
-            VaultCipher parsedCipher = (VaultCipher)(JsonSerializer.Deserialize(
+            Cipher parsedCipher = (Cipher)(JsonSerializer.Deserialize(
                 ref reader, _jsonOptions.GetTypeInfo(cipher.GetType()))
                 ?? throw new JsonException("Vault payload cannot be null."));
 
@@ -129,18 +127,18 @@ internal sealed partial class VaultDataParser
             return;
         }
 
-        if (typeof(VaultCipher).IsAssignableFrom(typeInfo.Type) && !typeInfo.Type.IsAbstract)
+        if (typeof(Cipher).IsAssignableFrom(typeInfo.Type) && !typeInfo.Type.IsAbstract)
             ConfigureCipherContract(typeInfo);
     }
 
     private void ConfigureCipherContract(JsonTypeInfo typeInfo)
     {
-        if (typeInfo.Type == typeof(LoginVaultCipher))
+        if (typeInfo.Type == typeof(LoginCipher))
         {
-            GetProperty(typeInfo, nameof(LoginVaultCipher.Username)).CustomConverter = _stringConverter;
-            GetProperty(typeInfo, nameof(LoginVaultCipher.Password)).CustomConverter = _stringConverter;
-            GetProperty(typeInfo, nameof(LoginVaultCipher.Uris)).CustomConverter = _loginUrisConverter;
-            JsonPropertyInfo fido2 = GetProperty(typeInfo, nameof(LoginVaultCipher.Fido2Credential));
+            GetProperty(typeInfo, nameof(LoginCipher.Username)).CustomConverter = _stringConverter;
+            GetProperty(typeInfo, nameof(LoginCipher.Password)).CustomConverter = _stringConverter;
+            GetProperty(typeInfo, nameof(LoginCipher.Uris)).CustomConverter = _loginUrisConverter;
+            JsonPropertyInfo fido2 = GetProperty(typeInfo, nameof(LoginCipher.Fido2Credential));
             fido2.Name = "fido2Credentials";
             fido2.CustomConverter = _firstFido2CredentialConverter;
         }
@@ -148,8 +146,8 @@ internal sealed partial class VaultDataParser
         for (int i = typeInfo.Properties.Count - 1; i >= 0; i--)
         {
             JsonPropertyInfo property = typeInfo.Properties[i];
-            bool commonProperty = property.DeclaringType == typeof(VaultCipher);
-            bool isCommonPayloadField = IsProperty(property, nameof(VaultCipher.Name)) || IsProperty(property, nameof(VaultCipher.Notes));
+            bool commonProperty = property.DeclaringType == typeof(Cipher);
+            bool isCommonPayloadField = IsProperty(property, nameof(Cipher.Name)) || IsProperty(property, nameof(Cipher.Notes));
             if ((commonProperty && !isCommonPayloadField) || (!commonProperty && property.Set is null))
             {
                 typeInfo.Properties.RemoveAt(i);
@@ -163,7 +161,7 @@ internal sealed partial class VaultDataParser
 
         typeInfo.CreateObject = () =>
         {
-            VaultCipher active = _activeCipher
+            Cipher active = _activeCipher
                 ?? throw new InvalidOperationException("No active cipher is being parsed.");
             if (active.GetType() != typeInfo.Type)
                 throw new InvalidOperationException("The active cipher type does not match the JSON contract.");
@@ -195,23 +193,23 @@ internal sealed partial class VaultDataParser
     }
 
     private List<LoginUri> GetActiveLoginUris()
-        => _activeCipher is LoginVaultCipher login
+        => _activeCipher is LoginCipher login
             ? login.Uris
             : throw new InvalidOperationException("No active login cipher is available.");
 
-    private static VaultCipherAttachment[] ParseAttachments(
+    private static CipherAttachment[] ParseAttachments(
         CipherId cipherId,
-        ReadOnlySpan<VaultCipherAttachmentDownloadResponse> attachmentDtos,
+        ReadOnlySpan<AttachmentDownloadResponse> attachmentDtos,
         scoped in CipherKey decryptionKey)
     {
         if (attachmentDtos is not { Length: > 0 })
             return [];
 
-        var attachments = new VaultCipherAttachment[attachmentDtos.Length];
+        var attachments = new CipherAttachment[attachmentDtos.Length];
         for (int i = 0; i < attachmentDtos.Length; i++)
         {
             ref readonly var dto = ref attachmentDtos[i];
-            attachments[i] = new VaultCipherAttachment
+            attachments[i] = new CipherAttachment
             {
                 Id = dto.Id,
                 CipherId = cipherId,

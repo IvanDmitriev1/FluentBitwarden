@@ -1,8 +1,8 @@
-using BitwardenApi.Identity.Contracts;
+using BitwardenApi.Identity.Models;
 
 namespace FluentBitwarden.AppHost.Modules.Account.Contracts;
 
-public sealed class AccountSessionRefreshException(SessionTokenResult<TokenRefreshSessionModel> outcome) : Exception
+public sealed class AccountSessionRefreshException(SessionTokenResult<RefreshedSession> outcome) : Exception
 {
-    public SessionTokenResult<TokenRefreshSessionModel> Outcome { get; } = outcome;
+    public SessionTokenResult<RefreshedSession> Outcome { get; } = outcome;
 }

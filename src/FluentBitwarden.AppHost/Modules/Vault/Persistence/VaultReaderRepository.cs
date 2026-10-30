@@ -1,7 +1,4 @@
-using System.Globalization;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
-using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Items.Contracts;
+﻿using System.Globalization;
 using Dapper;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
@@ -11,9 +8,9 @@ namespace FluentBitwarden.AppHost.Modules.Vault.Persistence;
 
 internal sealed class VaultReaderRepository(IDbSession dbSession)
 {
-    public delegate void CipherHandler(ref readonly VaultCipherResponse dto, ReadOnlySpan<byte> payload);
+    public delegate void CipherHandler(ref readonly CipherResponse dto, ReadOnlySpan<byte> payload);
 
-    public VaultFolderResponse[] GetAllFolders(UserId userId)
+    public FolderResponse[] GetAllFolders(UserId userId)
     {
         var rows = dbSession.Connection.Query<VaultFolderMapper.FolderRow>(
             """
@@ -57,7 +54,7 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
                 static organization => organization.ProtectedOrganizationKey);
     }
 
-    public VaultCollectionResponse[] GetAllCollections(UserId userId)
+    public CollectionResponse[] GetAllCollections(UserId userId)
     {
         var rows = dbSession.Connection.Query<VaultCollectionMapper.CollectionRow>(
             """
@@ -187,7 +184,7 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
                 StringComparer.OrdinalIgnoreCase);
     }
 
-    private Dictionary<string, VaultCipherAttachmentDownloadResponse[]> GetAttachmentsByCipherId(string userId)
+    private Dictionary<string, AttachmentDownloadResponse[]> GetAttachmentsByCipherId(string userId)
     {
         var rows = dbSession.Connection.Query<VaultCipherMapper.CipherAttachmentRow>(
             """

@@ -1,6 +1,6 @@
 using System.Buffers.Text;
 using System.Text.Json;
-using BitwardenApi.Identity.Contracts;
+using BitwardenApi.Identity.Models;
 using Windows.Win32.Security.Authentication.WebAuthn;
 using FluentBitwarden.AppHost.Infrastructure.WebAuthn.Internal;
 

@@ -1,8 +1,5 @@
-using System.Globalization;
-using BitwardenApi.Infrastructure.Cryptography.Enc;
+﻿using System.Globalization;
 using BitwardenApi.Primitives;
-using BitwardenApi.Vault.Attachments.Contracts;
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
 
@@ -43,17 +40,17 @@ internal static class VaultCipherMapper
         public byte[]? ProtectedCipherKey { get; init; }
     }
 
-    public static VaultCipherResponse ToDomain(
+    public static CipherResponse ToDomain(
         in CipherRow row,
         CollectionId[] collectionIds,
-        VaultCipherAttachmentDownloadResponse[] attachments) => new()
+        AttachmentDownloadResponse[] attachments) => new()
         {
             Id = CipherId.Parse(row.CipherId, CultureInfo.InvariantCulture),
             OrganizationId = SqliteConversions.ParseOrEmpty(row.OrganizationId, OrganizationId.Parse, OrganizationId.Empty),
             FolderId = SqliteConversions.ParseOrEmpty(row.FolderId, FolderId.Parse, FolderId.Empty),
             CollectionIds = collectionIds,
             ProtectedCipherKey = row.ProtectedCipherKey is null ? EncString.Empty : EncString.FromBytes(row.ProtectedCipherKey),
-            VaultCipherType = (VaultCipherType)row.CipherType,
+            VaultCipherType = (CipherType)row.CipherType,
             RevisionDate = row.RevisionDateUnixMs.ToDateTimeOffsetFromUnixMs(),
             CreationDate = row.CreationDateUnixMs.ToDateTimeOffsetFromUnixMs(),
             DeletedDate = row.DeletedDateUnixMs.ToDateTimeOffsetFromUnixMs(),
@@ -66,7 +63,7 @@ internal static class VaultCipherMapper
             Attachments = attachments
         };
 
-    public static VaultCipherAttachmentDownloadResponse ToDomain(in CipherAttachmentRow row) => new()
+    public static AttachmentDownloadResponse ToDomain(in CipherAttachmentRow row) => new()
     {
         Id = AttachmentId.Parse(row.AttachmentId, CultureInfo.InvariantCulture),
         Url = string.Empty,
@@ -98,7 +95,7 @@ internal static class VaultCipherMapper
         byte[]? ProtectedCipherKey,
         int Size);
 
-    public static CipherInsertParameters ToInsertParameters(string userId, string cipherId, in VaultCipherResponse dto) => new(
+    public static CipherInsertParameters ToInsertParameters(string userId, string cipherId, in CipherResponse dto) => new(
         UserId: userId,
         CipherId: cipherId,
         OrganizationId: dto.OrganizationId.IsEmpty
@@ -130,7 +127,7 @@ internal static class VaultCipherMapper
         string userId,
         string cipherId,
         int sortOrder,
-        in VaultCipherAttachmentDownloadResponse attachment) => new(
+        in AttachmentDownloadResponse attachment) => new(
         UserId: userId,
         CipherId: cipherId,
         AttachmentId: attachment.Id.ToString(),

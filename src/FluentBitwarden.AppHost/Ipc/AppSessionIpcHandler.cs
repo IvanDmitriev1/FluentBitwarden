@@ -7,17 +7,19 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class AppSessionIpcHandler(IAppSessionService sessionService) : IAppSessionClient, IIpcRequestsHandler
+internal sealed class AppSessionIpcHandler(
+    IAppSessionAccessor appSessionAccessor,
+    IAppSessionOperations sessionOperations) : IAppSessionClient, IIpcRequestsHandler
 {
-    public Task<AppSessionState> GetStateAsync(
+    public Task<AppSessionStateSnapshot> GetStateAsync(
         GetAppSessionStateRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromResult(sessionService.State);
+        Task.FromResult(appSessionAccessor.AppSessionState.ToSnapshot);
 
     public Task<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request, CancellationToken cancellationToken = default) =>
-        sessionService.UnlockAsync(request, cancellationToken);
+        sessionOperations.UnlockAsync(request, cancellationToken);
 
     public Task LockAsync(
         LockAppSessionRequest request, CancellationToken cancellationToken = default) =>
-        sessionService.LockAsync(cancellationToken);
+        sessionOperations.LockAsync(cancellationToken);
 }

@@ -1,5 +1,4 @@
-using BitwardenApi.Vault.Attachments.Contracts;
-using Humanizer;
+﻿using Humanizer;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.Storage.Pickers;
 
@@ -8,7 +7,7 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 [TemplatePart(Name = PartChrome, Type = typeof(VaultCipherFieldChrome))]
 [TemplatePart(Name = PartFileNameTextBlock, Type = typeof(TextBlock))]
 [TemplatePart(Name = PartSizeTextBlock, Type = typeof(TextBlock))]
-[DependencyProperty<VaultCipherAttachment>("Attachment")]
+[DependencyProperty<CipherAttachment>("Attachment")]
 public sealed partial class VaultCipherAttachmentField : Control
 {
     private const string PartChrome = "PART_Chrome";

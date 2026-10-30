@@ -2,20 +2,20 @@ using FluentBitwarden.Infrastructure.Converters;
 
 namespace FluentBitwarden.ViewModels.Vault.Models;
 
-public readonly record struct VaultCipherTypeOption(VaultCipherType? Value, string Title) : IOptionItem<VaultCipherType?>
+public readonly record struct VaultCipherTypeOption(CipherType? Value, string Title) : IOptionItem<CipherType?>
 {
     public static readonly VaultCipherTypeOption[] All =
     [
         new(null, "All categories"),
-        new(VaultCipherType.Login, "Login"),
-        new(VaultCipherType.SecureNote, "Secure note"),
-        new(VaultCipherType.Card, "Card"),
-        new(VaultCipherType.Identity, "Identity"),
-        new(VaultCipherType.SshKey, "SSH key"),
+        new(CipherType.Login, "Login"),
+        new(CipherType.SecureNote, "Secure note"),
+        new(CipherType.Card, "Card"),
+        new(CipherType.Identity, "Identity"),
+        new(CipherType.SshKey, "SSH key"),
     ];
 
     public override string ToString() => Title;
 }
 
 public sealed partial class VaultCipherTypeOptionConverter()
-    : OptionItemConverter<VaultCipherType?, VaultCipherTypeOption>(VaultCipherTypeOption.All);
+    : OptionItemConverter<CipherType?, VaultCipherTypeOption>(VaultCipherTypeOption.All);

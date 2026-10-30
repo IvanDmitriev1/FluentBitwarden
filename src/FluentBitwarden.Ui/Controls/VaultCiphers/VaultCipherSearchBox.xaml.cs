@@ -9,7 +9,7 @@ namespace FluentBitwarden.Controls.VaultCiphers;
 [DependencyProperty<int>("MaxVisibleItems", DefaultValue = 8)]
 public sealed partial class VaultCipherSearchBox : UserControl
 {
-    public sealed record Selection(string QueryText, VaultCipher SelectedItem);
+    public sealed record Selection(string QueryText, Cipher SelectedItem);
     private readonly IVaultCipherClient _vaultClient;
     private CancellationTokenSource? _searchCancellationTokenSource;
     private int _searchRequestId;
@@ -40,7 +40,7 @@ public sealed partial class VaultCipherSearchBox : UserControl
         string searchText = sender.Text.Trim();
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            sender.ItemsSource = Array.Empty<VaultCipher>();
+            sender.ItemsSource = Array.Empty<Cipher>();
             return;
         }
 
@@ -86,12 +86,12 @@ public sealed partial class VaultCipherSearchBox : UserControl
 
     private void AutoSuggestBox_OnQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        if (args.ChosenSuggestion is not VaultCipher vaultCipher)
+        if (args.ChosenSuggestion is not Cipher vaultCipher)
             return;
 
         CancelPendingSearch();
         sender.Text = string.Empty;
-        sender.ItemsSource = Array.Empty<VaultCipher>();
+        sender.ItemsSource = Array.Empty<Cipher>();
 
         var selection = new Selection(args.QueryText, vaultCipher);
         VaultCipherSelectedCommand?.Execute(selection);

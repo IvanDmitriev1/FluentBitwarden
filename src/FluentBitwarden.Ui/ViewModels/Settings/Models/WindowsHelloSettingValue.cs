@@ -27,11 +27,11 @@ public sealed partial class WindowsHelloSettingValue(
         _isLoading = true;
         try
         {
-            AppSessionState state = await appSessionClient.GetStateAsync(new(), cancellationToken);
-            AccountProfile? activeAccount = state switch
+            AppSessionStateSnapshot stateSnapshot = await appSessionClient.GetStateAsync(new(), cancellationToken);
+            AccountProfile? activeAccount = stateSnapshot switch
             {
-                AppSessionState.Locked locked => locked.Account,
-                AppSessionState.Unlocked unlocked => unlocked.Account,
+                AppSessionStateSnapshot.Locked locked => locked.Account,
+                AppSessionStateSnapshot.Unlocked unlocked => unlocked.Account,
                 _ => null
             };
 

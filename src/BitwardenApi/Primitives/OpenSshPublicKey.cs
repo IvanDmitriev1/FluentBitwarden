@@ -1,5 +1,6 @@
-using BitwardenApi.Infrastructure.Encoding;
 using MemoryPack;
+
+using BitwardenApi.Encoding;
 
 namespace BitwardenApi.Primitives;
 

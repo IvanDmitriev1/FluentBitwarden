@@ -7,7 +7,7 @@ internal static class VaultManagerTestData
 {
     public static readonly DateTimeOffset RevisionDate = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
-    public static VaultCipherResponse Cipher(
+    public static CipherResponse Cipher(
         string id,
         ReadOnlySpan<byte> userKey,
         string name = "Synthetic item")
@@ -20,11 +20,11 @@ internal static class VaultManagerTestData
             WriteEncrypted(writer, "password", "synthetic-password", key);
             writer.WriteEndObject();
         });
-        var cipher = CreateDto(VaultCipherType.Login, payload);
+        var cipher = CreateDto(CipherType.Login, payload);
         return cipher with { Id = CipherId.Parse(id), FolderId = FolderId.Empty };
     }
 
-    public static VaultFolderResponse Folder(string id, string name, ReadOnlySpan<byte> userKey) => new()
+    public static FolderResponse Folder(string id, string name, ReadOnlySpan<byte> userKey) => new()
     {
         Id = FolderId.Parse(id),
         RevisionDate = RevisionDate,
@@ -33,8 +33,8 @@ internal static class VaultManagerTestData
 
     public static VaultSyncResponse SyncResponse(
         UserId userId,
-        VaultCipherResponse[] ciphers,
-        VaultFolderResponse[] folders) => new()
+        CipherResponse[] ciphers,
+        FolderResponse[] folders) => new()
         {
             Profile = AccountTestData.SyncedProfile(
                 userId.ToString(),

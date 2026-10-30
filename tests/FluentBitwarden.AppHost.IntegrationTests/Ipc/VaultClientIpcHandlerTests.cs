@@ -13,15 +13,17 @@ public sealed class VaultClientIpcHandlerTests
     [Fact]
     public async Task Every_vault_operation_requires_an_unlocked_session_lease()
     {
-        IAppSessionService sessionService = Substitute.For<IAppSessionService>();
-        sessionService.RequireUnlockedSessionLease().Returns(_ => throw new UnlockedSessionRequiredException());
-        var vaultService = Substitute.For<IVaultService>();
-        var operationsHandler = new VaultOperationsIpcHandler(sessionService, vaultService);
+        IAppSessionAccessor accessor = Substitute.For<IAppSessionAccessor>();
+        accessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
+        using var context = new FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultManagerTestContext();
+        context.SessionAccessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
+        var vaultService = context.VaultService;
+        var operationsHandler = new VaultOperationsIpcHandler(vaultService);
         var cipherHandler = new VaultCipherIpcHandler(
-            sessionService,
+            accessor,
             vaultService,
-            Substitute.For<IVaultCipherAttachmentService>());
-        var folderHandler = new VaultFolderIpcHandler(sessionService);
+            new FluentBitwarden.AppHost.Modules.Vault.Services.VaultCipherAttachmentService(context.SessionAccessor, Substitute.For<BitwardenApi.Vault.Attachments.IAttachmentsApi>(), context.VaultReaderRepository));
+        var folderHandler = new VaultFolderIpcHandler(accessor);
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
@@ -33,22 +35,20 @@ public sealed class VaultClientIpcHandlerTests
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(async () =>
             await cipherHandler.GetCipherAsync(default!, cancellationToken));
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(async () =>
-            await cipherHandler.SaveCipherAsync(default!, cancellationToken));
+            await cipherHandler.SaveCipherAsync(new FluentBitwarden.Contracts.Modules.Vault.Ciphers.SaveVaultCipherRequest(Cipher.CreateBlankCipher(CipherType.Login)), cancellationToken));
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(async () =>
             await cipherHandler.DownloadCipherAttachmentAsync(default!, cancellationToken));
 
-        sessionService.Received(6).RequireUnlockedSessionLease();
+        _ = accessor.Received(3).AppSessionState;
     }
 
     [Fact]
     public async Task Download_attachment_delegates_to_service_with_the_unlocked_session()
     {
-        IAppSessionService sessionService = Substitute.For<IAppSessionService>();
-        IUnlockedSessionLease lease = Substitute.For<IUnlockedSessionLease>();
-        sessionService.RequireUnlockedSessionLease().Returns(lease);
+        IAppSessionAccessor accessor = Substitute.For<IAppSessionAccessor>();
         IVaultCipherAttachmentService attachmentService = Substitute.For<IVaultCipherAttachmentService>();
         var handler = new VaultCipherIpcHandler(
-            sessionService,
+            accessor,
             Substitute.For<IVaultService>(),
             attachmentService);
         var request = new DownloadVaultCipherAttachmentRequest(
@@ -59,9 +59,7 @@ public sealed class VaultClientIpcHandlerTests
 
         await handler.DownloadCipherAttachmentAsync(request, cancellationToken);
 
-        sessionService.Received(1).RequireUnlockedSessionLease();
         await attachmentService.Received(1).DownloadAsync(
-            lease,
             request.CipherId,
             request.AttachmentId,
             request.DestinationPath,

@@ -1,7 +1,8 @@
 using BitwardenApi;
+using FluentBitwarden.AppHost.Application;
+using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.Hosting;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Integrations.SshAgent;
@@ -27,7 +28,7 @@ public sealed class AppHostServiceRegistrationTests
         builder.ConfigureContainer(new DefaultServiceProviderFactory(
             new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }));
 
-        builder.Services.AddAppHostHosting();
+        builder.Services.AddApplicationServices();
         builder.Services.AddLogging();
         builder.Services.AddSingleton<ISettingsStore>(_ => SettingsStore.Instance);
 
@@ -58,9 +59,19 @@ public sealed class AppHostServiceRegistrationTests
         });
         builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
+        builder.Services.AddHostedService<AppHostLifecycleService>();
+
+        Assert.Single(builder.Services, descriptor =>
+            descriptor.ServiceType == typeof(IHostedService) &&
+            descriptor.ImplementationType == typeof(AppHostLifecycleService));
 
         using IHost host = builder.Build();
 
         Assert.NotNull(host.Services);
+        using IServiceScope firstScope = host.Services.CreateScope();
+        using IServiceScope secondScope = host.Services.CreateScope();
+        Assert.Same(
+            firstScope.ServiceProvider.GetRequiredService<IAppSessionLeaseProvider>(),
+            secondScope.ServiceProvider.GetRequiredService<IAppSessionLeaseProvider>());
     }
 }

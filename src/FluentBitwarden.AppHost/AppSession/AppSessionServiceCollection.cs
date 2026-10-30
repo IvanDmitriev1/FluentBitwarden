@@ -1,5 +1,4 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.AppSession.Internal;
 using FluentBitwarden.AppHost.AppSession.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,8 +8,12 @@ internal static class AppSessionServiceCollection
 {
     public static void AddAppSessionModule(this IServiceCollection services)
     {
-        services.AddSingleton<ActiveSessionManager>();
+        services.AddSingleton<AppSessionStore>();
+        services.AddSingleton<IAppSessionLeaseProvider>(static sp => sp.GetRequiredService<AppSessionStore>());
 
-        services.AddScoped<IAppSessionService, AppSessionService>();
+        services.AddScoped<IAppSessionAccessor>(static sp => sp.GetRequiredService<AppSessionStore>().CreateLease());
+        services.AddScoped<IAppSessionOperations, AppSessionOperations>();
+
+        services.AddHostedService<AppSessionHostedService>();
     }
 }

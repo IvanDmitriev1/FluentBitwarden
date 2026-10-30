@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 
 namespace FluentBitwarden.CommandPalette.VaultListItems;
@@ -6,7 +5,7 @@ namespace FluentBitwarden.CommandPalette.VaultListItems;
 internal sealed partial class IdentityVaultCipherListItem : ListItem
 {
     public IdentityVaultCipherListItem(
-        IdentityVaultCipher cipher,
+        IdentityCipher cipher,
         IUiProcessManager uiProcessManager)
         : base(new OpenItemCommand(cipher, uiProcessManager))
     {
@@ -15,7 +14,7 @@ internal sealed partial class IdentityVaultCipherListItem : ListItem
         Icon = Icons.Identity;
     }
 
-    private static string GetSubtitle(IdentityVaultCipher cipher)
+    private static string GetSubtitle(IdentityCipher cipher)
     {
         if (!string.IsNullOrWhiteSpace(cipher.Title))
             return cipher.Title;
@@ -28,7 +27,7 @@ internal sealed partial class IdentityVaultCipherListItem : ListItem
             : cipher.Email;
     }
 
-    private static string? GetFullName(IdentityVaultCipher cipher)
+    private static string? GetFullName(IdentityCipher cipher)
     {
         var parts = new[]
         {

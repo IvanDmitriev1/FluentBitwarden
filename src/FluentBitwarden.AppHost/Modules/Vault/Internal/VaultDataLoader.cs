@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
@@ -13,7 +12,7 @@ internal static class VaultDataLoader
         IAccountKeySession keySession)
     {
         var parser = new VaultDataParser();
-        List<VaultCipher> ciphers = [];
+        List<Cipher> ciphers = [];
 
         reader.ReadAllCiphers(userId,
             (ref readonly dto, payload) => ciphers.Add(DecryptCipher(in dto, payload, keySession, parser)));
@@ -23,7 +22,7 @@ internal static class VaultDataLoader
             .ToList();
 
         var collectionDtos = reader.GetAllCollections(userId);
-        var collections = new List<VaultCollection>(collectionDtos.Length);
+        var collections = new List<Collection>(collectionDtos.Length);
         foreach (ref readonly var dto in collectionDtos.AsSpan())
         {
             var key = keySession.GetDecryptionKey(dto.OrganizationId);
@@ -36,7 +35,7 @@ internal static class VaultDataLoader
     public static VaultData DecryptResponse(VaultSyncResponse response, IAccountKeySession keySession)
     {
         var parser = new VaultDataParser();
-        List<VaultCipher> ciphers = new(response.VaultCiphers.Length);
+        List<Cipher> ciphers = new(response.VaultCiphers.Length);
 
         foreach (ref readonly var dto in response.VaultCiphers.AsSpan())
         {
@@ -47,7 +46,7 @@ internal static class VaultDataLoader
             .Select(dto => VaultDataParser.ParseAndDecryptFolder(ref dto, keySession.UserKey))
             .ToList();
 
-        var collections = new List<VaultCollection>(response.Collections.Length);
+        var collections = new List<Collection>(response.Collections.Length);
         foreach (ref readonly var dto in response.Collections.AsSpan())
         {
             var key = keySession.GetDecryptionKey(dto.OrganizationId);
@@ -57,13 +56,13 @@ internal static class VaultDataLoader
         return new VaultData(ciphers, folders, collections);
     }
 
-    public static VaultCipher DecryptSavedCipher(
-        ref readonly VaultCipherResponse dto,
+    public static Cipher DecryptSavedCipher(
+        ref readonly CipherResponse dto,
         IAccountKeySession keySession) =>
         DecryptCipher(in dto, dto.Data, keySession, new VaultDataParser());
 
-    private static VaultCipher DecryptCipher(
-        ref readonly VaultCipherResponse dto,
+    private static Cipher DecryptCipher(
+        ref readonly CipherResponse dto,
         ReadOnlySpan<byte> payload,
         IAccountKeySession keySession,
         VaultDataParser parser)

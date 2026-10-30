@@ -23,12 +23,10 @@ internal static class TestApiSupport
     {
         var services = new ServiceCollection();
         services.AddBitwardenApi();
-        var accessTokenProvider = Substitute.For<IBitwardenAccessTokenProvider>();
-        accessTokenProvider.GetAccessTokenAsync(
-                Arg.Any<BitwardenAccountContext>(),
-                Arg.Any<CancellationToken>())
+        var accessTokenProvider = Substitute.For<IAccessTokenProvider>();
+        accessTokenProvider.GetAccessTokenAsync(Arg.Any<BitwardenAccountContext>())
             .Returns(ValueTask.FromResult(SessionAccessToken.Parse("vault-access-token")));
-        services.AddSingleton<IBitwardenAccessTokenProvider>(accessTokenProvider);
+        services.AddSingleton<IAccessTokenProvider>(accessTokenProvider);
 
         if (identityHandler is not null)
         {
@@ -54,7 +52,7 @@ internal static class TestApiSupport
     public static HttpResponseMessage JsonResponse(string content, HttpStatusCode statusCode = HttpStatusCode.OK) =>
         new(statusCode)
         {
-            Content = new StringContent(content, Encoding.UTF8, "application/json")
+            Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json")
         };
 
     public static HttpResponseMessage BytesResponse(byte[] content) =>
@@ -80,18 +78,18 @@ internal static class TestApiSupport
         using var handler = new SnapshottingHttpMessageHandler(() => JsonResponse(payload, HttpStatusCode.BadRequest));
         using ServiceProvider provider = CreateProvider(identityHandler: handler);
 
-        SessionTokenResult<TokenAuthenticatedModel> result = await provider
+        SessionTokenResult<AuthenticatedSession> result = await provider
             .GetRequiredService<IIdentityApi>()
             .AuthenticateWithPasswordAsync(
                 new PasswordAuthenticationRequest(ClientContext, "user@example.test", "password-hash"),
                 TestContext.Current.CancellationToken);
 
-        return Assert.IsType<SessionTokenResult<TokenAuthenticatedModel>.Rejected>(result).Error;
+        return Assert.IsType<SessionTokenResult<AuthenticatedSession>.Rejected>(result).Error;
     }
 
     public static EncString ParseEncString(string encoded)
     {
-        Utf8JsonReader reader = new(Encoding.UTF8.GetBytes($"\"{encoded}\""));
+        Utf8JsonReader reader = new(System.Text.Encoding.UTF8.GetBytes($"\"{encoded}\""));
         Assert.True(reader.Read());
         return EncString.CreateFrom(ref reader);
     }

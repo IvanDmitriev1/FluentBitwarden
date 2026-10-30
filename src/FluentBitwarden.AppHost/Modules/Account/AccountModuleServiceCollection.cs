@@ -1,4 +1,4 @@
-using BitwardenApi.Infrastructure.Transport;
+using BitwardenApi.Client;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Internal;
 using FluentBitwarden.AppHost.Modules.Account.Persistance;
@@ -18,9 +18,9 @@ internal static class AccountModuleServiceCollection
 
         services.AddSingleton<AccountAuthenticatorService>();
         services.AddSingleton<AccountTokenCache>();
+        services.AddSingleton<IAccessTokenProvider, AccountSessionAccessTokenProvider>();
 
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountWindowsHelloService, AccountWindowsHelloService>();
-        services.AddScoped<IBitwardenAccessTokenProvider, AccountSessionAccessTokenProvider>();
     }
 }

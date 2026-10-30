@@ -1,4 +1,3 @@
-using BitwardenApi.Vault.Items.Contracts;
 using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 
 namespace FluentBitwarden.CommandPalette.VaultListItems;
@@ -6,7 +5,7 @@ namespace FluentBitwarden.CommandPalette.VaultListItems;
 internal sealed partial class CardVaultCipherListItem : ListItem
 {
     public CardVaultCipherListItem(
-        CardVaultCipher cipher,
+        CardCipher cipher,
         IUiProcessManager uiProcessManager)
         : base(new OpenItemCommand(cipher, uiProcessManager))
     {

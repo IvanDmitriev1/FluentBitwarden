@@ -30,7 +30,7 @@ internal sealed class VaultSyncStateRepository(IDbSession dbSession)
             INSERT INTO vault_sync_state (user_id, server_revision_date_unix_ms)
             VALUES (@UserId, @RevisionDateUnixMs)
             ON CONFLICT(user_id) DO UPDATE SET
-                server_revision_date_unix_ms = excluded.server_revision_date_unix_ms;
+                server_revision_date_unix_ms = MAX(vault_sync_state.server_revision_date_unix_ms, excluded.server_revision_date_unix_ms);
             """,
             new
             {
