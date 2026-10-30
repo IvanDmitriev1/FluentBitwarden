@@ -20,14 +20,14 @@ internal sealed partial class IdentityJsonContext : JsonSerializerContext
     private static JsonSerializerOptions CreateOptions()
     {
         JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
-        options.Converters.Add(new SessionAccessToken.SessionAccessTokenSystemTextJsonConverter());
-        options.Converters.Add(new SessionRefreshToken.SessionRefreshTokenSystemTextJsonConverter());
-        options.Converters.Add(new TwoFactorToken.TwoFactorTokenSystemTextJsonConverter());
-        options.Converters.Add(new WebAuthnLoginAssertionOptionsToken.WebAuthnLoginAssertionOptionsTokenSystemTextJsonConverter());
-        options.Converters.Add(new UserId.UserIdSystemTextJsonConverter());
-        options.Converters.Add(new AuthRequestId.AuthRequestIdSystemTextJsonConverter());
-        options.Converters.Add(new DeviceIdentifier.DeviceIdentifierSystemTextJsonConverter());
-        options.Converters.Add(new DeviceName.DeviceNameSystemTextJsonConverter());
+        options.Converters.Add(new SessionAccessToken.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new SessionRefreshToken.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new TwoFactorToken.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new WebAuthnLoginAssertionOptionsToken.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new UserId.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new AuthRequestId.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new DeviceIdentifier.NullSafeSystemTextJsonConverter());
+        options.Converters.Add(new DeviceName.NullSafeSystemTextJsonConverter());
         return options;
     }
 }

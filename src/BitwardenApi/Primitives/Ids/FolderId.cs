@@ -3,7 +3,7 @@ using MemoryPack;
 namespace BitwardenApi.Primitives.Ids;
 
 [MemoryPackable(GenerateType.NoGenerate)]
-[StronglyTypedId(Template.String)]
+[StronglyTypedId(Template.String, "NullSafeSystemTextJsonConverter")]
 public readonly partial struct FolderId
 {
     public bool IsEmpty => string.IsNullOrEmpty(Value);

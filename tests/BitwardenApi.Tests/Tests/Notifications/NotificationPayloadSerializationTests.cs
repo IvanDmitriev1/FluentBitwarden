@@ -6,6 +6,16 @@ namespace BitwardenApi.Tests.Tests.Notifications;
 public sealed class NotificationPayloadSerializationTests
 {
     [Fact]
+    public void Notification_envelope_maps_a_null_context_id_to_default()
+    {
+        NotificationEnvelope envelope = JsonSerializer.Deserialize(
+            """{"contextId":null,"type":1,"payload":{}}""",
+            NotificationsJsonContext.ConfiguredDefault.NotificationEnvelope);
+
+        Assert.Equal(default, envelope.ContextId);
+    }
+
+    [Fact]
     public void Cipher_payload_normalizes_absent_optional_ids_and_round_trips_real_fields()
     {
         const string json = """{"id":"cipher-1","organizationId":null,"collectionIds":["collection-1"],"revisionDate":"2026-10-28T12:34:56Z"}""";

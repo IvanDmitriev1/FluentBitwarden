@@ -1,0 +1,15 @@
+public partial struct PLACEHOLDERID
+{
+    public sealed class NullSafeSystemTextJsonConverter : PLACEHOLDERIDSystemTextJsonConverter
+    {
+        public override bool HandleNull => true;
+
+        public override PLACEHOLDERID Read(
+            ref global::System.Text.Json.Utf8JsonReader reader,
+            global::System.Type typeToConvert,
+            global::System.Text.Json.JsonSerializerOptions options) =>
+            reader.TokenType == global::System.Text.Json.JsonTokenType.Null
+                ? default
+                : base.Read(ref reader, typeToConvert, options);
+    }
+}

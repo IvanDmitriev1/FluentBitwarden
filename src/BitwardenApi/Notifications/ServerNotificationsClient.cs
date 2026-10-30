@@ -1,6 +1,7 @@
 using BitwardenApi.Client;
 using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Notifications.Internal;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
@@ -22,8 +23,8 @@ internal sealed class ServerNotificationsClient(
         .AddRetry(new RetryStrategyOptions
         {
             MaxRetryAttempts = int.MaxValue,
-            Delay = TimeSpan.FromSeconds(2),
-            MaxDelay = TimeSpan.FromSeconds(30),
+            Delay = TimeSpan.FromSeconds(30),
+            MaxDelay = TimeSpan.FromMinutes(5),
             BackoffType = DelayBackoffType.Exponential
         })
         .Build();
@@ -71,6 +72,9 @@ internal sealed class ServerNotificationsClient(
         IHubConnectionBuilder builder = new HubConnectionBuilder()
             .WithUrl(hubEndpoint, options =>
             {
+                options.Transports = HttpTransportType.WebSockets;
+                options.SkipNegotiation = true;
+
                 options.AccessTokenProvider = async () =>
                 {
                     SessionAccessToken sessionAccessToken = await accessTokenProvider.GetAccessTokenAsync(

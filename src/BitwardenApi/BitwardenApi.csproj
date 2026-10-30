@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="StronglyTypedIdTemplates\*.typedid" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="BitwardenApi.Tests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
