@@ -93,7 +93,7 @@ public abstract record AppSessionState : IAsyncDisposable
             AccountProfile account,
             IUnlockedVault vault,
             IAccountKeySession accountKeySession,
-            IServerNotificationsClient serverNotificationsClient)
+            IServerNotificationsDispatcher serverNotificationsDispatcher)
         {
             if (account.UserId != accountKeySession.UserId)
                 throw new InvalidOperationException("The unlocked vault and account key must match the selected account.");
@@ -101,27 +101,27 @@ public abstract record AppSessionState : IAsyncDisposable
             Account = account;
             Vault = vault;
             AccountKeySession = accountKeySession;
-            ServerNotificationsClient = serverNotificationsClient;
+            ServerNotificationsDispatcher = serverNotificationsDispatcher;
         }
 
         public AccountProfile Account { get; }
         public IUnlockedVault Vault { get; }
         public IAccountKeySession AccountKeySession { get; }
-        public IServerNotificationsClient ServerNotificationsClient { get; }
+        public IServerNotificationsDispatcher ServerNotificationsDispatcher { get; }
 
         public void Deconstruct(
             out AccountProfile account,
             out IUnlockedVault vault,
             out IAccountKeySession accountKeySession,
-            out IServerNotificationsClient serverNotificationsClient) =>
-            (account, vault, accountKeySession, serverNotificationsClient) =
-            (Account, Vault, AccountKeySession, ServerNotificationsClient);
+            out IServerNotificationsDispatcher serverNotificationsDispatcher) =>
+            (account, vault, accountKeySession, serverNotificationsDispatcher) =
+            (Account, Vault, AccountKeySession, ServerNotificationsDispatcher);
 
         protected override async ValueTask DisposeCoreAsync()
         {
             try
             {
-                await ServerNotificationsClient.DisposeAsync();
+                await ServerNotificationsDispatcher.DisposeAsync();
             }
             finally
             {

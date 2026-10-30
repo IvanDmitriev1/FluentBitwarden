@@ -199,7 +199,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         services.AddSingleton(Substitute.For<IVaultService>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
-        services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsClientFactory>());
+        services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsDispatcherFactory>());
         var networkStatus = Substitute.For<FluentBitwarden.Platform.Infrastructure.Connectivity.INetworkStatus>();
         networkStatus.HasInternetAccess.Returns(false);
         services.AddSingleton(networkStatus);

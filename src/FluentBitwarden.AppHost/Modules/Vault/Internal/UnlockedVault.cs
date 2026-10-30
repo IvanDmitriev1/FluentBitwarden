@@ -82,6 +82,22 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         }
     }
 
+    public void RemoveCipher(CipherId id)
+    {
+        lock (_lock)
+            _data.Ciphers.RemoveAll(cipher => cipher.Id == id);
+    }
+
+    public void RemoveFolder(FolderId id)
+    {
+        lock (_lock)
+        {
+            _data.Folders.RemoveAll(folder => folder.Id == id);
+            foreach (Cipher cipher in _data.Ciphers.Where(cipher => cipher.FolderId == id))
+                cipher.FolderId = FolderId.Empty;
+        }
+    }
+
     private static void Clear(VaultData data)
     {
         data.Ciphers.Clear();

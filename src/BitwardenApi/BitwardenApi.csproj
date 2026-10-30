@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="StronglyTypedIdTemplates\*.typedid" />
+    <AdditionalFiles Include="Primitives/StronglyTypedIdTemplates/*.typedid" />
   </ItemGroup>
 
   <ItemGroup>

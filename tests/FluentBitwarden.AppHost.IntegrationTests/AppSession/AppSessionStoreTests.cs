@@ -25,7 +25,7 @@ public sealed class AppSessionStoreTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var candidate = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>());
+        var candidate = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
         Task unlock = store.UnlockAsync(candidate);
         try
         {
@@ -57,7 +57,7 @@ public sealed class AppSessionStoreTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var candidate = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>());
+        var candidate = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
         var failure = new InvalidOperationException("Notification failed.");
         publisher.PublishAsync(Arg.Any<AppSessionStateChangedEvent>(), Arg.Any<CancellationToken>())
             .Returns(_ => throw failure);
@@ -87,7 +87,7 @@ public sealed class AppSessionStoreTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>()));
+        await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
         var unlocked = Assert.IsType<AppSessionStateSnapshot.Unlocked>(store.State);
         Assert.Equal(Account, unlocked.Account);
         Assert.DoesNotContain("Vault =", unlocked.ToString(), StringComparison.Ordinal);
@@ -129,7 +129,7 @@ public sealed class AppSessionStoreTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var state = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>());
+        var state = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.UnlockAsync(state));
         vault.Received(1).Dispose();
@@ -139,7 +139,7 @@ public sealed class AppSessionStoreTests
         vault = Substitute.For<IUnlockedVault>();
         key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>()));
+        await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
         await using var oldLease = store.CreateLease();
         CancellationToken revoked = oldLease.Revoked;
 
@@ -157,7 +157,7 @@ public sealed class AppSessionStoreTests
         var otherKey = Substitute.For<IAccountKeySession>();
         otherKey.UserId.Returns(UserId.Parse(AccountTestData.SecondUserId));
 
-        Assert.Throws<InvalidOperationException>(() => new AppSessionState.Unlocked(Account, Substitute.For<IUnlockedVault>(), otherKey, Substitute.For<IServerNotificationsClient>()));
+        Assert.Throws<InvalidOperationException>(() => new AppSessionState.Unlocked(Account, Substitute.For<IUnlockedVault>(), otherKey, Substitute.For<IServerNotificationsDispatcher>()));
         otherKey.DidNotReceive().Dispose();
     }
 
@@ -171,7 +171,7 @@ public sealed class AppSessionStoreTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>()));
+        await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
         IAppSessionAccessor lease = await pending;
         await store.LockAsync(CancellationToken.None);
 

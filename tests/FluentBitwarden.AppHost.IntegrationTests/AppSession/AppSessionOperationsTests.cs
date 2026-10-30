@@ -427,7 +427,7 @@ public sealed class AppSessionOperationsTests
         using var accountKey = new TestAccountKeySession(new UnlockedUserKey(UserId.Empty, []));
         await store.AuthenticateAsync(account, TestContext.Current.CancellationToken);
         Assert.Throws<InvalidOperationException>(() =>
-            new AppSessionState.Unlocked(account, vault, accountKey, Substitute.For<IServerNotificationsClient>()));
+            new AppSessionState.Unlocked(account, vault, accountKey, Substitute.For<IServerNotificationsDispatcher>()));
 
         Assert.IsType<AppSessionStateSnapshot.Locked>(store.State);
     }
@@ -440,7 +440,7 @@ public sealed class AppSessionOperationsTests
         var vault = Substitute.For<IUnlockedVault>();
         await store.AuthenticateAsync(account, TestContext.Current.CancellationToken);
         await store.UnlockAsync(new AppSessionState.Unlocked(account, vault,
-            new TestAccountKeySession(new UnlockedUserKey(account.UserId, [])), Substitute.For<IServerNotificationsClient>()));
+            new TestAccountKeySession(new UnlockedUserKey(account.UserId, [])), Substitute.For<IServerNotificationsDispatcher>()));
 
         await store.SignOutAsync(TestContext.Current.CancellationToken);
 

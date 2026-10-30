@@ -2,6 +2,7 @@ using BitwardenApi.Notifications;
 using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Notifications.Internal;
 using BitwardenApi.Notifications.Models;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace BitwardenApi.Tests.Tests.Notifications;
 
@@ -13,7 +14,7 @@ public sealed class NotificationsScopeTests
     public async Task Dispatch_supported_payload_without_handler_completes()
     {
         using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
-        var client = CreateClient(services);
+        await using var client = CreateClient(services);
 
         await client.DispatchAsync(Envelope());
     }
@@ -30,7 +31,7 @@ public sealed class NotificationsScopeTests
                 return handler;
             })
             .BuildServiceProvider();
-        var client = CreateClient(services);
+        await using var client = CreateClient(services);
 
         await client.DispatchAsync(Envelope());
         await client.DispatchAsync(Envelope());
@@ -48,7 +49,7 @@ public sealed class NotificationsScopeTests
         using ServiceProvider services = new ServiceCollection()
             .AddScoped<INotificationHandler<CipherChangedNotification>>(_ => handler = new ScopedHandler(expected))
             .BuildServiceProvider();
-        var client = CreateClient(services);
+        await using var client = CreateClient(services);
 
         InvalidOperationException actual = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             client.DispatchAsync(Envelope()));
@@ -58,8 +59,8 @@ public sealed class NotificationsScopeTests
         Assert.True(handler.Disposed);
     }
 
-    private static ServerNotificationsClient CreateClient(IServiceProvider services) =>
-        new(new MissingAccessTokenProvider(), services.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System);
+    private static ServerNotificationsDispatcher CreateClient(IServiceProvider services) =>
+        new(new HubConnectionBuilder().WithUrl("http://localhost").Build(), services.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System);
 
     private static NotificationEnvelope Envelope()
     {
@@ -85,10 +86,4 @@ public sealed class NotificationsScopeTests
         }
     }
 
-    private sealed class MissingAccessTokenProvider : BitwardenApi.Client.IAccessTokenProvider
-    {
-        public ValueTask<SessionAccessToken> GetAccessTokenAsync(
-            BitwardenAccountContext accountContext) =>
-            throw new NotSupportedException("Dispatch does not request an access token.");
-    }
 }

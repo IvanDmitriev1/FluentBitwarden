@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections.Client;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 using System.IO.Pipelines;
@@ -12,16 +13,31 @@ internal sealed class NotificationTestConnectionFactory(params Exception[] conne
     private readonly Queue<Exception> _connectFailures = new(connectFailures);
     private readonly List<NotificationTestConnection> _connections = [];
     private readonly List<EndPoint> _endPoints = [];
+    private readonly TaskCompletionSource<NotificationTestConnection> _connectionCreated = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<bool> _connectStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<bool> _allowConnect = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public int ConnectCount { get; private set; }
 
     public bool InvokeAccessTokenProvider { get; set; }
 
+    public bool BlockConnect { get; set; }
+
+    public Task ConnectStarted => _connectStarted.Task;
+
+    public void AllowConnect() => _allowConnect.TrySetResult(true);
+
     public string? AccessToken { get; private set; }
+
+    public HttpTransportType Transports { get; private set; }
+
+    public bool SkipNegotiation { get; private set; }
 
     public IReadOnlyList<EndPoint> EndPoints => _endPoints;
 
     public IReadOnlyList<NotificationTestConnection> Connections => _connections;
+
+    public Task<NotificationTestConnection> ConnectionCreated => _connectionCreated.Task;
 
     private Func<Task<string?>>? AccessTokenProvider { get; set; }
 
@@ -29,8 +45,10 @@ internal sealed class NotificationTestConnectionFactory(params Exception[] conne
     {
         builder.Services.AddSingleton<IConnectionFactory>(services =>
         {
-            AccessTokenProvider = services.GetRequiredService<IOptions<HttpConnectionOptions>>()
-                .Value.AccessTokenProvider;
+            HttpConnectionOptions options = services.GetRequiredService<IOptions<HttpConnectionOptions>>().Value;
+            AccessTokenProvider = options.AccessTokenProvider;
+            Transports = options.Transports;
+            SkipNegotiation = options.SkipNegotiation;
             return this;
         });
     }
@@ -41,6 +59,11 @@ internal sealed class NotificationTestConnectionFactory(params Exception[] conne
     {
         ConnectCount++;
         _endPoints.Add(endPoint);
+        _connectStarted.TrySetResult(true);
+        if (BlockConnect)
+        {
+            await _allowConnect.Task.WaitAsync(cancellationToken);
+        }
 
         if (_connectFailures.TryDequeue(out Exception? failure))
         {
@@ -56,6 +79,7 @@ internal sealed class NotificationTestConnectionFactory(params Exception[] conne
         var connection = new NotificationTestConnection($"notification-{ConnectCount}");
         _connections.Add(connection);
         await connection.SendHandshakeResponseAsync(cancellationToken);
+        _connectionCreated.TrySetResult(connection);
         return connection.Context;
     }
 

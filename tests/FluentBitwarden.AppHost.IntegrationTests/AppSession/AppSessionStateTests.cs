@@ -24,7 +24,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        await using var unlocked = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>());
+        await using var unlocked = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
         var snapshot = Assert.IsType<AppSessionStateSnapshot.Unlocked>(unlocked.ToSnapshot);
         Assert.Equal(Account, snapshot.Account);
         Assert.DoesNotContain("Vault =", snapshot.ToString(), StringComparison.Ordinal);
@@ -56,7 +56,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var state = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>());
+        var state = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
         CancellationToken revoked = state.Revoked;
 
         await state.DisposeAsync();
@@ -74,7 +74,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var state = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsClient>());
+        var state = new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
         state.AddReference();
         state.AddReference();
 
@@ -103,7 +103,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var notifications = Substitute.For<IServerNotificationsClient>();
+        var notifications = Substitute.For<IServerNotificationsDispatcher>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         notifications.DisposeAsync().Returns(_ => new ValueTask(completion.Task));
         var state = new AppSessionState.Unlocked(Account, vault, key, notifications);
@@ -135,7 +135,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var notifications = Substitute.For<IServerNotificationsClient>();
+        var notifications = Substitute.For<IServerNotificationsDispatcher>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         notifications.DisposeAsync().Returns(_ => new ValueTask(completion.Task));
         var state = new AppSessionState.Unlocked(Account, vault, key, notifications);
@@ -165,7 +165,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
-        var notifications = Substitute.For<IServerNotificationsClient>();
+        var notifications = Substitute.For<IServerNotificationsDispatcher>();
         var failure = new IOException("Notification cleanup failed.");
         notifications.DisposeAsync().Returns(_ => ValueTask.FromException(failure));
         var state = new AppSessionState.Unlocked(Account, vault, key, notifications);
@@ -182,7 +182,7 @@ public sealed class AppSessionStateTests
     {
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(UserId.Parse(AccountTestData.SecondUserId));
-        Assert.Throws<InvalidOperationException>(() => new AppSessionState.Unlocked(Account, Substitute.For<IUnlockedVault>(), key, Substitute.For<IServerNotificationsClient>()));
+        Assert.Throws<InvalidOperationException>(() => new AppSessionState.Unlocked(Account, Substitute.For<IUnlockedVault>(), key, Substitute.For<IServerNotificationsDispatcher>()));
         key.DidNotReceive().Dispose();
     }
 
@@ -203,7 +203,7 @@ public sealed class AppSessionStateTests
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(account.UserId);
-        var notifications = Substitute.For<IServerNotificationsClient>();
+        var notifications = Substitute.For<IServerNotificationsDispatcher>();
         await using var state = new AppSessionState.Unlocked(account, vault, key, notifications);
 
         var (deconstructedAccount, deconstructedVault, deconstructedKey, deconstructedNotifications) = state;

@@ -43,7 +43,7 @@ public sealed class AppSessionAccessorTests
         key.UserId.Returns(account.UserId);
         var cancellationToken = TestContext.Current.CancellationToken;
         await store.AuthenticateAsync(account, cancellationToken);
-        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsClient>()));
+        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
         var lease = store.CreateLease();
 
         await store.LockAsync(cancellationToken);
@@ -65,7 +65,7 @@ public sealed class AppSessionAccessorTests
         key.UserId.Returns(account.UserId);
         var cancellationToken = TestContext.Current.CancellationToken;
         await store.AuthenticateAsync(account, cancellationToken);
-        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsClient>()));
+        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
         var lease = store.CreateLease();
         await store.LockAsync(cancellationToken);
 

@@ -56,7 +56,7 @@ public static class BitwardenApiServiceCollectionExtensions
         services.AddSingleton<IFoldersApi, FoldersApi>();
         services.AddSingleton<IAttachmentsApi, AttachmentsApi>();
 
-        services.AddSingleton<IServerNotificationsClientFactory, ServerNotificationsClientFactory>();
+        services.AddSingleton<IServerNotificationsDispatcherFactory, ServerNotificationsDispatcherFactory>();
 
         return services;
     }

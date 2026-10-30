@@ -1,11 +1,84 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Vault.Events;
+using BitwardenApi.Notifications.Abstractions;
+using BitwardenApi.Notifications.Models;
+using FluentBitwarden.AppHost.Modules.Vault.Services;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
 
 public sealed class VaultIncrementalSyncTests
 {
+    [Fact]
+    public async Task DeleteCipher_removes_persisted_and_unlocked_cipher()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var cipher = VaultManagerTestData.Cipher("deleted-cipher", keySession.UserKey.Key);
+        context.SeedCache([cipher]);
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+
+        var handler = new VaultSyncNotificationsHandler(context.SessionAccessor, context.VaultService);
+        await handler.HandleAsync(NotificationType.SyncCipherDelete,
+            new CipherChangedNotification(cipher.Id, context.Account.UserId, OrganizationId.Empty, [], cipher.RevisionDate), TestContext.Current.CancellationToken);
+
+        Assert.Null(vault.GetCipher(cipher.Id));
+        await context.CiphersApi.DidNotReceive().GetCipherAsync(Arg.Any<BitwardenAccountContext>(), cipher.Id, Arg.Any<CancellationToken>());
+        using var persisted = context.OpenVault();
+        Assert.Null(persisted.GetCipher(cipher.Id));
+    }
+
+    [Fact]
+    public async Task DeleteFolder_removes_folder_and_clears_linked_ciphers()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var folder = VaultManagerTestData.Folder("deleted-folder", "Folder", keySession.UserKey.Key);
+        var cipher = VaultManagerTestData.Cipher("folder-cipher", keySession.UserKey.Key) with { FolderId = folder.Id };
+        context.SeedCache([cipher], [folder]);
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+
+        var handler = new VaultSyncNotificationsHandler(context.SessionAccessor, context.VaultService);
+        await handler.HandleAsync(NotificationType.SyncFolderDelete,
+            new FolderChangedNotification(folder.Id, context.Account.UserId, folder.RevisionDate), TestContext.Current.CancellationToken);
+
+        Assert.Null(vault.GetFolder(folder.Id));
+        await context.FoldersApi.DidNotReceive().GetFolderAsync(Arg.Any<BitwardenAccountContext>(), folder.Id, Arg.Any<CancellationToken>());
+        Assert.Equal(FolderId.Empty, vault.GetCipher(cipher.Id)?.FolderId);
+        using var persisted = context.OpenVault();
+        Assert.Null(persisted.GetFolder(folder.Id));
+        Assert.Equal(FolderId.Empty, persisted.GetCipher(cipher.Id)?.FolderId);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Delete_notifications_do_not_remove_a_newer_object(bool folderObject)
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        DateTimeOffset newerRevision = VaultManagerTestData.RevisionDate.AddDays(2);
+        var cipher = VaultManagerTestData.Cipher("newer-cipher", keySession.UserKey.Key) with { RevisionDate = newerRevision };
+        var folder = VaultManagerTestData.Folder("newer-folder", "Newer", keySession.UserKey.Key) with { RevisionDate = newerRevision };
+        context.SeedCache([cipher], [folder]);
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+        DateTimeOffset staleRevision = newerRevision.AddDays(-1);
+
+        if (folderObject)
+            await context.VaultService.DeleteFolderAsync(folder.Id, staleRevision, CancellationToken.None);
+        else
+            await context.VaultService.DeleteCipherAsync(cipher.Id, staleRevision, CancellationToken.None);
+
+        Assert.NotNull(vault.GetFolder(folder.Id));
+        Assert.NotNull(vault.GetCipher(cipher.Id));
+        using var persisted = context.OpenVault();
+        Assert.NotNull(persisted.GetFolder(folder.Id));
+        Assert.NotNull(persisted.GetCipher(cipher.Id));
+    }
+
     [Fact]
     public async Task SyncCipher_inserts_a_missing_cipher()
     {

@@ -72,6 +72,11 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
             transaction: dbSession.RequiredTransaction);
     }
 
+    public void DeleteFolder(UserId userId, FolderId folderId) => dbSession.Connection.Execute(
+        "DELETE FROM vault_folder WHERE user_id = @UserId AND folder_id = @FolderId;",
+        new { UserId = userId.ToString(), FolderId = folderId.ToString() },
+        transaction: dbSession.RequiredTransaction);
+
     public void WriteCollections(UserId userId, ReadOnlySpan<CollectionResponse> collections)
     {
         var userIdStr = userId.ToString();
@@ -137,6 +142,11 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
 
         InsertCipher(userIdStr, in dto);
     }
+
+    public void DeleteCipher(UserId userId, CipherId cipherId) => dbSession.Connection.Execute(
+        "DELETE FROM vault_cipher WHERE user_id = @UserId AND cipher_id = @CipherId;",
+        new { UserId = userId.ToString(), CipherId = cipherId.ToString() },
+        transaction: dbSession.RequiredTransaction);
 
     private void InsertCipher(string userIdStr, ref readonly CipherResponse dto)
     {

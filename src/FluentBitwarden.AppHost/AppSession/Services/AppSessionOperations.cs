@@ -1,4 +1,3 @@
-using AsyncAwaitBestPractices;
 using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
@@ -7,7 +6,6 @@ using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
-using FluentBitwarden.Platform.Infrastructure.Connectivity;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
@@ -16,9 +14,11 @@ internal sealed class AppSessionOperations(
     IVaultService vaultService,
     IAppHostTermination appHostTermination,
     AppSessionStore appSessionStore,
-    INetworkStatus networkStatus,
-    IServerNotificationsClientFactory notificationsClientFactory) : IAppSessionOperations
+    IServerNotificationsDispatcherFactory notificationsDispatcherFactory) : IAppSessionOperations
 {
+    public Task AuthenticateAsync(AccountProfile account, CancellationToken cancellationToken) =>
+        appSessionStore.AuthenticateAsync(account, cancellationToken);
+
     public async Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -53,12 +53,8 @@ internal sealed class AppSessionOperations(
         try
         {
             IUnlockedVault unlockedVault = vaultService.Open(account.BitwardenAccountContext, accountKey);
-
-            var serverNotificationsClient = notificationsClientFactory.CreateClient();
-            if (networkStatus.HasInternetAccess)
-            {
-                serverNotificationsClient.ConnectAsync(account.BitwardenAccountContext).SafeFireAndForget();
-            }
+            var serverNotificationsClient =
+                notificationsDispatcherFactory.CreateDispatcher(account.BitwardenAccountContext);
 
             unlockedState = new AppSessionState.Unlocked(account, unlockedVault, accountKey, serverNotificationsClient);
         }

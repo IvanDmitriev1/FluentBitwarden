@@ -16,7 +16,7 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
         accountKeySession.UserId.Returns(userId);
         accountKeySession.UserKey.Returns(userKey);
         var unlocked = lease.RequireUnlockedState();
-        var state = new AppSessionState.Unlocked(unlocked.Account, unlocked.Vault, accountKeySession, Substitute.For<IServerNotificationsClient>());
+        var state = new AppSessionState.Unlocked(unlocked.Account, unlocked.Vault, accountKeySession, Substitute.For<IServerNotificationsDispatcher>());
         lease.AppSessionState.Returns(state);
         return userKey;
     }
@@ -31,7 +31,7 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
         var vault = Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>();
         var accountKey = Substitute.For<IAccountKeySession>();
         accountKey.UserId.Returns(account.UserId);
-        var state = new AppSessionState.Unlocked(account, vault, accountKey, Substitute.For<IServerNotificationsClient>());
+        var state = new AppSessionState.Unlocked(account, vault, accountKey, Substitute.For<IServerNotificationsDispatcher>());
         lease.AppSessionState.Returns(state);
 
 

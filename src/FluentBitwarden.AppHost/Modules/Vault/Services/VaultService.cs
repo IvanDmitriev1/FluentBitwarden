@@ -121,6 +121,35 @@ internal sealed class VaultService(
         await eventPublisher.PublishAsync(new FolderChangedEvent(accountProfile.UserId, updated), cancellationToken);
     }
 
+    public async Task DeleteCipherAsync(CipherId id, DateTimeOffset revisionDate, CancellationToken cancellationToken)
+    {
+        (AccountProfile account, IUnlockedVault vault, _, _) = appSessionAccessor.RequireUnlockedState();
+        if (vault.GetCipher(id) is { } current && current.RevisionDate > revisionDate)
+            return;
+
+        unitOfWork.Begin();
+        vaultWriterRepository.DeleteCipher(account.UserId, id);
+        vaultSyncStateRepository.UpsertServerRevisionDate(account.UserId, revisionDate);
+        unitOfWork.Commit();
+
+        vault.RemoveCipher(id);
+        await eventPublisher.PublishAsync(new CipherDeletedEvent(account.UserId, id), cancellationToken);
+    }
+
+    public async Task DeleteFolderAsync(FolderId id, DateTimeOffset revisionDate, CancellationToken cancellationToken)
+    {
+        (AccountProfile account, IUnlockedVault vault, _, _) = appSessionAccessor.RequireUnlockedState();
+        if (vault.GetFolder(id) is { } current && current.RevisionDate > revisionDate)
+            return;
+
+        unitOfWork.Begin();
+        vaultWriterRepository.DeleteFolder(account.UserId, id);
+        vaultSyncStateRepository.UpsertServerRevisionDate(account.UserId, revisionDate);
+        unitOfWork.Commit();
+
+        vault.RemoveFolder(id);
+    }
+
     public async Task<Cipher> SaveCipherAsync(
         Cipher cipher,
         CancellationToken cancellationToken)

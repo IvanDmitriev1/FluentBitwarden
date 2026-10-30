@@ -14,4 +14,6 @@ public interface IUnlockedVault : IDisposable
 
     void UpsertCipher(Cipher cipher);
     void UpsertFolder(Folder folder);
+    void RemoveCipher(CipherId id);
+    void RemoveFolder(FolderId id);
 }

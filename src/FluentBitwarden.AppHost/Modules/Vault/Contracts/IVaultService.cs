@@ -11,6 +11,8 @@ public interface IVaultService
     Task<VaultSyncResult> SyncAsync();
     Task SyncCipherAsync(CipherId id, CancellationToken cancellationToken);
     Task SyncFolderAsync(FolderId id, CancellationToken cancellationToken);
+    Task DeleteCipherAsync(CipherId id, DateTimeOffset revisionDate, CancellationToken cancellationToken);
+    Task DeleteFolderAsync(FolderId id, DateTimeOffset revisionDate, CancellationToken cancellationToken);
 
     Task<Cipher> SaveCipherAsync(
         Cipher cipher,

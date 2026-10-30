@@ -23,7 +23,7 @@ internal static class AccountSessionAccessTokenProviderTestSupport
         var networkStatus = Substitute.For<FluentBitwarden.Platform.Infrastructure.Connectivity.INetworkStatus>();
         networkStatus.HasInternetAccess.Returns(false);
         services.AddSingleton(networkStatus);
-        services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsClientFactory>());
+        services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsDispatcherFactory>());
         return services.BuildServiceProvider();
     }
 

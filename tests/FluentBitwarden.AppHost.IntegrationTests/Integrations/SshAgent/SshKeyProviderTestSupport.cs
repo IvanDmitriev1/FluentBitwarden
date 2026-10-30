@@ -26,7 +26,7 @@ internal static class SshKeyProviderTestSupport
         var lease = Substitute.For<IAppSessionAccessor>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(account.UserId);
-        var state = new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsClient>());
+        var state = new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsDispatcher>());
         lease.AppSessionState.Returns(state);
         return lease;
     }

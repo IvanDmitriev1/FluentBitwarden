@@ -1,7 +1,5 @@
-using BitwardenApi.Client;
 using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Notifications.Internal;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
@@ -9,91 +7,63 @@ using Polly.Retry;
 
 namespace BitwardenApi.Notifications;
 
-internal sealed class ServerNotificationsClient(
-    IAccessTokenProvider accessTokenProvider,
-    IServiceScopeFactory serviceScopeFactory,
-    TimeProvider timeProvider,
-    Action<IHubConnectionBuilder>? configureConnection = null)
-    : IServerNotificationsClient
+internal sealed class ServerNotificationsDispatcher
+    : IServerNotificationsDispatcher
 {
-    private readonly ResiliencePipeline _startRetry = new ResiliencePipelineBuilder
-        {
-            TimeProvider = timeProvider
-        }
-        .AddRetry(new RetryStrategyOptions
-        {
-            MaxRetryAttempts = int.MaxValue,
-            Delay = TimeSpan.FromSeconds(30),
-            MaxDelay = TimeSpan.FromMinutes(5),
-            BackoffType = DelayBackoffType.Exponential
-        })
-        .Build();
-
-    private HubConnection? _connection;
-
-    public async Task ConnectAsync(BitwardenAccountContext accountContext)
+    public ServerNotificationsDispatcher(
+        HubConnection hubConnection,
+        IServiceScopeFactory serviceScopeFactory,
+        TimeProvider timeProvider)
     {
-        if (_connection?.State is HubConnectionState.Connected
-            or HubConnectionState.Connecting
-            or HubConnectionState.Reconnecting)
-        {
-            return;
-        }
+        _hubConnection = hubConnection;
+        _serviceScopeFactory = serviceScopeFactory;
 
-        Uri requestedHubEndpoint = new(accountContext.Environment.NotificationsBase, "/hub");
-        _connection = CreateConnection(requestedHubEndpoint, accountContext);
+        hubConnection.On<NotificationEnvelope>("ReceiveMessage", DispatchAsync);
 
-        await _startRetry.ExecuteAsync(async token => await _connection.StartAsync(token));
+        ResiliencePipeline resiliencePipeline = new ResiliencePipelineBuilder
+            {
+                TimeProvider = timeProvider,
+            }
+            .AddRetry(new RetryStrategyOptions
+            {
+                MaxRetryAttempts = int.MaxValue,
+                Delay = TimeSpan.FromSeconds(30),
+                MaxDelay = TimeSpan.FromMinutes(5),
+                BackoffType = DelayBackoffType.Exponential,
+            })
+            .Build();
+
+        _connectionTask =
+            resiliencePipeline
+                .ExecuteAsync(static async (c, token) => await c.StartAsync(token), hubConnection, _cts.Token).AsTask();
     }
 
-    public async ValueTask DisconnectAsync()
+    private readonly CancellationTokenSource _cts = new();
+    private readonly HubConnection _hubConnection;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly Task _connectionTask;
+    private bool _disposed;
+
+    public async ValueTask DisposeAsync()
     {
-        if (_connection is null)
+        if (_disposed)
             return;
 
         try
         {
-            if (_connection.State != HubConnectionState.Disconnected)
-            {
-                await _connection.StopAsync();
-            }
+            _cts.Cancel();
+            await _connectionTask;
+        }
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested)
+        {
+            // Expected during disposal.
         }
         finally
         {
-            await _connection.DisposeAsync();
-            _connection = null;
+            await _hubConnection.DisposeAsync();
+            _cts.Dispose();
+            _disposed = true;
         }
-    }
-
-    public ValueTask DisposeAsync() => DisconnectAsync();
-
-    private HubConnection CreateConnection(Uri hubEndpoint, BitwardenAccountContext accountContext)
-    {
-        IHubConnectionBuilder builder = new HubConnectionBuilder()
-            .WithUrl(hubEndpoint, options =>
-            {
-                options.Transports = HttpTransportType.WebSockets;
-                options.SkipNegotiation = true;
-
-                options.AccessTokenProvider = async () =>
-                {
-                    SessionAccessToken sessionAccessToken = await accessTokenProvider.GetAccessTokenAsync(accountContext);
-
-                    return sessionAccessToken.ToString();
-                };
-            })
-            .AddJsonProtocol(options =>
-            {
-                options.PayloadSerializerOptions = NotificationsJsonContext.ConfiguredDefault.Options;
-            })
-            .WithAutomaticReconnect();
-
-        configureConnection?.Invoke(builder);
-        HubConnection connection = builder.Build();
-
-        connection.On<NotificationEnvelope>("ReceiveMessage", DispatchAsync);
-
-        return connection;
     }
 
     public Task DispatchAsync(NotificationEnvelope notificationEnvelope) =>
@@ -146,7 +116,7 @@ internal sealed class ServerNotificationsClient(
         TNotification notification,
         CancellationToken cancellationToken = default)
     {
-        await using var scope = serviceScopeFactory.CreateAsyncScope();
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
 
         INotificationHandler<TNotification>? handler = scope.ServiceProvider.GetService<INotificationHandler<TNotification>>();
         if (handler is not null)

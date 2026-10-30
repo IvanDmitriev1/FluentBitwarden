@@ -2,6 +2,7 @@ using BitwardenApi.Notifications;
 using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Notifications.Internal;
 using BitwardenApi.Notifications.Models;
+using Microsoft.AspNetCore.SignalR.Client;
 using NSubstitute;
 
 namespace BitwardenApi.Tests.Tests.Notifications;
@@ -22,7 +23,7 @@ public sealed class NotificationsDispatchTests
         var handler = Substitute.For<INotificationHandler<CipherChangedNotification>>();
         var expected = new CipherChangedNotification(CipherId.Parse("cipher-1"), UserId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), OrganizationId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), [CollectionId.Parse("collection-1")], DateTimeOffset.Parse("2026-10-28T12:34:56Z"));
         using ServiceProvider services = BuildServices(handler);
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
 
         await api.DispatchAsync(Envelope(type, CipherPayload));
 
@@ -39,7 +40,7 @@ public sealed class NotificationsDispatchTests
         var handler = Substitute.For<INotificationHandler<FolderChangedNotification>>();
         var expected = new FolderChangedNotification(FolderId.Parse("folder-1"), UserId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), DateTimeOffset.Parse("2026-10-28T12:34:56Z"));
         using ServiceProvider services = BuildServices(handler);
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
 
         await api.DispatchAsync(Envelope(NotificationType.SyncFolderUpdate, FolderPayload));
 
@@ -58,7 +59,7 @@ public sealed class NotificationsDispatchTests
         var handler = Substitute.For<INotificationHandler<VaultSyncRequestedNotification>>();
         var expected = new VaultSyncRequestedNotification(UserId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), DateTimeOffset.Parse("2026-10-28T12:34:56Z"));
         using ServiceProvider services = BuildServices(handler);
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
         await api.DispatchAsync(Envelope(type, VaultSyncPayload));
         await handler.Received(1).HandleAsync(type, expected, CancellationToken.None);
     }
@@ -69,7 +70,7 @@ public sealed class NotificationsDispatchTests
         var handler = Substitute.For<INotificationHandler<OrganizationStatusPushNotification>>();
         var expected = new OrganizationStatusPushNotification(OrganizationId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), true);
         using ServiceProvider services = BuildServices(handler);
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
         await api.DispatchAsync(Envelope(NotificationType.SyncOrganizationStatusChanged, """{"organizationId":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","enabled":true}"""));
         await handler.Received(1).HandleAsync(NotificationType.SyncOrganizationStatusChanged, expected, CancellationToken.None);
     }
@@ -80,7 +81,7 @@ public sealed class NotificationsDispatchTests
         var handler = Substitute.For<INotificationHandler<OrganizationCollectionSettingChangedPushNotification>>();
         var expected = new OrganizationCollectionSettingChangedPushNotification(OrganizationId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), true, false);
         using ServiceProvider services = BuildServices(handler);
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
         await api.DispatchAsync(Envelope(NotificationType.SyncOrganizationCollectionSettingChanged, """{"organizationId":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","limitCollectionCreation":true,"limitCollectionDeletion":false}"""));
         await handler.Received(1).HandleAsync(NotificationType.SyncOrganizationCollectionSettingChanged, expected, CancellationToken.None);
     }
@@ -101,7 +102,7 @@ public sealed class NotificationsDispatchTests
             .AddSingleton(logout).AddSingleton(sendHandler).AddSingleton(authHandler)
             .AddSingleton(orgVerifiedHandler).AddSingleton(providerVerifiedHandler)
             .AddSingleton(autoConfirmHandler).AddSingleton(premiumHandler).BuildServiceProvider();
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
 
         await api.DispatchAsync(Envelope(NotificationType.LogOut, $"{{\"userId\":\"{userId}\",\"reason\":0}}"));
         await logout.Received(1).HandleAsync(NotificationType.LogOut, new LogOutNotification(UserId.Parse(userId), PushNotificationLogOutReasonType.KdfChange), CancellationToken.None);
@@ -142,7 +143,8 @@ public sealed class NotificationsDispatchTests
     public async Task Dispatch_unknown_and_unsupported_types_without_handlers(NotificationType type)
     {
         using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
-        await CreateClient(services).DispatchAsync(new NotificationEnvelope(default, type, default));
+        await using var dispatcher = CreateClient(services);
+        await dispatcher.DispatchAsync(new NotificationEnvelope(default, type, default));
     }
 
     [Fact]
@@ -150,7 +152,7 @@ public sealed class NotificationsDispatchTests
     {
         var handler = Substitute.For<INotificationHandler<VaultSyncRequestedNotification>>();
         using ServiceProvider services = BuildServices(handler);
-        var api = CreateClient(services);
+        await using var api = CreateClient(services);
         await Assert.ThrowsAsync<JsonException>(() => api.DispatchAsync(Envelope(NotificationType.SyncCipherCreate, "[]")));
 
         var expected = new InvalidOperationException("handler failure");
@@ -162,8 +164,8 @@ public sealed class NotificationsDispatchTests
     private static ServiceProvider BuildServices<T>(INotificationHandler<T> handler) =>
         new ServiceCollection().AddSingleton(handler).BuildServiceProvider();
 
-    private static ServerNotificationsClient CreateClient(IServiceProvider services) =>
-        new(Substitute.For<IAccessTokenProvider>(), services.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System, _ => { });
+    private static ServerNotificationsDispatcher CreateClient(IServiceProvider services) =>
+        new(new HubConnectionBuilder().WithUrl("http://localhost").Build(), services.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System);
 
     private static NotificationEnvelope Envelope(NotificationType type, string payload)
     {

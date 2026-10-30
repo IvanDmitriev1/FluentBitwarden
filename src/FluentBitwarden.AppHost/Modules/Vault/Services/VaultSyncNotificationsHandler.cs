@@ -31,7 +31,10 @@ internal sealed class VaultSyncNotificationsHandler(
             return;
         }
 
-        await vaultService.SyncCipherAsync(notification.Id, cancellationToken);
+        if (type == NotificationType.SyncCipherDelete)
+            await vaultService.DeleteCipherAsync(notification.Id, notification.RevisionDate, cancellationToken);
+        else
+            await vaultService.SyncCipherAsync(notification.Id, cancellationToken);
     }
 
     public async Task HandleAsync(
@@ -42,7 +45,7 @@ internal sealed class VaultSyncNotificationsHandler(
         if (type is not (
             NotificationType.SyncFolderCreate or
             NotificationType.SyncFolderUpdate or
-            NotificationType.SyncFolderDelete))
+            NotificationType.SyncFolderDelete) || notification.Id.IsEmpty)
         {
             return;
         }
@@ -53,6 +56,9 @@ internal sealed class VaultSyncNotificationsHandler(
             return;
         }
 
-        await vaultService.SyncFolderAsync(notification.Id, cancellationToken);
+        if (type == NotificationType.SyncFolderDelete)
+            await vaultService.DeleteFolderAsync(notification.Id, notification.RevisionDate, cancellationToken);
+        else
+            await vaultService.SyncFolderAsync(notification.Id, cancellationToken);
     }
 }
