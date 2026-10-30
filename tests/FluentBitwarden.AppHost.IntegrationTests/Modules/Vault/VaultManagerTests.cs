@@ -29,7 +29,7 @@ public sealed class VaultManagerTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var keySession = new TestAccountKeySession(
             new UnlockedUserKey(UserId.Parse(AccountTestData.SecondUserId), [0x10, 0x20, 0x30]));
-        var service = new VaultService(null!, null!, null!, null!, null!, null!, null!, null!);
+        var service = new VaultService(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!);
 
         Assert.Throws<InvalidOperationException>(() =>
             service.Open(account.BitwardenAccountContext, keySession));

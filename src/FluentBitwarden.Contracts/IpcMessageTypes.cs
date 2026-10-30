@@ -21,6 +21,10 @@ public static class IpcMessageTypes
         public const ushort DownloadCipherAttachment = 107;
         public const ushort SaveCipher = 108;
         public const ushort GetFolders = 109;
+        public const ushort CipherChanged = 110;
+        public const ushort CipherDeleted = 111;
+        public const ushort FolderChanged = 112;
+        public const ushort Changed = 113;
     }
 
     public static class Account

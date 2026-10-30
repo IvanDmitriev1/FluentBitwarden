@@ -6,6 +6,7 @@ using BitwardenApi.Vault.Ciphers.Requests;
 using BitwardenApi.Vault.Ciphers.Responses;
 using BitwardenApi.Vault.Collections.Responses;
 using BitwardenApi.Vault.Folders.Responses;
+using BitwardenApi.Vault.Folders.Requests;
 using BitwardenApi.Vault.Sync.Responses;
 namespace BitwardenApi.Vault.Internal;
 
@@ -18,8 +19,16 @@ namespace BitwardenApi.Vault.Internal;
 [JsonSerializable(typeof(List<VaultOrganizationResponse>))]
 [JsonSerializable(typeof(List<FolderResponse>))]
 [JsonSerializable(typeof(List<CollectionResponse>))]
-[JsonSerializable(typeof(List<CipherResponse>))]
 [JsonSerializable(typeof(CipherRequest))]
+[JsonSerializable(typeof(CipherCreateRequest))]
+[JsonSerializable(typeof(CipherBulkShareRequest))]
+[JsonSerializable(typeof(CipherPartialRequest))]
+[JsonSerializable(typeof(CipherShareRequest))]
+[JsonSerializable(typeof(CipherBulkDeleteRequest))]
+[JsonSerializable(typeof(CipherBulkMoveRequest))]
+[JsonSerializable(typeof(List<CipherResponse>))]
+[JsonSerializable(typeof(FolderRequest))]
+[JsonSerializable(typeof(FolderBulkDeleteRequest))]
 [JsonSerializable(typeof(AttachmentDownloadResponse))]
 [JsonSerializable(typeof(List<AttachmentDownloadResponse>))]
 [JsonSerializable(typeof(FileSize))]

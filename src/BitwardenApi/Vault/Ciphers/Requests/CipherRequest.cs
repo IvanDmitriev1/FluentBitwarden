@@ -1,6 +1,10 @@
 using BitwardenApi.Cryptography.Encryption;
 using BitwardenApi.Vault.Ciphers.Models;
+using BitwardenApi.Vault.Internal;
+using System.Text.Json.Serialization;
+
 namespace BitwardenApi.Vault.Ciphers.Requests;
+
 /// <summary>
 /// Structured request body for <c>POST /ciphers</c> and <c>PUT /ciphers/{id}</c>.
 /// Mirrors Bitwarden server's <c>CipherRequestModel</c> DTO; exposed here as
@@ -10,6 +14,13 @@ namespace BitwardenApi.Vault.Ciphers.Requests;
 /// </summary>
 public sealed class CipherRequest
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public CipherId Id { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [JsonConverter(typeof(OptionalOrganizationIdJsonConverter))]
+    public OrganizationId OrganizationId { get; init; }
+
     public required CipherType Type { get; init; }
 
     /// <summary>
@@ -18,8 +29,9 @@ public sealed class CipherRequest
     /// </summary>
     public Guid? EncryptedFor { get; init; }
 
-    /// <summary>Owning folder id (personal ciphers only); null when unfiled.</summary>
-    public string? FolderId { get; init; }
+    /// <summary>Owning folder id (personal ciphers only); empty when unfiled.</summary>
+    [JsonConverter(typeof(OptionalFolderIdJsonConverter))]
+    public FolderId FolderId { get; init; }
 
     public required bool Favorite { get; init; }
 

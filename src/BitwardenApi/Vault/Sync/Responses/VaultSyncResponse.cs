@@ -1,11 +1,8 @@
 using System.Text.Json.Serialization;
-
-
-
-
 using BitwardenApi.Vault.Ciphers.Responses;
 using BitwardenApi.Vault.Collections.Responses;
 using BitwardenApi.Vault.Folders.Responses;
+
 namespace BitwardenApi.Vault.Sync.Responses;
 public sealed record VaultSyncResponse
 {

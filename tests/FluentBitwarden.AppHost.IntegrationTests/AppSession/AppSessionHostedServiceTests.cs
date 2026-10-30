@@ -11,7 +11,7 @@ public sealed class AppSessionHostedServiceTests
     [Fact]
     public async Task Startup_with_no_accounts_leaves_session_unauthenticated()
     {
-        using var provider = CreateProvider([]);
+        await using var provider = CreateProvider([]);
         var store = provider.GetRequiredService<AppSessionStore>();
         var service = new AppSessionHostedService(provider.GetRequiredService<IServiceScopeFactory>(), store);
 
@@ -26,7 +26,7 @@ public sealed class AppSessionHostedServiceTests
     {
         var first = AccountTestData.Profile(AccountTestData.FirstUserId, "first@example.test", "first");
         var second = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
-        using var provider = CreateProvider([first, second]);
+        await using var provider = CreateProvider([first, second]);
         var store = provider.GetRequiredService<AppSessionStore>();
         var service = new AppSessionHostedService(provider.GetRequiredService<IServiceScopeFactory>(), store);
 
@@ -41,7 +41,7 @@ public sealed class AppSessionHostedServiceTests
     {
         var accountService = Substitute.For<IAccountService, IDisposable>();
         accountService.GetAccounts().Returns(_ => throw new InvalidOperationException("read failed"));
-        using var provider = CreateProvider(accountService);
+        await using var provider = CreateProvider(accountService);
         var service = new AppSessionHostedService(provider.GetRequiredService<IServiceScopeFactory>(), new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>()));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.StartAsync(CancellationToken.None));

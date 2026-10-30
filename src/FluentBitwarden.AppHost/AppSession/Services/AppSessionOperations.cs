@@ -1,3 +1,5 @@
+using AsyncAwaitBestPractices;
+using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Internal;
@@ -5,6 +7,7 @@ using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
+using FluentBitwarden.Platform.Infrastructure.Connectivity;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
@@ -12,7 +15,9 @@ internal sealed class AppSessionOperations(
     IAccountService accountService,
     IVaultService vaultService,
     IAppHostTermination appHostTermination,
-    AppSessionStore appSessionStore) : IAppSessionOperations
+    AppSessionStore appSessionStore,
+    INetworkStatus networkStatus,
+    IServerNotificationsClientFactory notificationsClientFactory) : IAppSessionOperations
 {
     public async Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken)
     {
@@ -48,7 +53,14 @@ internal sealed class AppSessionOperations(
         try
         {
             IUnlockedVault unlockedVault = vaultService.Open(account.BitwardenAccountContext, accountKey);
-            unlockedState = new AppSessionState.Unlocked(account, unlockedVault, accountKey);
+
+            var serverNotificationsClient = notificationsClientFactory.CreateClient();
+            if (networkStatus.HasInternetAccess)
+            {
+                serverNotificationsClient.ConnectAsync(account.BitwardenAccountContext).SafeFireAndForget();
+            }
+
+            unlockedState = new AppSessionState.Unlocked(account, unlockedVault, accountKey, serverNotificationsClient);
         }
         catch
         {

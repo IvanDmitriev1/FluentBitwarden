@@ -1,9 +1,11 @@
+using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
+using FluentBitwarden.Platform.Infrastructure.Connectivity;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
 
@@ -15,7 +17,13 @@ internal sealed class SessionTestContext
         VaultService = Substitute.For<IVaultService>();
         Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
         AppHostTermination = Substitute.For<IAppHostTermination>();
-        Operations = new AppSessionOperations(AccountService, VaultService, AppHostTermination, Store);
+        Operations = new AppSessionOperations(
+            AccountService,
+            VaultService,
+            AppHostTermination,
+            Store,
+            Substitute.For<INetworkStatus>(),
+            Substitute.For<IServerNotificationsClientFactory>());
     }
 
     public IAccountService AccountService { get; }
@@ -24,7 +32,7 @@ internal sealed class SessionTestContext
     public IAppHostTermination AppHostTermination { get; }
     public AppSessionOperations Operations { get; }
 
-    public IAppSessionAccessor RequireUnlockedSessionLease()
+    public async ValueTask<IAppSessionAccessor> RequireUnlockedSessionLeaseAsync()
     {
         var lease = Store.CreateLease();
         try
@@ -34,7 +42,7 @@ internal sealed class SessionTestContext
         }
         catch
         {
-            lease.Dispose();
+            await lease.DisposeAsync();
             throw;
         }
     }

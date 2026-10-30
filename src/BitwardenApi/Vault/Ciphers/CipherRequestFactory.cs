@@ -21,7 +21,7 @@ public static class CipherRequestFactory
         {
             Type = cipher.Type,
             EncryptedFor = userKey.UserId.Value,
-            FolderId = cipher.FolderId.IsEmpty ? null : cipher.FolderId.ToString(),
+            FolderId = cipher.FolderId,
             Favorite = cipher.Favorite,
             Reprompt = cipher.Reprompt ? 1 : 0,
             Key = wrappedKey,

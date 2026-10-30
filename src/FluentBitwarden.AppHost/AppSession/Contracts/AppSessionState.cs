@@ -1,10 +1,11 @@
+using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
 
 namespace FluentBitwarden.AppHost.AppSession.Contracts;
 
-public abstract record AppSessionState : IDisposable
+public abstract record AppSessionState : IAsyncDisposable
 {
     private AppSessionState() {}
 
@@ -23,7 +24,7 @@ public abstract record AppSessionState : IDisposable
         _references = checked(_references + 1);
     }
 
-    public void Release()
+    public async ValueTask ReleaseAsync()
     {
         bool shouldDispose;
 
@@ -36,7 +37,7 @@ public abstract record AppSessionState : IDisposable
             }
 
             // The initial reference belongs to the store.
-            // Only Dispose() may retire that ownership.
+            // Only DisposeAsync() may retire that ownership.
             if (!_disposed && _references == 1)
             {
                 throw new InvalidOperationException(
@@ -49,46 +50,90 @@ public abstract record AppSessionState : IDisposable
         if (!shouldDispose)
             return;
 
-        Disposing(true);
-        _revoked.Dispose();
+        try
+        {
+            await DisposeCoreAsync();
+        }
+        finally
+        {
+            _revoked.Dispose();
+        }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        using var _ = _lock.EnterScope();
+        lock (_lock)
+        {
+            if (_disposed)
+                return;
 
-        if (_disposed)
-            return;
+            _disposed = true;
+        }
 
-        _disposed = true;
-        _revoked.Cancel();
-        Release();
-
-        GC.SuppressFinalize(this);
+        try
+        {
+            await _revoked.CancelAsync();
+        }
+        finally
+        {
+            await ReleaseAsync();
+            GC.SuppressFinalize(this);
+        }
     }
 
-    protected virtual void Disposing(bool disposing) { }
+    protected virtual ValueTask DisposeCoreAsync() => ValueTask.CompletedTask;
 
     public sealed record NotAuthenticated : AppSessionState;
 
     public sealed record Locked(AccountProfile Account) : AppSessionState;
 
-    public sealed record Unlocked(
-        AccountProfile Account,
-        IUnlockedVault Vault,
-        IAccountKeySession AccountKeySession) : AppSessionState
+    public sealed record Unlocked : AppSessionState
     {
-        public IAccountKeySession AccountKeySession { get; } = Account.UserId == AccountKeySession.UserId
-            ? AccountKeySession
-            : throw new InvalidOperationException("The unlocked vault and account key must match the selected account.");
-
-        protected override void Disposing(bool disposing)
+        public Unlocked(
+            AccountProfile account,
+            IUnlockedVault vault,
+            IAccountKeySession accountKeySession,
+            IServerNotificationsClient serverNotificationsClient)
         {
-            if (!disposing)
-                return;
+            if (account.UserId != accountKeySession.UserId)
+                throw new InvalidOperationException("The unlocked vault and account key must match the selected account.");
 
-            Vault.Dispose();
-            AccountKeySession.Dispose();
+            Account = account;
+            Vault = vault;
+            AccountKeySession = accountKeySession;
+            ServerNotificationsClient = serverNotificationsClient;
+        }
+
+        public AccountProfile Account { get; }
+        public IUnlockedVault Vault { get; }
+        public IAccountKeySession AccountKeySession { get; }
+        public IServerNotificationsClient ServerNotificationsClient { get; }
+
+        public void Deconstruct(
+            out AccountProfile account,
+            out IUnlockedVault vault,
+            out IAccountKeySession accountKeySession,
+            out IServerNotificationsClient serverNotificationsClient) =>
+            (account, vault, accountKeySession, serverNotificationsClient) =
+            (Account, Vault, AccountKeySession, ServerNotificationsClient);
+
+        protected override async ValueTask DisposeCoreAsync()
+        {
+            try
+            {
+                await ServerNotificationsClient.DisposeAsync();
+            }
+            finally
+            {
+                try
+                {
+                    Vault.Dispose();
+                }
+                finally
+                {
+                    AccountKeySession.Dispose();
+                }
+            }
         }
     }
 

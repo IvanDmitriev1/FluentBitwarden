@@ -1,5 +1,7 @@
+using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Vault.Sync;
 using BitwardenApi.Vault.Ciphers;
+using BitwardenApi.Vault.Folders;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
@@ -7,6 +9,8 @@ using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 using FluentBitwarden.AppHost.Modules.Vault.Services;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
+using FluentBitwarden.Platform.Ipc.Abstractions;
+using Dapper;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
 
@@ -26,6 +30,8 @@ internal sealed class VaultManagerTestContext : IDisposable
         _vaultSyncStateRepository = new VaultSyncStateRepository(_unitOfWork);
         SyncApi = Substitute.For<IVaultSyncApi>();
         CiphersApi = Substitute.For<ICiphersApi>();
+        FoldersApi = Substitute.For<IFoldersApi>();
+        EventPublisher = Substitute.For<IIpcEventPublisher>();
         NetworkStatus = Substitute.For<INetworkStatus>();
         NetworkStatus.HasInternetAccess.Returns(true);
 
@@ -37,8 +43,10 @@ internal sealed class VaultManagerTestContext : IDisposable
             _vaultSyncStateRepository,
             SyncApi,
             CiphersApi,
+            FoldersApi,
             _unitOfWork,
-            NetworkStatus);
+            NetworkStatus,
+            EventPublisher);
     }
 
     public IAppSessionAccessor SessionAccessor { get; } = Substitute.For<IAppSessionAccessor>();
@@ -46,6 +54,8 @@ internal sealed class VaultManagerTestContext : IDisposable
     public BitwardenAccountContext AccountContext => Account.BitwardenAccountContext;
     public IVaultSyncApi SyncApi { get; }
     public ICiphersApi CiphersApi { get; }
+    public IFoldersApi FoldersApi { get; }
+    public IIpcEventPublisher EventPublisher { get; }
     public INetworkStatus NetworkStatus { get; }
     public VaultReaderRepository VaultReaderRepository { get; }
     public VaultService VaultService { get; }
@@ -54,7 +64,7 @@ internal sealed class VaultManagerTestContext : IDisposable
 
     public IAppSessionAccessor CreateLease(IUnlockedVault vault, IAccountKeySession keySession)
     {
-        var state = new AppSessionState.Unlocked(Account, vault, keySession);
+        var state = new AppSessionState.Unlocked(Account, vault, keySession, Substitute.For<IServerNotificationsClient>());
         SessionAccessor.AppSessionState.Returns(state);
         return SessionAccessor;
     }
@@ -63,6 +73,22 @@ internal sealed class VaultManagerTestContext : IDisposable
     {
         using var keySession = CreateKeySession();
         return VaultService.Open(AccountContext, keySession);
+    }
+
+    public IUnlockedVault OpenVaultFromFreshConnection(IAccountKeySession keySession)
+    {
+        using var unitOfWork = _database.CreateUnitOfWork();
+        return new VaultService(
+            SessionAccessor,
+            new VaultReaderRepository(unitOfWork),
+            _vaultWriterRepository,
+            _vaultSyncStateRepository,
+            SyncApi,
+            CiphersApi,
+            FoldersApi,
+            unitOfWork,
+            NetworkStatus,
+            EventPublisher).Open(AccountContext, keySession);
     }
 
     public void SeedCache(
@@ -84,6 +110,23 @@ internal sealed class VaultManagerTestContext : IDisposable
 
     public DateTimeOffset? GetServerRevisionDate() =>
         _vaultSyncStateRepository.GetServerRevisionDate(AccountContext.UserId);
+
+    public DateTimeOffset? GetServerRevisionDateFromFreshConnection()
+    {
+        using var unitOfWork = _database.CreateUnitOfWork();
+        return new VaultSyncStateRepository(unitOfWork).GetServerRevisionDate(AccountContext.UserId);
+    }
+
+    public void FailCheckpointWrites()
+    {
+        using var connection = _database.OpenConnection();
+        connection.Execute("""
+            CREATE TRIGGER fail_checkpoint_writes BEFORE UPDATE ON vault_sync_state
+            BEGIN SELECT RAISE(ABORT, 'synthetic checkpoint persistence failure'); END;
+            """);
+    }
+
+    public void CloseUnitOfWork() => _unitOfWork.Dispose();
 
     public void Dispose()
     {

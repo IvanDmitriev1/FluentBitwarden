@@ -1,3 +1,4 @@
+using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
@@ -10,11 +11,11 @@ namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
 public sealed class AppSessionAccessorTests
 {
     [Fact]
-    public void Accessor_captures_the_state_identity_and_revocation_token()
+    public async Task Accessor_captures_the_state_identity_and_revocation_token()
     {
-        using var state = new AppSessionState.NotAuthenticated();
+        await using var state = new AppSessionState.NotAuthenticated();
         state.AddReference();
-        using var accessor = new AppSessionAccessor(state);
+        await using var accessor = new AppSessionAccessor(state);
 
         Assert.Same(state, accessor.AppSessionState);
         Assert.Equal(state.Revoked, accessor.Revoked);
@@ -22,12 +23,12 @@ public sealed class AppSessionAccessorTests
     }
 
     [Fact]
-    public void RequireUnlockedState_rejects_locked_state()
+    public async Task RequireUnlockedState_rejects_locked_state()
     {
-        using var state = new AppSessionState.Locked(
+        await using var state = new AppSessionState.Locked(
             AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first"));
         state.AddReference();
-        using var accessor = new AppSessionAccessor(state);
+        await using var accessor = new AppSessionAccessor(state);
 
         Assert.Throws<UnlockedSessionRequiredException>(() => accessor.RequireUnlockedState());
     }
@@ -42,14 +43,14 @@ public sealed class AppSessionAccessorTests
         key.UserId.Returns(account.UserId);
         var cancellationToken = TestContext.Current.CancellationToken;
         await store.AuthenticateAsync(account, cancellationToken);
-        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key));
+        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsClient>()));
         var lease = store.CreateLease();
 
         await store.LockAsync(cancellationToken);
 
         vault.DidNotReceive().Dispose();
         key.DidNotReceive().Dispose();
-        lease.Dispose();
+        await lease.DisposeAsync();
         vault.Received(1).Dispose();
         key.Received(1).Dispose();
     }
@@ -64,13 +65,13 @@ public sealed class AppSessionAccessorTests
         key.UserId.Returns(account.UserId);
         var cancellationToken = TestContext.Current.CancellationToken;
         await store.AuthenticateAsync(account, cancellationToken);
-        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key));
+        await store.UnlockAsync(new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsClient>()));
         var lease = store.CreateLease();
         await store.LockAsync(cancellationToken);
 
-        lease.Dispose();
-        lease.Dispose();
-        lease.Dispose();
+        await lease.DisposeAsync();
+        await lease.DisposeAsync();
+        await lease.DisposeAsync();
 
         vault.Received(1).Dispose();
         key.Received(1).Dispose();

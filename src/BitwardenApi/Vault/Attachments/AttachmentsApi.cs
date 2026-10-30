@@ -31,8 +31,6 @@ internal sealed class AttachmentsApi(IHttpClientFactory httpClientFactory) : IAt
                 $"Attachment download URL is not an absolute URI for attachment '{attachmentId}'.");
         }
 
-        // The download URL is a pre-signed third-party storage URL; it is fetched with a bare client
-        // that carries no Bitwarden authorization header, so the access token is never leaked to it.
         using var downloadClient = httpClientFactory.CreateClient(HttpClientNames.AttachmentDownload);
         using var downloadRequest = new HttpRequestMessage(HttpMethod.Get, downloadUri);
         using var downloadHttpResponse = await downloadClient.SendAsync(

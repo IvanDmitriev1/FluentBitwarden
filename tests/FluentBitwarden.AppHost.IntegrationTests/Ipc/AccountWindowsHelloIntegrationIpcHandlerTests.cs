@@ -10,7 +10,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
     [Fact]
     public async Task GetEnrollment_returns_enrolled_for_the_requested_account()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: false);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
         UserId requestedUserId = UserId.Parse(AccountTestData.SecondUserId);
         fixture.WindowsHello.IsEnabled(requestedUserId).Returns(true);
 
@@ -26,7 +26,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
     [Fact]
     public async Task GetEnrollment_returns_not_enrolled_for_the_requested_account()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: true);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: true);
         UserId requestedUserId = UserId.Parse(AccountTestData.SecondUserId);
         fixture.WindowsHello.IsEnabled(requestedUserId).Returns(false);
 
@@ -42,7 +42,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
     [Fact]
     public async Task GetEnrollment_returns_unavailable_without_account_lookup_when_unsupported()
     {
-        using var fixture = CreateFixture(isSupported: false, isEnabled: true);
+        await using var fixture = CreateFixture(isSupported: false, isEnabled: true);
         UserId requestedUserId = UserId.Parse(AccountTestData.SecondUserId);
 
         WindowsHelloEnrollmentStatus status = await fixture.Handler.GetEnrollmentAsync(
@@ -56,44 +56,44 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
     [Fact]
     public async Task Disable_disables_windows_hello_for_the_active_enrolled_account()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: true);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: true);
 
         await fixture.Handler.DisableAsync(default, TestContext.Current.CancellationToken);
 
         fixture.WindowsHello.Received(1).Disable(fixture.Account.UserId);
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Disable_skips_windows_hello_for_the_active_unenrolled_account()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: false);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
 
         await fixture.Handler.DisableAsync(default, TestContext.Current.CancellationToken);
 
         fixture.WindowsHello.DidNotReceive().Disable(fixture.Account.UserId);
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Disable_skips_account_checks_when_windows_hello_is_unsupported()
     {
-        using var fixture = CreateFixture(isSupported: false, isEnabled: true);
+        await using var fixture = CreateFixture(isSupported: false, isEnabled: true);
 
         await fixture.Handler.DisableAsync(default, TestContext.Current.CancellationToken);
 
         fixture.WindowsHello.DidNotReceive().IsEnabled(fixture.Account.UserId);
         fixture.WindowsHello.DidNotReceive().Disable(fixture.Account.UserId);
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Enable_forwards_the_active_user_key_and_owner_window()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: false);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
         using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Lease, fixture.Account.UserId);
         var request = new EnableWindowsHelloEnrollmentRequest(new NativeWindowHandle(0x1234));
 
@@ -103,14 +103,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
 
         Assert.Equal(WindowsHelloEnrollmentOutcome.Enrolled, outcome);
         fixture.WindowsHello.Received(1).Enable(userKey, (IntPtr)request.OwnerWindow);
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Enable_returns_enrolled_without_prompting_when_the_account_is_already_enrolled()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: true);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: true);
 
         WindowsHelloEnrollmentOutcome outcome = await fixture.Handler.EnableAsync(
             default,
@@ -118,14 +118,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
 
         Assert.Equal(WindowsHelloEnrollmentOutcome.Enrolled, outcome);
         fixture.WindowsHello.DidNotReceive().Enable(Arg.Any<UnlockedUserKey>(), Arg.Any<IntPtr>());
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Enable_returns_unavailable_without_checking_enrollment_when_unsupported()
     {
-        using var fixture = CreateFixture(isSupported: false, isEnabled: true);
+        await using var fixture = CreateFixture(isSupported: false, isEnabled: true);
 
         WindowsHelloEnrollmentOutcome outcome = await fixture.Handler.EnableAsync(
             default,
@@ -134,14 +134,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
         Assert.Equal(WindowsHelloEnrollmentOutcome.Unavailable, outcome);
         fixture.WindowsHello.DidNotReceive().IsEnabled(fixture.Account.UserId);
         fixture.WindowsHello.DidNotReceive().Enable(Arg.Any<UnlockedUserKey>(), Arg.Any<IntPtr>());
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Enable_maps_user_cancellation_and_releases_the_session_lease()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: false);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
         using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Lease, fixture.Account.UserId);
         fixture.WindowsHello.When(service => service.Enable(userKey, Arg.Any<IntPtr>()))
             .Do(_ => throw new OperationCanceledException());
@@ -151,14 +151,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(WindowsHelloEnrollmentOutcome.Cancelled, outcome);
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Enable_maps_cryptographic_failures_and_releases_the_session_lease()
     {
-        using var fixture = CreateFixture(isSupported: true, isEnabled: false);
+        await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
         using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Lease, fixture.Account.UserId);
         fixture.WindowsHello.When(service => service.Enable(userKey, Arg.Any<IntPtr>()))
             .Do(_ => throw new CryptographicException("synthetic enrollment failure"));
@@ -168,7 +168,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(WindowsHelloEnrollmentOutcome.Failed, outcome);
-        fixture.Dispose();
-        fixture.Lease.Received(1).Dispose();
+        await fixture.DisposeAsync();
+        await fixture.Lease.Received(1).DisposeAsync();
     }
 }

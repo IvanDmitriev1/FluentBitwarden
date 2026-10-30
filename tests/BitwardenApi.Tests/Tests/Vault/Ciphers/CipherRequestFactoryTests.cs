@@ -28,7 +28,7 @@ public sealed class CipherRequestFactoryTests
             Assert.Equal(64, length);
             Assert.Equal(userKey.UserId.Value, request.EncryptedFor);
             Assert.Equal(CipherType.Login, request.Type);
-            Assert.Null(request.FolderId);
+            Assert.True(request.FolderId.IsEmpty);
             Assert.Null(request.LastKnownRevisionDate);
             Assert.Equal("Example login", request.Name.Decode(cipherKey));
             Assert.Equal("private note", request.Notes.Decode(cipherKey));
@@ -96,7 +96,7 @@ public sealed class CipherRequestFactoryTests
         {
             Assert.Equal(CipherType.Card, request.Type);
             Assert.True(request.Favorite);
-            Assert.Equal("folder-id", request.FolderId);
+            Assert.Equal("folder-id", request.FolderId.Value);
             Assert.Equal(cipher.RevisionDate.UtcDateTime, request.LastKnownRevisionDate);
             Assert.Null(request.Login);
             Assert.Null(request.Identity);

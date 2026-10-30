@@ -4,9 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BitwardenApi.Notifications;
 
-internal sealed class ServerNotificationsClientFactory(IServiceScopeFactory serviceScopeFactory, TimeProvider timeProvider) : IServerNotificationsClientFactory
+internal sealed class ServerNotificationsClientFactory(
+    IServiceScopeFactory serviceScopeFactory,
+    IAccessTokenProvider accessTokenProvider,
+    TimeProvider timeProvider) : IServerNotificationsClientFactory
 {
-    public IServerNotificationsClient CreateClient(IAccessTokenProvider accessTokenProvider)
+    public IServerNotificationsClient CreateClient()
     {
         return new ServerNotificationsClient(accessTokenProvider, serviceScopeFactory, timeProvider);
     }

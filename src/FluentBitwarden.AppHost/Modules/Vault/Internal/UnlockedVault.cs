@@ -20,7 +20,7 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
     {
         lock (_lock)
         {
-            return _data.Ciphers.FirstOrDefault(cipher => cipher.Id == id);
+            return _data.Ciphers.FirstOrDefault(c => c.Id == id);
         }
     }
 
@@ -29,6 +29,14 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
         lock (_lock)
         {
             return _data.FilterCiphers(query);
+        }
+    }
+
+    public Folder? GetFolder(FolderId id)
+    {
+        lock (_lock)
+        {
+            return _data.Folders.FirstOrDefault(f => f.Id == id);
         }
     }
 
@@ -59,6 +67,18 @@ internal sealed class UnlockedVault(VaultData data) : IUnlockedVault
                 _data.Ciphers.Add(cipher);
             else
                 _data.Ciphers[index] = cipher;
+        }
+    }
+
+    public void UpsertFolder(Folder folder)
+    {
+        lock (_lock)
+        {
+            int index = _data.Folders.FindIndex(f => f.Id == folder.Id);
+            if (index < 0)
+                _data.Folders.Add(folder);
+            else
+                _data.Folders[index] = folder;
         }
     }
 

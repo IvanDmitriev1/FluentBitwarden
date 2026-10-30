@@ -20,6 +20,10 @@ internal static class AccountSessionAccessTokenProviderTestSupport
         services.AddScoped(_ => vaultService ?? Substitute.For<IVaultService>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
+        var networkStatus = Substitute.For<FluentBitwarden.Platform.Infrastructure.Connectivity.INetworkStatus>();
+        networkStatus.HasInternetAccess.Returns(false);
+        services.AddSingleton(networkStatus);
+        services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsClientFactory>());
         return services.BuildServiceProvider();
     }
 

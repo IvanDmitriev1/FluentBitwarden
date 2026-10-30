@@ -24,11 +24,11 @@ public sealed class SshKeyProviderTests
         await store.AuthenticateAsync(fixture.Account, cancellationToken);
         var provider = new SshKeyProvider(
             store, fixture.UiProcessLauncher, fixture.DialogClient, fixture.SettingsStore);
-        Assert.Empty(provider.GetIdentities());
+        Assert.Empty(await provider.GetIdentitiesAsync());
 
         await store.UnlockAsync(fixture.BeforeApprovalLease.RequireUnlockedState());
 
-        SshAgentIdentity identity = Assert.Single(provider.GetIdentities());
+        SshAgentIdentity identity = Assert.Single(await provider.GetIdentitiesAsync());
         Assert.Equal(fixture.Key.PublicKeyBlob, identity.PublicKeyBlob.ToArray());
         await store.LockAsync(cancellationToken);
     }
@@ -44,34 +44,34 @@ public sealed class SshKeyProviderTests
         await store.UnlockAsync(state);
         var provider = new SshKeyProvider(
             store, fixture.UiProcessLauncher, fixture.DialogClient, fixture.SettingsStore);
-        Assert.Single(provider.GetIdentities());
+        Assert.Single(await provider.GetIdentitiesAsync());
 
         await store.LockAsync(cancellationToken);
 
-        Assert.Empty(provider.GetIdentities());
+        Assert.Empty(await provider.GetIdentitiesAsync());
     }
 
     [Fact]
-    public void GetIdentities_returns_no_keys_while_the_session_is_locked()
+    public async Task GetIdentities_returns_no_keys_while_the_session_is_locked()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
         fixture.Accessor.AppSessionState.Returns(new AppSessionState.Locked(fixture.Account));
 
-        IReadOnlyList<SshAgentIdentity> identities = fixture.Provider.GetIdentities();
+        IReadOnlyList<SshAgentIdentity> identities = await fixture.Provider.GetIdentitiesAsync();
 
         Assert.Empty(identities);
         _ = fixture.Session.Received(1).CreateLease();
-        fixture.Accessor.Received(1).Dispose();
+        await fixture.Accessor.Received(1).DisposeAsync();
     }
 
     [Fact]
-    public void GetIdentities_returns_ssh_keys_from_an_unlocked_vault()
+    public async Task GetIdentities_returns_ssh_keys_from_an_unlocked_vault()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.AllowWhenUnlocked);
         Cipher login = Cipher.CreateBlankCipher(CipherType.Login);
         fixture.ConfigureVault(fixture.Key.CreateCipher("work key"), login);
 
-        IReadOnlyList<SshAgentIdentity> identities = fixture.Provider.GetIdentities();
+        IReadOnlyList<SshAgentIdentity> identities = await fixture.Provider.GetIdentitiesAsync();
 
         SshAgentIdentity identity = Assert.Single(identities);
         Assert.Equal(fixture.Key.PublicKeyBlob, identity.PublicKeyBlob.ToArray());
@@ -114,7 +114,7 @@ public sealed class SshKeyProviderTests
         Assert.NotNull(signature);
         AssertSignature(fixture.Key, data, signature);
         _ = fixture.Session.Received(1).WaitUntilUnlockedAsync(Arg.Any<CancellationToken>());
-        fixture.BeforeApprovalLease.Received(1).Dispose();
+        await fixture.BeforeApprovalLease.Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public sealed class SshKeyProviderTests
         _ = fixture.DialogClient.DidNotReceive().ShowSshDialogAsync(
             Arg.Any<SshUserActionRequest>(),
             Arg.Any<CancellationToken>());
-        fixture.BeforeApprovalLease.DidNotReceive().Dispose();
+        await fixture.BeforeApprovalLease.DidNotReceive().DisposeAsync();
     }
 
     [Fact]
@@ -166,10 +166,10 @@ public sealed class SshKeyProviderTests
         fixture.DialogClient.ShowSshDialogAsync(
                 Arg.Any<SshUserActionRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(_ =>
+            .Returns(async _ =>
             {
-                fixture.BeforeApprovalLease.Received(1).Dispose();
-                return Task.FromResult(UserActionDialogOutcome.Approved);
+                await fixture.BeforeApprovalLease.Received(1).DisposeAsync();
+                return UserActionDialogOutcome.Approved;
             });
         byte[] data = "approved signing input"u8.ToArray();
 
@@ -182,7 +182,7 @@ public sealed class SshKeyProviderTests
         _ = fixture.DialogClient.Received(1).ShowSshDialogAsync(
             new SshUserActionRequest("synthetic key", "SHA256:synthetic", false),
             Arg.Any<CancellationToken>());
-        fixture.ActiveLease.Received(1).Dispose();
+        await fixture.ActiveLease.Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -192,10 +192,10 @@ public sealed class SshKeyProviderTests
         fixture.DialogClient.ShowSshDialogAsync(
                 Arg.Any<SshUserActionRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(_ =>
+            .Returns(async _ =>
             {
-                fixture.BeforeApprovalLease.Received(1).Dispose();
-                return Task.FromResult(UserActionDialogOutcome.Denied);
+                await fixture.BeforeApprovalLease.Received(1).DisposeAsync();
+                return UserActionDialogOutcome.Denied;
             });
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
@@ -203,7 +203,7 @@ public sealed class SshKeyProviderTests
             CancellationToken.None);
 
         Assert.Null(signature);
-        fixture.ActiveLease.DidNotReceive().Dispose();
+        await fixture.ActiveLease.DidNotReceive().DisposeAsync();
     }
 
     [Fact]
@@ -216,10 +216,10 @@ public sealed class SshKeyProviderTests
         fixture.DialogClient.ShowSshDialogAsync(
                 Arg.Any<SshUserActionRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(_ =>
+            .Returns(async _ =>
             {
-                fixture.BeforeApprovalLease.Received(1).Dispose();
-                return Task.FromResult(UserActionDialogOutcome.Approved);
+                await fixture.BeforeApprovalLease.Received(1).DisposeAsync();
+                return UserActionDialogOutcome.Approved;
             });
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
@@ -227,7 +227,7 @@ public sealed class SshKeyProviderTests
             CancellationToken.None);
 
         Assert.Null(signature);
-        fixture.BeforeApprovalLease.Received(1).Dispose();
+        await fixture.BeforeApprovalLease.Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -246,7 +246,7 @@ public sealed class SshKeyProviderTests
             CancellationToken.None);
 
         Assert.Null(signature);
-        fixture.ActiveLease.Received(1).Dispose();
+        await fixture.ActiveLease.Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public sealed class SshKeyProviderTests
             CancellationToken.None);
 
         Assert.Null(signature);
-        fixture.ActiveLease.Received(1).Dispose();
+        await fixture.ActiveLease.Received(1).DisposeAsync();
     }
 
     private sealed class ProviderFixture
@@ -318,11 +318,11 @@ public sealed class SshKeyProviderTests
             DialogClient.ShowSshDialogAsync(
                     Arg.Any<SshUserActionRequest>(),
                     Arg.Any<CancellationToken>())
-                .Returns(_ =>
+                .Returns(async _ =>
                 {
-                    Accessor.Received(1).Dispose();
-                    BeforeApprovalLease.Received(1).Dispose();
-                    return Task.FromResult(UserActionDialogOutcome.Approved);
+                    await Accessor.Received(1).DisposeAsync();
+                    await BeforeApprovalLease.Received(1).DisposeAsync();
+                    return UserActionDialogOutcome.Approved;
                 });
 
     }

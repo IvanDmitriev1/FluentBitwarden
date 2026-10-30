@@ -4,7 +4,7 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
-internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppSessionLeaseProvider
+internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppSessionLeaseProvider, IAsyncDisposable
 {
     private readonly Lock _lock = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -21,6 +21,20 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
             {
                 return _state.ToSnapshot;
             }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _gate.WaitAsync();
+
+        try
+        {
+            await _state.DisposeAsync();
+        }
+        finally
+        {
+            _gate.Release();
         }
     }
 
@@ -102,10 +116,14 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
         {
             bool published;
             lock (_lock)
+            {
                 published = ReferenceEquals(_state, nextState);
+            }
 
             if (!published)
-                nextState.Dispose();
+            {
+                await nextState.DisposeAsync();
+            }
 
             throw;
         }
@@ -189,7 +207,7 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
         }
         finally
         {
-            previous.Dispose();
+            await previous.DisposeAsync();
         }
     }
 }

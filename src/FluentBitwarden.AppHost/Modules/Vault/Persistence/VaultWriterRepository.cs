@@ -58,6 +58,20 @@ internal sealed class VaultWriterRepository(IDbSession dbSession)
         }
     }
 
+    public void UpdateFolder(UserId userId, ref readonly FolderResponse dto)
+    {
+        dbSession.Connection.Execute(
+            """
+            INSERT INTO vault_folder (user_id, folder_id, revision_date_unix_ms, encrypted_name)
+            VALUES (@UserId, @FolderId, @RevisionDateUnixMs, @EncryptedName)
+            ON CONFLICT (user_id, folder_id) DO UPDATE SET
+                revision_date_unix_ms = excluded.revision_date_unix_ms,
+                encrypted_name = excluded.encrypted_name;
+            """,
+            VaultFolderMapper.ToInsertParameters(userId.ToString(), in dto),
+            transaction: dbSession.RequiredTransaction);
+    }
+
     public void WriteCollections(UserId userId, ReadOnlySpan<CollectionResponse> collections)
     {
         var userIdStr = userId.ToString();

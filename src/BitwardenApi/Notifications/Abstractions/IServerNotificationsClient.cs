@@ -3,9 +3,6 @@ namespace BitwardenApi.Notifications.Abstractions;
 
 public interface IServerNotificationsClient : IAsyncDisposable
 {
-    Task ConnectAsync(
-        BitwardenAccountContext accountContext,
-        CancellationToken cancellationToken = default);
-
-    Task DisconnectAsync();
+    Task ConnectAsync(BitwardenAccountContext accountContext);
+    ValueTask DisconnectAsync();
 }

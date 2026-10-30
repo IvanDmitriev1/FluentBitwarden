@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
-using BitwardenApi.Notifications.Internal;
 using BitwardenApi.Client;
 using BitwardenApi.Notifications.Abstractions;
+using BitwardenApi.Notifications.Internal;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Retry;
 
@@ -30,7 +30,7 @@ internal sealed class ServerNotificationsClient(
 
     private HubConnection? _connection;
 
-    public async Task ConnectAsync(BitwardenAccountContext accountContext, CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(BitwardenAccountContext accountContext)
     {
         if (_connection?.State is HubConnectionState.Connected
             or HubConnectionState.Connecting
@@ -42,12 +42,10 @@ internal sealed class ServerNotificationsClient(
         Uri requestedHubEndpoint = new(accountContext.Environment.NotificationsBase, "/hub");
         _connection = CreateConnection(requestedHubEndpoint, accountContext);
 
-        await _startRetry.ExecuteAsync(
-            async token => await _connection.StartAsync(token),
-            cancellationToken);
+        await _startRetry.ExecuteAsync(async token => await _connection.StartAsync(token));
     }
 
-    public async Task DisconnectAsync()
+    public async ValueTask DisconnectAsync()
     {
         if (_connection is null)
             return;
@@ -66,10 +64,7 @@ internal sealed class ServerNotificationsClient(
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await DisconnectAsync();
-    }
+    public ValueTask DisposeAsync() => DisconnectAsync();
 
     private HubConnection CreateConnection(Uri hubEndpoint, BitwardenAccountContext accountContext)
     {

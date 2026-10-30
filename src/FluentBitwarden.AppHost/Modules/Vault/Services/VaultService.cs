@@ -1,12 +1,16 @@
 using BitwardenApi.Client;
+using BitwardenApi.Vault.Folders;
 using BitwardenApi.Vault.Sync;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
+using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
+using FluentBitwarden.Contracts.Modules.Vault.Events;
 using FluentBitwarden.Contracts.Modules.Vault.Operations;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
+using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
 
@@ -17,8 +21,10 @@ internal sealed class VaultService(
     VaultSyncStateRepository vaultSyncStateRepository,
     IVaultSyncApi vaultSyncApi,
     ICiphersApi ciphersApi,
+    IFoldersApi foldersApi,
     IUnitOfWork unitOfWork,
-    INetworkStatus networkStatus) : IVaultService
+    INetworkStatus networkStatus,
+    IIpcEventPublisher eventPublisher) : IVaultService
 {
     public IUnlockedVault Open(BitwardenAccountContext accountContext, IAccountKeySession keySession)
     {
@@ -33,11 +39,8 @@ internal sealed class VaultService(
 
     public async Task<VaultSyncResult> SyncAsync(CancellationToken cancellationToken)
     {
-        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession) = appSessionAccessor.RequireUnlockedState();
+        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession, _) = appSessionAccessor.RequireUnlockedState();
         BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
-
-        if (accountProfile.UserId != keySession.UserId)
-            return VaultSyncResult.Failed;
 
         try
         {
@@ -78,15 +81,56 @@ internal sealed class VaultService(
         }
     }
 
+    public async Task SyncCipherAsync(CipherId id, CancellationToken cancellationToken)
+    {
+        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession, _) = appSessionAccessor.RequireUnlockedState();
+
+        var response = await ciphersApi.GetCipherAsync(accountProfile.BitwardenAccountContext, id, cancellationToken);
+        var current = vault.GetCipher(response.Id);
+
+        if (current is not null && current.RevisionDate >= response.RevisionDate)
+        {
+            return;
+        }
+
+        Cipher updated = VaultDataLoader.DecryptSavedCipher(in response, keySession);
+        
+        unitOfWork.Begin();
+        vaultWriterRepository.UpsertCipher(accountProfile.UserId, in response);
+        vaultSyncStateRepository.UpsertServerRevisionDate(accountProfile.UserId, updated.RevisionDate);
+        unitOfWork.Commit();
+
+        vault.UpsertCipher(updated);
+        await eventPublisher.PublishAsync(new CipherChangedEvent(accountProfile.UserId, updated), cancellationToken);
+    }
+
+    public async Task SyncFolderAsync(FolderId id, CancellationToken cancellationToken)
+    {
+        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession, _) = appSessionAccessor.RequireUnlockedState();
+
+        var response = await foldersApi.GetFolderAsync(accountProfile.BitwardenAccountContext, id, cancellationToken);
+        var current = vault.GetFolder(response.Id);
+
+        if (current is not null && current.RevisionDate >= response.RevisionDate)
+            return;
+
+        var updated = VaultDataParser.ParseAndDecryptFolder(ref response, keySession.UserKey);
+
+        unitOfWork.Begin();
+        vaultWriterRepository.UpdateFolder(accountProfile.UserId, ref response);
+        vaultSyncStateRepository.UpsertServerRevisionDate(accountProfile.UserId, updated.RevisionDate);
+        unitOfWork.Commit();
+
+        vault.UpsertFolder(updated);
+        await eventPublisher.PublishAsync(new FolderChangedEvent(accountProfile.UserId, updated), cancellationToken);
+    }
+
     public async Task<Cipher> SaveCipherAsync(
         Cipher cipher,
         CancellationToken cancellationToken)
     {
-        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession) = appSessionAccessor.RequireUnlockedState();
+        var (accountProfile, vault, keySession, _) = appSessionAccessor.RequireUnlockedState();
         BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
-
-        if (accountProfile.UserId != keySession.UserId)
-            throw new InvalidOperationException("The unlocked account and account key must have the same user ID.");
 
         var request = CipherRequestFactory.BuildRequest(keySession.UserKey, cipher);
         CipherResponse savedDto = cipher.Id.IsEmpty

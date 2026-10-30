@@ -19,9 +19,9 @@ internal sealed class SshKeyProvider(
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
-    public IReadOnlyList<SshAgentIdentity> GetIdentities()
+    public async ValueTask<IReadOnlyList<SshAgentIdentity>> GetIdentitiesAsync()
     {
-        using var lease = sessionLeaseProvider.CreateLease();
+        await using var lease = sessionLeaseProvider.CreateLease();
         if (lease.AppSessionState is not AppSessionState.Unlocked unlocked)
             return [];
 
@@ -34,7 +34,7 @@ internal sealed class SshKeyProvider(
 
     public async ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken)
     {
-        using (var lease = sessionLeaseProvider.CreateLease())
+        await using (var lease = sessionLeaseProvider.CreateLease())
         {
             if (lease.AppSessionState is AppSessionState.NotAuthenticated)
                 return null;
@@ -44,7 +44,7 @@ internal sealed class SshKeyProvider(
         UserId accountId;
         SshUserActionRequest actionRequest;
 
-        using (var lease = await sessionLeaseProvider.WaitUntilUnlockedAsync(cancellationToken))
+        await using (var lease = await sessionLeaseProvider.WaitUntilUnlockedAsync(cancellationToken))
         {
             var unlocked = lease.RequireUnlockedState();
 
@@ -68,7 +68,7 @@ internal sealed class SshKeyProvider(
         if (userAction != UserActionDialogOutcome.Approved)
             return null;
 
-        using var activeLease = sessionLeaseProvider.CreateLease();
+        await using var activeLease = sessionLeaseProvider.CreateLease();
         if (activeLease.AppSessionState is not AppSessionState.Unlocked unlockedAfterDialog)
             return null;
 

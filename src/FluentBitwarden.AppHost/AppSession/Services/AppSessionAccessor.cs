@@ -9,11 +9,11 @@ internal sealed class AppSessionAccessor(AppSessionState appSessionState) : IApp
     public AppSessionState AppSessionState => appSessionState;
     public CancellationToken Revoked => appSessionState.Revoked;
 
-    public void Dispose()
+    public ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, true))
-            return;
+            return ValueTask.CompletedTask;
 
-        appSessionState.Release();
+        return appSessionState.ReleaseAsync();
     }
 }

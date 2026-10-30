@@ -53,9 +53,9 @@ internal static class TokenRequestFormFactory
         form["username"] = request.Email;
         form["password"] = request.OneTimeAccessCode;
 
-        if (request.AuthRequestId is { } authRequestId && !string.IsNullOrWhiteSpace(authRequestId.Value))
+        if (!string.IsNullOrWhiteSpace(request.AuthRequestId.Value))
         {
-            form["authRequest"] = authRequestId.Value;
+            form["authRequest"] = request.AuthRequestId.Value;
         }
 
         return form;

@@ -18,9 +18,9 @@ internal static class AccountModuleServiceCollection
 
         services.AddSingleton<AccountAuthenticatorService>();
         services.AddSingleton<AccountTokenCache>();
+        services.AddSingleton<IAccessTokenProvider, AccountSessionAccessTokenProvider>();
 
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountWindowsHelloService, AccountWindowsHelloService>();
-        services.AddScoped<IAccessTokenProvider, AccountSessionAccessTokenProvider>();
     }
 }

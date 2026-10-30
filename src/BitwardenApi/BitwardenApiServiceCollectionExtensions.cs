@@ -6,6 +6,7 @@ using BitwardenApi.Notifications;
 using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Vault.Attachments;
 using BitwardenApi.Vault.Ciphers;
+using BitwardenApi.Vault.Folders;
 using BitwardenApi.Vault.Sync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -52,6 +53,7 @@ public static class BitwardenApiServiceCollectionExtensions
         services.AddSingleton<IWebAuthnIdentityApi, WebAuthnIdentityApi>();
         services.AddSingleton<IVaultSyncApi, VaultSyncApi>();
         services.AddSingleton<ICiphersApi, CiphersApi>();
+        services.AddSingleton<IFoldersApi, FoldersApi>();
         services.AddSingleton<IAttachmentsApi, AttachmentsApi>();
 
         services.AddSingleton<IServerNotificationsClientFactory, ServerNotificationsClientFactory>();

@@ -45,8 +45,8 @@ public sealed class IdentityAuthenticationRequestTests
         string? authRequestValue,
         string? expectedAuthRequest)
     {
-        AuthRequestId? authRequestId = authRequestValue is null
-            ? null
+        AuthRequestId authRequestId = string.IsNullOrEmpty(authRequestValue)
+            ? AuthRequestId.Empty
             : new AuthRequestId(authRequestValue);
 
         TestApiSupport.RecordedRequest request = await CaptureAuthenticationRequestAsync(

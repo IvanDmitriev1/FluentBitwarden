@@ -1,5 +1,6 @@
 using BitwardenApi.Client;
 using BitwardenApi.Vault.Sync.Responses;
+
 namespace BitwardenApi.Vault.Sync;
 
 public interface IVaultSyncApi

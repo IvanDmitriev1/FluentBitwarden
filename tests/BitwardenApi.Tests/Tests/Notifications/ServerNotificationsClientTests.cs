@@ -9,27 +9,15 @@ namespace BitwardenApi.Tests.Tests.Notifications;
 public sealed class ServerNotificationsClientTests
 {
     [Fact]
-    public async Task Default_connection_configuration_honors_cancellation_before_network_access()
-    {
-        using ServiceProvider services = CreateServices();
-        await using var api = CreateClient(services, _ => { });
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        cancellation.Cancel();
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            api.ConnectAsync(TestApiSupport.AccountContext, cancellation.Token));
-    }
-
-    [Fact]
     public async Task Connect_starts_the_hub_once_and_uses_the_notifications_endpoint()
     {
         using var timeout = CreateTimeoutTokenSource();
         await using var transport = new NotificationTestConnectionFactory();
-        using ServiceProvider services = CreateServices();
+        await using ServiceProvider services = CreateServices();
         await using var api = CreateClient(services, transport.Configure);
 
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
 
         Assert.Equal(1, transport.ConnectCount);
         Microsoft.AspNetCore.Connections.UriEndPoint endPoint = Assert.IsAssignableFrom<Microsoft.AspNetCore.Connections.UriEndPoint>(Assert.Single(transport.EndPoints));
@@ -47,31 +35,13 @@ public sealed class ServerNotificationsClientTests
         {
             InvokeAccessTokenProvider = true,
         };
-        using ServiceProvider services = CreateServices();
+        await using ServiceProvider services = CreateServices();
         await using var api = CreateClient(services, transport.Configure, accessTokenProvider);
 
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
 
         Assert.Equal("notifications-session-token", transport.AccessToken);
-        await accessTokenProvider.Received(1).GetAccessTokenAsync(
-            TestApiSupport.AccountContext,
-            CancellationToken.None);
-    }
-
-    [Fact]
-    public async Task Connect_canceled_before_start_does_not_open_a_transport()
-    {
-        await using var transport = new NotificationTestConnectionFactory();
-        using ServiceProvider services = CreateServices();
-        await using var api = CreateClient(services, transport.Configure);
-        using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => api.ConnectAsync(
-            TestApiSupport.AccountContext,
-            cancellation.Token));
-
-        Assert.Equal(0, transport.ConnectCount);
+        await accessTokenProvider.Received(1).GetAccessTokenAsync(TestApiSupport.AccountContext, CancellationToken.None);
     }
 
     [Fact]
@@ -79,15 +49,15 @@ public sealed class ServerNotificationsClientTests
     {
         using var timeout = CreateTimeoutTokenSource();
         await using var transport = new NotificationTestConnectionFactory();
-        using ServiceProvider services = CreateServices();
+        await using ServiceProvider services = CreateServices();
         await using var api = CreateClient(services, transport.Configure);
 
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
         NotificationTestConnectionFactory.NotificationTestConnection firstConnection = Assert.Single(transport.Connections);
         await api.DisconnectAsync();
 
         await firstConnection.Disposed.WaitAsync(TimeSpan.FromSeconds(5), timeout.Token);
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
 
         Assert.Equal(2, transport.ConnectCount);
         Assert.Equal(2, transport.Connections.Count);
@@ -98,10 +68,10 @@ public sealed class ServerNotificationsClientTests
     {
         using var timeout = CreateTimeoutTokenSource();
         await using var transport = new NotificationTestConnectionFactory();
-        using ServiceProvider services = CreateServices();
+        await using ServiceProvider services = CreateServices();
         await using var api = CreateClient(services, transport.Configure);
 
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
         NotificationTestConnectionFactory.NotificationTestConnection connection = Assert.Single(transport.Connections);
         await api.DisposeAsync();
 
@@ -120,10 +90,10 @@ public sealed class ServerNotificationsClientTests
             return Task.CompletedTask;
         });
         await using var transport = new NotificationTestConnectionFactory();
-        using ServiceProvider services = CreateServices(handler);
+        await using ServiceProvider services = CreateServices(handler);
         await using var api = CreateClient(services, transport.Configure);
 
-        await api.ConnectAsync(TestApiSupport.AccountContext, timeout.Token);
+        await api.ConnectAsync(TestApiSupport.AccountContext);
         await Assert.Single(transport.Connections).SendHubMessageAsync("""
             {"type":1,"target":"ReceiveMessage","arguments":[{"contextId":"00000000-0000-0000-0000-000000000000","type":1,"payload":{"id":"cipher-1","userId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","collectionIds":[],"revisionDate":"2026-10-28T12:34:56Z"}}]}
             """, timeout.Token);

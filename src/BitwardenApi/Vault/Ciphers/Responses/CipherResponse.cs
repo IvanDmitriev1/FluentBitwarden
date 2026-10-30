@@ -1,14 +1,12 @@
-﻿using System.Text.Json.Serialization;
-
-
-
-
+using System.Text.Json.Serialization;
 using BitwardenApi.Cryptography.Encryption;
 using BitwardenApi.Serialization;
 using BitwardenApi.Vault.Attachments.Responses;
 using BitwardenApi.Vault.Ciphers.Models;
 using BitwardenApi.Vault.Internal;
+
 namespace BitwardenApi.Vault.Ciphers.Responses;
+
 public readonly struct CipherResponse
 {
     public required CipherId Id { get; init; }

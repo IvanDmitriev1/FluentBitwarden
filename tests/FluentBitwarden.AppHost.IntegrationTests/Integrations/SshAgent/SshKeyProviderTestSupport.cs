@@ -1,3 +1,4 @@
+using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
@@ -25,7 +26,7 @@ internal static class SshKeyProviderTestSupport
         var lease = Substitute.For<IAppSessionAccessor>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(account.UserId);
-        var state = new AppSessionState.Unlocked(account, vault, key);
+        var state = new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsClient>());
         lease.AppSessionState.Returns(state);
         return lease;
     }

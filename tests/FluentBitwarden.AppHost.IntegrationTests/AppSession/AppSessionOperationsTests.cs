@@ -1,3 +1,4 @@
+using BitwardenApi.Notifications.Abstractions;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.AppSession.Services;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
@@ -22,12 +23,12 @@ public sealed class AppSessionOperationsTests
     }
 
     [Fact]
-    public void RequireUnlockedSessionLease_throws_when_not_authenticated()
+    public async Task RequireUnlockedSessionLease_throws_when_not_authenticated()
     {
         var context = new SessionTestContext();
 
-        Assert.Throws<UnlockedSessionRequiredException>(
-            context.RequireUnlockedSessionLease);
+        await Assert.ThrowsAsync<UnlockedSessionRequiredException>(
+            async () => await context.RequireUnlockedSessionLeaseAsync());
     }
 
     [Fact]
@@ -46,8 +47,8 @@ public sealed class AppSessionOperationsTests
             TestContext.Current.CancellationToken);
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
 
-        Assert.Throws<UnlockedSessionRequiredException>(
-            context.RequireUnlockedSessionLease);
+        await Assert.ThrowsAsync<UnlockedSessionRequiredException>(
+            async () => await context.RequireUnlockedSessionLeaseAsync());
     }
 
     [Fact]
@@ -62,14 +63,14 @@ public sealed class AppSessionOperationsTests
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken);
 
-        IAppSessionAccessor lease = context.RequireUnlockedSessionLease();
+        IAppSessionAccessor lease = await context.RequireUnlockedSessionLeaseAsync();
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(account, lease.RequireUnlockedState().Account);
         Assert.Same(vault, lease.RequireUnlockedState().Vault);
         vault.DidNotReceive().Dispose();
 
-        lease.Dispose();
+        await lease.DisposeAsync();
 
         vault.Received(1).Dispose();
     }
@@ -390,8 +391,8 @@ public sealed class AppSessionOperationsTests
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
         Assert.IsType<AppSessionStateSnapshot.Locked>(context.Store.State);
 
-        lease.Dispose();
-        lease.Dispose();
+        await lease.DisposeAsync();
+        await lease.DisposeAsync();
     }
 
     [Fact]
@@ -426,7 +427,7 @@ public sealed class AppSessionOperationsTests
         using var accountKey = new TestAccountKeySession(new UnlockedUserKey(UserId.Empty, []));
         await store.AuthenticateAsync(account, TestContext.Current.CancellationToken);
         Assert.Throws<InvalidOperationException>(() =>
-            new AppSessionState.Unlocked(account, vault, accountKey));
+            new AppSessionState.Unlocked(account, vault, accountKey, Substitute.For<IServerNotificationsClient>()));
 
         Assert.IsType<AppSessionStateSnapshot.Locked>(store.State);
     }
@@ -439,7 +440,7 @@ public sealed class AppSessionOperationsTests
         var vault = Substitute.For<IUnlockedVault>();
         await store.AuthenticateAsync(account, TestContext.Current.CancellationToken);
         await store.UnlockAsync(new AppSessionState.Unlocked(account, vault,
-            new TestAccountKeySession(new UnlockedUserKey(account.UserId, []))));
+            new TestAccountKeySession(new UnlockedUserKey(account.UserId, [])), Substitute.For<IServerNotificationsClient>()));
 
         await store.SignOutAsync(TestContext.Current.CancellationToken);
 
@@ -462,7 +463,7 @@ public sealed class AppSessionOperationsTests
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
 
-        using IAppSessionAccessor lease = await waiter;
+        await using IAppSessionAccessor lease = await waiter;
         Assert.Equal(account, lease.RequireUnlockedState().Account);
         Assert.Same(vault, lease.RequireUnlockedState().Vault);
     }
@@ -512,8 +513,8 @@ public sealed class AppSessionOperationsTests
 
         Assert.IsType<AppSessionStateSnapshot.Locked>(context.Store.State);
         _ = userKey.Key;
-        lease.Dispose();
-        lease.Dispose();
+        await lease.DisposeAsync();
+        await lease.DisposeAsync();
         Assert.Throws<ObjectDisposedException>(() => userKey.Key.ToArray());
     }
 

@@ -17,5 +17,7 @@ internal static class VaultModuleServiceCollection
 
         services.AddScoped<IVaultService, VaultService>();
         services.AddScoped<IVaultCipherAttachmentService, VaultCipherAttachmentService>();
+
+        services.AddNotificationHandlers<VaultSyncNotificationsHandler>();
     }
 }

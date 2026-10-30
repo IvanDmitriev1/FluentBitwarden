@@ -26,7 +26,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         AccountSessionTokens tokens = Tokens(accountContext, "shared");
         accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(tokens));
-        using ServiceProvider services = CreateServices(accountService);
+        await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope firstScope = services.CreateScope();
         using IServiceScope secondScope = services.CreateScope();
 
@@ -51,7 +51,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         accountService.RefreshSessionTokens(firstAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(firstTokens));
         accountService.RefreshSessionTokens(secondAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(secondTokens));
         accountService.RefreshSessionTokens(europeanAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(europeanTokens));
-        using ServiceProvider services = CreateServices(accountService);
+        await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
         IAccessTokenProvider provider = Provider(scope);
 
@@ -74,7 +74,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         int refreshCount = 0;
         accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult(Interlocked.Increment(ref refreshCount) == 1 ? expiredTokens : replacementTokens));
-        using ServiceProvider services = CreateServices(accountService);
+        await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
         IAccessTokenProvider provider = Provider(scope);
 
@@ -101,7 +101,7 @@ public sealed class AccountSessionAccessTokenProviderTests
                 await WaitWithCancellationAsync(releaseRefresh.Task, call.Arg<CancellationToken>());
                 return tokens;
             });
-        using ServiceProvider services = CreateServices(accountService);
+        await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope firstScope = services.CreateScope();
         using IServiceScope secondScope = services.CreateScope();
 
@@ -128,7 +128,7 @@ public sealed class AccountSessionAccessTokenProviderTests
             .Returns(_ => Interlocked.Increment(ref refreshCount) == 1
                 ? Task.FromException<AccountSessionTokens>(new InvalidOperationException("Synthetic refresh failure."))
                 : Task.FromResult(tokens));
-        using ServiceProvider services = CreateServices(accountService);
+        await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
         IAccessTokenProvider provider = Provider(scope);
 
@@ -157,7 +157,7 @@ public sealed class AccountSessionAccessTokenProviderTests
 
                 return tokens;
             });
-        using ServiceProvider services = CreateServices(accountService);
+        await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
         IAccessTokenProvider provider = Provider(scope);
         using var cancellation = new CancellationTokenSource();
@@ -198,7 +198,7 @@ public sealed class AccountSessionAccessTokenProviderTests
                 return tokens;
             });
 
-        using ServiceProvider services = CreateServices(accountService, vaultService);
+        await using ServiceProvider services = CreateServices(accountService, vaultService);
         using IServiceScope scope = services.CreateScope();
         IAppSessionOperations sessionOperations = scope.ServiceProvider.GetRequiredService<IAppSessionOperations>();
         var sessionStore = scope.ServiceProvider.GetRequiredService<AppSessionStore>();
@@ -223,7 +223,7 @@ public sealed class AccountSessionAccessTokenProviderTests
     }
 
     [Fact]
-    public void Registers_the_session_service_and_token_cache_with_the_required_lifetimes()
+    public async Task Registers_the_session_service_and_token_cache_with_the_required_lifetimes()
     {
         var services = new ServiceCollection();
         services.AddAccountModule();
@@ -232,8 +232,12 @@ public sealed class AccountSessionAccessTokenProviderTests
         services.AddSingleton(Substitute.For<IVaultService>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
+        services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsClientFactory>());
+        var networkStatus = Substitute.For<FluentBitwarden.Platform.Infrastructure.Connectivity.INetworkStatus>();
+        networkStatus.HasInternetAccess.Returns(false);
+        services.AddSingleton(networkStatus);
 
-        using ServiceProvider provider = services.BuildServiceProvider();
+        await using ServiceProvider provider = services.BuildServiceProvider();
         using IServiceScope firstScope = provider.CreateScope();
         using IServiceScope secondScope = provider.CreateScope();
         IAppSessionOperations firstSession = firstScope.ServiceProvider.GetRequiredService<IAppSessionOperations>();
@@ -243,7 +247,7 @@ public sealed class AccountSessionAccessTokenProviderTests
 
         Assert.IsType<AppSessionOperations>(firstSession);
         Assert.NotSame(firstSession, secondSession);
-        Assert.NotSame(firstTokenProvider, secondTokenProvider);
+        Assert.Same(firstTokenProvider, secondTokenProvider);
         Assert.Same(
             firstScope.ServiceProvider.GetRequiredService<AppSessionStore>(),
             secondScope.ServiceProvider.GetRequiredService<AppSessionStore>());
