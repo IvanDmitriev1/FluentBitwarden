@@ -88,8 +88,7 @@ public sealed class NotificationsScopeTests
     private sealed class MissingAccessTokenProvider : BitwardenApi.Client.IAccessTokenProvider
     {
         public ValueTask<SessionAccessToken> GetAccessTokenAsync(
-            BitwardenAccountContext accountContext,
-            CancellationToken cancellationToken = default) =>
+            BitwardenAccountContext accountContext) =>
             throw new NotSupportedException("Dispatch does not request an access token.");
     }
 }

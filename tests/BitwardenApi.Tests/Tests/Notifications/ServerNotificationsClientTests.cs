@@ -29,7 +29,7 @@ public sealed class ServerNotificationsClientTests
     {
         using var timeout = CreateTimeoutTokenSource();
         var accessTokenProvider = Substitute.For<IAccessTokenProvider>();
-        accessTokenProvider.GetAccessTokenAsync(TestApiSupport.AccountContext, CancellationToken.None)
+        accessTokenProvider.GetAccessTokenAsync(TestApiSupport.AccountContext)
             .Returns(ValueTask.FromResult(SessionAccessToken.Parse("notifications-session-token")));
         await using var transport = new NotificationTestConnectionFactory
         {
@@ -41,7 +41,7 @@ public sealed class ServerNotificationsClientTests
         await api.ConnectAsync(TestApiSupport.AccountContext);
 
         Assert.Equal("notifications-session-token", transport.AccessToken);
-        await accessTokenProvider.Received(1).GetAccessTokenAsync(TestApiSupport.AccountContext, CancellationToken.None);
+        await accessTokenProvider.Received(1).GetAccessTokenAsync(TestApiSupport.AccountContext);
     }
 
     [Fact]
@@ -128,9 +128,7 @@ public sealed class ServerNotificationsClientTests
     private static IAccessTokenProvider CreateAccessTokenProvider()
     {
         var accessTokenProvider = Substitute.For<IAccessTokenProvider>();
-        accessTokenProvider.GetAccessTokenAsync(
-                Arg.Any<BitwardenAccountContext>(),
-                Arg.Any<CancellationToken>())
+        accessTokenProvider.GetAccessTokenAsync(Arg.Any<BitwardenAccountContext>())
             .Returns(ValueTask.FromResult(SessionAccessToken.Parse("notifications-test-token")));
         return accessTokenProvider;
     }

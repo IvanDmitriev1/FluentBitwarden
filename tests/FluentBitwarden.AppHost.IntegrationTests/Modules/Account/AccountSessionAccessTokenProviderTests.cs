@@ -24,18 +24,18 @@ public sealed class AccountSessionAccessTokenProviderTests
         var accountService = Substitute.For<IAccountService>();
         BitwardenAccountContext accountContext = Context(AccountTestData.FirstUserId);
         AccountSessionTokens tokens = Tokens(accountContext, "shared");
-        accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
+        accountService.RefreshSessionTokensAsync(accountContext)
             .Returns(Task.FromResult(tokens));
         await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope firstScope = services.CreateScope();
         using IServiceScope secondScope = services.CreateScope();
 
-        SessionAccessToken first = await GetToken(Provider(firstScope), accountContext, TestContext.Current.CancellationToken);
-        SessionAccessToken second = await GetToken(Provider(secondScope), accountContext, TestContext.Current.CancellationToken);
+        SessionAccessToken first = await GetToken(Provider(firstScope), accountContext);
+        SessionAccessToken second = await GetToken(Provider(secondScope), accountContext);
 
         Assert.Equal(tokens.AccessToken, first);
         Assert.Equal(first, second);
-        await accountService.Received(1).RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>());
+        await accountService.Received(1).RefreshSessionTokensAsync(accountContext);
     }
 
     [Fact]
@@ -48,20 +48,20 @@ public sealed class AccountSessionAccessTokenProviderTests
         AccountSessionTokens firstTokens = Tokens(firstAccount, "first-us");
         AccountSessionTokens secondTokens = Tokens(secondAccount, "second-us");
         AccountSessionTokens europeanTokens = Tokens(europeanAccount, "first-eu");
-        accountService.RefreshSessionTokens(firstAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(firstTokens));
-        accountService.RefreshSessionTokens(secondAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(secondTokens));
-        accountService.RefreshSessionTokens(europeanAccount, Arg.Any<CancellationToken>()).Returns(Task.FromResult(europeanTokens));
+        accountService.RefreshSessionTokensAsync(firstAccount).Returns(Task.FromResult(firstTokens));
+        accountService.RefreshSessionTokensAsync(secondAccount).Returns(Task.FromResult(secondTokens));
+        accountService.RefreshSessionTokensAsync(europeanAccount).Returns(Task.FromResult(europeanTokens));
         await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
         IAccessTokenProvider provider = Provider(scope);
 
-        Assert.Equal(firstTokens.AccessToken, await GetToken(provider, firstAccount, TestContext.Current.CancellationToken));
-        Assert.Equal(secondTokens.AccessToken, await GetToken(provider, secondAccount, TestContext.Current.CancellationToken));
-        Assert.Equal(europeanTokens.AccessToken, await GetToken(provider, europeanAccount, TestContext.Current.CancellationToken));
+        Assert.Equal(firstTokens.AccessToken, await GetToken(provider, firstAccount));
+        Assert.Equal(secondTokens.AccessToken, await GetToken(provider, secondAccount));
+        Assert.Equal(europeanTokens.AccessToken, await GetToken(provider, europeanAccount));
 
-        await accountService.Received(1).RefreshSessionTokens(firstAccount, Arg.Any<CancellationToken>());
-        await accountService.Received(1).RefreshSessionTokens(secondAccount, Arg.Any<CancellationToken>());
-        await accountService.Received(1).RefreshSessionTokens(europeanAccount, Arg.Any<CancellationToken>());
+        await accountService.Received(1).RefreshSessionTokensAsync(firstAccount);
+        await accountService.Received(1).RefreshSessionTokensAsync(secondAccount);
+        await accountService.Received(1).RefreshSessionTokensAsync(europeanAccount);
     }
 
     [Fact]
@@ -72,15 +72,15 @@ public sealed class AccountSessionAccessTokenProviderTests
         AccountSessionTokens expiredTokens = Tokens(accountContext, "expired", DateTimeOffset.UtcNow.AddMinutes(4));
         AccountSessionTokens replacementTokens = Tokens(accountContext, "replacement");
         int refreshCount = 0;
-        accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
+        accountService.RefreshSessionTokensAsync(accountContext)
             .Returns(_ => Task.FromResult(Interlocked.Increment(ref refreshCount) == 1 ? expiredTokens : replacementTokens));
         await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope scope = services.CreateScope();
         IAccessTokenProvider provider = Provider(scope);
 
-        Assert.Equal(expiredTokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
-        Assert.Equal(replacementTokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
-        Assert.Equal(replacementTokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
+        Assert.Equal(expiredTokens.AccessToken, await GetToken(provider, accountContext));
+        Assert.Equal(replacementTokens.AccessToken, await GetToken(provider, accountContext));
+        Assert.Equal(replacementTokens.AccessToken, await GetToken(provider, accountContext));
         Assert.Equal(2, refreshCount);
     }
 
@@ -93,21 +93,21 @@ public sealed class AccountSessionAccessTokenProviderTests
         var refreshStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseRefresh = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         int refreshCount = 0;
-        accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
+        accountService.RefreshSessionTokensAsync(accountContext)
             .Returns(async call =>
             {
                 Interlocked.Increment(ref refreshCount);
                 refreshStarted.TrySetResult();
-                await WaitWithCancellationAsync(releaseRefresh.Task, call.Arg<CancellationToken>());
+                await releaseRefresh.Task;
                 return tokens;
             });
         await using ServiceProvider services = CreateServices(accountService);
         using IServiceScope firstScope = services.CreateScope();
         using IServiceScope secondScope = services.CreateScope();
 
-        Task<SessionAccessToken> first = GetToken(Provider(firstScope), accountContext, TestContext.Current.CancellationToken).AsTask();
+        Task<SessionAccessToken> first = GetToken(Provider(firstScope), accountContext).AsTask();
         await WaitWithTimeoutAsync(refreshStarted.Task, TimeSpan.FromSeconds(5));
-        Task<SessionAccessToken> second = GetToken(Provider(secondScope), accountContext, TestContext.Current.CancellationToken).AsTask();
+        Task<SessionAccessToken> second = GetToken(Provider(secondScope), accountContext).AsTask();
         Assert.False(second.IsCompleted);
         releaseRefresh.TrySetResult();
 
@@ -124,7 +124,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         BitwardenAccountContext accountContext = Context(AccountTestData.FirstUserId);
         AccountSessionTokens tokens = Tokens(accountContext, "after-failure");
         int refreshCount = 0;
-        accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
+        accountService.RefreshSessionTokensAsync(accountContext)
             .Returns(_ => Interlocked.Increment(ref refreshCount) == 1
                 ? Task.FromException<AccountSessionTokens>(new InvalidOperationException("Synthetic refresh failure."))
                 : Task.FromResult(tokens));
@@ -133,41 +133,8 @@ public sealed class AccountSessionAccessTokenProviderTests
         IAccessTokenProvider provider = Provider(scope);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
-        Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
-        Assert.Equal(2, refreshCount);
-    }
-
-    [Fact]
-    public async Task Releases_refresh_coordination_after_cancellation()
-    {
-        var accountService = Substitute.For<IAccountService>();
-        BitwardenAccountContext accountContext = Context(AccountTestData.FirstUserId);
-        AccountSessionTokens tokens = Tokens(accountContext, "after-cancellation");
-        var refreshStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        int refreshCount = 0;
-        accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
-            .Returns(async call =>
-            {
-                if (Interlocked.Increment(ref refreshCount) == 1)
-                {
-                    refreshStarted.TrySetResult();
-                    await DelayUntilCancelledAsync(call.Arg<CancellationToken>());
-                }
-
-                return tokens;
-            });
-        await using ServiceProvider services = CreateServices(accountService);
-        using IServiceScope scope = services.CreateScope();
-        IAccessTokenProvider provider = Provider(scope);
-        using var cancellation = new CancellationTokenSource();
-
-        Task<SessionAccessToken> cancelledRequest = GetToken(provider, accountContext, cancellation.Token).AsTask();
-        await WaitWithTimeoutAsync(refreshStarted.Task, TimeSpan.FromSeconds(5));
-        cancellation.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelledRequest);
-
-        Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
+            await GetToken(provider, accountContext));
+        Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext));
         Assert.Equal(2, refreshCount);
     }
 
@@ -190,11 +157,11 @@ public sealed class AccountSessionAccessTokenProviderTests
         AccountSessionTokens tokens = Tokens(accountContext, "paused-refresh");
         var refreshStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseRefresh = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        accountService.RefreshSessionTokens(accountContext, Arg.Any<CancellationToken>())
+        accountService.RefreshSessionTokensAsync(accountContext)
             .Returns(async call =>
             {
                 refreshStarted.TrySetResult();
-                await WaitWithCancellationAsync(releaseRefresh.Task, call.Arg<CancellationToken>());
+                await releaseRefresh.Task;
                 return tokens;
             });
 
@@ -207,7 +174,7 @@ public sealed class AccountSessionAccessTokenProviderTests
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
         IAccessTokenProvider provider = Provider(scope);
-        Task<SessionAccessToken> refresh = GetToken(provider, accountContext, TestContext.Current.CancellationToken).AsTask();
+        Task<SessionAccessToken> refresh = GetToken(provider, accountContext).AsTask();
         await WaitWithTimeoutAsync(refreshStarted.Task, TimeSpan.FromSeconds(5));
 
         Task lockTask = sessionOperations.LockAsync(TestContext.Current.CancellationToken);
@@ -218,7 +185,7 @@ public sealed class AccountSessionAccessTokenProviderTests
 
         AppSessionStateSnapshot.Locked lockedState = Assert.IsType<AppSessionStateSnapshot.Locked>(sessionStore.State);
         Assert.Equal(account, lockedState.Account);
-        Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext, TestContext.Current.CancellationToken));
+        Assert.Equal(tokens.AccessToken, await GetToken(provider, accountContext));
         Assert.Equal(lockedState, sessionStore.State);
     }
 

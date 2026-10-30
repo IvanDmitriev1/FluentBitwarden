@@ -9,6 +9,6 @@ internal sealed class VaultOperationsIpcHandler(
 {
     public async Task<VaultSyncResult> SyncAsync(SyncVaultRequest request, CancellationToken cancellationToken = default)
     {
-        return await vaultService.SyncAsync(cancellationToken);
+        return await vaultService.SyncAsync();
     }
 }

@@ -9,6 +9,6 @@ public interface IAccountService
     AccountProfile? GetAccount(UserId userId);
 
     Task<AccountAuthenticationOutcome> AuthenticateAsync(AccountAuthenticationRequest request, CancellationToken cancellationToken);
-    Task<AccountSessionTokens> RefreshSessionTokens(BitwardenAccountContext accountContext, CancellationToken cancellationToken);
+    Task<AccountSessionTokens> RefreshSessionTokensAsync(BitwardenAccountContext accountContext);
     AccountKeyUnlockResult UnlockKey(UserId userId, AccountUnlockMethod method);
 }

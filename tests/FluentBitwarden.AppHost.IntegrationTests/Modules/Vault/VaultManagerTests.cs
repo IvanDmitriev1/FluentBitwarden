@@ -47,7 +47,7 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(CancellationToken.None);
+        var result = await context.VaultService.SyncAsync();
 
         Assert.Equal(VaultSyncResult.SkippedOffline, result);
         _ = context.SyncApi.DidNotReceive().GetRevisionDateAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>());
@@ -72,7 +72,7 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(CancellationToken.None);
+        var result = await context.VaultService.SyncAsync();
 
         Assert.Equal(VaultSyncResult.NoChanges, result);
         _ = context.SyncApi.DidNotReceive().GetSyncAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>());
@@ -102,7 +102,7 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(CancellationToken.None);
+        var result = await context.VaultService.SyncAsync();
 
         Assert.Equal(VaultSyncResult.Synced, result);
         await context.SyncApi.Received(1).GetRevisionDateAsync(context.AccountContext, Arg.Any<CancellationToken>());
@@ -140,7 +140,7 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(CancellationToken.None);
+        var result = await context.VaultService.SyncAsync();
 
         Assert.Equal(VaultSyncResult.Failed, result);
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
@@ -184,7 +184,7 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(CancellationToken.None);
+        var result = await context.VaultService.SyncAsync();
 
         Assert.Equal(VaultSyncResult.Failed, result);
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
@@ -210,7 +210,7 @@ public sealed class VaultManagerTests
         using var vault = context.OpenVault();
 
         context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(CancellationToken.None);
+        var result = await context.VaultService.SyncAsync();
 
         Assert.Equal(VaultSyncResult.Failed, result);
         Assert.Equal(lastRevision, context.GetServerRevisionDate());
@@ -219,32 +219,6 @@ public sealed class VaultManagerTests
         using var cachedVault = context.OpenVault();
         Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
         Assert.Equal("Cached folder", Assert.Single(cachedVault.GetFolders()).Name);
-    }
-
-    [Fact]
-    public async Task Sync_returns_skipped_offline_when_a_request_is_canceled_without_changing_cache()
-    {
-        using var context = new VaultManagerTestContext();
-        using var keySession = context.CreateKeySession();
-        var cachedCipher = VaultManagerTestData.Cipher("cached-cipher", keySession.UserKey.Key);
-        DateTimeOffset lastRevision = VaultManagerTestData.RevisionDate;
-        context.SeedCache([cachedCipher], [], lastRevision);
-        context.SyncApi.GetRevisionDateAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>())
-            .Returns(lastRevision.AddDays(1));
-        using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
-        context.SyncApi.GetSyncAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromCanceled<VaultSyncResponse>(cancellation.Token));
-        using var vault = context.OpenVault();
-
-        context.CreateLease(vault, keySession);
-        var result = await context.VaultService.SyncAsync(cancellation.Token);
-
-        Assert.Equal(VaultSyncResult.SkippedOffline, result);
-        Assert.Equal(lastRevision, context.GetServerRevisionDate());
-        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
-        using var cachedVault = context.OpenVault();
-        Assert.Equal("Synthetic item", cachedVault.GetCipher(cachedCipher.Id)?.Name);
     }
 
     [Fact]

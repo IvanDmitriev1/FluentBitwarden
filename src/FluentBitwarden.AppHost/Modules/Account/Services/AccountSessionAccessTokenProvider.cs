@@ -9,12 +9,10 @@ internal sealed class AccountSessionAccessTokenProvider(
     IServiceScopeFactory scopeFactory,
     AccountTokenCache tokenCache) : IAccessTokenProvider
 {
-    public async ValueTask<SessionAccessToken> GetAccessTokenAsync(
-        BitwardenAccountContext context,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<SessionAccessToken> GetAccessTokenAsync(BitwardenAccountContext context)
     {
         using var entry =
-            await tokenCache.AcquireAsync(context, cancellationToken);
+            await tokenCache.AcquireAsync(context);
 
         if (entry.TryGetValidAccessToken(out var token))
             return token;
@@ -24,8 +22,7 @@ internal sealed class AccountSessionAccessTokenProvider(
         var accountService =
             scope.ServiceProvider.GetRequiredService<IAccountService>();
 
-        var refreshed = await accountService.RefreshSessionTokens(
-            context, cancellationToken);
+        var refreshed = await accountService.RefreshSessionTokensAsync(context);
 
         entry.Store(refreshed);
         return refreshed.AccessToken;

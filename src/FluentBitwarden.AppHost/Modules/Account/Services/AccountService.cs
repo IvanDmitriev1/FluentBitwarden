@@ -40,10 +40,10 @@ internal sealed class AccountService(
         return new AccountAuthenticationOutcome.Success(profile);
     }
 
-    public async Task<AccountSessionTokens> RefreshSessionTokens(BitwardenAccountContext accountContext, CancellationToken cancellationToken)
+    public async Task<AccountSessionTokens> RefreshSessionTokensAsync(BitwardenAccountContext accountContext)
     {
         var refreshToken = accountBitwardenSessionTokenRepository.Get(accountContext.UserId);
-        var result = await identityApi.RefreshAuthenticationAsync(new RefreshAuthenticationRequest(new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo), refreshToken), cancellationToken);
+        var result = await identityApi.RefreshAuthenticationAsync(new RefreshAuthenticationRequest(new BitwardenClientContext(accountContext.Environment, DeviceIdentity.DeviceInfo), refreshToken));
         if (result is SessionTokenResult<RefreshedSession>.Rejected rejected)
             throw new AccountSessionRefreshException(rejected);
 

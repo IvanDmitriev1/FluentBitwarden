@@ -24,9 +24,7 @@ internal static class TestApiSupport
         var services = new ServiceCollection();
         services.AddBitwardenApi();
         var accessTokenProvider = Substitute.For<IAccessTokenProvider>();
-        accessTokenProvider.GetAccessTokenAsync(
-                Arg.Any<BitwardenAccountContext>(),
-                Arg.Any<CancellationToken>())
+        accessTokenProvider.GetAccessTokenAsync(Arg.Any<BitwardenAccountContext>())
             .Returns(ValueTask.FromResult(SessionAccessToken.Parse("vault-access-token")));
         services.AddSingleton<IAccessTokenProvider>(accessTokenProvider);
 

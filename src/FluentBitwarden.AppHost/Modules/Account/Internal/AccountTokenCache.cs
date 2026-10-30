@@ -8,11 +8,9 @@ internal sealed class AccountTokenCache
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private readonly Dictionary<BitwardenAccountContext, AccountSessionTokens> _tokens = [];
 
-    public async ValueTask<Entry> AcquireAsync(
-        BitwardenAccountContext context,
-        CancellationToken cancellationToken)
+    public async ValueTask<Entry> AcquireAsync(BitwardenAccountContext context)
     {
-        await _refreshGate.WaitAsync(cancellationToken);
+        await _refreshGate.WaitAsync();
         return new Entry(this, context);
     }
 

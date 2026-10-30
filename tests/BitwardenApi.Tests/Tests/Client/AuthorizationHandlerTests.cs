@@ -16,7 +16,7 @@ public sealed class AuthorizationHandlerTests
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         SessionAccessToken accessToken = SessionAccessToken.Parse("account-specific-token");
         IAccessTokenProvider accessTokenProvider = Substitute.For<IAccessTokenProvider>();
-        accessTokenProvider.GetAccessTokenAsync(accountContext, cancellationToken)
+        accessTokenProvider.GetAccessTokenAsync(accountContext)
             .Returns(ValueTask.FromResult(accessToken));
 
         var terminalHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
@@ -30,7 +30,7 @@ public sealed class AuthorizationHandlerTests
 
         using HttpResponseMessage response = await invoker.SendAsync(request, cancellationToken);
 
-        await accessTokenProvider.Received(1).GetAccessTokenAsync(accountContext, cancellationToken);
+        await accessTokenProvider.Received(1).GetAccessTokenAsync(accountContext);
         Assert.Equal(
             ["Bearer account-specific-token"],
             Assert.Single(terminalHandler.Requests).Headers["Authorization"]);

@@ -37,7 +37,7 @@ internal sealed class VaultService(
         return new UnlockedVault(data);
     }
 
-    public async Task<VaultSyncResult> SyncAsync(CancellationToken cancellationToken)
+    public async Task<VaultSyncResult> SyncAsync()
     {
         (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession, _) = appSessionAccessor.RequireUnlockedState();
         BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
@@ -47,13 +47,13 @@ internal sealed class VaultService(
             if (!networkStatus.HasInternetAccess)
                 return VaultSyncResult.SkippedOffline;
 
-            var revisionDate = await vaultSyncApi.GetRevisionDateAsync(accountContext, cancellationToken);
+            var revisionDate = await vaultSyncApi.GetRevisionDateAsync(accountContext);
             var userId = accountProfile.UserId;
             var lastSync = vaultSyncStateRepository.GetServerRevisionDate(userId);
             if (lastSync is not null && lastSync.Value >= revisionDate)
                 return VaultSyncResult.NoChanges;
 
-            var response = await vaultSyncApi.GetSyncAsync(accountContext, cancellationToken);
+            var response = await vaultSyncApi.GetSyncAsync(accountContext);
             if (response.Profile.Id != userId)
                 throw new InvalidDataException("Sync profile user id did not match the unlocked account.");
 
@@ -69,10 +69,6 @@ internal sealed class VaultService(
 
             vault.ReplaceContents(data.Ciphers, data.Folders, data.Collections);
             return VaultSyncResult.Synced;
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return VaultSyncResult.SkippedOffline;
         }
         catch (Exception e)
         {

@@ -8,7 +8,7 @@ public interface IVaultService
 {
     IUnlockedVault Open(BitwardenAccountContext accountContext, IAccountKeySession keySession);
 
-    Task<VaultSyncResult> SyncAsync(CancellationToken cancellationToken);
+    Task<VaultSyncResult> SyncAsync();
     Task SyncCipherAsync(CipherId id, CancellationToken cancellationToken);
     Task SyncFolderAsync(FolderId id, CancellationToken cancellationToken);
 

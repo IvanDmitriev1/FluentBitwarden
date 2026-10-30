@@ -77,9 +77,7 @@ internal sealed class ServerNotificationsClient(
 
                 options.AccessTokenProvider = async () =>
                 {
-                    SessionAccessToken sessionAccessToken = await accessTokenProvider.GetAccessTokenAsync(
-                        accountContext,
-                        CancellationToken.None);
+                    SessionAccessToken sessionAccessToken = await accessTokenProvider.GetAccessTokenAsync(accountContext);
 
                     return sessionAccessToken.ToString();
                 };

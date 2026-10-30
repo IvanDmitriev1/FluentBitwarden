@@ -261,9 +261,7 @@ public sealed class AccountServiceTests
                 new SessionTokenResult<RefreshedSession>.Success(
                     new RefreshedSession(accessToken, newRefreshToken, default, expiresAt))));
 
-        AccountSessionTokens result = await context.Service.RefreshSessionTokens(
-            profile.BitwardenAccountContext,
-            TestContext.Current.CancellationToken);
+        AccountSessionTokens result = await context.Service.RefreshSessionTokensAsync(profile.BitwardenAccountContext);
 
         Assert.Equal(profile.UserId, result.UserId);
         Assert.Equal(newRefreshToken, result.RefreshToken);
@@ -293,9 +291,7 @@ public sealed class AccountServiceTests
             .Returns(Task.FromResult<SessionTokenResult<RefreshedSession>>(rejected));
 
         AccountSessionRefreshException exception = await Assert.ThrowsAsync<AccountSessionRefreshException>(
-            () => context.Service.RefreshSessionTokens(
-                profile.BitwardenAccountContext,
-                TestContext.Current.CancellationToken));
+            () => context.Service.RefreshSessionTokensAsync(profile.BitwardenAccountContext));
 
         using var persistedReadUnitOfWork = database.CreateUnitOfWork();
         Assert.Equal(rejected, exception.Outcome);

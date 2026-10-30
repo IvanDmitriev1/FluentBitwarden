@@ -32,18 +32,11 @@ internal static class AccountSessionAccessTokenProviderTestSupport
 
     internal static ValueTask<SessionAccessToken> GetToken(
         IAccessTokenProvider provider,
-        BitwardenAccountContext accountContext,
-        CancellationToken cancellationToken) =>
-        provider.GetAccessTokenAsync(accountContext, cancellationToken);
+        BitwardenAccountContext accountContext) =>
+        provider.GetAccessTokenAsync(accountContext);
 
     internal static Task WaitWithTimeoutAsync(Task task, TimeSpan timeout) =>
         task.WaitAsync(timeout, TestContext.Current.CancellationToken);
-
-    internal static Task WaitWithCancellationAsync(Task task, CancellationToken cancellationToken) =>
-        task.WaitAsync(cancellationToken);
-
-    internal static Task DelayUntilCancelledAsync(CancellationToken cancellationToken) =>
-        Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
 
     internal static BitwardenAccountContext Context(string userId, BitwardenEnvironment? environment = null) =>
         new(UserId.Parse(userId), environment ?? BitwardenEnvironment.UnitedStates);
