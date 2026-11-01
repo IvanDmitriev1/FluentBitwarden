@@ -12,15 +12,22 @@ public sealed class VaultSyncApiTests
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
             () => TestApiSupport.JsonResponse("1767225600123"));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/api/")
+            }
+        };
 
         DateTimeOffset result = await provider.GetRequiredService<IVaultSyncApi>().GetRevisionDateAsync(
-            TestApiSupport.AccountContext,
+            account,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(1767225600123), result);
         TestApiSupport.RecordedRequest request = Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Get, request.Method);
-        Assert.Equal("/accounts/revision-date", request.RequestUri.AbsolutePath);
+        Assert.Equal("/api/accounts/revision-date", request.RequestUri.AbsolutePath);
         Assert.Equal(["Bearer vault-access-token"], request.Headers["Authorization"]);
     }
 
@@ -120,9 +127,16 @@ public sealed class VaultSyncApiTests
                 }
                 """));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/tenant/v1/api")
+            }
+        };
 
         VaultSyncResponse result = await provider.GetRequiredService<IVaultSyncApi>().GetSyncAsync(
-            TestApiSupport.AccountContext,
+            account,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(UserId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), result.Profile.Id);
@@ -131,7 +145,7 @@ public sealed class VaultSyncApiTests
         Assert.Equal(FolderId.Parse("folder-id"), folder.Id);
         Assert.Equal(DateTimeOffset.Parse("2026-01-02T00:00:00Z"), folder.RevisionDate);
         Assert.Equal(TestApiSupport.ParseEncString(encoded), folder.EncryptedName);
-        Assert.Equal("/sync", Assert.Single(handler.Requests).RequestUri.AbsolutePath);
+        Assert.Equal("/tenant/v1/api/sync", Assert.Single(handler.Requests).RequestUri.AbsolutePath);
         Assert.Equal("excludeDomains=true", handler.Requests.Single().RequestUri.Query.TrimStart('?'));
     }
 

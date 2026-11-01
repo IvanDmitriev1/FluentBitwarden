@@ -33,13 +33,13 @@ public sealed class CryptoTests
     [Fact]
     public void Hash_master_password_with_argon2id_matches_the_fixed_reference_vector()
     {
+        // The SDK hashes the UTF-8 salt with SHA-256 before Argon2id.
         MasterPasswordHash hash = MasterPassword.HashMasterPassword(
             "user@example.test",
             "password",
             new KdfConfig.Argon2Id(2, 8, 1));
 
-        // argon2-cffi 25.1.0: Argon2id(password, email, time=2, memory=8192 KiB, parallelism=1), then auth PBKDF2(1).
-        Assert.Equal("NyKRRcjEiUThbYJBpNForKoV5XIyxzrX1I13CJ9h/X4=", hash.Value);
+        Assert.Equal("XuB6Ndmbr8qe1Wrdyo8MyZljVe4Uh8hhBAj+AAVX8dg=", hash.Value);
     }
 
     [Fact]
@@ -122,6 +122,68 @@ public sealed class CryptoTests
         EncString value = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284A=");
 
         Assert.Throws<CryptographicException>(() => value.Decode(TestKey));
+    }
+
+    [Fact]
+    public void Decode_rejects_a_downgraded_authenticated_enc_string_on_every_decode_path()
+    {
+        const string encoded = "0.NQfjHLr6za7VQVAbrpL81w==|wfrjmyJ0bfwkQlySrhw8dA==";
+        byte[] key = Convert.FromBase64String(
+            "hvBMMb1t79YssFZkpetYsM3deyVuQv4r88Uj9gvYe0+G8EwxvW3v1iywVmSl61iwzd17JW5C/ivzxSP2C9h7Tw==");
+        EncString value = TestApiSupport.ParseEncString(encoded);
+
+        Assert.Throws<CryptographicException>(() => value.Decode(key));
+        Assert.Throws<CryptographicException>(() => value.DecodeToArray(key));
+        Assert.Throws<CryptographicException>(() => System.Text.Encoding.UTF8.GetBytes(encoded).AsSpan().DecodeEncString(key));
+        Assert.Throws<CryptographicException>(() => System.Text.Encoding.UTF8.GetBytes(encoded).AsSpan().DecodeEncStringInPlace(key));
+    }
+
+    [Theory]
+    [InlineData(31, false)]
+    [InlineData(32, true)]
+    [InlineData(33, false)]
+    public void Legacy_enc_string_matches_sdk_vector_and_requires_exactly_32_key_bytes(int keyLength, bool succeeds)
+    {
+        byte[] key = Convert.FromBase64String(
+            "hvBMMb1t79YssFZkpetYsM3deyVuQv4r88Uj9gvYe08=");
+        Array.Resize(ref key, keyLength);
+        // Pinned SDK master_key.rs test_decrypt_cbc256 interoperability vector.
+        EncString value = TestApiSupport.ParseEncString(
+            "0.tn/heK4HLbbEe+yEkC+kvw==|8QM94f7aVTtjm/bmvRdVxOxiLiiZtHYYO7+oBdjFCkilncesx0iVrXPl+tMKqW+Jo7+FtZdPNsTrL6RdoG7i5QbCRVwK+9010+xm7MTQY8s=");
+
+        if (succeeds)
+        {
+            Assert.Equal(
+                "74AABB2B50D4C1CAEAB5394297F93B2F46103904AA4E55F198E85B390957D1F528F56A8C02E18AD562DF5CA887D016C21F15B2FCCBC623AE35DAFE97EB390762",
+                Convert.ToHexString(value.DecodeToArray(key)));
+        }
+        else
+        {
+            Assert.Throws<CryptographicException>(() => value.DecodeToArray(key));
+        }
+    }
+
+    [Theory]
+    [InlineData(63, false)]
+    [InlineData(64, true)]
+    [InlineData(65, false)]
+    public void Authenticated_enc_string_requires_exactly_64_key_bytes(int keyLength, bool succeeds)
+    {
+        byte[] key = TestKey.ToArray();
+        Array.Resize(ref key, keyLength);
+        EncString value = TestApiSupport.ParseEncString(CryptoTestFixtures.AuthenticatedEncString);
+
+        if (succeeds)
+        {
+            Assert.Equal("fixture plaintext", value.Decode(key));
+            EncString encrypted = EncString.Encrypt("key length", key);
+            Assert.Equal("key length", encrypted.Decode(key));
+        }
+        else
+        {
+            Assert.Throws<CryptographicException>(() => value.Decode(key));
+            Assert.Throws<CryptographicException>(() => EncString.Encrypt("key length", key));
+        }
     }
 
     [Theory]

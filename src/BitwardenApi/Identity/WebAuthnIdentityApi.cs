@@ -14,7 +14,7 @@ internal sealed class WebAuthnIdentityApi(IHttpClientFactory httpClientFactory) 
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Identity);
-        Uri endpoint = new(context.Environment.IdentityBase, "/accounts/webauthn/assertion-options");
+        Uri endpoint = new(context.Environment.IdentityBase, "accounts/webauthn/assertion-options");
 
         using var response = await httpClient.GetAsync(endpoint, cancellationToken);
         response.EnsureSuccess("Identity get WebAuthn assertion options", cancellationToken);

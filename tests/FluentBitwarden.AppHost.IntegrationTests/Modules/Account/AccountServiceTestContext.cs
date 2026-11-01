@@ -1,4 +1,5 @@
 using BitwardenApi.Identity;
+using BitwardenApi.Cryptography.KeyDerivation;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Services;
@@ -11,6 +12,11 @@ internal sealed class AccountServiceTestContext : IDisposable
     {
         UnitOfWork = database.CreateUnitOfWork();
         IdentityApi = Substitute.For<IIdentityApi>();
+        IdentityApi.GetPasswordPreloginAsync(
+                Arg.Any<BitwardenClientContext>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PasswordPreloginData(new KdfConfig.Pbkdf2(2), null)));
         WebAuthnIdentityApi = Substitute.For<IWebAuthnIdentityApi>();
         WindowsHelloService = Substitute.For<IAccountWindowsHelloService>();
         Service = new AccountService(

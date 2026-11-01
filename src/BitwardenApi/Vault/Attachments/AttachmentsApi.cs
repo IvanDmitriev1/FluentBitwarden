@@ -52,9 +52,7 @@ internal sealed class AttachmentsApi(IHttpClientFactory httpClientFactory) : IAt
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
 
-        Uri requestUri = new(
-            accountContext.Environment.ApiBase,
-            $"/ciphers/{cipherId}/attachment/{attachmentId}");
+        Uri requestUri = new(accountContext.Environment.ApiBase, $"ciphers/{cipherId}/attachment/{attachmentId}");
 
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         requestMessage.SetBitwardenAccountContext(accountContext);

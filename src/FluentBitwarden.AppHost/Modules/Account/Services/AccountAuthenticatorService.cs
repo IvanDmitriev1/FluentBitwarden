@@ -44,10 +44,15 @@ internal sealed class AccountAuthenticatorService(
         AccountAuthenticationRequest.Password request,
         CancellationToken cancellationToken)
     {
-        var serverAuthorizationHash = MasterPassword.HashMasterPassword(
+        PasswordPreloginData prelogin = await identityApi.GetPasswordPreloginAsync(
+            request.Context,
             request.Email,
+            cancellationToken);
+        string salt = prelogin.Salt ?? request.Email.Trim().ToLowerInvariant();
+        string serverAuthorizationHash = HashMasterPassword(
             request.MasterPassword,
-            new KdfConfig.Pbkdf2(600000)).Value;
+            salt,
+            prelogin.KdfConfig);
 
         var result = await identityApi.AuthenticateWithPasswordAsync(
             new PasswordAuthenticationRequest(
@@ -61,6 +66,15 @@ internal sealed class AccountAuthenticatorService(
             request.Context.Environment,
             request.Email,
             serverAuthorizationHash);
+    }
+
+    private static string HashMasterPassword(
+        string masterPassword,
+        string salt,
+        KdfConfig kdfConfig)
+    {
+        using MasterKey masterKey = MasterKey.Derive(masterPassword, salt, kdfConfig);
+        return masterKey.HashPassword(masterPassword).Value;
     }
 
     private async Task<Result> AuthenticateWithTwoFactorAsync(

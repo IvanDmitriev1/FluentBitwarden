@@ -15,7 +15,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(accountContext.Environment.ApiBase, $"/ciphers/{cipherId.Value:D}"));
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(accountContext.Environment.ApiBase, $"ciphers/{cipherId.Value:D}"));
         requestMessage.SetBitwardenAccountContext(accountContext);
 
         using var response = await httpClient.SendAsync(
@@ -33,7 +33,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(accountContext.Environment.ApiBase, $"/ciphers/{cipherId.Value:D}/details"));
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(accountContext.Environment.ApiBase, $"ciphers/{cipherId.Value:D}/details"));
         requestMessage.SetBitwardenAccountContext(accountContext);
 
         using var response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -47,14 +47,14 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
         CipherRequest request,
         CancellationToken cancellationToken = default)
     {
-        Uri requestUri = new(accountContext.Environment.ApiBase, "/ciphers");
+        Uri requestUri = new(accountContext.Environment.ApiBase, "ciphers");
         return SendCipherAsync(accountContext, HttpMethod.Post, requestUri, request, "Vault create vaultCipher", cancellationToken);
     }
 
     public async Task<CipherResponse> CreateCipherAsync(BitwardenAccountContext accountContext, CipherRequest request, IReadOnlyList<CollectionId> collectionIds, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri(accountContext.Environment.ApiBase, "/ciphers/create"));
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri(accountContext.Environment.ApiBase, "ciphers/create"));
         requestMessage.Content =
             JsonContent.Create(new CipherCreateRequest { Cipher = request, CollectionIds = collectionIds },
                 VaultJsonContext.ConfiguredDefault.CipherCreateRequest);
@@ -72,7 +72,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
         CipherRequest request,
         CancellationToken cancellationToken = default)
     {
-        Uri requestUri = new(accountContext.Environment.ApiBase, $"/ciphers/{cipherId:D}");
+        Uri requestUri = new(accountContext.Environment.ApiBase, $"ciphers/{cipherId:D}");
         return SendCipherAsync(accountContext, HttpMethod.Put, requestUri, request, "Vault update vaultCipher", cancellationToken);
     }
 
@@ -82,7 +82,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
         FolderId folderId,
         bool favorite,
         CancellationToken cancellationToken = default) =>
-        SendCipherBodyStatusAsync(accountContext, $"/ciphers/{cipherId.Value:D}/partial",
+        SendCipherBodyStatusAsync(accountContext, $"ciphers/{cipherId.Value:D}/partial",
             JsonContent.Create(
                 new CipherPartialRequest { FolderId = folderId.IsEmpty ? null : folderId.Value, Favorite = favorite },
                 VaultJsonContext.ConfiguredDefault.CipherPartialRequest),
@@ -95,26 +95,26 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
     {
         ValidateIds(cipherIds);
         return cipherIds.Count == 1
-            ? SendStatusAsync(accountContext, HttpMethod.Delete, $"/ciphers/{cipherIds[0].Value:D}", null,
+            ? SendStatusAsync(accountContext, HttpMethod.Delete, $"ciphers/{cipherIds[0].Value:D}", null,
                 "Vault delete cipher", cancellationToken)
-            : SendStatusAsync(accountContext, HttpMethod.Delete, "/ciphers",
+            : SendStatusAsync(accountContext, HttpMethod.Delete, "ciphers",
                 JsonContent.Create(new CipherBulkDeleteRequest { Ids = cipherIds },
                     VaultJsonContext.ConfiguredDefault.CipherBulkDeleteRequest), "Vault delete ciphers",
                 cancellationToken);
     }
 
     public Task SoftDeleteCiphersAsync(BitwardenAccountContext accountContext, IReadOnlyList<CipherId> cipherIds,
-        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "/delete", "/ciphers/delete", "Vault soft delete ciphers", cancellationToken);
+        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "delete", "ciphers/delete", "Vault soft delete ciphers", cancellationToken);
 
     public Task RestoreCiphersAsync(BitwardenAccountContext accountContext, IReadOnlyList<CipherId> cipherIds,
-        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "/restore", "/ciphers/restore", "Vault restore ciphers", cancellationToken);
+        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "restore", "ciphers/restore", "Vault restore ciphers", cancellationToken);
 
     public Task UnarchiveCiphersAsync(BitwardenAccountContext accountContext, IReadOnlyList<CipherId> cipherIds,
-        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "/unarchive", "/ciphers/unarchive", "Vault unarchive ciphers", cancellationToken);
+        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "unarchive", "ciphers/unarchive", "Vault unarchive ciphers", cancellationToken);
 
     public Task ArchiveCiphersAsync(BitwardenAccountContext accountContext,
         IReadOnlyList<CipherId> cipherIds,
-        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "/archive", "/ciphers/archive", "Vault archive ciphers", cancellationToken);
+        CancellationToken cancellationToken = default) => SendIdCommandAsync(accountContext, cipherIds, "archive", "ciphers/archive", "Vault archive ciphers", cancellationToken);
 
     public Task MoveCiphersAsync(
         BitwardenAccountContext accountContext,
@@ -123,7 +123,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
         CancellationToken cancellationToken = default) =>
         SendStatusAsync(accountContext,
             HttpMethod.Put,
-            "/ciphers/move",
+            "ciphers/move",
             JsonContent.Create(new CipherBulkMoveRequest { Ids = cipherIds, FolderId = folderId.IsEmpty ? null : folderId.Value },
                 VaultJsonContext.ConfiguredDefault.CipherBulkMoveRequest),
             "Vault move ciphers", cancellationToken);
@@ -142,7 +142,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
             if (cipher.Id.IsEmpty) throw new ArgumentException("A cipher ID is required to share a cipher.", nameof(ciphers));
             return SendShareSingleAsync(accountContext, cipher, collectionIds, cancellationToken);
         }
-        return SendStatusAsync(accountContext, HttpMethod.Put, "/ciphers/share",
+            return SendStatusAsync(accountContext, HttpMethod.Put, "ciphers/share",
             JsonContent.Create(new CipherBulkShareRequest { Ciphers = ciphers, CollectionIds = collectionIds }, VaultJsonContext.ConfiguredDefault.CipherBulkShareRequest), "Vault share ciphers", cancellationToken);
     }
 
@@ -150,7 +150,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
     {
         ValidateIds(ids);
         return ids.Count == 1
-            ? SendStatusAsync(accountContext, HttpMethod.Put, $"/ciphers/{ids[0].Value:D}{suffix}", null, operation, cancellationToken)
+            ? SendStatusAsync(accountContext, HttpMethod.Put, $"ciphers/{ids[0].Value:D}/{suffix}", null, operation, cancellationToken)
             : SendStatusAsync(accountContext, HttpMethod.Put, bulkPath,
                 JsonContent.Create(new CipherBulkDeleteRequest { Ids = ids }, VaultJsonContext.ConfiguredDefault.CipherBulkDeleteRequest), operation, cancellationToken);
     }
@@ -164,7 +164,7 @@ internal sealed class CiphersApi(IHttpClientFactory httpClientFactory) : ICipher
     private async Task SendShareSingleAsync(BitwardenAccountContext accountContext, CipherRequest cipher, IReadOnlyList<CollectionId> collectionIds, CancellationToken cancellationToken)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
-        using var request = new HttpRequestMessage(HttpMethod.Put, new Uri(accountContext.Environment.ApiBase, $"/ciphers/{cipher.Id.Value:D}/share"));
+        using var request = new HttpRequestMessage(HttpMethod.Put, new Uri(accountContext.Environment.ApiBase, $"ciphers/{cipher.Id.Value:D}/share"));
         request.Content = JsonContent.Create(new CipherShareRequest { Cipher = cipher, CollectionIds = collectionIds }, VaultJsonContext.ConfiguredDefault.CipherShareRequest);
         request.SetBitwardenAccountContext(accountContext);
 

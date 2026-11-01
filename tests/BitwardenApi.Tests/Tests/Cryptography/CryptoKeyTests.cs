@@ -143,6 +143,37 @@ public sealed class CryptoKeyTests
     }
 
     [Fact]
+    public void Protected_user_key_decrypts_legacy_enc_strings_with_the_raw_master_key()
+    {
+        const string password = "legacy password";
+        const string email = "user@example.test";
+        var kdf = new KdfConfig.Pbkdf2(2);
+        // Fixed fixture produced with BCL PBKDF2-SHA256 and AES-CBC for the raw master key.
+        EncString legacyValue = TestApiSupport.ParseEncString(
+            "0.AAECAwQFBgcICQoLDA0ODw==|cBG136HqRdPzb5GY1OkfT37pHb08KUUCibyGA37tJzY=");
+
+        byte[] actual = ProtectedUserKey.Create(legacyValue).Decrypt(password, email, kdf);
+
+        try
+        {
+            Assert.Equal("legacy protected user key", System.Text.Encoding.UTF8.GetString(actual));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(actual);
+        }
+    }
+
+    [Fact]
+    public void Protected_user_key_rejects_unsupported_enc_string_types()
+    {
+        EncString unsupportedValue = TestApiSupport.ParseEncString("3.AQ==");
+
+        Assert.Throws<CryptographicException>(() => ProtectedUserKey.Create(unsupportedValue)
+            .Decrypt("password", "user@example.test", new KdfConfig.Pbkdf2(2)));
+    }
+
+    [Fact]
     public void Unlocked_user_key_imports_its_protected_private_key()
     {
         using RSA rsa = CreateRsa();

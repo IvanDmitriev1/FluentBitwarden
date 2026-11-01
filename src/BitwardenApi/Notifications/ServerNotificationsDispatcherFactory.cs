@@ -24,7 +24,7 @@ internal sealed class ServerNotificationsDispatcherFactory(
     private IHubConnectionBuilder CreateConnection(BitwardenAccountContext accountContext)
     {
         IHubConnectionBuilder builder = new HubConnectionBuilder()
-            .WithUrl(new Uri(accountContext.Environment.NotificationsBase, "/hub"), options =>
+            .WithUrl(new Uri(accountContext.Environment.NotificationsBase, "hub"), options =>
             {
                 options.Transports = HttpTransportType.WebSockets;
                 options.SkipNegotiation = true;

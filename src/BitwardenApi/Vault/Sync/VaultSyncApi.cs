@@ -15,7 +15,7 @@ internal sealed class VaultSyncApi(IHttpClientFactory httpClientFactory) : IVaul
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
 
-        Uri requestUri = new(accountContext.Environment.ApiBase, "/accounts/revision-date");
+        Uri requestUri = new(accountContext.Environment.ApiBase, "accounts/revision-date");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         requestMessage.SetBitwardenAccountContext(accountContext);
 
@@ -36,7 +36,7 @@ internal sealed class VaultSyncApi(IHttpClientFactory httpClientFactory) : IVaul
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
 
-        Uri requestUri = new(accountContext.Environment.ApiBase, "/sync?excludeDomains=true");
+        Uri requestUri = new(accountContext.Environment.ApiBase, "sync?excludeDomains=true");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         requestMessage.SetBitwardenAccountContext(accountContext);
 

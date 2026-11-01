@@ -22,13 +22,20 @@ public sealed class AttachmentsApiTests
         using var blobHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
             () => TestApiSupport.BytesResponse("blob"u8.ToArray()));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: vaultHandler, attachmentHandler: blobHandler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/proxy/api")
+            }
+        };
         CipherId cipherId = CipherId.Parse("cipher-id");
         AttachmentId attachmentId = AttachmentId.Parse("attachment-id");
         byte[]? downloaded = null;
         EncString? encryptedKey = null;
 
         await provider.GetRequiredService<IAttachmentsApi>().DownloadToAsync(
-            TestApiSupport.AccountContext,
+            account,
             cipherId,
             attachmentId,
             async (stream, key) =>
@@ -41,7 +48,7 @@ public sealed class AttachmentsApiTests
             TestContext.Current.CancellationToken);
 
         TestApiSupport.RecordedRequest metadataRequest = Assert.Single(vaultHandler.Requests);
-        Assert.Equal("/ciphers/cipher-id/attachment/attachment-id", metadataRequest.RequestUri.AbsolutePath);
+        Assert.Equal("/proxy/api/ciphers/cipher-id/attachment/attachment-id", metadataRequest.RequestUri.AbsolutePath);
         Assert.Equal(["Bearer vault-access-token"], metadataRequest.Headers["Authorization"]);
         TestApiSupport.RecordedRequest blobRequest = Assert.Single(blobHandler.Requests);
         Assert.Equal("https://blob.bitwarden.test/download?signature=abc", blobRequest.RequestUri.AbsoluteUri);
