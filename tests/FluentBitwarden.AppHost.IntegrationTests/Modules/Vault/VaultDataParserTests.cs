@@ -544,17 +544,118 @@ public sealed partial class VaultDataParserTests
     }
 
     [Fact]
-    public void Rejects_missing_or_null_uri_values_and_invalid_match_values()
+    public void Omits_blank_uri_items_and_preserves_valid_values_order_and_match()
     {
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(keyBytes);
-        byte[] missingUri = "{\"uris\":[{}]}"u8.ToArray();
-        byte[] nullUri = "{\"uris\":[{\"uri\":null}]}"u8.ToArray();
+        byte[] payload = WritePayload(keyBytes, static (writer, key) =>
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("uris");
+            writer.WriteStartArray();
+            writer.WriteStartObject();
+            writer.WriteNumber("match", (int)LoginUri.MatchType.Domain);
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            writer.WriteNull("uri");
+            writer.WriteNumber("match", (int)LoginUri.MatchType.Host);
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            WriteEncrypted(writer, "uri", string.Empty, key);
+            writer.WriteNumber("match", (int)LoginUri.MatchType.StartsWith);
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            WriteEncrypted(writer, "uri", " https://valid.example ", key);
+            writer.WriteNumber("match", (int)LoginUri.MatchType.Exact);
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            WriteEncrypted(writer, "uri", " \t ", key);
+            writer.WriteNumber("match", (int)LoginUri.MatchType.RegularExpression);
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            WriteEncrypted(writer, "uri", "ftp://legacy.example/path", key);
+            writer.WriteNumber("match", (int)LoginUri.MatchType.Never);
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        });
+        var dto = CreateDto(CipherType.Login, payload);
+
+        var parsed = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
+
+        Assert.Equal(new[] { "https://valid.example", "ftp://legacy.example/path" },
+            parsed.Uris.Select(static uri => uri.Value));
+        Assert.Equal(
+            new[] { LoginUri.MatchType.Exact, LoginUri.MatchType.Never },
+            parsed.Uris.Select(static uri => uri.Match));
+    }
+
+    [Fact]
+    public void Missing_uri_lists_and_only_blank_uri_items_produce_empty_lists()
+    {
+        byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
+        using var baseKey = new TestKey(keyBytes);
+        byte[] blankUris = WritePayload(keyBytes, static (writer, key) =>
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("uris");
+            writer.WriteStartArray();
+            writer.WriteStartObject();
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            writer.WriteNull("uri");
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            WriteEncrypted(writer, "uri", string.Empty, key);
+            writer.WriteEndObject();
+            writer.WriteStartObject();
+            WriteEncrypted(writer, "uri", " \t ", key);
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        });
+        byte[][] payloads = ["{}"u8.ToArray(), "{\"uris\":[]}"u8.ToArray(), blankUris];
+
+        foreach (byte[] payload in payloads)
+        {
+            var dto = CreateDto(CipherType.Login, payload);
+            var parsed = Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey));
+            Assert.Empty(parsed.Uris);
+        }
+    }
+
+    [Fact]
+    public void Rejects_invalid_uri_values_and_invalid_match_values()
+    {
+        byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
+        using var baseKey = new TestKey(keyBytes);
         byte[] nullMatch = CreateUriMatchPayload(keyBytes, static writer => writer.WriteNull("match"));
         byte[] stringMatch = CreateUriMatchPayload(keyBytes, static writer => writer.WriteString("match", "exact"));
         byte[] undefinedMatch = CreateUriMatchPayload(keyBytes, static writer => writer.WriteNumber("match", 99));
         byte[] nullUriList = "{\"uris\":null}"u8.ToArray();
-        byte[][] payloads = [missingUri, nullUri, nullMatch, stringMatch, undefinedMatch, nullUriList];
+        byte[] nonStringUri = WritePayload(keyBytes, static (writer, _) =>
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("uris");
+            writer.WriteStartArray();
+            writer.WriteStartObject();
+            writer.WriteNumber("uri", 42);
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        });
+        byte[] invalidCiphertext = WritePayload(keyBytes, static (writer, _) =>
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("uris");
+            writer.WriteStartArray();
+            writer.WriteStartObject();
+            writer.WriteString("uri", "not-encrypted");
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        });
+        byte[][] payloads = [nullMatch, stringMatch, undefinedMatch, nullUriList, nonStringUri, invalidCiphertext];
 
         foreach (byte[] payload in payloads)
         {

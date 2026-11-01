@@ -81,8 +81,10 @@ internal sealed class LoginUrisJsonConverter(
             if (reader.TokenType != JsonTokenType.StartObject)
                 throw new JsonException("Each URI item must be a JSON object.");
 
-            uris.Add(JsonSerializer.Deserialize(ref reader, uriTypeInfo)
-                ?? throw new JsonException("URI item cannot be null."));
+            LoginUri uri = JsonSerializer.Deserialize(ref reader, uriTypeInfo)
+                ?? throw new JsonException("URI item cannot be null.");
+            if (!string.IsNullOrWhiteSpace(uri.Value))
+                uris.Add(uri);
         }
 
         throw new JsonException("Incomplete URI list.");

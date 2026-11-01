@@ -116,8 +116,9 @@ internal sealed partial class VaultDataParser
         {
             JsonPropertyInfo uri = GetProperty(typeInfo, nameof(LoginUri.Value));
             uri.Name = "uri";
-            uri.IsRequired = true;
-            uri.CustomConverter = _stringConverter;
+            uri.IsSetNullable = true;
+            uri.CustomConverter = _nullableStringConverter;
+            uri.Set = static (obj, value) => ((LoginUri)obj).Value = (string?)value ?? string.Empty;
             return;
         }
 
