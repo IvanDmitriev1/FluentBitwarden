@@ -7,7 +7,7 @@ using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
+using BitwardenApi.Vault.Serialization;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 using FluentBitwarden.Contracts.Modules.Vault.Operations;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
@@ -164,7 +164,7 @@ internal sealed class VaultSyncHandler(
         if (fetchedFolder is not null && fetchedFolder.RevisionDate >= response.RevisionDate)
             return;
 
-        var folder = VaultDataParser.ParseAndDecryptFolder(ref response, unlocked.AccountKeySession.UserKey);
+        var folder = VaultMetadataReader.ReadFolder(ref response, unlocked.AccountKeySession.UserKey);
         unitOfWork.Begin();
         vaultWriterRepository.UpdateFolder(userId, in response);
         vaultSyncStateRepository.UpsertServerRevisionDate(userId, response.RevisionDate);

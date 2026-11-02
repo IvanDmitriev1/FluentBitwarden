@@ -238,20 +238,19 @@ public sealed class CiphersApiTests
     }
 
     [Fact]
-    public async Task Update_cipher_serializes_utf8_data_as_the_server_json_string()
+    public async Task Update_cipher_serializes_structured_fields_without_opaque_data()
     {
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(CipherResponseJson));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
         CipherId cipherId = CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-        byte[] data = "{\"name\":\"encrypted\",\"opaque\":{\"revision\":3}}"u8.ToArray();
-
         await provider.GetRequiredService<ICiphersApi>().UpdateCipherAsync(
-            TestApiSupport.AccountContext, cipherId, CreateCipherRequest(data: data), TestContext.Current.CancellationToken);
+            TestApiSupport.AccountContext, cipherId, CreateCipherRequest(), TestContext.Current.CancellationToken);
 
         TestApiSupport.RecordedRequest request = AssertRequest(handler, HttpMethod.Put, $"/ciphers/{cipherId}", "Bearer vault-access-token");
         using JsonDocument body = JsonDocument.Parse(request.Content!);
-        Assert.Equal(System.Text.Encoding.UTF8.GetString(data), body.RootElement.GetProperty("data").GetString());
-        Assert.Equal(JsonValueKind.String, body.RootElement.GetProperty("data").ValueKind);
+        Assert.False(body.RootElement.TryGetProperty("data", out _));
+        Assert.Equal("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=",
+            body.RootElement.GetProperty("login").GetProperty("username").GetString());
     }
 
     [Fact]
@@ -515,15 +514,18 @@ public sealed class CiphersApiTests
         {"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","type":1,"revisionDate":"2026-01-02T00:00:00Z","creationDate":"2026-01-01T00:00:00Z","favorite":false,"reprompt":false,"edit":true,"viewPassword":true,"data":"{}"}
         """;
 
-    private static CipherRequest CreateCipherRequest(CipherId id = default, byte[]? data = null) => new()
+    private static CipherRequest CreateCipherRequest(CipherId id = default) => new()
     {
         Id = id,
         Type = CipherType.Login,
         Favorite = true,
         Reprompt = 0,
-        Data = data,
         Key = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y="),
-        Name = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=")
+        Name = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y="),
+        Login = new CipherLoginRequest
+        {
+            Username = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=")
+        }
     };
 
     private static TestApiSupport.RecordedRequest AssertRequest(

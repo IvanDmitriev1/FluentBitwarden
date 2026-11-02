@@ -285,9 +285,7 @@ public sealed class VaultManagerTests
                 Arg.Any<CipherRequest>(),
                 Arg.Any<CancellationToken>())
             .Returns(updatedResponse);
-        var cipher = (LoginCipher)Cipher.CreateBlankCipher(CipherType.Login);
-        cipher.Id = existingCipher.Id;
-        cipher.RevisionDate = existingCipher.RevisionDate;
+        var cipher = Assert.IsType<LoginCipher>(VaultParserTestData.ParseCipher(in existingCipher, existingCipher.Data, keySession.UserKey));
         cipher.Name = "Edited input";
         using var vault = context.OpenVault();
 
@@ -333,6 +331,8 @@ public sealed class VaultManagerTests
             VaultParserTestData.WriteEncrypted(writer, "username", "original-user", key);
             VaultParserTestData.WriteEncrypted(writer, "password", "original-password", key);
             VaultParserTestData.WriteEncrypted(writer, "totp", "unsupported secret format", key);
+            writer.WriteString("passwordRevisionDate", "2026-09-29T10:00:00Z");
+            writer.WriteBoolean("autofillOnPageLoad", false);
             writer.WritePropertyName("fields");
             writer.WriteStartArray();
             writer.WriteStartObject();
@@ -351,16 +351,13 @@ public sealed class VaultManagerTests
             writer.WriteEndArray();
             writer.WritePropertyName("uris");
             writer.WriteStartArray();
-            VaultParserTestData.WriteLoginUri(writer, key, "https://example.test");
+            VaultParserTestData.WriteLoginUri(writer, key, "https://example.test", (int)LoginUri.MatchType.Domain, "uri-checksum", includeUnknownMetadata: false);
             writer.WriteEndArray();
             writer.WritePropertyName("fido2Credentials");
             writer.WriteStartArray();
-            VaultParserTestData.WriteFido2Credential(writer, key, "12345678-1234-5678-9abc-def012345678");
-            VaultParserTestData.WriteFido2Credential(writer, key, "12345678-1234-5678-9abc-def012345679");
+            VaultParserTestData.WriteFido2Credential(writer, key, "12345678-1234-5678-9abc-def012345678", includeUnknownMetadata: false);
+            VaultParserTestData.WriteFido2Credential(writer, key, "12345678-1234-5678-9abc-def012345679", includeUnknownMetadata: false);
             writer.WriteEndArray();
-            writer.WriteStartObject("futureLoginProperty");
-            writer.WriteString("opaque", "preserved encrypted payload metadata");
-            writer.WriteEndObject();
             writer.WriteEndObject();
         });
         AttachmentDownloadResponse attachment = new()
@@ -378,6 +375,39 @@ public sealed class VaultManagerTests
             ArchivedDate = new DateTimeOffset(2026, 9, 29, 10, 0, 0, TimeSpan.Zero),
             Attachments = [attachment]
         };
+        byte[] updatedData = VaultParserTestData.WritePayload(cipherKey.ToArray(), static (writer, key) =>
+        {
+            writer.WriteStartObject();
+            VaultParserTestData.WriteEncrypted(writer, "name", "Updated item", key);
+            VaultParserTestData.WriteEncrypted(writer, "notes", "Updated notes", key);
+            VaultParserTestData.WriteEncrypted(writer, "username", "updated-user", key);
+            VaultParserTestData.WriteEncrypted(writer, "password", "updated-password", key);
+            VaultParserTestData.WriteEncrypted(writer, "totp", "unsupported secret format", key);
+            writer.WriteString("passwordRevisionDate", "2026-09-29T10:00:00Z");
+            writer.WriteBoolean("autofillOnPageLoad", false);
+            writer.WriteStartArray("fields");
+            writer.WriteStartObject();
+            VaultParserTestData.WriteEncrypted(writer, "name", "Linked field", key);
+            VaultParserTestData.WriteEncrypted(writer, "value", "Linked field value", key);
+            writer.WriteNumber("type", 1);
+            writer.WriteNumber("linkedId", 100);
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteStartArray("passwordHistory");
+            writer.WriteStartObject();
+            writer.WriteString("lastUsedDate", "2025-04-03T02:01:00Z");
+            VaultParserTestData.WriteEncrypted(writer, "password", "historical password", key);
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteStartArray("uris");
+            VaultParserTestData.WriteLoginUri(writer, key, "https://example.test", (int)LoginUri.MatchType.Domain, "uri-checksum", includeUnknownMetadata: false);
+            writer.WriteEndArray();
+            writer.WriteStartArray("fido2Credentials");
+            VaultParserTestData.WriteFido2Credential(writer, key, "12345678-1234-5678-9abc-def012345678", includeUnknownMetadata: false);
+            VaultParserTestData.WriteFido2Credential(writer, key, "12345678-1234-5678-9abc-def012345679", includeUnknownMetadata: false);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        });
         DateTimeOffset savedRevision = baseline.RevisionDate.AddMinutes(1);
         context.SeedCache([baseline]);
         context.CiphersApi.GetCipherAsync(context.AccountContext, baseline.Id, Arg.Any<CancellationToken>()).Returns(baseline);
@@ -392,23 +422,16 @@ public sealed class VaultManagerTests
                 capturedRequest = callInfo.Arg<CipherRequest>();
                 return Task.FromResult(baseline with
                 {
-                    ProtectedCipherKey = capturedRequest.Key,
-                    Data = capturedRequest.Data!,
-                    ArchivedDate = capturedRequest.ArchivedDate is { } archivedDate
-                        ? new DateTimeOffset(archivedDate, TimeSpan.Zero)
-                        : null,
+                    Data = updatedData,
                     RevisionDate = savedRevision
                 });
             });
 
-        var cipher = (LoginCipher)Cipher.CreateBlankCipher(CipherType.Login);
-        cipher.Id = baseline.Id;
-        cipher.RevisionDate = baseline.RevisionDate;
+        var cipher = Assert.IsType<LoginCipher>(VaultParserTestData.ParseCipher(in baseline, baseline.Data, keySession.UserKey));
         cipher.Name = "Updated item";
         cipher.Notes = "Updated notes";
         cipher.Username = "updated-user";
         cipher.Password = "updated-password";
-        cipher.Uris.Add(new LoginUri { Value = "https://example.test", Match = LoginUri.MatchType.Domain });
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
@@ -420,22 +443,20 @@ public sealed class VaultManagerTests
         Assert.Equal(savedRevision, saved.RevisionDate);
         Assert.NotNull(capturedRequest);
         Assert.Equal(protectedCipherKey, capturedRequest.Key);
-        Assert.Equal(baseline.ArchivedDate?.UtcDateTime, capturedRequest.ArchivedDate);
-        using (JsonDocument updatedData = JsonDocument.Parse(capturedRequest.Data!))
-        {
-            JsonElement root = updatedData.RootElement;
-            Assert.Equal(JsonValueKind.String, root.GetProperty("username").ValueKind);
-            Assert.Equal(1, root.GetProperty("fields").GetArrayLength());
-            Assert.Equal(100, root.GetProperty("fields")[0].GetProperty("linkedId").GetInt32());
-            Assert.Equal("2025-04-03T02:01:00Z", root.GetProperty("passwordHistory")[0].GetProperty("lastUsedDate").GetString());
-            Assert.Equal(2, root.GetProperty("fido2Credentials").GetArrayLength());
-            Assert.True(root.GetProperty("uris")[0].TryGetProperty("unknownMetadata", out _));
-            Assert.Equal("preserved encrypted payload metadata", root.GetProperty("futureLoginProperty").GetProperty("opaque").GetString());
-            using JsonDocument originalData = JsonDocument.Parse(baseline.Data);
-            Assert.Equal(
-                originalData.RootElement.GetProperty("totp").GetRawText(),
-                root.GetProperty("totp").GetRawText());
-        }
+        Assert.Equal(baseline.ArchivedDate, capturedRequest.ArchivedDate);
+        CipherLoginRequest requestedLogin = Assert.IsType<CipherLoginRequest>(capturedRequest.Login);
+        Assert.Equal("Updated item", capturedRequest.Name.Decode(cipherKey));
+        Assert.Equal("Updated notes", capturedRequest.Notes.Decode(cipherKey));
+        Assert.Equal("updated-user", requestedLogin.Username.Decode(cipherKey));
+        Assert.Equal("updated-password", requestedLogin.Password.Decode(cipherKey));
+        Assert.Equal("unsupported secret format", requestedLogin.Totp.Decode(cipherKey));
+        Assert.Equal(new DateTimeOffset(2026, 9, 29, 10, 0, 0, TimeSpan.Zero), requestedLogin.PasswordRevisionDate);
+        Assert.False(requestedLogin.AutofillOnPageLoad);
+        Assert.Equal("Linked field", Assert.Single(capturedRequest.Fields!).Name.Decode(cipherKey));
+        Assert.Equal(100, capturedRequest.Fields![0].LinkedId);
+        Assert.Equal("historical password", Assert.Single(capturedRequest.PasswordHistory!).Password.Decode(cipherKey));
+        Assert.Equal(2, requestedLogin.Fido2Credentials.Count);
+        Assert.Equal("uri-checksum", Assert.Single(requestedLogin.Uris).UriChecksum);
 
         using var reopened = context.OpenVaultFromFreshConnection(keySession);
         LoginCipher persisted = Assert.IsType<LoginCipher>(reopened.GetCipher(baseline.Id));
@@ -444,6 +465,52 @@ public sealed class VaultManagerTests
         Assert.Equal("old-file.txt", Assert.Single(persisted.Attachments).FileName);
         var persistedKey = context.VaultReaderRepository.GetCipherKeyMaterial(context.AccountContext.UserId, baseline.Id);
         Assert.Equal(protectedCipherKey, persistedKey.ProtectedCipherKey);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SaveCipher_rejects_unknown_baseline_fields_before_put_or_local_mutation(bool nestedUnknown)
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var cachedCipher = VaultManagerTestData.Cipher("existing-cipher", keySession.UserKey.Key);
+        byte[] unknownData = VaultParserTestData.WritePayload(keySession.UserKey.Key.ToArray(), (writer, key) =>
+        {
+            writer.WriteStartObject();
+            VaultParserTestData.WriteEncrypted(writer, "name", "Synthetic item", key);
+            if (nestedUnknown)
+            {
+                writer.WriteStartArray("uris");
+                writer.WriteStartObject();
+                VaultParserTestData.WriteEncrypted(writer, "uri", "https://example.test", key);
+                writer.WriteBoolean("futureUriField", true);
+                writer.WriteEndObject();
+                writer.WriteEndArray();
+            }
+            else
+            {
+                writer.WriteBoolean("futureCipherField", true);
+            }
+
+            writer.WriteEndObject();
+        });
+        CipherResponse serverCipher = cachedCipher with { Data = unknownData };
+        context.SeedCache([cachedCipher]);
+        context.CiphersApi.GetCipherAsync(context.AccountContext, cachedCipher.Id, Arg.Any<CancellationToken>()).Returns(serverCipher);
+        var editedCipher = (LoginCipher)Cipher.CreateBlankCipher(CipherType.Login);
+        editedCipher.Id = cachedCipher.Id;
+        editedCipher.RevisionDate = cachedCipher.RevisionDate;
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+
+        await Assert.ThrowsAnyAsync<JsonException>(() => context.VaultCipherService.SaveAsync(editedCipher, CancellationToken.None));
+
+        _ = context.CiphersApi.DidNotReceive().UpdateCipherAsync(
+            Arg.Any<BitwardenAccountContext>(), Arg.Any<CipherId>(), Arg.Any<CipherRequest>(), Arg.Any<CancellationToken>());
+        Assert.Equal("Synthetic item", vault.GetCipher(cachedCipher.Id)?.Name);
+        using var reopened = context.OpenVault();
+        Assert.Equal("Synthetic item", reopened.GetCipher(cachedCipher.Id)?.Name);
     }
 
     [Theory]
@@ -525,7 +592,7 @@ public sealed class VaultManagerTests
         cipher.Id = cachedCipher.Id;
         cipher.RevisionDate = cachedCipher.RevisionDate;
         cipher.Uris.Add(new LoginUri { Value = "https://example.test", Match = LoginUri.MatchType.Domain });
-        cipher.Uris.Add(new LoginUri { Value = "https://example.test", Match = LoginUri.MatchType.Domain });
+        cipher.Uris.Add(new LoginUri { Value = "https://changed.example", Match = LoginUri.MatchType.Domain });
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
@@ -680,7 +747,7 @@ public sealed class VaultManagerTests
         writer.WriteStartObject();
         VaultParserTestData.WriteEncrypted(writer, "uri", "https://example.test", key);
         writer.WriteNumber("match", (int)LoginUri.MatchType.Domain);
-        writer.WriteString("checksum", checksum);
+        writer.WriteString("uriChecksum", checksum);
         writer.WriteEndObject();
     }
 }

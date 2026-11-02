@@ -17,10 +17,21 @@ internal sealed class VaultCipherService(
     {
         var (accountProfile, vault, keySession, _) = appSessionAccessor.RequireUnlockedState();
         BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
-        CipherRequest request = CipherRequestFactory.BuildRequest(keySession.UserKey, cipher);
-        CipherResponse savedDto = cipher.Id.IsEmpty
-            ? await ciphersApi.CreateCipherAsync(accountContext, request, cancellationToken)
-            : await ciphersApi.UpdateCipherAsync(accountContext, cipher.Id, request, cancellationToken);
+        CipherResponse savedDto;
+        if (cipher.Id.IsEmpty)
+        {
+            CipherRequest request = CipherRequestBuilder.Build(keySession.UserKey, cipher);
+            savedDto = await ciphersApi.CreateCipherAsync(accountContext, request, cancellationToken);
+        }
+        else
+        {
+            CipherResponse original = await ciphersApi.GetCipherAsync(accountContext, cipher.Id, cancellationToken);
+            if (cipher.RevisionDate != original.RevisionDate)
+                throw new InvalidOperationException("The cipher changed since it was opened. Sync before saving.");
+            CipherRequest request = CipherUpdateRequestBuilder.Build(keySession.UserKey, cipher, in original);
+            savedDto = await ciphersApi.UpdateCipherAsync(accountContext, cipher.Id, request, cancellationToken);
+        }
+
         var savedCipher = VaultDataLoader.DecryptSavedCipher(in savedDto, keySession);
 
         unitOfWork.Begin();

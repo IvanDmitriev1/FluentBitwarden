@@ -1,4 +1,5 @@
 using BitwardenApi.Cryptography.Encryption;
+
 namespace BitwardenApi.Vault.Ciphers.Requests;
 public sealed class CipherSshKeyRequest
 {

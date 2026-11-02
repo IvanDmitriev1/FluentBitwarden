@@ -149,8 +149,11 @@ public readonly struct EncString : IEquatable<EncString>
             SegmentLayout.CreatePacked(parts.Type, parts.Iv.Length, parts.Data.Length, parts.Mac.Length));
     }
 
-    public static EncString Encrypt(string plaintext, ReadOnlySpan<byte> key)
+    public static EncString Encrypt(string? plaintext, ReadOnlySpan<byte> key)
     {
+        if (string.IsNullOrEmpty(plaintext))
+            return Empty;
+
         int maxByteCount = System.Text.Encoding.UTF8.GetMaxByteCount(plaintext.Length);
         bool useStack = maxByteCount <= MaxStackByteCount;
 

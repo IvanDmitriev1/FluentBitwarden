@@ -18,4 +18,20 @@ public sealed partial class Fido2Credential
     public required uint Counter { get; init; }
     public required bool Discoverable { get; init; }
     public required DateTimeOffset CreationDate { get; init; }
+
+    internal bool HasSameContentAs(Fido2Credential? other)
+        => other is not null &&
+           CredentialId.AsSpan().SequenceEqual(other.CredentialId) &&
+           KeyType == other.KeyType &&
+           KeyAlgorithm == other.KeyAlgorithm &&
+           KeyCurve == other.KeyCurve &&
+           KeyValue.AsSpan().SequenceEqual(other.KeyValue) &&
+           string.Equals(RpId, other.RpId, StringComparison.Ordinal) &&
+           string.Equals(RpName, other.RpName, StringComparison.Ordinal) &&
+           UserHandle.AsSpan().SequenceEqual(other.UserHandle) &&
+           string.Equals(UserName, other.UserName, StringComparison.Ordinal) &&
+           string.Equals(UserDisplayName, other.UserDisplayName, StringComparison.Ordinal) &&
+           Counter == other.Counter &&
+           Discoverable == other.Discoverable &&
+           CreationDate == other.CreationDate;
 }

@@ -1,5 +1,4 @@
 using BitwardenApi.Cryptography.Encryption;
-using BitwardenApi.Serialization;
 using BitwardenApi.Vault.Ciphers.Models;
 using BitwardenApi.Vault.Internal;
 using System.Text.Json.Serialization;
@@ -44,6 +43,8 @@ public sealed class CipherRequest
 
     public required EncString Name { get; init; }
     public EncString Notes { get; init; }
+    public List<EncryptedCipherField>? Fields { get; init; }
+    public List<EncryptedPasswordHistory>? PasswordHistory { get; init; }
 
     public CipherLoginRequest? Login { get; init; }
     public CipherCardRequest? Card { get; init; }
@@ -51,15 +52,10 @@ public sealed class CipherRequest
     public CipherSecureNoteRequest? SecureNote { get; init; }
     public CipherSshKeyRequest? SshKey { get; init; }
 
-    /// <summary>Complete encrypted cipher data for lossless updates; omitted for new ciphers.</summary>
-    [JsonConverter(typeof(StringToUtf8BytesConverter))]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public byte[]? Data { get; init; }
-
     /// <summary>Preserves server-owned archive state during a full update.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public DateTime? ArchivedDate { get; init; }
+    public DateTimeOffset? ArchivedDate { get; init; }
 
     /// <summary>Optimistic-concurrency guard sent on update; the last revision date we hold.</summary>
-    public DateTime? LastKnownRevisionDate { get; init; }
+    public DateTimeOffset? LastKnownRevisionDate { get; init; }
 }

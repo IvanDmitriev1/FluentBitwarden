@@ -1,12 +1,13 @@
 using System.Buffers.Text;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 using BitwardenApi.Primitives;
 
-namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
+using BitwardenApi.Vault.Ciphers.Models;
+
+namespace BitwardenApi.Vault.Ciphers.Serialization;
 
 internal sealed class DecryptedValueJsonConverter<T>(
     ReadOnlyMemory<byte> key,
@@ -46,6 +47,9 @@ internal sealed class UriMatchTypeJsonConverter : JsonConverter<LoginUri.MatchTy
 
     public override LoginUri.MatchType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        if (reader.TokenType == JsonTokenType.Null)
+            return LoginUri.MatchType.Domain;
+
         if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out int value))
             throw new JsonException("URI match must be a defined Int32 value.");
 
@@ -136,14 +140,14 @@ internal sealed class FirstFido2CredentialJsonConverter(
 
 internal static class VaultPayloadValueParsers
 {
-    public static string ParseString(Span<byte> value) => Encoding.UTF8.GetString(value);
+    public static string ParseString(Span<byte> value) => System.Text.Encoding.UTF8.GetString(value);
 
     public static TotpValue? ParseTotp(Span<byte> value)
         => TotpValue.TryParse(value, out var totp) ? totp : null;
 
     public static OpenSshPublicKey ParseSshPublicKey(Span<byte> value)
     {
-        string rawKey = Encoding.UTF8.GetString(value);
+        string rawKey = System.Text.Encoding.UTF8.GetString(value);
         return OpenSshPublicKey.TryParse(rawKey, out var publicKey)
             ? publicKey
             : OpenSshPublicKey.CreateUnparsed(rawKey);

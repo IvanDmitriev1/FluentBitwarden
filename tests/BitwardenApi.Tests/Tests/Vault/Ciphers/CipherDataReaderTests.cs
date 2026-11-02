@@ -1,17 +1,19 @@
 using System.Buffers;
-using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
-using static FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultParserTestData;
+using BitwardenApi.Vault.Ciphers.Serialization;
+using BitwardenApi.Vault.Ciphers.Responses;
+using BitwardenApi.Vault.Collections.Models;
+using BitwardenApi.Vault.Collections.Responses;
+using BitwardenApi.Vault.Attachments.Models;
+using static BitwardenApi.Tests.Tests.Vault.Ciphers.VaultParserTestData;
 
-namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
+namespace BitwardenApi.Tests.Tests.Vault.Ciphers;
 
-public sealed partial class VaultDataParserTests
+public sealed partial class CipherDataReaderTests
 {
     private readonly ITestOutputHelper _output;
 
-    public VaultDataParserTests(ITestOutputHelper output) => _output = output;
+    public CipherDataReaderTests(ITestOutputHelper output) => _output = output;
 
     [Fact]
     public void Parses_encrypted_login_fields_using_the_base_key()
@@ -115,8 +117,8 @@ public sealed partial class VaultDataParserTests
             EncryptedName = EncString.Encrypt("Synthetic collection", keyBytes)
         };
 
-        Collection parsed = FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser
-            .ParseAndDecryptCollection(in dto, key);
+        Collection parsed = BitwardenApi.Vault.Serialization.VaultMetadataReader
+            .ReadCollection(in dto, key);
 
         Assert.Equal(dto.Id, parsed.Id);
         Assert.Equal("Synthetic collection", parsed.Name);
@@ -195,7 +197,7 @@ public sealed partial class VaultDataParserTests
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(keyBytes);
         long setupStart = GC.GetAllocatedBytesForCurrentThread();
-        var parser = new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser();
+        var parser = new BitwardenApi.Vault.Ciphers.Serialization.CipherDataReader();
         long setupBytes = GC.GetAllocatedBytesForCurrentThread() - setupStart;
 
         byte[] loginPayload = CreateLoginPayload(keyBytes);
@@ -629,7 +631,6 @@ public sealed partial class VaultDataParserTests
     {
         byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(keyBytes);
-        byte[] nullMatch = CreateUriMatchPayload(keyBytes, static writer => writer.WriteNull("match"));
         byte[] stringMatch = CreateUriMatchPayload(keyBytes, static writer => writer.WriteString("match", "exact"));
         byte[] undefinedMatch = CreateUriMatchPayload(keyBytes, static writer => writer.WriteNumber("match", 99));
         byte[] nullUriList = "{\"uris\":null}"u8.ToArray();
@@ -655,13 +656,26 @@ public sealed partial class VaultDataParserTests
             writer.WriteEndArray();
             writer.WriteEndObject();
         });
-        byte[][] payloads = [nullMatch, stringMatch, undefinedMatch, nullUriList, nonStringUri, invalidCiphertext];
+        byte[][] payloads = [stringMatch, undefinedMatch, nullUriList, nonStringUri, invalidCiphertext];
 
         foreach (byte[] payload in payloads)
         {
             var dto = CreateDto(CipherType.Login, payload);
             Assert.ThrowsAny<Exception>(() => ParseCipher(in dto, payload, baseKey));
         }
+    }
+
+    [Fact]
+    public void Null_uri_match_defaults_to_domain_for_projection()
+    {
+        byte[] keyBytes = Enumerable.Range(1, 64).Select(static value => (byte)value).ToArray();
+        using var baseKey = new TestKey(keyBytes);
+        byte[] payload = CreateUriMatchPayload(keyBytes, static writer => writer.WriteNull("match"));
+        var dto = CreateDto(CipherType.Login, payload);
+
+        LoginUri parsed = Assert.Single(Assert.IsType<LoginCipher>(ParseCipher(in dto, payload, baseKey)).Uris);
+
+        Assert.Equal(LoginUri.MatchType.Domain, parsed.Match);
     }
 
     [Fact]
@@ -772,21 +786,21 @@ public sealed partial class VaultDataParserTests
         byte[] firstCipherKey = Enumerable.Range(65, 64).Select(static value => (byte)value).ToArray();
         byte[] secondCipherKey = Enumerable.Range(129, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(baseKeyBytes);
-        var parser = new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser();
+        var parser = new BitwardenApi.Vault.Ciphers.Serialization.CipherDataReader();
         byte[] invalidPayload = CreateLoginPayload(secondCipherKey);
         var invalidDto = CreateDto(CipherType.Login, invalidPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(firstCipherKey, baseKeyBytes)
         };
 
-        Assert.ThrowsAny<Exception>(() => parser.ParseAndDecryptCipher(in invalidDto, invalidPayload, baseKey));
+        Assert.ThrowsAny<Exception>(() => parser.Read(in invalidDto, invalidPayload, baseKey));
 
         byte[] validPayload = CreateLoginPayload(secondCipherKey);
         var validDto = CreateDto(CipherType.Login, validPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(secondCipherKey, baseKeyBytes)
         };
-        var recovered = Assert.IsType<LoginCipher>(parser.ParseAndDecryptCipher(in validDto, validPayload, baseKey));
+        var recovered = Assert.IsType<LoginCipher>(parser.Read(in validDto, validPayload, baseKey));
         Assert.Equal("Synthetic item", recovered.Name);
 
         byte[] otherPayload = CreateLoginPayload(firstCipherKey);
@@ -795,8 +809,8 @@ public sealed partial class VaultDataParserTests
             ProtectedCipherKey = EncString.Encrypt(firstCipherKey, baseKeyBytes)
         };
         var isolated = Assert.IsType<LoginCipher>(
-            new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser()
-                .ParseAndDecryptCipher(in otherDto, otherPayload, baseKey));
+            new BitwardenApi.Vault.Ciphers.Serialization.CipherDataReader()
+                .Read(in otherDto, otherPayload, baseKey));
         Assert.Equal("Synthetic item", isolated.Name);
     }
 
@@ -807,14 +821,14 @@ public sealed partial class VaultDataParserTests
         byte[] loginKeyBytes = Enumerable.Range(65, 64).Select(static value => (byte)value).ToArray();
         byte[] noteKeyBytes = Enumerable.Range(129, 64).Select(static value => (byte)value).ToArray();
         using var baseKey = new TestKey(baseKeyBytes);
-        var parser = new FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing.VaultDataParser();
+        var parser = new BitwardenApi.Vault.Ciphers.Serialization.CipherDataReader();
 
         byte[] loginPayload = CreateLoginPayload(loginKeyBytes);
         var loginDto = CreateDto(CipherType.Login, loginPayload) with
         {
             ProtectedCipherKey = EncString.Encrypt(loginKeyBytes, baseKeyBytes)
         };
-        var login = Assert.IsType<LoginCipher>(parser.ParseAndDecryptCipher(in loginDto, loginPayload, baseKey));
+        var login = Assert.IsType<LoginCipher>(parser.Read(in loginDto, loginPayload, baseKey));
 
         byte[] notePayload = WritePayload(noteKeyBytes, static (writer, key) =>
         {
@@ -827,7 +841,7 @@ public sealed partial class VaultDataParserTests
         {
             ProtectedCipherKey = EncString.Encrypt(noteKeyBytes, baseKeyBytes)
         };
-        var note = Assert.IsType<SecureNoteCipher>(parser.ParseAndDecryptCipher(in noteDto, notePayload, baseKey));
+        var note = Assert.IsType<SecureNoteCipher>(parser.Read(in noteDto, notePayload, baseKey));
 
         Assert.Equal("synthetic-password", login.Password);
         Assert.Equal("Second key note", note.Name);
@@ -889,7 +903,7 @@ public sealed partial class VaultDataParserTests
             long lengthBytes = MeasureConverterAllocations(lengthConverter, payload, options);
             long utf8StringBytes = MeasureUtf8StringAllocations(plaintext);
 
-            _output.WriteLine($"Converter allocations for {Encoding.UTF8.GetByteCount(plaintext)} UTF-8 bytes: string={stringBytes} B; length-only={lengthBytes} B; standalone UTF-8 string={utf8StringBytes} B; delta={stringBytes - lengthBytes} B.");
+            _output.WriteLine($"Converter allocations for {System.Text.Encoding.UTF8.GetByteCount(plaintext)} UTF-8 bytes: string={stringBytes} B; length-only={lengthBytes} B; standalone UTF-8 string={utf8StringBytes} B; delta={stringBytes - lengthBytes} B.");
             Assert.Equal(utf8StringBytes, stringBytes - lengthBytes);
         }
     }
