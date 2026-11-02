@@ -25,6 +25,7 @@ public static class IpcMessageTypes
         public const ushort CipherDeleted = 111;
         public const ushort FolderChanged = 112;
         public const ushort Changed = 113;
+        public const ushort FolderDeleted = 114;
     }
 
     public static class Account

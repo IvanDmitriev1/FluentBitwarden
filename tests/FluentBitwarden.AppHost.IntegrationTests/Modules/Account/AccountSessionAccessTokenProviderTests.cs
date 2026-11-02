@@ -142,14 +142,14 @@ public sealed class AccountSessionAccessTokenProviderTests
     public async Task Lock_completes_while_token_refresh_is_paused_and_keeps_the_session_locked_for_same_account()
     {
         var accountService = Substitute.For<IAccountService>();
-        var vaultService = Substitute.For<IVaultService>();
+        var vaultFactory = Substitute.For<IVaultFactory>();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
         accountService.GetAccount(account.UserId).Returns(account);
         accountService.UnlockKey(account.UserId, Arg.Any<AccountUnlockMethod>())
             .Returns(new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)));
-        vaultService.Open(
+        vaultFactory.Open(
             Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
             Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
 
@@ -165,7 +165,7 @@ public sealed class AccountSessionAccessTokenProviderTests
                 return tokens;
             });
 
-        await using ServiceProvider services = CreateServices(accountService, vaultService);
+        await using ServiceProvider services = CreateServices(accountService, vaultFactory);
         using IServiceScope scope = services.CreateScope();
         IAppSessionOperations sessionOperations = scope.ServiceProvider.GetRequiredService<IAppSessionOperations>();
         var sessionStore = scope.ServiceProvider.GetRequiredService<AppSessionStore>();
@@ -196,7 +196,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         services.AddAccountModule();
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddSingleton(Substitute.For<IAccountService>());
-        services.AddSingleton(Substitute.For<IVaultService>());
+        services.AddSingleton(Substitute.For<IVaultFactory>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
         services.AddSingleton(Substitute.For<BitwardenApi.Notifications.Abstractions.IServerNotificationsDispatcherFactory>());

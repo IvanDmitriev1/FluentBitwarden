@@ -1,11 +1,11 @@
 using System.Buffers.Text;
 using System.Globalization;
 using System.Security.Cryptography;
-
 using BitwardenApi.Cryptography.Encryption;
 using BitwardenApi.Cryptography.Keys;
 using BitwardenApi.Vault.Ciphers.Models;
 using BitwardenApi.Vault.Ciphers.Requests;
+
 namespace BitwardenApi.Vault.Ciphers;
 
 public static class CipherRequestFactory

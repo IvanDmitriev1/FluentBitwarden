@@ -156,8 +156,8 @@ public sealed class AccountServiceTests
 
         Assert.Equal(new AccountAuthenticationOutcome.InvalidCredentials("Synthetic rejection."), result);
         Assert.NotNull(identityRequest);
-        // Python hashlib.pbkdf2_hmac("sha256", password, server salt, 2), then one auth-hash round.
-        Assert.Equal("SQ4cbNRi9enot4ZKsPkfJWorVGFd1HK4fzhjmr5RO+Q=", identityRequest.MasterPasswordHash);
+        // Python hashlib.pbkdf2_hmac for the master key, then the protocol auth hash: PBKDF2(master key, password, 1).
+        Assert.Equal("ZUXKoMGCecw9b+k0GhQ+5vlP8hXPSgWofH6Lz13PCe8=", identityRequest.MasterPasswordHash);
         _ = context.IdentityApi.Received(1).GetPasswordPreloginAsync(
             request.Context,
             profile.Email,

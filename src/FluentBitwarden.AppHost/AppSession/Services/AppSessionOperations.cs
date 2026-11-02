@@ -11,7 +11,7 @@ namespace FluentBitwarden.AppHost.AppSession.Services;
 
 internal sealed class AppSessionOperations(
     IAccountService accountService,
-    IVaultService vaultService,
+    IVaultFactory vaultFactory,
     IAppHostTermination appHostTermination,
     AppSessionStore appSessionStore,
     IServerNotificationsDispatcherFactory notificationsDispatcherFactory) : IAppSessionOperations
@@ -52,7 +52,7 @@ internal sealed class AppSessionOperations(
         AppSessionState.Unlocked unlockedState;
         try
         {
-            IUnlockedVault unlockedVault = vaultService.Open(account.BitwardenAccountContext, accountKey);
+            IUnlockedVault unlockedVault = vaultFactory.Open(account.BitwardenAccountContext, accountKey);
             var serverNotificationsClient =
                 notificationsDispatcherFactory.CreateDispatcher(account.BitwardenAccountContext);
 

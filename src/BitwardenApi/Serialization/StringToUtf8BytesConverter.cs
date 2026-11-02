@@ -22,6 +22,6 @@ internal sealed class StringToUtf8BytesConverter : JsonConverter<byte[]>
         byte[] value,
         JsonSerializerOptions options)
     {
-        writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(value));
+        writer.WriteStringValue(value.AsSpan());
     }
 }

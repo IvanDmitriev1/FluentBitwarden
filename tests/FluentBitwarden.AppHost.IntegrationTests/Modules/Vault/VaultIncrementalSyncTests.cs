@@ -1,9 +1,7 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Vault.Events;
 using BitwardenApi.Notifications.Abstractions;
 using BitwardenApi.Notifications.Models;
-using FluentBitwarden.AppHost.Modules.Vault.Services;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Vault;
 
@@ -18,8 +16,7 @@ public sealed class VaultIncrementalSyncTests
         context.SeedCache([cipher]);
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
-
-        var handler = new VaultSyncNotificationsHandler(context.SessionAccessor, context.VaultService);
+        var handler = context.VaultSyncHandler;
         await handler.HandleAsync(NotificationType.SyncCipherDelete,
             new CipherChangedNotification(cipher.Id, context.Account.UserId, OrganizationId.Empty, [], cipher.RevisionDate), TestContext.Current.CancellationToken);
 
@@ -39,8 +36,17 @@ public sealed class VaultIncrementalSyncTests
         context.SeedCache([cipher], [folder]);
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
+        context.EventPublisher.When(p => p.PublishAsync(Arg.Any<FolderDeletedEvent>(), Arg.Any<CancellationToken>()))
+            .Do(_ =>
+            {
+                Assert.Null(vault.GetFolder(folder.Id));
+                Assert.Equal(FolderId.Empty, vault.GetCipher(cipher.Id)?.FolderId);
+                using var committed = context.OpenVaultFromFreshConnection(keySession);
+                Assert.Null(committed.GetFolder(folder.Id));
+                Assert.Equal(FolderId.Empty, committed.GetCipher(cipher.Id)?.FolderId);
+            });
 
-        var handler = new VaultSyncNotificationsHandler(context.SessionAccessor, context.VaultService);
+        var handler = context.VaultSyncHandler;
         await handler.HandleAsync(NotificationType.SyncFolderDelete,
             new FolderChangedNotification(folder.Id, context.Account.UserId, folder.RevisionDate), TestContext.Current.CancellationToken);
 
@@ -50,6 +56,60 @@ public sealed class VaultIncrementalSyncTests
         using var persisted = context.OpenVault();
         Assert.Null(persisted.GetFolder(folder.Id));
         Assert.Equal(FolderId.Empty, persisted.GetCipher(cipher.Id)?.FolderId);
+        await context.FoldersApi.DidNotReceive().DeleteFoldersAsync(Arg.Any<BitwardenAccountContext>(), Arg.Any<IReadOnlyList<FolderId>>(), Arg.Any<CancellationToken>());
+        await context.EventPublisher.Received(1).PublishAsync(new FolderDeletedEvent(context.Account.UserId, folder.Id), Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(-1, true)]
+    [InlineData(0, false)]
+    [InlineData(1, false)]
+    public async Task Folder_deletion_applies_equal_or_newer_revision_only(int offset, bool remains)
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var folder = VaultManagerTestData.Folder("revision-folder", "Folder", keySession.UserKey.Key);
+        var cipher = VaultManagerTestData.Cipher("revision-folder-cipher", keySession.UserKey.Key) with { FolderId = folder.Id };
+        context.SeedCache([cipher], [folder]);
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+
+        await context.VaultSyncHandler.HandleAsync(
+            NotificationType.SyncFolderDelete,
+            new FolderChangedNotification(folder.Id, context.Account.UserId, folder.RevisionDate.AddDays(offset)),
+            CancellationToken.None);
+
+        Assert.Equal(remains, vault.GetFolder(folder.Id) is not null);
+        Assert.Equal(remains ? folder.Id : FolderId.Empty, vault.GetCipher(cipher.Id)?.FolderId);
+        using var persisted = context.OpenVaultFromFreshConnection(keySession);
+        Assert.Equal(remains, persisted.GetFolder(folder.Id) is not null);
+        Assert.Equal(remains ? folder.Id : FolderId.Empty, persisted.GetCipher(cipher.Id)?.FolderId);
+        await context.EventPublisher.Received(remains ? 0 : 1).PublishAsync(
+            Arg.Any<FolderDeletedEvent>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Folder_deletion_persistence_failure_does_not_mutate_or_publish()
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var folder = VaultManagerTestData.Folder("failed-delete-folder", "Folder", keySession.UserKey.Key);
+        var cipher = VaultManagerTestData.Cipher("failed-delete-cipher", keySession.UserKey.Key) with { FolderId = folder.Id };
+        context.SeedCache([cipher], [folder], VaultManagerTestData.RevisionDate);
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+        context.FailCheckpointWrites();
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
+            context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderDelete, new FolderChangedNotification(folder.Id, context.Account.UserId, folder.RevisionDate), CancellationToken.None));
+        context.CloseUnitOfWork();
+
+        Assert.NotNull(vault.GetFolder(folder.Id));
+        Assert.Equal(folder.Id, vault.GetCipher(cipher.Id)?.FolderId);
+        using var persisted = context.OpenVaultFromFreshConnection(keySession);
+        Assert.NotNull(persisted.GetFolder(folder.Id));
+        Assert.Equal(folder.Id, persisted.GetCipher(cipher.Id)?.FolderId);
+        Assert.Empty(context.EventPublisher.ReceivedCalls());
     }
 
     [Theory]
@@ -68,9 +128,9 @@ public sealed class VaultIncrementalSyncTests
         DateTimeOffset staleRevision = newerRevision.AddDays(-1);
 
         if (folderObject)
-            await context.VaultService.DeleteFolderAsync(folder.Id, staleRevision, CancellationToken.None);
+            await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderDelete, new FolderChangedNotification(folder.Id, context.Account.UserId, staleRevision), CancellationToken.None);
         else
-            await context.VaultService.DeleteCipherAsync(cipher.Id, staleRevision, CancellationToken.None);
+            await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherDelete, new CipherChangedNotification(cipher.Id, context.Account.UserId, OrganizationId.Empty, [], staleRevision), CancellationToken.None);
 
         Assert.NotNull(vault.GetFolder(folder.Id));
         Assert.NotNull(vault.GetCipher(cipher.Id));
@@ -92,7 +152,7 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
         using var cancellation = new CancellationTokenSource();
-        await context.VaultService.SyncCipherAsync(response.Id, cancellation.Token);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(response.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), cancellation.Token);
         await context.CiphersApi.Received(1).GetCipherAsync(context.AccountContext, response.Id, cancellation.Token);
 
         Assert.Equal("inserted item", vault.GetCipher(response.Id)?.Name);
@@ -139,7 +199,7 @@ public sealed class VaultIncrementalSyncTests
                 });
         }
 
-        await context.VaultService.SyncCipherAsync(response.Id, CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(response.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         string expected = revisionOffset > 0 ? expectedName : "Synthetic item";
         Assert.Equal(expected, vault.GetCipher(response.Id)?.Name);
@@ -170,7 +230,7 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
-        await context.VaultService.SyncCipherAsync(response.Id, CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(response.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Equal(response.RevisionDate, context.GetServerRevisionDate());
     }
@@ -193,8 +253,8 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
-        await context.VaultService.SyncCipherAsync(later.Id, CancellationToken.None);
-        await context.VaultService.SyncCipherAsync(earlier.Id, CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(later.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(earlier.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Equal("later", vault.GetCipher(later.Id)?.Name);
         Assert.Equal("earlier", vault.GetCipher(earlier.Id)?.Name);
@@ -218,7 +278,7 @@ public sealed class VaultIncrementalSyncTests
         context.CreateLease(vault, keySession);
         context.FailCheckpointWrites();
 
-        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() => context.VaultService.SyncCipherAsync(response.Id, CancellationToken.None));
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(response.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None));
         context.CloseUnitOfWork();
 
         Assert.Equal("original value", vault.GetCipher(response.Id)?.Name);
@@ -251,7 +311,7 @@ public sealed class VaultIncrementalSyncTests
                 Assert.Equal("new folder", committed.GetFolder(response.Id)?.Name);
             });
 
-        await context.VaultService.SyncFolderAsync(response.Id, CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(response.Id, context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Equal("new folder", vault.GetFolder(response.Id)?.Name);
         using var persisted = context.OpenVault();
@@ -273,7 +333,7 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
-        await context.VaultService.SyncFolderAsync(response.Id, CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(response.Id, context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Equal(response.RevisionDate, context.GetServerRevisionDate());
     }
@@ -294,13 +354,66 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
-        await context.VaultService.SyncFolderAsync(id, CancellationToken.None);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(id, context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Equal(offset > 0 ? "after" : "before", vault.GetFolder(id)?.Name);
         Assert.Equal(offset > 0 ? response.RevisionDate : old.RevisionDate, vault.GetFolder(id)?.RevisionDate);
         Assert.Equal(offset > 0 ? response.RevisionDate : null, context.GetServerRevisionDate());
         using var persisted = context.OpenVault();
         Assert.Equal(offset > 0 ? "after" : "before", persisted.GetFolder(id)?.Name);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sync_notification_does_not_overwrite_a_newer_vault_value_arriving_during_fetch(bool folderObject)
+    {
+        using var context = new VaultManagerTestContext();
+        using var keySession = context.CreateKeySession();
+        var oldRevision = VaultManagerTestData.RevisionDate;
+        var fetchedRevision = oldRevision.AddDays(1);
+        var arrivedRevision = oldRevision.AddDays(2);
+        var cipher = VaultManagerTestData.Cipher("fetch-race-cipher", keySession.UserKey.Key, "stored") with { RevisionDate = oldRevision };
+        var folder = VaultManagerTestData.Folder("fetch-race-folder", "stored", keySession.UserKey.Key) with { RevisionDate = oldRevision };
+        context.SeedCache([cipher], [folder], oldRevision);
+        using var vault = context.OpenVault();
+        context.CreateLease(vault, keySession);
+
+        if (folderObject)
+        {
+            var response = VaultManagerTestData.Folder("fetch-race-folder", "fetched", keySession.UserKey.Key) with { RevisionDate = fetchedRevision };
+            context.FoldersApi.GetFolderAsync(context.AccountContext, folder.Id, Arg.Any<CancellationToken>())
+                .Returns(_ =>
+                {
+                    var arriving = vault.GetFolder(folder.Id)!;
+                    arriving.Name = "arrived";
+                    arriving.RevisionDate = arrivedRevision;
+                    return Task.FromResult(response);
+                });
+            await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate,
+                new FolderChangedNotification(folder.Id, context.Account.UserId, oldRevision), CancellationToken.None);
+            Assert.Equal("arrived", vault.GetFolder(folder.Id)?.Name);
+        }
+        else
+        {
+            var response = VaultManagerTestData.Cipher("fetch-race-cipher", keySession.UserKey.Key, "fetched") with { RevisionDate = fetchedRevision };
+            context.CiphersApi.GetCipherAsync(context.AccountContext, cipher.Id, Arg.Any<CancellationToken>())
+                .Returns(_ =>
+                {
+                    var arriving = vault.GetCipher(cipher.Id)!;
+                    arriving.Name = "arrived";
+                    arriving.RevisionDate = arrivedRevision;
+                    return Task.FromResult(response);
+                });
+            await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate,
+                new CipherChangedNotification(cipher.Id, context.Account.UserId, OrganizationId.Empty, [], oldRevision), CancellationToken.None);
+            Assert.Equal("arrived", vault.GetCipher(cipher.Id)?.Name);
+        }
+
+        using var persisted = context.OpenVaultFromFreshConnection(keySession);
+        Assert.Equal("stored", folderObject ? persisted.GetFolder(folder.Id)?.Name : persisted.GetCipher(cipher.Id)?.Name);
+        Assert.Equal(oldRevision, context.GetServerRevisionDateFromFreshConnection());
+        Assert.Empty(context.EventPublisher.ReceivedCalls());
     }
 
     [Fact]
@@ -314,7 +427,7 @@ public sealed class VaultIncrementalSyncTests
         context.CreateLease(vault, keySession);
 
         using var cancellation = new CancellationTokenSource();
-        await context.VaultService.SyncFolderAsync(response.Id, cancellation.Token);
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(response.Id, context.Account.UserId, VaultManagerTestData.RevisionDate), cancellation.Token);
         await context.FoldersApi.Received(1).GetFolderAsync(context.AccountContext, response.Id, cancellation.Token);
 
         Assert.Equal("inserted", vault.GetFolder(response.Id)?.Name);
@@ -340,11 +453,11 @@ public sealed class VaultIncrementalSyncTests
 
         if (canceled)
         {
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => context.VaultService.SyncCipherAsync(id, CancellationToken.None));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None));
         }
         else
         {
-            await Assert.ThrowsAsync<HttpRequestException>(() => context.VaultService.SyncCipherAsync(id, CancellationToken.None));
+            await Assert.ThrowsAsync<HttpRequestException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None));
         }
 
         Assert.Equal("unchanged", vault.GetCipher(cached.Id)?.Name);
@@ -369,7 +482,7 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
-        await Assert.ThrowsAnyAsync<System.Security.Cryptography.CryptographicException>(() => context.VaultService.SyncCipherAsync(response.Id, CancellationToken.None));
+        await Assert.ThrowsAnyAsync<System.Security.Cryptography.CryptographicException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(response.Id, context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None));
 
         Assert.Equal("Unchanged", vault.GetCipher(response.Id)?.Name);
         using var persisted = context.OpenVaultFromFreshConnection(keySession);
@@ -381,14 +494,14 @@ public sealed class VaultIncrementalSyncTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task SyncCipher_requires_unlocked_session(bool locked)
+    public async Task SyncCipher_ignores_notification_without_unlocked_session(bool locked)
     {
         using var context = new VaultManagerTestContext();
         context.SessionAccessor.AppSessionState.Returns(locked
             ? new AppSessionState.Locked(context.Account)
             : new AppSessionState.NotAuthenticated());
 
-        await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() => context.VaultService.SyncCipherAsync(CipherId.Parse("locked"), CancellationToken.None));
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncCipherUpdate, new CipherChangedNotification(CipherId.Parse("locked"), context.Account.UserId, OrganizationId.Empty, [], VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Empty(context.CiphersApi.ReceivedCalls());
     }
@@ -396,14 +509,14 @@ public sealed class VaultIncrementalSyncTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task SyncFolder_requires_unlocked_session(bool locked)
+    public async Task SyncFolder_ignores_notification_without_unlocked_session(bool locked)
     {
         using var context = new VaultManagerTestContext();
         context.SessionAccessor.AppSessionState.Returns(locked
             ? new AppSessionState.Locked(context.Account)
             : new AppSessionState.NotAuthenticated());
 
-        await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() => context.VaultService.SyncFolderAsync(FolderId.Parse("locked-folder"), CancellationToken.None));
+        await context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(FolderId.Parse("locked-folder"), context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None);
 
         Assert.Empty(context.FoldersApi.ReceivedCalls());
     }
@@ -426,11 +539,11 @@ public sealed class VaultIncrementalSyncTests
 
         if (canceled)
         {
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => context.VaultService.SyncFolderAsync(id, CancellationToken.None));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(id, context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None));
         }
         else
         {
-            await Assert.ThrowsAsync<HttpRequestException>(() => context.VaultService.SyncFolderAsync(id, CancellationToken.None));
+            await Assert.ThrowsAsync<HttpRequestException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(id, context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None));
         }
 
         Assert.Equal("unchanged", vault.GetFolder(id)?.Name);
@@ -455,7 +568,7 @@ public sealed class VaultIncrementalSyncTests
         using var vault = context.OpenVault();
         context.CreateLease(vault, keySession);
 
-        await Assert.ThrowsAnyAsync<System.Security.Cryptography.CryptographicException>(() => context.VaultService.SyncFolderAsync(response.Id, CancellationToken.None));
+        await Assert.ThrowsAnyAsync<System.Security.Cryptography.CryptographicException>(() => context.VaultSyncHandler.HandleAsync(NotificationType.SyncFolderUpdate, new FolderChangedNotification(response.Id, context.Account.UserId, VaultManagerTestData.RevisionDate), CancellationToken.None));
 
         Assert.Equal("Unchanged", vault.GetFolder(response.Id)?.Name);
         using var persisted = context.OpenVaultFromFreshConnection(keySession);
@@ -464,3 +577,5 @@ public sealed class VaultIncrementalSyncTests
         Assert.Empty(context.EventPublisher.ReceivedCalls());
     }
 }
+
+

@@ -1,5 +1,4 @@
 using BitwardenApi.Identity;
-using BitwardenApi.Cryptography.KeyDerivation;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Account.Services;
