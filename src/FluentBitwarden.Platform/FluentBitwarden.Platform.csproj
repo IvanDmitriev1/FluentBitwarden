@@ -5,6 +5,10 @@
     <RootNamespace>FluentBitwarden.Platform</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <RootNamespace>FluentBitwarden.Platform</RootNamespace>
+  </PropertyGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="FluentBitwarden.Platform.Tests" />
   </ItemGroup>
