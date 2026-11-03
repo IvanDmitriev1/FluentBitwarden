@@ -52,8 +52,8 @@ public sealed class AppSessionStoreTests
         var publisher = Substitute.For<IIpcEventPublisher>();
         var store = new AppSessionStore(publisher, Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         await store.AuthenticateAsync(Account, CancellationToken.None);
-        await using var previous = store.CreateLease();
-        var revoked = previous.Revoked;
+        await using var previous = new AppSessionAccessor(store);
+        var revoked = previous.State.Revoked;
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
@@ -140,8 +140,8 @@ public sealed class AppSessionStoreTests
         key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
         await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
-        await using var oldLease = store.CreateLease();
-        CancellationToken revoked = oldLease.Revoked;
+        await using var oldAccessor = new AppSessionAccessor(store);
+        CancellationToken revoked = oldAccessor.State.Revoked;
 
         await store.LockAsync(CancellationToken.None);
 
@@ -149,6 +149,10 @@ public sealed class AppSessionStoreTests
         Assert.IsType<AppSessionStateSnapshot.Locked>(store.State);
         vault.DidNotReceive().Dispose();
         key.DidNotReceive().Dispose();
+
+        await oldAccessor.DisposeAsync();
+        vault.Received(1).Dispose();
+        key.Received(1).Dispose();
     }
 
     [Fact]
@@ -162,22 +166,19 @@ public sealed class AppSessionStoreTests
     }
 
     [Fact]
-    public async Task Wait_until_unlocked_returns_a_captured_lease_that_survives_lock()
+    public async Task Wait_until_unlocked_completes_without_retaining_state()
     {
         var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         await store.AuthenticateAsync(Account, CancellationToken.None);
         using var cancellation = new CancellationTokenSource();
-        Task<IAppSessionLease> pending = store.WaitUntilUnlockedAsync(cancellation.Token).AsTask();
+        Task pending = store.WaitUntilUnlockedAsync(cancellation.Token);
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
         await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
-        IAppSessionLease lease = await pending;
+        await pending;
         await store.LockAsync(CancellationToken.None);
 
-        Assert.Same(vault, lease.RequireUnlockedState().Vault);
-        vault.DidNotReceive().Dispose();
-        await lease.DisposeAsync();
         vault.Received(1).Dispose();
         key.Received(1).Dispose();
     }

@@ -12,8 +12,8 @@ using FluentBitwarden.Contracts.Settings.Models;
 namespace FluentBitwarden.AppHost.Integrations.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
-    IAppSessionLeaseFactory appSessionLeaseFactory,
-    IAppSessionLease appSessionLease,
+    IAppSessionAccessor appSessionAccessor,
+    IAppSessionOperations appSessionOperations,
     IUserDialogService userDialogService,
     ISettingsStore settingsStore) : ISshKeyProvider
 {
@@ -21,19 +21,18 @@ internal sealed class SshKeyProvider(
 
     public async ValueTask<IReadOnlyList<SshAgentIdentity>> GetIdentitiesAsync(CancellationToken cancellationToken)
     {
-        await using var sessionAccessor = await appSessionLeaseFactory.WaitUntilUnlockedAsync(cancellationToken);
-        var unlocked = sessionAccessor.RequireUnlockedState();
+        await appSessionOperations.WaitUntilUnlockedAsync(cancellationToken);
+        var unlocked = appSessionAccessor.RequireUnlockedState();
 
-        var data = unlocked.Vault.GetCiphers(SshCipherQuery).OfType<SshKeyCipher>()
+        var identities = unlocked.Vault.GetCiphers(SshCipherQuery).OfType<SshKeyCipher>()
             .Select(static c => new SshAgentIdentity(c.PublicKey.KeyBlob, c.Name))
             .ToList();
-
-        return data;
+        return identities;
     }
 
     public async ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken)
     {
-        var unlocked = appSessionLease.RequireUnlockedState();
+        var unlocked = appSessionAccessor.RequireUnlockedState();
         UserId accountId = unlocked.Account.UserId;
 
         var userVerificationPolicy = settingsStore.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);

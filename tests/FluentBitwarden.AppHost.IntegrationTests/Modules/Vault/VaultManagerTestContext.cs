@@ -38,7 +38,7 @@ internal sealed class VaultManagerTestContext : IDisposable
         VaultReaderRepository = new VaultReaderRepository(_unitOfWork);
         VaultFactory = new VaultFactory(VaultReaderRepository);
         VaultSyncHandler = new VaultSyncHandler(
-            SessionLease,
+            SessionAccessor,
             _vaultWriterRepository,
             _vaultSyncStateRepository,
             SyncApi,
@@ -48,10 +48,10 @@ internal sealed class VaultManagerTestContext : IDisposable
             NetworkStatus,
             EventPublisher);
         VaultCipherService = new VaultCipherService(
-            SessionLease, _vaultWriterRepository, _unitOfWork, CiphersApi);
+            SessionAccessor, _vaultWriterRepository, _unitOfWork, CiphersApi);
     }
 
-    public IAppSessionLease SessionLease { get; } = Substitute.For<IAppSessionLease>();
+    public IAppSessionAccessor SessionAccessor { get; } = Substitute.For<IAppSessionAccessor>();
     public AccountProfile Account { get; }
     public BitwardenAccountContext AccountContext => Account.BitwardenAccountContext;
     public IVaultSyncApi SyncApi { get; }
@@ -66,11 +66,11 @@ internal sealed class VaultManagerTestContext : IDisposable
 
     public VaultManagerTestKeySession CreateKeySession() => new(AccountContext.UserId);
 
-    public IAppSessionLease CreateLease(IUnlockedVault vault, IAccountKeySession keySession)
+    public AppSessionState.Unlocked SetSessionState(IUnlockedVault vault, IAccountKeySession keySession)
     {
         var state = new AppSessionState.Unlocked(Account, vault, keySession, Substitute.For<IServerNotificationsDispatcher>());
-        SessionLease.AppSessionState.Returns(state);
-        return SessionLease;
+        SessionAccessor.State.Returns(state);
+        return state;
     }
 
     public IUnlockedVault OpenVault()

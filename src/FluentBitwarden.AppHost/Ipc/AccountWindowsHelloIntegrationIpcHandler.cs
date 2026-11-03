@@ -9,7 +9,7 @@ namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class AccountWindowsHelloIntegrationIpcHandler(
     IAccountWindowsHelloService accountWindowsHelloService,
-    IAppSessionLease appSessionLease) : IAccountWindowsHelloIntegrationClient, IIpcRequestsHandler
+    IAppSessionAccessor appSessionAccessor) : IAccountWindowsHelloIntegrationClient, IIpcRequestsHandler
 {
     public async Task<WindowsHelloEnrollmentStatus> GetEnrollmentAsync(GetWindowsHelloEnrollmentRequest request, CancellationToken cancellationToken = default)
     {
@@ -27,7 +27,7 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
     {
         try
         {
-            var state = appSessionLease.RequireUnlockedState();
+            var state = appSessionAccessor.RequireUnlockedState();
 
             if (!await accountWindowsHelloService.IsSupportedAsync())
                 return WindowsHelloEnrollmentOutcome.Unavailable;
@@ -52,7 +52,7 @@ internal sealed class AccountWindowsHelloIntegrationIpcHandler(
 
     public async Task DisableAsync(DisableWindowsHelloEnrollmentRequest request, CancellationToken cancellationToken = default)
     {
-        var state = appSessionLease.RequireUnlockedState();
+        var state = appSessionAccessor.RequireUnlockedState();
 
         if (!await accountWindowsHelloService.IsSupportedAsync())
             return;

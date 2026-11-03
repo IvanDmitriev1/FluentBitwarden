@@ -8,14 +8,14 @@ using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
 
 internal sealed class VaultCipherService(
-    IAppSessionLease appSessionLease,
+    IAppSessionAccessor appSessionAccessor,
     VaultWriterRepository vaultWriterRepository,
     IUnitOfWork unitOfWork,
     ICiphersApi ciphersApi) : IVaultCipherService
 {
     public async Task<Cipher> SaveAsync(Cipher cipher, CancellationToken cancellationToken = default)
     {
-        var (accountProfile, vault, keySession, _) = appSessionLease.RequireUnlockedState();
+        var (accountProfile, vault, keySession, _) = appSessionAccessor.RequireUnlockedState();
         BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
         CipherResponse savedDto;
         if (cipher.Id.IsEmpty)

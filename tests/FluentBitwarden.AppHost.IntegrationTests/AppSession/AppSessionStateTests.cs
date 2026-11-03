@@ -130,7 +130,7 @@ public sealed class AppSessionStateTests
     }
 
     [Fact]
-    public async Task Final_lease_release_awaits_notification_disposal()
+    public async Task Final_reference_release_awaits_notification_disposal()
     {
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();

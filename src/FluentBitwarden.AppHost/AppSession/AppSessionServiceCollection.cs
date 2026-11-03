@@ -9,9 +9,7 @@ internal static class AppSessionServiceCollection
     public static void AddAppSessionModule(this IServiceCollection services)
     {
         services.AddSingleton<AppSessionStore>();
-        services.AddSingleton<IAppSessionLeaseFactory>(static sp => sp.GetRequiredService<AppSessionStore>());
-
-        services.AddScoped<IAppSessionLease>(static sp => sp.GetRequiredService<AppSessionStore>().CreateLease());
+        services.AddScoped<IAppSessionAccessor, AppSessionAccessor>();
         services.AddScoped<IAppSessionOperations, AppSessionOperations>();
 
         services.AddHostedService<AppSessionHostedService>();

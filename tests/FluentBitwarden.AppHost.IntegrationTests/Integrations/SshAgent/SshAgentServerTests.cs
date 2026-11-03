@@ -91,7 +91,6 @@ public sealed class SshAgentServerTests
             services.GetRequiredService<IServiceScopeFactory>(),
             Substitute.For<ILogger<SshAgentServer>>());
         using var stopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var serverTask = server.RunAsync(pipeName, stopping.Token);
 
         try
@@ -101,6 +100,8 @@ public sealed class SshAgentServerTests
                 using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
                 await client.ConnectAsync(cancellationToken)
                     .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+                await new SshAgentMessage(SshAgentMessageType.RequestIdentities, ReadOnlyMemory<byte>.Empty)
+                    .WriteMessageAsync(client, cancellationToken);
 
                 var buffer = new byte[1];
                 var readTask = client.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
@@ -119,6 +120,7 @@ public sealed class SshAgentServerTests
         finally
         {
             stopping.Cancel();
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             await serverTask.WaitAsync(cleanup.Token);
         }
     }

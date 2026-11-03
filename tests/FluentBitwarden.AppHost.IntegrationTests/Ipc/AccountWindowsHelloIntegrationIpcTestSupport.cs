@@ -9,15 +9,15 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 
 internal static class AccountWindowsHelloIntegrationIpcTestSupport
 {
-    internal static UnlockedUserKey ConfigureAccountKeySession(IAppSessionLease lease, UserId userId)
+    internal static UnlockedUserKey ConfigureAccountKeySession(IAppSessionAccessor accessor, UserId userId)
     {
         var userKey = new UnlockedUserKey(userId, [0x10, 0x20, 0x30]);
         IAccountKeySession accountKeySession = Substitute.For<IAccountKeySession>();
         accountKeySession.UserId.Returns(userId);
         accountKeySession.UserKey.Returns(userKey);
-        var unlocked = lease.RequireUnlockedState();
+        var unlocked = accessor.RequireUnlockedState();
         var state = new AppSessionState.Unlocked(unlocked.Account, unlocked.Vault, accountKeySession, Substitute.For<IServerNotificationsDispatcher>());
-        lease.AppSessionState.Returns(state);
+        accessor.State.Returns(state);
         return userKey;
     }
 
@@ -27,32 +27,32 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
             AccountTestData.FirstUserId,
             "user@example.test",
             "first");
-        IAppSessionLease lease = Substitute.For<IAppSessionLease>();
+        IAppSessionAccessor accessor = Substitute.For<IAppSessionAccessor, IAsyncDisposable>();
         var vault = Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>();
         var accountKey = Substitute.For<IAccountKeySession>();
         accountKey.UserId.Returns(account.UserId);
         var state = new AppSessionState.Unlocked(account, vault, accountKey, Substitute.For<IServerNotificationsDispatcher>());
-        lease.AppSessionState.Returns(state);
+        accessor.State.Returns(state);
 
 
         IAccountWindowsHelloService windowsHello = Substitute.For<IAccountWindowsHelloService>();
         windowsHello.IsSupportedAsync().Returns(Task.FromResult(isSupported));
         windowsHello.IsEnabled(account.UserId).Returns(isEnabled);
 
-        return new Fixture(windowsHello, lease, account);
+        return new Fixture(windowsHello, accessor, account);
     }
     internal sealed class Fixture : IAsyncDisposable
     {
         private readonly ServiceProvider _services;
         private readonly AsyncServiceScope _scope;
-        public Fixture(IAccountWindowsHelloService windowsHello, IAppSessionLease lease, AccountProfile account)
+        public Fixture(IAccountWindowsHelloService windowsHello, IAppSessionAccessor accessor, AccountProfile account)
         {
             WindowsHello = windowsHello;
-            Lease = lease;
+            Accessor = accessor;
             Account = account;
             var services = new ServiceCollection();
             services.AddSingleton(windowsHello);
-            services.AddScoped<IAppSessionLease>(_ => lease);
+            services.AddScoped<IAppSessionAccessor>(_ => accessor);
             services.AddScoped<AccountWindowsHelloIntegrationIpcHandler>();
             _services = services.BuildServiceProvider();
             _scope = _services.CreateAsyncScope();
@@ -60,7 +60,7 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
         }
         public AccountWindowsHelloIntegrationIpcHandler Handler { get; }
         public IAccountWindowsHelloService WindowsHello { get; }
-        public IAppSessionLease Lease { get; }
+        public IAppSessionAccessor Accessor { get; }
         public AccountProfile Account { get; }
         public async ValueTask DisposeAsync()
         {

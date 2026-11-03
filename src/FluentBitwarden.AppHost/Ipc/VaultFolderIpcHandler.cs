@@ -4,11 +4,11 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class VaultFolderIpcHandler(IAppSessionLease appSessionLease) : IVaultFolderClient, IIpcRequestsHandler
+internal sealed class VaultFolderIpcHandler(IAppSessionAccessor appSessionAccessor) : IVaultFolderClient, IIpcRequestsHandler
 {
     public Task<Folder[]> GetFoldersAsync(GetVaultFoldersRequest request, CancellationToken cancellationToken = default)
     {
-        var unlocked = appSessionLease.RequireUnlockedState();
+        var unlocked = appSessionAccessor.RequireUnlockedState();
 
         return Task.FromResult(unlocked.Vault.GetFolders());
     }

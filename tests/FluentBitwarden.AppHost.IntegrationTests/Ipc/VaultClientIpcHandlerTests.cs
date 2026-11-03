@@ -11,18 +11,18 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 public sealed class VaultClientIpcHandlerTests
 {
     [Fact]
-    public async Task Every_vault_operation_requires_an_unlocked_session_lease()
+    public async Task Every_vault_operation_requires_an_unlocked_session_accessor()
     {
-        IAppSessionLease lease = Substitute.For<IAppSessionLease>();
-        lease.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
+        IAppSessionAccessor accessor = Substitute.For<IAppSessionAccessor>();
+        accessor.State.Returns(new AppSessionState.NotAuthenticated());
         using var context = new FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultManagerTestContext();
-        context.SessionLease.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
+        context.SessionAccessor.State.Returns(new AppSessionState.NotAuthenticated());
         var operationsHandler = new VaultOperationsIpcHandler(context.VaultSyncHandler);
         var cipherHandler = new VaultCipherIpcHandler(
-            lease,
+            accessor,
             context.VaultCipherService,
-            new FluentBitwarden.AppHost.Modules.Vault.Services.VaultCipherAttachmentService(context.SessionLease, Substitute.For<BitwardenApi.Vault.Attachments.IAttachmentsApi>(), context.VaultReaderRepository));
-        var folderHandler = new VaultFolderIpcHandler(lease);
+            new FluentBitwarden.AppHost.Modules.Vault.Services.VaultCipherAttachmentService(context.SessionAccessor, Substitute.For<BitwardenApi.Vault.Attachments.IAttachmentsApi>(), context.VaultReaderRepository));
+        var folderHandler = new VaultFolderIpcHandler(accessor);
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() =>
@@ -38,16 +38,16 @@ public sealed class VaultClientIpcHandlerTests
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(async () =>
             await cipherHandler.DownloadCipherAttachmentAsync(default!, cancellationToken));
 
-        _ = lease.Received(3).AppSessionState;
+        _ = accessor.Received(3).State;
     }
 
     [Fact]
     public async Task Download_attachment_delegates_to_service_with_the_unlocked_session()
     {
-        IAppSessionLease lease = Substitute.For<IAppSessionLease>();
+        IAppSessionAccessor accessor = Substitute.For<IAppSessionAccessor>();
         IVaultCipherAttachmentService attachmentService = Substitute.For<IVaultCipherAttachmentService>();
         var handler = new VaultCipherIpcHandler(
-            lease,
+            accessor,
             Substitute.For<IVaultCipherService>(),
             attachmentService);
         var request = new DownloadVaultCipherAttachmentRequest(

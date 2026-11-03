@@ -8,12 +8,14 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class PasskeyIpcHandler(
-    IAppSessionLeaseFactory appSessionLeaseFactory,
+    IAppSessionAccessor appSessionAccessor,
+    IAppSessionOperations appSessionOperations,
     IUserDialogService userDialogService) : IPasskeyClient, IIpcRequestsHandler
 {
     public async Task<PasskeyAssertionResponse> SelectCredentialAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
-        await using var lease = await appSessionLeaseFactory.WaitUntilUnlockedAsync(cancellationToken);
+        await appSessionOperations.WaitUntilUnlockedAsync(cancellationToken);
+        _ = appSessionAccessor.RequireUnlockedState();
 
         var result =
             await userDialogService.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(

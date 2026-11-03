@@ -7,7 +7,7 @@ namespace FluentBitwarden.AppHost.AppSession.Services;
 
 internal sealed class AppSessionStore(
     IIpcEventPublisher eventPublisher,
-    IUiProcessLauncher uiProcessLauncher) : IAppSessionLeaseFactory, IAsyncDisposable
+    IUiProcessLauncher uiProcessLauncher)
 {
     private readonly Lock _lock = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -27,33 +27,17 @@ internal sealed class AppSessionStore(
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _gate.WaitAsync();
-
-        try
-        {
-            await _state.DisposeAsync();
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
-
-    public IAppSessionLease CreateLease()
+    public AppSessionState AcquireState()
     {
         lock (_lock)
         {
             var state = _state;
-
             state.AddReference();
-
-            return new AppSessionLease(state);
+            return state;
         }
     }
 
-    public async ValueTask<IAppSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
+    public async Task WaitUntilUnlockedAsync(CancellationToken cancellationToken)
     {
         while (true)
         {
@@ -65,7 +49,7 @@ internal sealed class AppSessionStore(
 
                 if (_state is AppSessionState.Unlocked)
                 {
-                    return CreateLease();
+                    return;
                 }
 
                 uiProcessLauncher.Activate();
@@ -85,10 +69,7 @@ internal sealed class AppSessionStore(
             lock (_lock)
             {
                 if (_state is not AppSessionState.NotAuthenticated)
-                {
-                    throw new InvalidOperationException(
-                        "Session is already authenticated.");
-                }
+                    throw new InvalidOperationException("Session is already authenticated.");
             }
 
             if (ct.IsCancellationRequested)

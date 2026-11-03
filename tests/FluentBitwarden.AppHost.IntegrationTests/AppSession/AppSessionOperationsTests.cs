@@ -14,27 +14,26 @@ namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
 public sealed class AppSessionOperationsTests
 {
     [Fact]
-    public void Starts_without_an_active_account()
+    public async Task Starts_without_an_active_account()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
 
         Assert.IsType<AppSessionStateSnapshot.NotAuthenticated>(context.Store.State);
         Assert.Null(AppSessionTestSupport.GetAccount(context.Store.State));
     }
 
     [Fact]
-    public async Task RequireUnlockedSessionLease_throws_when_not_authenticated()
+    public async Task RequireUnlockedState_throws_when_not_authenticated()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
 
-        await Assert.ThrowsAsync<UnlockedSessionRequiredException>(
-            async () => await context.RequireUnlockedSessionLeaseAsync());
+        Assert.Throws<UnlockedSessionRequiredException>(() => context.Accessor.RequireUnlockedState());
     }
 
     [Fact]
-    public async Task RequireUnlockedSessionLease_throws_when_locked()
+    public async Task RequireUnlockedState_throws_when_locked()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -47,14 +46,13 @@ public sealed class AppSessionOperationsTests
             TestContext.Current.CancellationToken);
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<UnlockedSessionRequiredException>(
-            async () => await context.RequireUnlockedSessionLeaseAsync());
+        Assert.Throws<UnlockedSessionRequiredException>(() => context.Accessor.RequireUnlockedState());
     }
 
     [Fact]
-    public async Task RequireUnlockedSessionLease_returns_a_lease_that_survives_lock_until_disposed()
+    public async Task Accessor_keeps_captured_state_until_scope_disposal_after_lock()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -63,22 +61,24 @@ public sealed class AppSessionOperationsTests
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken);
 
-        IAppSessionLease lease = await context.RequireUnlockedSessionLeaseAsync();
+        var state = context.Accessor.RequireUnlockedState();
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(account, lease.RequireUnlockedState().Account);
-        Assert.Same(vault, lease.RequireUnlockedState().Vault);
+        Assert.Same(state, context.Accessor.State);
+        Assert.Equal(account, state.Account);
+        Assert.Same(vault, state.Vault);
         vault.DidNotReceive().Dispose();
 
-        await lease.DisposeAsync();
+        await context.SessionAccessor.DisposeAsync();
 
         vault.Received(1).Dispose();
+        Assert.Throws<ObjectDisposedException>(() => _ = context.Accessor.State);
     }
 
     [Fact]
     public async Task TryGetUnlockedAccount_returns_the_selected_account_only_while_unlocked()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), Substitute.For<IUnlockedVault>());
@@ -96,7 +96,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_with_master_password_opens_the_account_vault()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -122,7 +122,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_opening_the_vault_throws_requests_application_termination()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var expectedException = new InvalidOperationException("Vault open failed.");
@@ -144,7 +144,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_lifetime_creation_fails_requests_application_termination()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(UserId.Empty, []);
         var vault = Substitute.For<IUnlockedVault>();
@@ -164,7 +164,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_with_Windows_Hello_forwards_owner_window_and_opens_the_account_vault()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -189,7 +189,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_account_is_missing_returns_failure()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         UserId userId = UserId.Parse(AccountTestData.FirstUserId);
 
         SessionUnlockOutcome result = await context.Operations.UnlockAsync(
@@ -204,7 +204,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_key_is_invalid_maps_to_invalid_credentials_failure()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         context.ConfigureAccount(account, new AccountKeyUnlockResult.InvalidCredentials());
 
@@ -220,7 +220,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_Windows_Hello_is_cancelled_maps_to_cancelled_outcome()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Cancelled());
 
@@ -234,7 +234,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_password_unlock_is_cancelled_maps_to_generic_failure()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Cancelled());
 
@@ -248,7 +248,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_key_requires_online_reauthentication_maps_to_reauthentication_outcome()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         context.ConfigureAccount(account, new AccountKeyUnlockResult.RequiresOnlineReauthentication());
 
@@ -262,7 +262,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_when_key_failure_is_unclassified_maps_to_generic_failure()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Failure("Synthetic internal failure."));
 
@@ -276,7 +276,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_for_the_same_account_while_unlocked_succeeds_without_reopening_the_vault()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -299,7 +299,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Unlock_for_a_different_account_while_unlocked_requires_locking_first()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var firstAccount = AccountTestData.Profile(AccountTestData.FirstUserId, "first@example.test", "first");
         var secondAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
         using var firstUserKey = new UnlockedUserKey(firstAccount.UserId, [0x10, 0x20, 0x30]);
@@ -333,7 +333,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Lock_then_unlock_again_reopens_the_vault_for_the_account()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var firstVault = Substitute.For<IUnlockedVault>();
@@ -362,9 +362,9 @@ public sealed class AppSessionOperationsTests
     }
 
     [Fact]
-    public async Task Lock_then_unlock_another_account_keeps_existing_lease_identity_stable()
+    public async Task Lock_then_unlock_another_account_keeps_accessor_identity_stable()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var firstAccount = AccountTestData.Profile(AccountTestData.FirstUserId, "first@example.test", "first");
         var secondAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
         using var firstUserKey = new UnlockedUserKey(firstAccount.UserId, [0x10, 0x20, 0x30]);
@@ -377,7 +377,7 @@ public sealed class AppSessionOperationsTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(firstAccount.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
-        IAppSessionLease lease = await context.Store.WaitUntilUnlockedAsync(TestContext.Current.CancellationToken);
+        var capturedState = context.Accessor.State;
 
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
@@ -385,20 +385,22 @@ public sealed class AppSessionOperationsTests
             TestContext.Current.CancellationToken));
 
         Assert.Equal(secondAccount, (context.Store.State switch { AppSessionStateSnapshot.Locked locked => locked.Account, AppSessionStateSnapshot.Unlocked unlocked => unlocked.Account, _ => null }));
-        Assert.Equal(firstAccount, lease.RequireUnlockedState().Account);
-        Assert.Same(firstVault, lease.RequireUnlockedState().Vault);
+        Assert.Equal(firstAccount, Assert.IsType<AppSessionState.Unlocked>(capturedState).Account);
+        Assert.Same(capturedState, context.Accessor.State);
+        Assert.Same(firstVault, context.Accessor.RequireUnlockedState().Vault);
+        firstVault.DidNotReceive().Dispose();
 
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
         Assert.IsType<AppSessionStateSnapshot.Locked>(context.Store.State);
 
-        await lease.DisposeAsync();
-        await lease.DisposeAsync();
+        await context.SessionAccessor.DisposeAsync();
+        firstVault.Received(1).Dispose();
     }
 
     [Fact]
     public async Task Failed_switch_after_lock_keeps_the_previous_account_selected_and_locked()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var firstAccount = AccountTestData.Profile(AccountTestData.FirstUserId, "first@example.test", "first");
         var secondAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
         using var firstUserKey = new UnlockedUserKey(firstAccount.UserId, [0x10, 0x20, 0x30]);
@@ -449,41 +451,75 @@ public sealed class AppSessionOperationsTests
         vault.Received(1).Dispose();
     }
     [Fact]
-    public async Task WaitUntilUnlocked_completes_after_unlock()
+    public async Task WaitUntilUnlocked_completes_after_unlock_without_retaining_state()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
-        ValueTask<IAppSessionLease> waiter = context.Store.WaitUntilUnlockedAsync(
+        Task waiter = context.Operations.WaitUntilUnlockedAsync(
             TestContext.Current.CancellationToken);
+        Assert.False(waiter.IsCompleted);
+        context.UiProcessLauncher.Received(1).Activate();
 
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
 
-        await using IAppSessionLease lease = await waiter;
-        Assert.Equal(account, lease.RequireUnlockedState().Account);
-        Assert.Same(vault, lease.RequireUnlockedState().Vault);
+        await waiter;
+        await context.Operations.LockAsync(TestContext.Current.CancellationToken);
+        vault.Received(1).Dispose();
     }
 
     [Fact]
     public async Task WaitUntilUnlocked_cancels_when_cancellation_is_requested()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        await context.Store.AuthenticateAsync(account, CancellationToken.None);
         using var cancellation = new CancellationTokenSource();
-        ValueTask<IAppSessionLease> waiter = context.Store.WaitUntilUnlockedAsync(cancellation.Token);
+        Task waiter = context.Store.WaitUntilUnlockedAsync(cancellation.Token);
+        Assert.False(waiter.IsCompleted);
 
         cancellation.Cancel();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiter.AsTask());
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiter);
+    }
+
+    [Fact]
+    public async Task WaitUntilUnlocked_honors_cancellation_before_waiting()
+    {
+        await using var context = new SessionTestContext();
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            context.Operations.WaitUntilUnlockedAsync(cancellation.Token));
+    }
+
+    [Fact]
+    public async Task WaitUntilUnlocked_returns_immediately_when_already_unlocked()
+    {
+        await using var context = new SessionTestContext();
+        var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
+        var vault = Substitute.For<IUnlockedVault>();
+        context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
+        Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
+            new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
+            TestContext.Current.CancellationToken));
+
+        await context.Operations.WaitUntilUnlockedAsync(TestContext.Current.CancellationToken);
+        await context.Operations.LockAsync(TestContext.Current.CancellationToken);
+
+        vault.Received(1).Dispose();
     }
 
     [Fact]
     public async Task Unlock_honors_cancellation_before_publishing_the_vault()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var key = new TestAccountKeySession(new UnlockedUserKey(account.UserId, []));
         var vault = Substitute.For<IUnlockedVault>();
@@ -496,9 +532,9 @@ public sealed class AppSessionOperationsTests
         Assert.IsType<AppSessionStateSnapshot.Locked>(context.Store.State);
     }
     [Fact]
-    public async Task Lock_defers_account_key_disposal_until_the_active_session_lease_is_released()
+    public async Task Lock_defers_account_key_disposal_until_the_captured_scope_is_released()
     {
-        var context = new SessionTestContext();
+        await using var context = new SessionTestContext();
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
@@ -506,15 +542,13 @@ public sealed class AppSessionOperationsTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
-        IAppSessionLease lease = await context.Store.WaitUntilUnlockedAsync(
-            TestContext.Current.CancellationToken);
+        _ = context.Accessor.State;
 
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
 
         Assert.IsType<AppSessionStateSnapshot.Locked>(context.Store.State);
         _ = userKey.Key;
-        await lease.DisposeAsync();
-        await lease.DisposeAsync();
+        await context.SessionAccessor.DisposeAsync();
         Assert.Throws<ObjectDisposedException>(() => userKey.Key.ToArray());
     }
 

@@ -8,13 +8,15 @@ using FluentBitwarden.Contracts.AppSession.State;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
 
-internal sealed class SessionTestContext
+internal sealed class SessionTestContext : IAsyncDisposable
 {
     public SessionTestContext()
     {
         AccountService = Substitute.For<IAccountService>();
         VaultFactory = Substitute.For<IVaultFactory>();
-        Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
+        UiProcessLauncher = Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>();
+        Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), UiProcessLauncher);
+        SessionAccessor = new AppSessionAccessor(Store);
         AppHostTermination = Substitute.For<IAppHostTermination>();
         Operations = new AppSessionOperations(
             AccountService,
@@ -26,22 +28,22 @@ internal sealed class SessionTestContext
 
     public IAccountService AccountService { get; }
     public IVaultFactory VaultFactory { get; }
+    public FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher UiProcessLauncher { get; }
     public AppSessionStore Store { get; }
+    public AppSessionAccessor SessionAccessor { get; }
+    public IAppSessionAccessor Accessor => SessionAccessor;
     public IAppHostTermination AppHostTermination { get; }
     public AppSessionOperations Operations { get; }
 
-    public async ValueTask<IAppSessionLease> RequireUnlockedSessionLeaseAsync()
+    public async ValueTask DisposeAsync()
     {
-        var lease = Store.CreateLease();
         try
         {
-            _ = lease.RequireUnlockedState();
-            return lease;
+            await Store.SignOutAsync(CancellationToken.None);
         }
-        catch
+        finally
         {
-            await lease.DisposeAsync();
-            throw;
+            await SessionAccessor.DisposeAsync();
         }
     }
 
