@@ -19,11 +19,11 @@ internal static class SshKeyProviderTestSupport
         Assert.True(verifier.VerifySignature(signature.Value));
     }
 
-    internal static IAppSessionAccessor CreateLease(AccountProfile account, params Cipher[] ciphers)
+    internal static IAppSessionLease CreateLease(AccountProfile account, params Cipher[] ciphers)
     {
         var vault = Substitute.For<IUnlockedVault>();
         vault.GetCiphers(Arg.Any<VaultCipherQuery>()).Returns(ciphers);
-        var lease = Substitute.For<IAppSessionAccessor>();
+        var lease = Substitute.For<IAppSessionLease>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(account.UserId);
         var state = new AppSessionState.Unlocked(account, vault, key, Substitute.For<IServerNotificationsDispatcher>());

@@ -17,7 +17,7 @@ using FluentBitwarden.Contracts.Modules.Vault.Events;
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
 
 internal sealed class VaultSyncHandler(
-    IAppSessionAccessor appSessionAccessor,
+    IAppSessionLease appSessionLease,
     VaultWriterRepository vaultWriterRepository,
     VaultSyncStateRepository vaultSyncStateRepository,
     IVaultSyncApi vaultSyncApi,
@@ -32,7 +32,7 @@ internal sealed class VaultSyncHandler(
 {
     public async Task<VaultSyncResult> SyncAsync()
     {
-        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession, _) = appSessionAccessor.RequireUnlockedState();
+        (AccountProfile accountProfile, IUnlockedVault vault, IAccountKeySession keySession, _) = appSessionLease.RequireUnlockedState();
         BitwardenAccountContext accountContext = accountProfile.BitwardenAccountContext;
 
         try
@@ -81,7 +81,7 @@ internal sealed class VaultSyncHandler(
                 NotificationType.SyncCipherDelete or
                 NotificationType.SyncLoginDelete) ||
             notification.Id.IsEmpty ||
-            appSessionAccessor.AppSessionState is not AppSessionState.Unlocked unlocked ||
+            appSessionLease.AppSessionState is not AppSessionState.Unlocked unlocked ||
             notification.UserId != unlocked.Account.UserId)
         {
             return;
@@ -133,7 +133,7 @@ internal sealed class VaultSyncHandler(
                 NotificationType.SyncFolderUpdate or
                 NotificationType.SyncFolderDelete) ||
             notification.Id.IsEmpty ||
-            appSessionAccessor.AppSessionState is not AppSessionState.Unlocked unlocked ||
+            appSessionLease.AppSessionState is not AppSessionState.Unlocked unlocked ||
             notification.UserId != unlocked.Account.UserId)
         {
             return;

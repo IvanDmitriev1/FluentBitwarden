@@ -1,14 +1,13 @@
 using System.Security.Cryptography;
 using FluentBitwarden.AppHost.AppSession.Contracts;
-using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.IntegrationTests.AppSession;
 using FluentBitwarden.AppHost.IntegrationTests.Infrastructure;
 using FluentBitwarden.AppHost.Modules.Account.Contracts;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
-using FluentBitwarden.Contracts.Integrations.Passkey;
 using Microsoft.Extensions.DependencyInjection;
+using FluentBitwarden.AppHost.Ipc;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 
@@ -19,14 +18,18 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
     private int _nextAccountKeyGeneration = 1;
     private int _nextCredentialId = 1;
 
-    public PasskeyIpcHandlerTestContext(IPasskeyDialogClient dialog)
+    public PasskeyIpcHandlerTestContext(FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService dialog)
     {
         Dialog = dialog;
         Session = new SessionTestContext();
+        SessionLeaseFactory = Substitute.For<IAppSessionLeaseFactory>();
+        SessionLeaseFactory.WaitUntilUnlockedAsync(Arg.Any<CancellationToken>())
+            .Returns(call => Session.Store.WaitUntilUnlockedAsync(call.Arg<CancellationToken>()));
 
         var services = new ServiceCollection();
         services.AddSingleton<IAppSessionOperations>(Session.Operations);
-        services.AddSingleton<IPasskeyDialogClient>(Dialog);
+        services.AddSingleton(SessionLeaseFactory);
+        services.AddSingleton<FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService>(Dialog);
         services.AddTransient<PasskeyIpcHandler>();
         _services = services.BuildServiceProvider(new ServiceProviderOptions
         {
@@ -37,8 +40,9 @@ internal sealed class PasskeyIpcHandlerTestContext : IAsyncDisposable
         Handler = _services.GetRequiredService<PasskeyIpcHandler>();
     }
 
-    public IPasskeyDialogClient Dialog { get; }
+    public FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService Dialog { get; }
     public SessionTestContext Session { get; }
+    public IAppSessionLeaseFactory SessionLeaseFactory { get; }
     public PasskeyIpcHandler Handler { get; }
 
     public Fido2Credential CreateCredential(string rpId)

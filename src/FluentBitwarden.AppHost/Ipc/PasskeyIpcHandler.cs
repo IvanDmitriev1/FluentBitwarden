@@ -1,19 +1,26 @@
-using FluentBitwarden.AppHost.Infrastructure.Processes;
+using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.WebAuthn;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Integrations.Passkey;
 using FluentBitwarden.Contracts.Modules.Passkey.Models;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class PasskeyIpcHandler(IPasskeyDialogClient passkeyDialogClient) : IPasskeyClient, IIpcRequestsHandler
+internal sealed class PasskeyIpcHandler(
+    IAppSessionLeaseFactory appSessionLeaseFactory,
+    IUserDialogService userDialogService) : IPasskeyClient, IIpcRequestsHandler
 {
     public async Task<PasskeyAssertionResponse> SelectCredentialAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
-        var credential =
-            await passkeyDialogClient.ShowPasskeySelectionDialogAsync(
+        await using var lease = await appSessionLeaseFactory.WaitUntilUnlockedAsync(cancellationToken);
+
+        var result =
+            await userDialogService.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
                 new PasskeySelectCredentialRequest(request.RpId),
                 cancellationToken);
+
+        var credential = result.GetResultOrThrow();
 
         var (authenticatorData, signature) =
             WebAuthnAssertion.Create(
@@ -36,22 +43,5 @@ internal sealed class PasskeyIpcHandler(IPasskeyDialogClient passkeyDialogClient
     public Task<PasskeyMakeCredentialResponse> MakeCredentialAsync(PasskeyMakeCredentialRequest request, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
-    }
-}
-
-//TODO remove after refactoring UI dialog system
-internal sealed class PasskeyDialogClient(
-    IIpcClient ipcClient,
-    IUiProcessLauncher uiProcessLauncher) : IPasskeyDialogClient
-{
-    public Task<Fido2Credential> ShowPasskeySelectionDialogAsync(
-        PasskeySelectCredentialRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        uiProcessLauncher.Activate();
-
-        return ipcClient.SendAsync<PasskeySelectCredentialRequest, Fido2Credential>(
-            request,
-            cancellationToken);
     }
 }

@@ -497,7 +497,7 @@ public sealed class VaultIncrementalSyncTests
     public async Task SyncCipher_ignores_notification_without_unlocked_session(bool locked)
     {
         using var context = new VaultManagerTestContext();
-        context.SessionAccessor.AppSessionState.Returns(locked
+        context.SessionLease.AppSessionState.Returns(locked
             ? new AppSessionState.Locked(context.Account)
             : new AppSessionState.NotAuthenticated());
 
@@ -512,7 +512,7 @@ public sealed class VaultIncrementalSyncTests
     public async Task SyncFolder_ignores_notification_without_unlocked_session(bool locked)
     {
         using var context = new VaultManagerTestContext();
-        context.SessionAccessor.AppSessionState.Returns(locked
+        context.SessionLease.AppSessionState.Returns(locked
             ? new AppSessionState.Locked(context.Account)
             : new AppSessionState.NotAuthenticated());
 

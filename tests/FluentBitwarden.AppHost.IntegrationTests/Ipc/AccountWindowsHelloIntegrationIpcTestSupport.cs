@@ -9,7 +9,7 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 
 internal static class AccountWindowsHelloIntegrationIpcTestSupport
 {
-    internal static UnlockedUserKey ConfigureAccountKeySession(IAppSessionAccessor lease, UserId userId)
+    internal static UnlockedUserKey ConfigureAccountKeySession(IAppSessionLease lease, UserId userId)
     {
         var userKey = new UnlockedUserKey(userId, [0x10, 0x20, 0x30]);
         IAccountKeySession accountKeySession = Substitute.For<IAccountKeySession>();
@@ -27,7 +27,7 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
             AccountTestData.FirstUserId,
             "user@example.test",
             "first");
-        IAppSessionAccessor lease = Substitute.For<IAppSessionAccessor>();
+        IAppSessionLease lease = Substitute.For<IAppSessionLease>();
         var vault = Substitute.For<FluentBitwarden.AppHost.Modules.Vault.Contracts.IUnlockedVault>();
         var accountKey = Substitute.For<IAccountKeySession>();
         accountKey.UserId.Returns(account.UserId);
@@ -45,14 +45,14 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
     {
         private readonly ServiceProvider _services;
         private readonly AsyncServiceScope _scope;
-        public Fixture(IAccountWindowsHelloService windowsHello, IAppSessionAccessor lease, AccountProfile account)
+        public Fixture(IAccountWindowsHelloService windowsHello, IAppSessionLease lease, AccountProfile account)
         {
             WindowsHello = windowsHello;
             Lease = lease;
             Account = account;
             var services = new ServiceCollection();
             services.AddSingleton(windowsHello);
-            services.AddScoped<IAppSessionAccessor>(_ => lease);
+            services.AddScoped<IAppSessionLease>(_ => lease);
             services.AddScoped<AccountWindowsHelloIntegrationIpcHandler>();
             _services = services.BuildServiceProvider();
             _scope = _services.CreateAsyncScope();
@@ -60,7 +60,7 @@ internal static class AccountWindowsHelloIntegrationIpcTestSupport
         }
         public AccountWindowsHelloIntegrationIpcHandler Handler { get; }
         public IAccountWindowsHelloService WindowsHello { get; }
-        public IAppSessionAccessor Lease { get; }
+        public IAppSessionLease Lease { get; }
         public AccountProfile Account { get; }
         public async ValueTask DisposeAsync()
         {

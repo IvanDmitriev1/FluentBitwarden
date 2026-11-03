@@ -1,10 +1,13 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
-internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppSessionLeaseProvider, IAsyncDisposable
+internal sealed class AppSessionStore(
+    IIpcEventPublisher eventPublisher,
+    IUiProcessLauncher uiProcessLauncher) : IAppSessionLeaseFactory, IAsyncDisposable
 {
     private readonly Lock _lock = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -38,7 +41,7 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
         }
     }
 
-    public IAppSessionAccessor CreateLease()
+    public IAppSessionLease CreateLease()
     {
         lock (_lock)
         {
@@ -46,11 +49,11 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
 
             state.AddReference();
 
-            return new AppSessionAccessor(state);
+            return new AppSessionLease(state);
         }
     }
 
-    public async ValueTask<IAppSessionAccessor> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
+    public async ValueTask<IAppSessionLease> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
     {
         while (true)
         {
@@ -65,6 +68,7 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
                     return CreateLease();
                 }
 
+                uiProcessLauncher.Activate();
                 changed = _changed.Task;
             }
 

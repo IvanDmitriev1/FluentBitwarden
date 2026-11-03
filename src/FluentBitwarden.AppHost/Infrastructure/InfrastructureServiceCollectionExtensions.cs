@@ -1,6 +1,7 @@
 using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.Infrastructure.Data;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FluentBitwarden.AppHost.Infrastructure;
@@ -25,6 +26,8 @@ internal static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<UiProcessLauncher>();
         services.AddSingleton<IUiProcessLauncher>(provider => provider.GetRequiredService<UiProcessLauncher>());
         services.AddSingleton<IAppHostTermination>(provider => provider.GetRequiredService<UiProcessLauncher>());
+
+        services.AddSingleton<IUserDialogService, UserDialogService>();
 
         return services;
     }

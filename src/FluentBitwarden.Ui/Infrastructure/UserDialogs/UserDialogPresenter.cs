@@ -1,35 +1,34 @@
 using CommunityToolkit.WinUI;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 using FluentBitwarden.Infrastructure.Window;
 
 namespace FluentBitwarden.Infrastructure.UserDialogs;
 
-internal sealed class UiDialogCoordinator(IWindowManager windowManager) : IUiDialogCoordinator
+internal sealed class UserDialogPresenter(IWindowManager windowManager) : IUserDialogPresenter
 {
     private readonly SemaphoreSlim _presentationGate = new(1, 1);
 
-    public Task<ContentDialogResult> ShowAsync(
-        Func<ContentDialog> dialogFactory,
-        CancellationToken cancellationToken = default) =>
-        App.Current.DispatcherQueue.EnqueueAsync(() => ShowCoreAsync(dialogFactory(), cancellationToken));
+    public Task<UserDialogResult<TResult>> ShowAsync<TResult>(Func<IUserDialog<TResult>> dialogFactory, CancellationToken cancellationToken = default)
+        where TResult : notnull
+        => App.Current.DispatcherQueue.EnqueueAsync(() => ShowCoreAsync(dialogFactory, cancellationToken));
 
-    public Task<TResult> ShowAsync<TResult>(
-        Func<IUserDialog<TResult>> dialogFactory,
-        CancellationToken cancellationToken = default) =>
-        App.Current.DispatcherQueue.EnqueueAsync(() => ShowTypedAsync(dialogFactory(), cancellationToken));
-
-    private async Task<TResult> ShowTypedAsync<TResult>(IUserDialog<TResult> dialog, CancellationToken cancellationToken)
+    private async Task<UserDialogResult<TResult>> ShowCoreAsync<TResult>(Func<IUserDialog<TResult>> dialogFactory, CancellationToken cancellationToken)
+        where TResult : notnull
     {
-        if (dialog is not ContentDialog contentDialog)
-            throw new ArgumentException($"A user dialog must derive from {nameof(ContentDialog)}.",nameof(dialog));
+        var dialog = dialogFactory.Invoke();
 
-        await ShowCoreAsync(contentDialog, cancellationToken);
+        if (dialog is not ContentDialog contentDialog)
+            throw new ArgumentException($"A user dialog must derive from {nameof(ContentDialog)}.", nameof(dialog));
+
+        await ShowDialogAsync(contentDialog, cancellationToken);
+
         return dialog.TryGetResult(out var result)
-            ? result
-            : throw new OperationCanceledException();
+            ? UserDialogResult<TResult>.Completed(result)
+            : UserDialogResult<TResult>.Cancelled;
     }
 
-    private async Task<ContentDialogResult> ShowCoreAsync(ContentDialog contentDialog, CancellationToken cancellationToken)
+    private async Task ShowDialogAsync(ContentDialog contentDialog, CancellationToken cancellationToken)
     {
         await _presentationGate.WaitAsync(cancellationToken);
 
@@ -43,7 +42,8 @@ internal sealed class UiDialogCoordinator(IWindowManager windowManager) : IUiDia
             contentDialog.XamlRoot = windowManager.XamlRoot;
             using var cancellationRegistration = cancellationToken.Register(static state => HideDialog((ContentDialog)state!), contentDialog);
 
-            return await contentDialog.ShowAsync(dialogPlacement).AsTask(cancellationToken);
+            await contentDialog.ShowAsync(dialogPlacement).AsTask(cancellationToken);
+            return;
         }
         finally
         {
@@ -60,5 +60,4 @@ internal sealed class UiDialogCoordinator(IWindowManager windowManager) : IUiDia
             _ = dialog.DispatcherQueue.TryEnqueue(dialog.Hide);
         }
     }
- 
 }

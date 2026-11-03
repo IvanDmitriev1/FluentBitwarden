@@ -14,7 +14,7 @@ internal sealed class SessionTestContext
     {
         AccountService = Substitute.For<IAccountService>();
         VaultFactory = Substitute.For<IVaultFactory>();
-        Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         AppHostTermination = Substitute.For<IAppHostTermination>();
         Operations = new AppSessionOperations(
             AccountService,
@@ -30,7 +30,7 @@ internal sealed class SessionTestContext
     public IAppHostTermination AppHostTermination { get; }
     public AppSessionOperations Operations { get; }
 
-    public async ValueTask<IAppSessionAccessor> RequireUnlockedSessionLeaseAsync()
+    public async ValueTask<IAppSessionLease> RequireUnlockedSessionLeaseAsync()
     {
         var lease = Store.CreateLease();
         try

@@ -195,6 +195,7 @@ public sealed class AccountSessionAccessTokenProviderTests
         var services = new ServiceCollection();
         services.AddAccountModule();
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
+        services.AddSingleton(Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         services.AddSingleton(Substitute.For<IAccountService>());
         services.AddSingleton(Substitute.For<IVaultFactory>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());

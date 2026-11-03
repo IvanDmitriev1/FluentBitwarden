@@ -6,7 +6,7 @@ using FluentBitwarden.AppHost.Modules.Vault.Persistence;
 namespace FluentBitwarden.AppHost.Modules.Vault.Services;
 
 internal sealed class VaultCipherAttachmentService(
-    IAppSessionAccessor appSessionAccessor,
+    IAppSessionLease appSessionLease,
     IAttachmentsApi attachmentApi,
     VaultReaderRepository vaultReaderRepository) : IVaultCipherAttachmentService
 {
@@ -16,7 +16,7 @@ internal sealed class VaultCipherAttachmentService(
         string destinationPath,
         CancellationToken cancellationToken)
     {
-        var unlocked = appSessionAccessor.RequireUnlockedState();
+        var unlocked = appSessionLease.RequireUnlockedState();
 
         return attachmentApi.DownloadToAsync(
             unlocked.Account.BitwardenAccountContext,

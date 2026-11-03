@@ -2,7 +2,7 @@ using FluentBitwarden.AppHost.AppSession.Contracts;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
-internal sealed class AppSessionAccessor(AppSessionState appSessionState) : IAppSessionAccessor
+internal sealed class AppSessionLease(AppSessionState appSessionState) : IAppSessionLease
 {
     private bool _disposed;
 

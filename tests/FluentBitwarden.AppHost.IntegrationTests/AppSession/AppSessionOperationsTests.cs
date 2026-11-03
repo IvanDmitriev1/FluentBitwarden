@@ -63,7 +63,7 @@ public sealed class AppSessionOperationsTests
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken);
 
-        IAppSessionAccessor lease = await context.RequireUnlockedSessionLeaseAsync();
+        IAppSessionLease lease = await context.RequireUnlockedSessionLeaseAsync();
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(account, lease.RequireUnlockedState().Account);
@@ -377,7 +377,7 @@ public sealed class AppSessionOperationsTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(firstAccount.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
-        IAppSessionAccessor lease = await context.Store.WaitUntilUnlockedAsync(TestContext.Current.CancellationToken);
+        IAppSessionLease lease = await context.Store.WaitUntilUnlockedAsync(TestContext.Current.CancellationToken);
 
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
@@ -421,7 +421,7 @@ public sealed class AppSessionOperationsTests
     [Fact]
     public async Task Rejects_an_unlocked_vault_with_a_mismatched_account_key()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var vault = Substitute.For<IUnlockedVault>();
         using var accountKey = new TestAccountKeySession(new UnlockedUserKey(UserId.Empty, []));
@@ -436,7 +436,7 @@ public sealed class AppSessionOperationsTests
     public async Task SignOut_clears_the_selected_account_and_disposes_the_vault()
     {
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         var vault = Substitute.For<IUnlockedVault>();
         await store.AuthenticateAsync(account, TestContext.Current.CancellationToken);
         await store.UnlockAsync(new AppSessionState.Unlocked(account, vault,
@@ -456,14 +456,14 @@ public sealed class AppSessionOperationsTests
         using var userKey = new UnlockedUserKey(account.UserId, [0x10, 0x20, 0x30]);
         var vault = Substitute.For<IUnlockedVault>();
         context.ConfigureAccount(account, new AccountKeyUnlockResult.Success(new TestAccountKeySession(userKey)), vault);
-        ValueTask<IAppSessionAccessor> waiter = context.Store.WaitUntilUnlockedAsync(
+        ValueTask<IAppSessionLease> waiter = context.Store.WaitUntilUnlockedAsync(
             TestContext.Current.CancellationToken);
 
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
 
-        await using IAppSessionAccessor lease = await waiter;
+        await using IAppSessionLease lease = await waiter;
         Assert.Equal(account, lease.RequireUnlockedState().Account);
         Assert.Same(vault, lease.RequireUnlockedState().Vault);
     }
@@ -473,7 +473,7 @@ public sealed class AppSessionOperationsTests
     {
         var context = new SessionTestContext();
         using var cancellation = new CancellationTokenSource();
-        ValueTask<IAppSessionAccessor> waiter = context.Store.WaitUntilUnlockedAsync(cancellation.Token);
+        ValueTask<IAppSessionLease> waiter = context.Store.WaitUntilUnlockedAsync(cancellation.Token);
 
         cancellation.Cancel();
 
@@ -506,7 +506,7 @@ public sealed class AppSessionOperationsTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.Operations.UnlockAsync(
             new SessionUnlockRequest.MasterPasswordRequest(account.UserId, "synthetic-password"),
             TestContext.Current.CancellationToken));
-        IAppSessionAccessor lease = await context.Store.WaitUntilUnlockedAsync(
+        IAppSessionLease lease = await context.Store.WaitUntilUnlockedAsync(
             TestContext.Current.CancellationToken);
 
         await context.Operations.LockAsync(TestContext.Current.CancellationToken);

@@ -20,7 +20,7 @@ public sealed class AppSessionStoreTests
         var publication = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         publisher.PublishAsync(Arg.Any<AppSessionStateChangedEvent>(), Arg.Any<CancellationToken>())
             .Returns(publication.Task);
-        var store = new AppSessionStore(publisher);
+        var store = new AppSessionStore(publisher, Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         Task authentication = store.AuthenticateAsync(Account, CancellationToken.None);
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
@@ -50,7 +50,7 @@ public sealed class AppSessionStoreTests
     public async Task Notification_failure_keeps_published_vault_alive_and_retires_previous_state()
     {
         var publisher = Substitute.For<IIpcEventPublisher>();
-        var store = new AppSessionStore(publisher);
+        var store = new AppSessionStore(publisher, Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         await store.AuthenticateAsync(Account, CancellationToken.None);
         await using var previous = store.CreateLease();
         var revoked = previous.Revoked;
@@ -78,7 +78,7 @@ public sealed class AppSessionStoreTests
     [Fact]
     public async Task State_snapshots_expose_only_the_state_and_account()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         Assert.IsType<AppSessionStateSnapshot.NotAuthenticated>(store.State);
 
         await store.AuthenticateAsync(Account, CancellationToken.None);
@@ -100,7 +100,7 @@ public sealed class AppSessionStoreTests
     [Fact]
     public async Task Duplicate_authentication_is_rejected_and_keeps_the_original_account()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         await store.AuthenticateAsync(Account, CancellationToken.None);
         var other = AccountTestData.Profile(AccountTestData.SecondUserId, "other@example.test", "second");
 
@@ -112,7 +112,7 @@ public sealed class AppSessionStoreTests
     [Fact]
     public async Task Lock_and_signout_are_noops_when_already_locked_or_signed_out()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         await store.LockAsync(CancellationToken.None);
         await store.SignOutAsync(CancellationToken.None);
         await store.AuthenticateAsync(Account, CancellationToken.None);
@@ -125,7 +125,7 @@ public sealed class AppSessionStoreTests
     [Fact]
     public async Task Unlock_requires_locked_state_and_lock_retires_unlocked_state()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
@@ -164,15 +164,15 @@ public sealed class AppSessionStoreTests
     [Fact]
     public async Task Wait_until_unlocked_returns_a_captured_lease_that_survives_lock()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         await store.AuthenticateAsync(Account, CancellationToken.None);
         using var cancellation = new CancellationTokenSource();
-        Task<IAppSessionAccessor> pending = store.WaitUntilUnlockedAsync(cancellation.Token).AsTask();
+        Task<IAppSessionLease> pending = store.WaitUntilUnlockedAsync(cancellation.Token).AsTask();
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
         key.UserId.Returns(Account.UserId);
         await store.UnlockAsync(new AppSessionState.Unlocked(Account, vault, key, Substitute.For<IServerNotificationsDispatcher>()));
-        IAppSessionAccessor lease = await pending;
+        IAppSessionLease lease = await pending;
         await store.LockAsync(CancellationToken.None);
 
         Assert.Same(vault, lease.RequireUnlockedState().Vault);

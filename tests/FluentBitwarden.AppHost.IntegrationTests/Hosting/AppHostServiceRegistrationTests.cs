@@ -4,12 +4,14 @@ using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.AppHost.AppSession;
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Infrastructure.Data.Abstractions;
+using FluentBitwarden.AppHost.Infrastructure;
 using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Integrations.SshAgent;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.Modules.Account;
 using FluentBitwarden.AppHost.Modules.Vault;
 using FluentBitwarden.Contracts.Settings;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +33,7 @@ public sealed class AppHostServiceRegistrationTests
         builder.Services.AddApplicationServices();
         builder.Services.AddLogging();
         builder.Services.AddSingleton<ISettingsStore>(_ => SettingsStore.Instance);
+        builder.Services.AddSingleton<IUserDialogService, UserDialogService>();
 
         builder.Services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory("unused.db"));
         builder.Services.AddSingleton<IDatabaseInitializationService, SqliteInitializationService>();
@@ -38,9 +41,8 @@ public sealed class AppHostServiceRegistrationTests
         builder.Services.AddScoped<IUnitOfWork>(static provider => provider.GetRequiredService<UnitOfWork>());
         builder.Services.AddScoped<IDbSession>(static provider => provider.GetRequiredService<UnitOfWork>());
         builder.Services.AddHttpClient("SharedHttpClient");
-        builder.Services.AddSingleton<UiProcessLauncher>();
-        builder.Services.AddSingleton<IUiProcessLauncher>(provider => provider.GetRequiredService<UiProcessLauncher>());
-        builder.Services.AddSingleton<IAppHostTermination>(provider => provider.GetRequiredService<UiProcessLauncher>());
+        builder.Services.AddSingleton<IUiProcessLauncher>(new FakeUiProcessLauncher());
+        builder.Services.AddSingleton<IAppHostTermination>(Substitute.For<IAppHostTermination>());
         builder.Services.AddBitwardenApi();
         builder.Services.AddAppSessionModule();
         builder.Services.AddAccountModule();
@@ -68,10 +70,14 @@ public sealed class AppHostServiceRegistrationTests
         using IHost host = builder.Build();
 
         Assert.NotNull(host.Services);
+        ServiceDescriptor dialogServiceRegistration = Assert.Single(builder.Services, descriptor =>
+            descriptor.ServiceType == typeof(IUserDialogService) &&
+            descriptor.ImplementationType == typeof(UserDialogService));
+        Assert.Equal(ServiceLifetime.Singleton, dialogServiceRegistration.Lifetime);
         using IServiceScope firstScope = host.Services.CreateScope();
         using IServiceScope secondScope = host.Services.CreateScope();
         Assert.Same(
-            firstScope.ServiceProvider.GetRequiredService<IAppSessionLeaseProvider>(),
-            secondScope.ServiceProvider.GetRequiredService<IAppSessionLeaseProvider>());
+            firstScope.ServiceProvider.GetRequiredService<IAppSessionLeaseFactory>(),
+            secondScope.ServiceProvider.GetRequiredService<IAppSessionLeaseFactory>());
     }
 }

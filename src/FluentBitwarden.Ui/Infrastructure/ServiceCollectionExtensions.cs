@@ -36,10 +36,9 @@ internal static class ServiceCollectionExtensions
         services.AddIpcServer(
             IpcConstants.UiPipeName,
             handlers => handlers
-                .Add<SshUserActionDialogRequestHandler>()
-                .Add<PasskeySelectionDialogRequestHandler>());
+                .Add<UserDialogRequestHandler>());
 
-        services.AddSingleton<IUiDialogCoordinator, UiDialogCoordinator>();
+        services.AddSingleton<IUserDialogPresenter, UserDialogPresenter>();
 
         return services;
     }

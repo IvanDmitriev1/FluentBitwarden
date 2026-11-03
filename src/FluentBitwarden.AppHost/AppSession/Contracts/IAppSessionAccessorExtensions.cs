@@ -4,9 +4,9 @@ namespace FluentBitwarden.AppHost.AppSession.Contracts;
 
 internal static class IAppSessionAccessorExtensions
 {
-    extension(IAppSessionAccessor accessor)
+    extension(IAppSessionLease lease)
     {
         public AppSessionState.Unlocked RequireUnlockedState() =>
-            accessor.AppSessionState as AppSessionState.Unlocked ?? throw new UnlockedSessionRequiredException();
+            lease.AppSessionState as AppSessionState.Unlocked ?? throw new UnlockedSessionRequiredException();
     }
 }

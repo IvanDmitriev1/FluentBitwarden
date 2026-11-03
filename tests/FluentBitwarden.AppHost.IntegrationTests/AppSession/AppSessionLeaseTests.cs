@@ -8,14 +8,14 @@ using FluentBitwarden.Contracts.AppSession;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.AppSession;
 
-public sealed class AppSessionAccessorTests
+public sealed class AppSessionLeaseTests
 {
     [Fact]
     public async Task Accessor_captures_the_state_identity_and_revocation_token()
     {
         await using var state = new AppSessionState.NotAuthenticated();
         state.AddReference();
-        await using var accessor = new AppSessionAccessor(state);
+        await using var accessor = new AppSessionLease(state);
 
         Assert.Same(state, accessor.AppSessionState);
         Assert.Equal(state.Revoked, accessor.Revoked);
@@ -28,7 +28,7 @@ public sealed class AppSessionAccessorTests
         await using var state = new AppSessionState.Locked(
             AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first"));
         state.AddReference();
-        await using var accessor = new AppSessionAccessor(state);
+        await using var accessor = new AppSessionLease(state);
 
         Assert.Throws<UnlockedSessionRequiredException>(() => accessor.RequireUnlockedState());
     }
@@ -36,7 +36,7 @@ public sealed class AppSessionAccessorTests
     [Fact]
     public async Task Disposing_the_last_lease_after_lock_releases_the_vault_and_key()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();
@@ -58,7 +58,7 @@ public sealed class AppSessionAccessorTests
     [Fact]
     public async Task Repeated_disposal_does_not_release_the_same_lease_again()
     {
-        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        var store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
         var vault = Substitute.For<IUnlockedVault>();
         var key = Substitute.For<IAccountKeySession>();

@@ -8,20 +8,20 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class VaultCipherIpcHandler(
-    IAppSessionAccessor appSessionAccessor,
+    IAppSessionLease appSessionLease,
     IVaultCipherService cipherService,
     IVaultCipherAttachmentService cipherAttachmentService) : IVaultCipherClient, IIpcRequestsHandler
 {
     public Task<Cipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
     {
-        var unlocked = appSessionAccessor.RequireUnlockedState();
+        var unlocked = appSessionLease.RequireUnlockedState();
 
         return Task.FromResult(unlocked.Vault.GetCiphers(query));
     }
 
     public Task<Cipher?> GetCipherAsync(GetVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
-        var unlocked = appSessionAccessor.RequireUnlockedState();
+        var unlocked = appSessionLease.RequireUnlockedState();
 
         return Task.FromResult(unlocked.Vault.GetCipher(request.CipherId));
     }

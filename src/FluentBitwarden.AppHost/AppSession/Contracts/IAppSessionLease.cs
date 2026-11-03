@@ -1,6 +1,6 @@
 namespace FluentBitwarden.AppHost.AppSession.Contracts;
 
-public interface IAppSessionAccessor : IAsyncDisposable
+public interface IAppSessionLease : IAsyncDisposable
 {
     AppSessionState AppSessionState { get; }
     CancellationToken Revoked { get; }

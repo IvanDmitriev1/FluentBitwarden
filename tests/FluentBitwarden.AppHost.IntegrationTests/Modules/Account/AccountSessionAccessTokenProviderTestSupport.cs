@@ -16,6 +16,7 @@ internal static class AccountSessionAccessTokenProviderTestSupport
         var services = new ServiceCollection();
         services.AddAccountModule();
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
+        services.AddSingleton(Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         services.AddScoped(_ => accountService);
         services.AddScoped(_ => vaultFactory ?? Substitute.For<IVaultFactory>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());
