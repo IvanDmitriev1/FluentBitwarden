@@ -40,10 +40,15 @@ internal sealed class UserDialogPresenter(IWindowManager windowManager) : IUserD
         try
         {
             contentDialog.XamlRoot = windowManager.XamlRoot;
-            using var cancellationRegistration = cancellationToken.Register(static state => HideDialog((ContentDialog)state!), contentDialog);
+            using var cancellationRegistration =
+                cancellationToken.Register(static state => HideDialog((ContentDialog)state!), contentDialog);
 
             await contentDialog.ShowAsync(dialogPlacement).AsTask(cancellationToken);
             return;
+        }
+        catch (OperationCanceledException)
+        {
+            
         }
         finally
         {

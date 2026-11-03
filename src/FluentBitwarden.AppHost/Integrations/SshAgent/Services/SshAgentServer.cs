@@ -97,25 +97,27 @@ internal sealed class SshAgentServer(
         try
         {
             await using NamedPipeServerStream _ = pipe;
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var messagesHandler = scope.ServiceProvider.GetRequiredService<ISshAgentMessagesHandler>();
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var idleReadCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                CancellationToken cancellationToken = idleReadCts.Token;
                 idleReadCts.CancelAfter(ClientIdleTimeout);
 
                 try
                 {
-                    var message = await SshAgentMessage.ReadAsync(pipe, idleReadCts.Token);
+                    var message = await SshAgentMessage.ReadAsync(pipe, cancellationToken);
 
                     if (message == SshAgentMessage.Failure)
                         return;
 
-                    var response = await messagesHandler.HandleAsync(message, stoppingToken);
-                    await response.WriteMessageAsync(pipe, stoppingToken);
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var messagesHandler = scope.ServiceProvider.GetRequiredService<ISshAgentMessagesHandler>();
+
+                    var response = await messagesHandler.HandleAsync(message, cancellationToken);
+                    await response.WriteMessageAsync(pipe, cancellationToken);
                 }
-                catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
