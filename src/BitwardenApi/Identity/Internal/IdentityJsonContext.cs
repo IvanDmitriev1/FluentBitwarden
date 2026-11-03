@@ -12,6 +12,7 @@ namespace BitwardenApi.Identity.Internal;
 [JsonSerializable(typeof(WebAuthnAuthenticationAssertionOptionsResponse))]
 [JsonSerializable(typeof(WebAuthnLoginAssertionResponseRequest))]
 [JsonSerializable(typeof(PreloginRequest))]
+[JsonSerializable(typeof(PreloginResponse))]
 [JsonSerializable(typeof(string))]
 internal sealed partial class IdentityJsonContext : JsonSerializerContext
 {

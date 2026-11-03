@@ -19,7 +19,7 @@ internal static class AesCbcHmac
     {
         ValidateIv(iv);
 
-        if (key.Length < CombinedKeyByteLength)
+        if (key.Length != CombinedKeyByteLength)
             throw new CryptographicException("A 64-byte key is required for HMAC-protected EncStrings.");
 
         if (macDestination.Length < MacByteLength)
@@ -151,7 +151,7 @@ internal static class AesCbcHmac
     {
         ValidateIv(parts.Iv);
 
-        if (key.Length < EncryptionKeyByteLength)
+        if (key.Length != EncryptionKeyByteLength)
             throw new CryptographicException("A 32-byte AES key is required.");
     }
 
@@ -161,7 +161,7 @@ internal static class AesCbcHmac
     {
         ValidateIvAndMac(parts.Iv, parts.Mac);
 
-        if (key.Length < CombinedKeyByteLength)
+        if (key.Length != CombinedKeyByteLength)
             throw new CryptographicException("A 64-byte key is required for HMAC-protected EncStrings.");
 
         VerifyMac(in parts, key.Slice(EncryptionKeyByteLength, MacByteLength));

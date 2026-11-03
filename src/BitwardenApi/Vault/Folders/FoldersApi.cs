@@ -12,7 +12,7 @@ internal sealed class FoldersApi(IHttpClientFactory httpClientFactory) : IFolder
     public async Task<IReadOnlyList<FolderResponse>> GetFoldersAsync(BitwardenAccountContext accountContext, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(accountContext.Environment.ApiBase, "/folders"));
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(accountContext.Environment.ApiBase, "folders"));
         requestMessage.SetBitwardenAccountContext(accountContext);
 
         using var response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -36,7 +36,7 @@ internal sealed class FoldersApi(IHttpClientFactory httpClientFactory) : IFolder
         CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Vault);
-        Uri requestUri = new(accountContext.Environment.ApiBase, $"/folders/{folderId.Value:D}");
+        Uri requestUri = new(accountContext.Environment.ApiBase, $"folders/{folderId.Value:D}");
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
         requestMessage.SetBitwardenAccountContext(accountContext);
 
@@ -50,10 +50,10 @@ internal sealed class FoldersApi(IHttpClientFactory httpClientFactory) : IFolder
     }
 
     public Task<FolderResponse> CreateFolderAsync(BitwardenAccountContext accountContext, FolderRequest request, CancellationToken cancellationToken = default) =>
-        SendFolderAsync(accountContext, HttpMethod.Post, new Uri(accountContext.Environment.ApiBase, "/folders"), request, "Vault create folder", cancellationToken);
+        SendFolderAsync(accountContext, HttpMethod.Post, new Uri(accountContext.Environment.ApiBase, "folders"), request, "Vault create folder", cancellationToken);
 
     public Task<FolderResponse> UpdateFolderAsync(BitwardenAccountContext accountContext, FolderId folderId, FolderRequest request, CancellationToken cancellationToken = default) =>
-        SendFolderAsync(accountContext, HttpMethod.Put, new Uri(accountContext.Environment.ApiBase, $"/folders/{folderId.Value:D}"), request, "Vault update folder", cancellationToken);
+        SendFolderAsync(accountContext, HttpMethod.Put, new Uri(accountContext.Environment.ApiBase, $"folders/{folderId.Value:D}"), request, "Vault update folder", cancellationToken);
 
     public Task DeleteFoldersAsync(BitwardenAccountContext accountContext, IReadOnlyList<FolderId> folderIds, CancellationToken cancellationToken = default)
     {
@@ -62,14 +62,14 @@ internal sealed class FoldersApi(IHttpClientFactory httpClientFactory) : IFolder
             throw new ArgumentException("At least one folder ID is required.", nameof(folderIds));
 
         return folderIds.Count == 1
-            ? SendDeleteAsync(accountContext, $"/folders/{folderIds[0].Value:D}", null, "Vault delete folder", cancellationToken)
-            : SendDeleteAsync(accountContext, "/folders",
+            ? SendDeleteAsync(accountContext, $"folders/{folderIds[0].Value:D}", null, "Vault delete folder", cancellationToken)
+            : SendDeleteAsync(accountContext, "folders",
                 JsonContent.Create(new FolderBulkDeleteRequest { Ids = folderIds }, VaultJsonContext.ConfiguredDefault.FolderBulkDeleteRequest),
                 "Vault delete folders", cancellationToken);
     }
 
     public async Task DeleteAllFoldersAsync(BitwardenAccountContext accountContext, CancellationToken cancellationToken = default) =>
-        await SendDeleteAsync(accountContext, "/folders/all", null, "Vault delete all folders", cancellationToken);
+        await SendDeleteAsync(accountContext, "folders/all", null, "Vault delete all folders", cancellationToken);
 
     private async Task<FolderResponse> SendFolderAsync(BitwardenAccountContext accountContext, HttpMethod method, Uri requestUri, FolderRequest request, string operation, CancellationToken cancellationToken)
     {

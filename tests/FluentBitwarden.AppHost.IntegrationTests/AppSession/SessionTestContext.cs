@@ -13,19 +13,19 @@ internal sealed class SessionTestContext
     public SessionTestContext()
     {
         AccountService = Substitute.For<IAccountService>();
-        VaultService = Substitute.For<IVaultService>();
+        VaultFactory = Substitute.For<IVaultFactory>();
         Store = new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
         AppHostTermination = Substitute.For<IAppHostTermination>();
         Operations = new AppSessionOperations(
             AccountService,
-            VaultService,
+            VaultFactory,
             AppHostTermination,
             Store,
             Substitute.For<IServerNotificationsDispatcherFactory>());
     }
 
     public IAccountService AccountService { get; }
-    public IVaultService VaultService { get; }
+    public IVaultFactory VaultFactory { get; }
     public AppSessionStore Store { get; }
     public IAppHostTermination AppHostTermination { get; }
     public AppSessionOperations Operations { get; }
@@ -55,7 +55,7 @@ internal sealed class SessionTestContext
 
         if (unlockResult is AccountKeyUnlockResult.Success && vault is not null)
         {
-            VaultService.Open(
+            VaultFactory.Open(
                 Arg.Is<BitwardenAccountContext>(context => context == account.BitwardenAccountContext),
                 Arg.Is<IAccountKeySession>(key => key.UserId == account.UserId)).Returns(vault);
         }

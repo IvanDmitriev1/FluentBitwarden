@@ -1,8 +1,4 @@
-﻿using MemoryPack;
-
-
-
-
+using MemoryPack;
 using BitwardenApi.Vault.Attachments.Models;
 using BitwardenApi.Serialization;
 

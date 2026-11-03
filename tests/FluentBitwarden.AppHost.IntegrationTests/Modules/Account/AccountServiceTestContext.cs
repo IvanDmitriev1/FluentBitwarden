@@ -11,6 +11,11 @@ internal sealed class AccountServiceTestContext : IDisposable
     {
         UnitOfWork = database.CreateUnitOfWork();
         IdentityApi = Substitute.For<IIdentityApi>();
+        IdentityApi.GetPasswordPreloginAsync(
+                Arg.Any<BitwardenClientContext>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PasswordPreloginData(new KdfConfig.Pbkdf2(2), null)));
         WebAuthnIdentityApi = Substitute.For<IWebAuthnIdentityApi>();
         WindowsHelloService = Substitute.For<IAccountWindowsHelloService>();
         Service = new AccountService(

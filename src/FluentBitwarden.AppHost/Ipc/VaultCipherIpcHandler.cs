@@ -9,7 +9,7 @@ namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class VaultCipherIpcHandler(
     IAppSessionAccessor appSessionAccessor,
-    IVaultService vaultService,
+    IVaultCipherService cipherService,
     IVaultCipherAttachmentService cipherAttachmentService) : IVaultCipherClient, IIpcRequestsHandler
 {
     public Task<Cipher[]> SearchCiphersAsync(VaultCipherQuery query, CancellationToken cancellationToken = default)
@@ -28,7 +28,7 @@ internal sealed class VaultCipherIpcHandler(
 
     public async Task<Cipher> SaveCipherAsync(SaveVaultCipherRequest request, CancellationToken cancellationToken = default)
     {
-        return await vaultService.SaveCipherAsync(
+        return await cipherService.SaveAsync(
             request.Cipher,
             cancellationToken);
     }

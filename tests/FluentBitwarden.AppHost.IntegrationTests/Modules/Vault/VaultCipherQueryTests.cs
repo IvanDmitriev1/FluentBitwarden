@@ -16,7 +16,7 @@ public sealed class VaultCipherQueryTests
             "Deleted item",
             deletedDate: new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero));
         context.SeedCache([activeCipher, deletedCipher]);
-        using var vault = context.VaultService.Open(context.AccountContext, keySession);
+        using var vault = context.VaultFactory.Open(context.AccountContext, keySession);
 
         Assert.Equal(
             new[] { "active-cipher" },
@@ -50,7 +50,7 @@ public sealed class VaultCipherQueryTests
             VaultManagerTestData.Folder("folder-a", "Folder A", keySession.UserKey.Key),
             VaultManagerTestData.Folder("folder-b", "Folder B", keySession.UserKey.Key)
         ]);
-        using var vault = context.VaultService.Open(context.AccountContext, keySession);
+        using var vault = context.VaultFactory.Open(context.AccountContext, keySession);
 
         Assert.Equal(
             new[] { "favorite-card", "favorite-a", "favorite-b" },
@@ -91,7 +91,7 @@ public sealed class VaultCipherQueryTests
             VaultQueryTestData.Identity("null-fields", keySession.UserKey.Key, "Unrelated null identity")
         };
         context.SeedCache(ciphers);
-        using var vault = context.VaultService.Open(context.AccountContext, keySession);
+        using var vault = context.VaultFactory.Open(context.AccountContext, keySession);
 
         foreach ((string searchText, string expectedId) in new[]
         {
@@ -139,7 +139,7 @@ public sealed class VaultCipherQueryTests
                     "IdentityFieldNeedle"),
                 VaultQueryTestData.Identity("neutral-identity", keySession.UserKey.Key, "Another neutral identity")
             ]);
-        using var vault = context.VaultService.Open(context.AccountContext, keySession);
+        using var vault = context.VaultFactory.Open(context.AccountContext, keySession);
 
         Assert.Equal(
             new[] { "matching-identity-field" },
@@ -171,7 +171,7 @@ public sealed class VaultCipherQueryTests
             creationDate: new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero),
             revisionDate: new DateTimeOffset(2026, 10, 3, 0, 0, 0, TimeSpan.Zero));
         context.SeedCache([alpha, beta, gamma]);
-        using var vault = context.VaultService.Open(context.AccountContext, keySession);
+        using var vault = context.VaultFactory.Open(context.AccountContext, keySession);
 
         foreach ((VaultCipherSortField field, VaultCipherSortDirection direction, string[] expectedIds) in new[]
         {
@@ -195,7 +195,7 @@ public sealed class VaultCipherQueryTests
     {
         using var context = new VaultManagerTestContext();
         using var keySession = context.CreateKeySession();
-        using (var emptyVault = context.VaultService.Open(context.AccountContext, keySession))
+        using (var emptyVault = context.VaultFactory.Open(context.AccountContext, keySession))
         {
             Assert.Empty(emptyVault.GetCiphers(new VaultCipherQuery()));
             Assert.Empty(emptyVault.GetCiphers(new VaultCipherQuery { Limit = 0 }));
@@ -203,7 +203,7 @@ public sealed class VaultCipherQueryTests
 
         var singleton = VaultQueryTestData.Login("only", keySession.UserKey.Key, "Only item");
         context.SeedCache([singleton]);
-        using (var singletonVault = context.VaultService.Open(context.AccountContext, keySession))
+        using (var singletonVault = context.VaultFactory.Open(context.AccountContext, keySession))
         {
             Assert.Empty(singletonVault.GetCiphers(new VaultCipherQuery { Limit = 0 }));
             Assert.Equal("only", Assert.Single(singletonVault.GetCiphers(new VaultCipherQuery { Limit = 1 })).Id.ToString());
@@ -217,7 +217,7 @@ public sealed class VaultCipherQueryTests
             VaultQueryTestData.Login("mike", keySession.UserKey.Key, "Mike")
         };
         context.SeedCache(ciphers);
-        using var vault = context.VaultService.Open(context.AccountContext, keySession);
+        using var vault = context.VaultFactory.Open(context.AccountContext, keySession);
 
         Assert.Empty(vault.GetCiphers(new VaultCipherQuery { Limit = 0 }));
         Assert.Equal(new[] { "alpha" }, vault.GetCiphers(new VaultCipherQuery { Limit = 1 }).Select(static cipher => cipher.Id.ToString()));

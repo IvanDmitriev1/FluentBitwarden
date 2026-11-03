@@ -2,6 +2,7 @@
 
 using BitwardenApi.Primitives;
 using BitwardenApi.Vault.Attachments.Responses;
+using BitwardenApi.Vault.Ciphers.Models;
 using BitwardenApi.Vault.Ciphers.Requests;
 using BitwardenApi.Vault.Ciphers.Responses;
 using BitwardenApi.Vault.Collections.Responses;
@@ -20,6 +21,10 @@ namespace BitwardenApi.Vault.Internal;
 [JsonSerializable(typeof(List<FolderResponse>))]
 [JsonSerializable(typeof(List<CollectionResponse>))]
 [JsonSerializable(typeof(CipherRequest))]
+[JsonSerializable(typeof(EncryptedCipherField))]
+[JsonSerializable(typeof(EncryptedPasswordHistory))]
+[JsonSerializable(typeof(EncryptedLoginUri))]
+[JsonSerializable(typeof(EncryptedFido2Credential))]
 [JsonSerializable(typeof(CipherCreateRequest))]
 [JsonSerializable(typeof(CipherBulkShareRequest))]
 [JsonSerializable(typeof(CipherPartialRequest))]

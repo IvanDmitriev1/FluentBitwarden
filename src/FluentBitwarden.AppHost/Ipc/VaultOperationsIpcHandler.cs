@@ -5,10 +5,10 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 namespace FluentBitwarden.AppHost.Ipc;
 
 internal sealed class VaultOperationsIpcHandler(
-    IVaultService vaultService) : IVaultOperationsClient, IIpcRequestsHandler
+    IVaultSyncService vaultSyncService) : IVaultOperationsClient, IIpcRequestsHandler
 {
     public async Task<VaultSyncResult> SyncAsync(SyncVaultRequest request, CancellationToken cancellationToken = default)
     {
-        return await vaultService.SyncAsync();
+        return await vaultSyncService.SyncAsync();
     }
 }

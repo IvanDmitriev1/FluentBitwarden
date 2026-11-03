@@ -15,13 +15,20 @@ public sealed class ServerNotificationsDispatcherTests
         using var timeout = Timeout();
         await using var transport = new NotificationTestConnectionFactory();
         await using var services = new ServiceCollection().BuildServiceProvider();
-        await using IServerNotificationsDispatcher dispatcher = CreateFactory(services).CreateDispatcher(TestApiSupport.AccountContext, transport.Configure);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                NotificationsBase = new Uri("https://notifications.bitwarden.test/notifications")
+            }
+        };
+        await using IServerNotificationsDispatcher dispatcher = CreateFactory(services).CreateDispatcher(account, transport.Configure);
 
         await transport.ConnectionCreated.WaitAsync(timeout.Token);
         Assert.Equal(1, transport.ConnectCount);
         Assert.Equal(Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets, transport.Transports);
         Assert.True(transport.SkipNegotiation);
-        Assert.Equal(new Uri(TestApiSupport.AccountContext.Environment.NotificationsBase, "/hub"),
+        Assert.Equal(new Uri("https://notifications.bitwarden.test/notifications/hub"),
             Assert.IsAssignableFrom<UriEndPoint>(Assert.Single(transport.EndPoints)).Uri);
     }
 

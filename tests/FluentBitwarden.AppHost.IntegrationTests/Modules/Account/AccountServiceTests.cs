@@ -81,14 +81,15 @@ public sealed class AccountServiceTests
         using var database = new AccountRepositoryTestDatabase();
         using var context = new AccountServiceTestContext(database);
         var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        const string email = "  USER@EXAMPLE.TEST  ";
         var request = new AccountAuthenticationRequest.Password(
             new BitwardenClientContext(
                 profile.Environment,
                 new DeviceInfo(
                     DeviceIdentifier.Parse("synthetic-device-id"),
                     DeviceName.Parse("synthetic-device-name"))),
-            profile.Email,
-            "synthetic-master-password");
+            email,
+            "password");
         var challenge = new IdentityTwoFactorChallenge(
         (IdentityTwoFactorProviderOption[])[
             new IdentityTwoFactorProviderOption(IdentityTwoFactorProviderType.Email),
@@ -114,12 +115,90 @@ public sealed class AccountServiceTests
         Assert.Equal(request.Email, twoFactor.Email);
         Assert.NotNull(identityRequest);
         Assert.Equal(request.Context, identityRequest.Context);
-        Assert.Equal(request.Email, identityRequest.Email);
-        Assert.False(string.IsNullOrWhiteSpace(identityRequest.MasterPasswordHash));
+        Assert.Equal(email, identityRequest.Email);
+        // Python hashlib.pbkdf2_hmac fixed vector using the missing-salt email fallback and two KDF iterations.
+        Assert.Equal("mrEkdfLXzlATl6Z6iTHwBgSsWzgciEl5qHNHkg2axaI=", identityRequest.MasterPasswordHash);
         Assert.Equal(identityRequest.MasterPasswordHash, twoFactor.ServerAuthorizationHash);
+        _ = context.IdentityApi.Received(1).GetPasswordPreloginAsync(
+            request.Context,
+            email,
+            Arg.Any<CancellationToken>());
         Assert.Null(context.Service.GetAccount(profile.UserId));
         Assert.Null(new AccountKeyMaterialRepository(context.UnitOfWork).GetById(profile.UserId));
         Assert.Equal(SessionRefreshToken.Empty, new AccountBitwardenSessionTokenRepository(context.UnitOfWork).Get(profile.UserId));
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_uses_explicit_prelogin_salt_for_nondefault_pbkdf2_hash()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        const string password = "password";
+        const string salt = "server-salt";
+        var request = CreatePasswordRequest(profile, password);
+        PasswordAuthenticationRequest? identityRequest = null;
+        context.IdentityApi.GetPasswordPreloginAsync(
+                Arg.Any<BitwardenClientContext>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PasswordPreloginData(new KdfConfig.Pbkdf2(2), salt)));
+        context.IdentityApi.AuthenticateWithPasswordAsync(
+                Arg.Do<PasswordAuthenticationRequest>(value => identityRequest = value),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(
+                new SessionTokenResult<AuthenticatedSession>.Rejected(
+                    new SessionTokenRejection(SessionTokenRejectionKind.InvalidCredentials, "Synthetic rejection."))));
+
+        AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(new AccountAuthenticationOutcome.InvalidCredentials("Synthetic rejection."), result);
+        Assert.NotNull(identityRequest);
+        // Python hashlib.pbkdf2_hmac for the master key, then the protocol auth hash: PBKDF2(master key, password, 1).
+        Assert.Equal("ZUXKoMGCecw9b+k0GhQ+5vlP8hXPSgWofH6Lz13PCe8=", identityRequest.MasterPasswordHash);
+        _ = context.IdentityApi.Received(1).GetPasswordPreloginAsync(
+            request.Context,
+            profile.Email,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_uses_prelogin_argon2_settings_for_password_hash()
+    {
+        using var database = new AccountRepositoryTestDatabase();
+        using var context = new AccountServiceTestContext(database);
+        var profile = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "first");
+        const string password = "password";
+        var request = CreatePasswordRequest(profile, password);
+        PasswordAuthenticationRequest? identityRequest = null;
+        context.IdentityApi.GetPasswordPreloginAsync(
+                Arg.Any<BitwardenClientContext>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PasswordPreloginData(
+                new KdfConfig.Argon2Id(2, 8, 1),
+                "user@example.test")));
+        context.IdentityApi.AuthenticateWithPasswordAsync(
+                Arg.Do<PasswordAuthenticationRequest>(value => identityRequest = value),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<SessionTokenResult<AuthenticatedSession>>(
+                new SessionTokenResult<AuthenticatedSession>.Rejected(
+                    new SessionTokenRejection(SessionTokenRejectionKind.InvalidCredentials, "Synthetic rejection."))));
+
+        AccountAuthenticationOutcome result = await context.Service.AuthenticateAsync(
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(new AccountAuthenticationOutcome.InvalidCredentials("Synthetic rejection."), result);
+        Assert.NotNull(identityRequest);
+        // Independent SDK Argon2id salt-hash reference vector with 2 iterations, 8 MiB, and parallelism 1.
+        Assert.Equal("XuB6Ndmbr8qe1Wrdyo8MyZljVe4Uh8hhBAj+AAVX8dg=", identityRequest.MasterPasswordHash);
+        _ = context.IdentityApi.Received(1).GetPasswordPreloginAsync(
+            request.Context,
+            profile.Email,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -392,6 +471,17 @@ public sealed class AccountServiceTests
         Assert.Equal(expected, result);
         context.WindowsHelloService.Received(1).Unlock(keyMaterial, (IntPtr)ownerWindow.Value);
     }
+
+    private AccountAuthenticationRequest.Password CreatePasswordRequest(
+        AccountProfile profile,
+        string masterPassword) => new(
+        new BitwardenClientContext(
+            profile.Environment,
+            new DeviceInfo(
+                DeviceIdentifier.Parse("synthetic-device-id"),
+                DeviceName.Parse("synthetic-device-name"))),
+        profile.Email,
+        masterPassword);
 
     private AccountAuthenticationRequest.TwoFactor CreateTwoFactorRequest(AccountProfile profile) => new(
         new BitwardenClientContext(

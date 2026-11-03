@@ -27,4 +27,3 @@ global using BitwardenApi.Vault.Collections.Models;
 global using BitwardenApi.Vault.Collections.Responses;
 global using BitwardenApi.Vault.Sync.Responses;
 global using BitwardenApi.Vault.Attachments.Responses;
-global using BitwardenApi.Vault.Attachments.Models;

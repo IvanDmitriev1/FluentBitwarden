@@ -36,9 +36,9 @@ internal sealed class VaultManagerTestContext : IDisposable
         NetworkStatus.HasInternetAccess.Returns(true);
 
         VaultReaderRepository = new VaultReaderRepository(_unitOfWork);
-        VaultService = new VaultService(
+        VaultFactory = new VaultFactory(VaultReaderRepository);
+        VaultSyncHandler = new VaultSyncHandler(
             SessionAccessor,
-            VaultReaderRepository,
             _vaultWriterRepository,
             _vaultSyncStateRepository,
             SyncApi,
@@ -47,6 +47,8 @@ internal sealed class VaultManagerTestContext : IDisposable
             _unitOfWork,
             NetworkStatus,
             EventPublisher);
+        VaultCipherService = new VaultCipherService(
+            SessionAccessor, _vaultWriterRepository, _unitOfWork, CiphersApi);
     }
 
     public IAppSessionAccessor SessionAccessor { get; } = Substitute.For<IAppSessionAccessor>();
@@ -58,7 +60,9 @@ internal sealed class VaultManagerTestContext : IDisposable
     public IIpcEventPublisher EventPublisher { get; }
     public INetworkStatus NetworkStatus { get; }
     public VaultReaderRepository VaultReaderRepository { get; }
-    public VaultService VaultService { get; }
+    public VaultFactory VaultFactory { get; }
+    public VaultSyncHandler VaultSyncHandler { get; }
+    public VaultCipherService VaultCipherService { get; }
 
     public VaultManagerTestKeySession CreateKeySession() => new(AccountContext.UserId);
 
@@ -72,23 +76,13 @@ internal sealed class VaultManagerTestContext : IDisposable
     public IUnlockedVault OpenVault()
     {
         using var keySession = CreateKeySession();
-        return VaultService.Open(AccountContext, keySession);
+        return VaultFactory.Open(AccountContext, keySession);
     }
 
     public IUnlockedVault OpenVaultFromFreshConnection(IAccountKeySession keySession)
     {
         using var unitOfWork = _database.CreateUnitOfWork();
-        return new VaultService(
-            SessionAccessor,
-            new VaultReaderRepository(unitOfWork),
-            _vaultWriterRepository,
-            _vaultSyncStateRepository,
-            SyncApi,
-            CiphersApi,
-            FoldersApi,
-            unitOfWork,
-            NetworkStatus,
-            EventPublisher).Open(AccountContext, keySession);
+        return new VaultFactory(new VaultReaderRepository(unitOfWork)).Open(AccountContext, keySession);
     }
 
     public void SeedCache(

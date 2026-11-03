@@ -46,6 +46,27 @@ internal sealed record IdentityTokenFailureResponse
     public IReadOnlyList<IdentityTwoFactorProviderOption>? TwoFactorProviders2 { get; init; } = [];
 }
 
+internal sealed class PreloginResponse
+{
+    [JsonPropertyName("kdfSettings")]
+    public KdfSettingsDto? KdfSettings { get; init; }
+
+    [JsonPropertyName("kdf")]
+    public int? Kdf { get; init; }
+
+    [JsonPropertyName("kdfIterations")]
+    public int? KdfIterations { get; init; }
+
+    [JsonPropertyName("kdfMemory")]
+    public int? KdfMemory { get; init; }
+
+    [JsonPropertyName("kdfParallelism")]
+    public int? KdfParallelism { get; init; }
+
+    [JsonPropertyName("salt")]
+    public string? Salt { get; init; }
+}
+
 internal sealed class UserDecryptionOptions
 {
     [JsonPropertyName("masterPasswordUnlock")]

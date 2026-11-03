@@ -140,6 +140,20 @@ public sealed class CipherValueTests
     }
 
     [Fact]
+    public void String_encryption_maps_null_and_empty_to_empty_but_byte_encryption_keeps_empty_plaintext()
+    {
+        byte[] key = new byte[64];
+
+        Assert.True(EncString.Encrypt((string?)null, key).IsEmpty);
+        Assert.True(EncString.Encrypt(string.Empty, key).IsEmpty);
+
+        EncString encryptedEmptyBytes = EncString.Encrypt(ReadOnlySpan<byte>.Empty, key);
+
+        Assert.False(encryptedEmptyBytes.IsEmpty);
+        Assert.Equal(string.Empty, encryptedEmptyBytes.Decode(key));
+    }
+
+    [Fact]
     public void Fido2_wire_mappings_reject_unsupported_enum_values_and_text()
     {
         Assert.Throws<NotSupportedException>(() => ((Fido2CredentialKeyType)0).ToWireValue());

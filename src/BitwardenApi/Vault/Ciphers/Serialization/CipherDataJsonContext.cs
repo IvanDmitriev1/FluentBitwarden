@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
 
 using BitwardenApi.Primitives;
+using BitwardenApi.Vault.Ciphers.Models;
 
-namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
+namespace BitwardenApi.Vault.Ciphers.Serialization;
 
 [JsonSourceGenerationOptions(
     GenerationMode = JsonSourceGenerationMode.Metadata,

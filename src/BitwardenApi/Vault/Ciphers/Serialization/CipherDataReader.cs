@@ -1,17 +1,20 @@
-﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
+using BitwardenApi.Cryptography.Keys;
 using BitwardenApi.Primitives;
-using FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
+using BitwardenApi.Vault.Attachments.Models;
+using BitwardenApi.Vault.Attachments.Responses;
+using BitwardenApi.Vault.Ciphers.Models;
+using BitwardenApi.Vault.Ciphers.Responses;
 
-namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Parsing;
+namespace BitwardenApi.Vault.Ciphers.Serialization;
 
 /// <summary>
 /// Parses vault cipher payloads using parser-local state. Create one instance for each
 /// sequential vault open operation; instances are not reentrant or thread-safe.
 /// </summary>
-internal sealed partial class VaultDataParser
+public sealed class CipherDataReader
 {
     private readonly DecryptedValueJsonConverter<string> _stringConverter;
     private readonly DecryptedValueJsonConverter<string?> _nullableStringConverter;
@@ -30,7 +33,7 @@ internal sealed partial class VaultDataParser
 
     private Cipher? _activeCipher;
 
-    public VaultDataParser()
+    public CipherDataReader()
     {
         _stringConverter = new DecryptedValueJsonConverter<string>(default, VaultPayloadValueParsers.ParseString);
         _nullableStringConverter = new DecryptedValueJsonConverter<string?>(default, VaultPayloadValueParsers.ParseString, allowNull: true);
@@ -70,28 +73,28 @@ internal sealed partial class VaultDataParser
         _loginUrisConverter = new LoginUrisJsonConverter(GetActiveLoginUris, loginUriTypeInfo);
     }
 
-    public Cipher ParseAndDecryptCipher(
-        ref readonly CipherResponse dto,
+    public Cipher Read(
+        in CipherResponse response,
         ReadOnlySpan<byte> payload,
         SymmetricCryptoKey baseKey)
     {
         if (_activeCipher is not null)
             throw new InvalidOperationException("Vault payload parsing is sequential and non-reentrant.");
 
-        Cipher cipher = Cipher.CreateBlankCipher(dto.VaultCipherType);
-        cipher.Id = dto.Id;
-        cipher.FolderId = dto.FolderId;
-        cipher.Favorite = dto.Favorite;
-        cipher.Reprompt = dto.Reprompt;
-        cipher.RevisionDate = dto.RevisionDate;
-        cipher.CreationDate = dto.CreationDate;
-        cipher.DeletedDate = dto.DeletedDate;
+        Cipher cipher = Cipher.CreateBlankCipher(response.VaultCipherType);
+        cipher.Id = response.Id;
+        cipher.FolderId = response.FolderId;
+        cipher.Favorite = response.Favorite;
+        cipher.Reprompt = response.Reprompt;
+        cipher.RevisionDate = response.RevisionDate;
+        cipher.CreationDate = response.CreationDate;
+        cipher.DeletedDate = response.DeletedDate;
 
         var reader = new Utf8JsonReader(payload, isFinalBlock: true, state: default);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Expected a JSON object payload.");
 
-        using var key = CipherKey.Create(dto.ProtectedCipherKey, baseKey);
+        using var key = CipherKey.Create(response.ProtectedCipherKey, baseKey);
         SetActiveKey(key.BorrowKeyMemory());
         _activeCipher = cipher;
         try
@@ -100,7 +103,7 @@ internal sealed partial class VaultDataParser
                 ref reader, _jsonOptions.GetTypeInfo(cipher.GetType()))
                 ?? throw new JsonException("Vault payload cannot be null."));
 
-            parsedCipher.Attachments = ParseAttachments(dto.Id, dto.Attachments, key);
+            parsedCipher.Attachments = ParseAttachments(response.Id, response.Attachments, key);
             return parsedCipher;
         }
         finally
@@ -116,8 +119,9 @@ internal sealed partial class VaultDataParser
         {
             JsonPropertyInfo uri = GetProperty(typeInfo, nameof(LoginUri.Value));
             uri.Name = "uri";
-            uri.IsRequired = true;
-            uri.CustomConverter = _stringConverter;
+            uri.IsSetNullable = true;
+            uri.CustomConverter = _nullableStringConverter;
+            uri.Set = static (obj, value) => ((LoginUri)obj).Value = (string?)value ?? string.Empty;
             return;
         }
 

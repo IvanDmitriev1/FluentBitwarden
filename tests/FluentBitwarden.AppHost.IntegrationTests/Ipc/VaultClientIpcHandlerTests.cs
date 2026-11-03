@@ -17,11 +17,10 @@ public sealed class VaultClientIpcHandlerTests
         accessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
         using var context = new FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultManagerTestContext();
         context.SessionAccessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
-        var vaultService = context.VaultService;
-        var operationsHandler = new VaultOperationsIpcHandler(vaultService);
+        var operationsHandler = new VaultOperationsIpcHandler(context.VaultSyncHandler);
         var cipherHandler = new VaultCipherIpcHandler(
             accessor,
-            vaultService,
+            context.VaultCipherService,
             new FluentBitwarden.AppHost.Modules.Vault.Services.VaultCipherAttachmentService(context.SessionAccessor, Substitute.For<BitwardenApi.Vault.Attachments.IAttachmentsApi>(), context.VaultReaderRepository));
         var folderHandler = new VaultFolderIpcHandler(accessor);
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -49,7 +48,7 @@ public sealed class VaultClientIpcHandlerTests
         IVaultCipherAttachmentService attachmentService = Substitute.For<IVaultCipherAttachmentService>();
         var handler = new VaultCipherIpcHandler(
             accessor,
-            Substitute.For<IVaultService>(),
+            Substitute.For<IVaultCipherService>(),
             attachmentService);
         var request = new DownloadVaultCipherAttachmentRequest(
             CipherId.Parse("synthetic-cipher"),
@@ -92,3 +91,4 @@ public sealed class VaultClientIpcHandlerTests
         Assert.Equal(ServiceLifetime.Scoped, folders.Lifetime);
     }
 }
+

@@ -1,9 +1,15 @@
+using BitwardenApi.Client;
 using BitwardenApi.Identity.Models;
 
 namespace BitwardenApi.Identity;
 
 public interface IIdentityApi
 {
+    Task<PasswordPreloginData> GetPasswordPreloginAsync(
+        BitwardenClientContext context,
+        string email,
+        CancellationToken cancellationToken = default);
+
     Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithPasswordAsync(
         PasswordAuthenticationRequest request,
         CancellationToken cancellationToken = default);

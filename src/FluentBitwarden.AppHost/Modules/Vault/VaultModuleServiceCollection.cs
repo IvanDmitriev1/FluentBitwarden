@@ -15,9 +15,11 @@ internal static class VaultModuleServiceCollection
         services.AddScoped<VaultSyncStateRepository>();
         services.AddScoped<VaultWriterRepository>();
 
-        services.AddScoped<IVaultService, VaultService>();
+        services.AddScoped<IVaultFactory, VaultFactory>();
+        services.AddScoped<IVaultCipherService, VaultCipherService>();
         services.AddScoped<IVaultCipherAttachmentService, VaultCipherAttachmentService>();
 
-        services.AddNotificationHandlers<VaultSyncNotificationsHandler>();
+        services.AddNotificationHandlers<VaultSyncHandler>();
+        services.AddScoped<IVaultSyncService>(static sp => sp.GetRequiredService<VaultSyncHandler>());
     }
 }

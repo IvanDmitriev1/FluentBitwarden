@@ -11,13 +11,13 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Modules.Account;
 
 internal static class AccountSessionAccessTokenProviderTestSupport
 {
-    internal static ServiceProvider CreateServices(IAccountService accountService, IVaultService? vaultService = null)
+    internal static ServiceProvider CreateServices(IAccountService accountService, IVaultFactory? vaultFactory = null)
     {
         var services = new ServiceCollection();
         services.AddAccountModule();
         services.AddSingleton(Substitute.For<IIpcEventPublisher>());
         services.AddScoped(_ => accountService);
-        services.AddScoped(_ => vaultService ?? Substitute.For<IVaultService>());
+        services.AddScoped(_ => vaultFactory ?? Substitute.For<IVaultFactory>());
         services.AddSingleton(Substitute.For<IAppHostTermination>());
         services.AddAppSessionModule();
         var networkStatus = Substitute.For<FluentBitwarden.Platform.Infrastructure.Connectivity.INetworkStatus>();

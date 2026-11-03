@@ -5,15 +5,166 @@ namespace BitwardenApi.Tests.Tests;
 public sealed class IdentityApiTests
 {
     [Fact]
+    public async Task Password_prelogin_reads_structured_pbkdf2_settings_and_posts_normalized_email_to_prefixed_endpoint()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("{\"kdfSettings\":{\"kdfType\":0,\"iterations\":321000},\"salt\":\"server-salt\"}"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+        BitwardenClientContext context = TestApiSupport.ClientContext with
+        {
+            Environment = TestApiSupport.ClientContext.Environment with
+            {
+                IdentityBase = new Uri("https://identity.bitwarden.test/tenant/identity")
+            }
+        };
+
+        PasswordPreloginData result = await provider.GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(context, "  USER@EXAMPLE.TEST  ", TestContext.Current.CancellationToken);
+
+        Assert.Equal(new KdfConfig.Pbkdf2(321_000), result.KdfConfig);
+        Assert.Equal("server-salt", result.Salt);
+        TestApiSupport.RecordedRequest request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal("https://identity.bitwarden.test/tenant/identity/accounts/prelogin", request.RequestUri.AbsoluteUri);
+        using JsonDocument body = JsonDocument.Parse(request.Content!);
+        Assert.Equal("user@example.test", body.RootElement.GetProperty("email").GetString());
+    }
+
+    [Fact]
+    public async Task Password_prelogin_reads_structured_argon2_settings_and_preserves_salt()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("{\"kdfSettings\":{\"kdfType\":1,\"iterations\":3,\"memory\":64,\"parallelism\":4},\"salt\":\" Salt From Server \"}"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        PasswordPreloginData result = await provider.GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken);
+
+        Assert.Equal(new KdfConfig.Argon2Id(3, 64, 4), result.KdfConfig);
+        Assert.Equal(" Salt From Server ", result.Salt);
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Password_prelogin_uses_legacy_flat_settings_only_when_structured_settings_are_absent()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("{\"kdfSettings\":{\"kdfType\":0,\"iterations\":321000},\"kdf\":1,\"kdfIterations\":5,\"kdfMemory\":32,\"kdfParallelism\":2}"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        PasswordPreloginData structured = await provider.GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken);
+
+        Assert.Equal(new KdfConfig.Pbkdf2(321_000), structured.KdfConfig);
+
+        using var legacyHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("{\"kdf\":1,\"kdfIterations\":5,\"kdfMemory\":32,\"kdfParallelism\":2}"));
+        using ServiceProvider legacyProvider = TestApiSupport.CreateProvider(identityHandler: legacyHandler);
+        PasswordPreloginData legacy = await legacyProvider.GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken);
+
+        Assert.Equal(new KdfConfig.Argon2Id(5, 32, 2), legacy.KdfConfig);
+        Assert.Single(handler.Requests);
+        Assert.Single(legacyHandler.Requests);
+    }
+
+    [Theory]
+    [InlineData("{\"kdfSettings\":{\"kdfType\":99,\"iterations\":2}}")]
+    [InlineData("{\"kdfSettings\":{\"kdfType\":0,\"iterations\":0}}")]
+    [InlineData("{\"kdfSettings\":{\"kdfType\":1,\"iterations\":2,\"memory\":8}}")]
+    [InlineData("{\"kdfSettings\":{\"kdfType\":1,\"iterations\":2,\"memory\":8,\"parallelism\":0}}")]
+    [InlineData("{\"kdfSettings\":{\"kdfType\":1,\"iterations\":2,\"memory\":2097152,\"parallelism\":1}}")]
+    [InlineData("{\"kdfSettings\":{\"kdfType\":0}}")]
+    [InlineData("{\"salt\":null}")]
+    public async Task Password_prelogin_rejects_missing_unsupported_or_invalid_settings(string payload)
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(payload));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => provider.GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData(2_097_151, true)]
+    [InlineData(2_097_152, false)]
+    public async Task Password_prelogin_checks_argon_memory_multiplication_boundary(int memory, bool isValid)
+    {
+        string payload = $"{{\"kdfSettings\":{{\"kdfType\":1,\"iterations\":2,\"memory\":{memory},\"parallelism\":1}}}}";
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(payload));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        if (isValid)
+        {
+            PasswordPreloginData result = await provider.GetRequiredService<IIdentityApi>()
+                .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken);
+            Assert.Equal(new KdfConfig.Argon2Id(2, memory, 1), result.KdfConfig);
+        }
+        else
+        {
+            await Assert.ThrowsAsync<InvalidDataException>(() => provider.GetRequiredService<IIdentityApi>()
+                .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken));
+        }
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Password_prelogin_wraps_malformed_json_as_invalid_data()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("{"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => provider.GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Password_prelogin_preserves_http_errors_and_cancellation()
+    {
+        using var errorHandler = new TestApiSupport.SnapshottingHttpMessageHandler(
+            () => TestApiSupport.JsonResponse("service unavailable", HttpStatusCode.ServiceUnavailable));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: errorHandler);
+
+        BitwardenApiException exception = await Assert.ThrowsAsync<BitwardenApiException>(() => provider
+            .GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", TestContext.Current.CancellationToken));
+
+        Assert.Equal("Identity get password prelogin", exception.Operation);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
+        Assert.Single(errorHandler.Requests);
+
+        using var cancellationHandler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("{}"));
+        using ServiceProvider cancellationProvider = TestApiSupport.CreateProvider(identityHandler: cancellationHandler);
+        using var cancellationSource = new CancellationTokenSource();
+        cancellationSource.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancellationProvider
+            .GetRequiredService<IIdentityApi>()
+            .GetPasswordPreloginAsync(TestApiSupport.ClientContext, "user@example.test", cancellationSource.Token));
+    }
+
+    [Fact]
     public async Task Password_login_maps_success_payload_to_authenticated_result()
     {
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
             () => TestApiSupport.JsonResponse(AuthenticatedPayload));
         using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
         IIdentityApi identityApi = provider.GetRequiredService<IIdentityApi>();
+        BitwardenClientContext context = TestApiSupport.ClientContext with
+        {
+            Environment = TestApiSupport.ClientContext.Environment with
+            {
+                IdentityBase = new Uri("https://identity.bitwarden.test/identity")
+            }
+        };
 
         SessionTokenResult<AuthenticatedSession> result = await identityApi.AuthenticateWithPasswordAsync(
-            new PasswordAuthenticationRequest(TestApiSupport.ClientContext, "user@example.test", "password-hash"),
+            new PasswordAuthenticationRequest(context, "user@example.test", "password-hash"),
             TestContext.Current.CancellationToken);
 
         var success = Assert.IsType<SessionTokenResult<AuthenticatedSession>.Success>(result);
@@ -31,7 +182,7 @@ public sealed class IdentityApiTests
             success.Value.MasterPasswordUnlockModel.UserKey);
         TestApiSupport.RecordedRequest request = Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Post, request.Method);
-        Assert.Equal("/connect/token", request.RequestUri.AbsolutePath);
+        Assert.Equal("/identity/connect/token", request.RequestUri.AbsolutePath);
         Assert.Equal(
             new Dictionary<string, string>
             {
@@ -261,9 +412,16 @@ public sealed class IdentityApiTests
             () => TestApiSupport.JsonResponse("{\"options\":{\"challenge\":\"AQID\",\"timeout\":60000,\"rpId\":\"bitwarden.test\"},\"token\":\"assertion-token\"}"));
         using ServiceProvider provider = TestApiSupport.CreateProvider(identityHandler: handler);
         IWebAuthnIdentityApi webAuthnApi = provider.GetRequiredService<IWebAuthnIdentityApi>();
+        BitwardenClientContext context = TestApiSupport.ClientContext with
+        {
+            Environment = TestApiSupport.ClientContext.Environment with
+            {
+                IdentityBase = new Uri("https://identity.bitwarden.test/identity/")
+            }
+        };
 
         WebAuthnLoginAssertionOptionsResult result = await webAuthnApi.GetAuthenticationAssertionOptionsAsync(
-            TestApiSupport.ClientContext,
+            context,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(new byte[] { 1, 2, 3 }, result.Options.Challenge);
@@ -271,7 +429,7 @@ public sealed class IdentityApiTests
         Assert.Equal("bitwarden.test", result.Options.RpId);
         Assert.Equal(WebAuthnLoginAssertionOptionsToken.Parse("assertion-token"), result.Token);
         Assert.Equal(HttpMethod.Get, handler.Requests.Single().Method);
-        Assert.Equal("/accounts/webauthn/assertion-options", handler.Requests.Single().RequestUri.AbsolutePath);
+        Assert.Equal("/identity/accounts/webauthn/assertion-options", handler.Requests.Single().RequestUri.AbsolutePath);
     }
 
     [Fact]

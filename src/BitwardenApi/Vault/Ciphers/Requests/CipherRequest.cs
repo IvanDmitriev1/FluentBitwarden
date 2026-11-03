@@ -43,6 +43,8 @@ public sealed class CipherRequest
 
     public required EncString Name { get; init; }
     public EncString Notes { get; init; }
+    public List<EncryptedCipherField>? Fields { get; init; }
+    public List<EncryptedPasswordHistory>? PasswordHistory { get; init; }
 
     public CipherLoginRequest? Login { get; init; }
     public CipherCardRequest? Card { get; init; }
@@ -50,6 +52,10 @@ public sealed class CipherRequest
     public CipherSecureNoteRequest? SecureNote { get; init; }
     public CipherSshKeyRequest? SshKey { get; init; }
 
+    /// <summary>Preserves server-owned archive state during a full update.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? ArchivedDate { get; init; }
+
     /// <summary>Optimistic-concurrency guard sent on update; the last revision date we hold.</summary>
-    public DateTime? LastKnownRevisionDate { get; init; }
+    public DateTimeOffset? LastKnownRevisionDate { get; init; }
 }

@@ -16,6 +16,8 @@ public readonly ref struct MasterKey
 
     private readonly byte[] _key;
 
+    internal ReadOnlySpan<byte> Span => _key;
+
     private MasterKey(byte[] key) => _key = key;
 
     public static MasterKey Derive(

@@ -153,7 +153,7 @@ public sealed class FoldersApiTests
     [Theory]
     [InlineData("https://api.bitwarden.test/prefix/")]
     [InlineData("https://api.bitwarden.test/prefix")]
-    public async Task Get_folder_uses_root_relative_route_for_api_base_with_path(string apiBase)
+    public async Task Get_folder_preserves_api_base_path_with_or_without_trailing_slash(string apiBase)
     {
         const string encoded = "2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=";
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(
@@ -167,7 +167,7 @@ public sealed class FoldersApiTests
         await provider.GetRequiredService<IFoldersApi>().GetFolderAsync(
             account, FolderId.Parse("folder-id"), TestContext.Current.CancellationToken);
 
-        Assert.Equal("/folders/folder-id", Assert.Single(handler.Requests).RequestUri.AbsolutePath);
+        Assert.Equal($"{new Uri(apiBase).AbsolutePath.TrimEnd('/')}/folders/folder-id", Assert.Single(handler.Requests).RequestUri.AbsolutePath);
     }
 
     [Fact]

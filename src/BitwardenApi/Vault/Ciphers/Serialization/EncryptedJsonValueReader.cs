@@ -1,8 +1,9 @@
 using System.Buffers;
 using System.Security.Cryptography;
-using System.Text.Json;
 
-namespace FluentBitwarden.AppHost.Modules.Vault.Persistence.Serialization;
+using BitwardenApi.Cryptography.Encryption;
+
+namespace BitwardenApi.Vault.Ciphers.Serialization;
 
 internal static class EncryptedJsonValueReader
 {

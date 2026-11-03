@@ -9,6 +9,41 @@ namespace BitwardenApi.Identity;
 
 internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdentityApi
 {
+    public async Task<PasswordPreloginData> GetPasswordPreloginAsync(
+        BitwardenClientContext context,
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Identity);
+        Uri endpoint = new(context.Environment.IdentityBase, "accounts/prelogin");
+        var preloginRequest = new PreloginRequest { Email = email.Trim().ToLowerInvariant() };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        {
+            Content = JsonContent.Create(
+                preloginRequest,
+                IdentityJsonContext.ConfiguredDefault.PreloginRequest)
+        };
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccess("Identity get password prelogin", cancellationToken);
+
+        try
+        {
+            PreloginResponse? payload = await response.Content.ReadFromJsonAsync(
+                IdentityJsonContext.ConfiguredDefault.PreloginResponse,
+                cancellationToken);
+
+            if (payload is null)
+                throw new InvalidDataException("Prelogin response JSON payload was empty.");
+
+            return payload.ToPasswordPreloginData();
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException("Prelogin response JSON payload was malformed.", exception);
+        }
+    }
+
     public Task<SessionTokenResult<AuthenticatedSession>> AuthenticateWithPasswordAsync(
         PasswordAuthenticationRequest request,
         CancellationToken cancellationToken = default)
@@ -94,7 +129,7 @@ internal sealed class IdentityApi(IHttpClientFactory httpClientFactory) : IIdent
         CancellationToken cancellationToken)
     {
         using var httpClient = httpClientFactory.CreateClient(HttpClientNames.Identity);
-        Uri tokenEndpoint = new(context.Environment.IdentityBase, "/connect/token");
+        Uri tokenEndpoint = new(context.Environment.IdentityBase, "connect/token");
 
         using var content = new FormUrlEncodedContent(form);
         using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint);

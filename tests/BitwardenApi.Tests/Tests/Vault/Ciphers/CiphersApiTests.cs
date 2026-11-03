@@ -24,6 +24,25 @@ public sealed class CiphersApiTests
     }
 
     [Fact]
+    public async Task Get_cipher_preserves_a_nested_api_base_path()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(CipherResponseJson));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/tenant/v1/api/")
+            }
+        };
+        CipherId cipherId = CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+        await provider.GetRequiredService<ICiphersApi>().GetCipherAsync(account, cipherId, TestContext.Current.CancellationToken);
+
+        AssertRequest(handler, HttpMethod.Get, $"/tenant/v1/api/ciphers/{cipherId}", "Bearer vault-access-token");
+    }
+
+    [Fact]
     public async Task Get_cipher_details_uses_details_route()
     {
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(CipherResponseJson));
@@ -44,17 +63,84 @@ public sealed class CiphersApiTests
     {
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(CipherResponseJson));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/tenant/v1/api")
+            }
+        };
         CipherId cipherId = CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         ICiphersApi api = provider.GetRequiredService<ICiphersApi>();
 
         switch (operation)
         {
-            case "soft-delete": await api.SoftDeleteCiphersAsync(TestApiSupport.AccountContext, [cipherId], TestContext.Current.CancellationToken); break;
-            case "restore": await api.RestoreCiphersAsync(TestApiSupport.AccountContext, [cipherId], TestContext.Current.CancellationToken); break;
-            case "unarchive": await api.UnarchiveCiphersAsync(TestApiSupport.AccountContext, [cipherId], TestContext.Current.CancellationToken); break;
+            case "soft-delete": await api.SoftDeleteCiphersAsync(account, [cipherId], TestContext.Current.CancellationToken); break;
+            case "restore": await api.RestoreCiphersAsync(account, [cipherId], TestContext.Current.CancellationToken); break;
+            case "unarchive": await api.UnarchiveCiphersAsync(account, [cipherId], TestContext.Current.CancellationToken); break;
         }
 
-        AssertRequest(handler, new HttpMethod(method), path, "Bearer vault-access-token");
+        AssertRequest(handler, new HttpMethod(method), $"/tenant/v1/api{path}", "Bearer vault-access-token");
+    }
+
+    [Fact]
+    public async Task Delete_ciphers_preserves_api_prefix_for_single_and_bulk_requests()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("{}"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/tenant/v1/api/")
+            }
+        };
+        CipherId first = CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        CipherId second = CipherId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        ICiphersApi api = provider.GetRequiredService<ICiphersApi>();
+
+        await api.DeleteCiphersAsync(account, [first], TestContext.Current.CancellationToken);
+        await api.DeleteCiphersAsync(account, [first, second], TestContext.Current.CancellationToken);
+
+        TestApiSupport.RecordedRequest[] requests = handler.Requests.ToArray();
+        Assert.Equal(2, requests.Length);
+        Assert.Equal($"/tenant/v1/api/ciphers/{first}", requests[0].RequestUri.AbsolutePath);
+        Assert.Equal("/tenant/v1/api/ciphers", requests[1].RequestUri.AbsolutePath);
+    }
+
+    [Theory]
+    [InlineData("soft-delete", "/ciphers/delete")]
+    [InlineData("restore", "/ciphers/restore")]
+    [InlineData("unarchive", "/ciphers/unarchive")]
+    [InlineData("archive", "/ciphers/archive")]
+    public async Task Cipher_bulk_lifecycle_preserves_api_prefix(string operation, string path)
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("{}"));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/tenant/v1/api")
+            }
+        };
+        CipherId[] cipherIds =
+        [
+            CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            CipherId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+        ];
+        ICiphersApi api = provider.GetRequiredService<ICiphersApi>();
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        switch (operation)
+        {
+            case "soft-delete": await api.SoftDeleteCiphersAsync(account, cipherIds, cancellationToken); break;
+            case "restore": await api.RestoreCiphersAsync(account, cipherIds, cancellationToken); break;
+            case "unarchive": await api.UnarchiveCiphersAsync(account, cipherIds, cancellationToken); break;
+            case "archive": await api.ArchiveCiphersAsync(account, cipherIds, cancellationToken); break;
+        }
+
+        AssertRequest(handler, HttpMethod.Put, $"/tenant/v1/api{path}", "Bearer vault-access-token");
     }
 
     [Fact]
@@ -152,6 +238,22 @@ public sealed class CiphersApiTests
     }
 
     [Fact]
+    public async Task Update_cipher_serializes_structured_fields_without_opaque_data()
+    {
+        using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse(CipherResponseJson));
+        using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        CipherId cipherId = CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        await provider.GetRequiredService<ICiphersApi>().UpdateCipherAsync(
+            TestApiSupport.AccountContext, cipherId, CreateCipherRequest(), TestContext.Current.CancellationToken);
+
+        TestApiSupport.RecordedRequest request = AssertRequest(handler, HttpMethod.Put, $"/ciphers/{cipherId}", "Bearer vault-access-token");
+        using JsonDocument body = JsonDocument.Parse(request.Content!);
+        Assert.False(body.RootElement.TryGetProperty("data", out _));
+        Assert.Equal("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=",
+            body.RootElement.GetProperty("login").GetProperty("username").GetString());
+    }
+
+    [Fact]
     public async Task Delete_cipher_uses_authenticated_delete_route()
     {
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => TestApiSupport.JsonResponse("{}"));
@@ -220,14 +322,21 @@ public sealed class CiphersApiTests
     {
         using var handler = new TestApiSupport.SnapshottingHttpMessageHandler(() => new HttpResponseMessage(statusCode));
         using ServiceProvider provider = TestApiSupport.CreateProvider(vaultHandler: handler);
+        BitwardenAccountContext account = TestApiSupport.AccountContext with
+        {
+            Environment = TestApiSupport.AccountContext.Environment with
+            {
+                ApiBase = new Uri("https://api.bitwarden.test/tenant/v1/api")
+            }
+        };
         CipherId cipherId = CipherId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         ICiphersApi api = provider.GetRequiredService<ICiphersApi>();
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         Func<Task> execute = operation switch
         {
-            "archive-one" => () => api.ArchiveCiphersAsync(TestApiSupport.AccountContext, [cipherId], cancellationToken),
-            "archive-many" => () => api.ArchiveCiphersAsync(TestApiSupport.AccountContext, [cipherId, CipherId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")], cancellationToken),
-            "unarchive-one" => () => api.UnarchiveCiphersAsync(TestApiSupport.AccountContext, [cipherId], cancellationToken),
+            "archive-one" => () => api.ArchiveCiphersAsync(account, [cipherId], cancellationToken),
+            "archive-many" => () => api.ArchiveCiphersAsync(account, [cipherId, CipherId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")], cancellationToken),
+            "unarchive-one" => () => api.UnarchiveCiphersAsync(account, [cipherId], cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
@@ -247,7 +356,7 @@ public sealed class CiphersApiTests
             "archive-many" => "/ciphers/archive",
             _ => $"/ciphers/{cipherId}/unarchive"
         };
-        TestApiSupport.RecordedRequest request = AssertRequest(handler, HttpMethod.Put, path, "Bearer vault-access-token");
+        TestApiSupport.RecordedRequest request = AssertRequest(handler, HttpMethod.Put, $"/tenant/v1/api{path}", "Bearer vault-access-token");
         if (operation == "archive-one")
             Assert.Null(request.Content);
         else if (operation == "archive-many")
@@ -412,7 +521,11 @@ public sealed class CiphersApiTests
         Favorite = true,
         Reprompt = 0,
         Key = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y="),
-        Name = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=")
+        Name = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y="),
+        Login = new CipherLoginRequest
+        {
+            Username = TestApiSupport.ParseEncString("2.AAECAwQFBgcICQoLDA0ODw==|URUSTubWO/mgdJPbxF260L2ZR++Nqev9R2ivTxISOOs=|9SVSKKsSfeuCZA/eHiHEWz2vSxZR3+x5ubAyGjy284Y=")
+        }
     };
 
     private static TestApiSupport.RecordedRequest AssertRequest(

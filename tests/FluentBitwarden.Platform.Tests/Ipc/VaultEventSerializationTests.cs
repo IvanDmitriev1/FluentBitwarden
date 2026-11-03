@@ -57,6 +57,14 @@ public sealed class VaultEventSerializationTests
         Assert.Equal(folder.RevisionDate, actual.RevisionDate);
     }
 
+    [Fact]
+    public void Deleted_folder_preserves_account_and_folder_identity()
+    {
+        var message = new FolderDeletedEvent(UserId, FolderId.Parse("33333333-3333-3333-3333-333333333333"));
+
+        Assert.Equal(message, RoundTrip(message));
+    }
+
     private static T RoundTrip<T>(T message) =>
         MemoryPackSerializer.Deserialize<T>(MemoryPackSerializer.Serialize(message))!;
 }

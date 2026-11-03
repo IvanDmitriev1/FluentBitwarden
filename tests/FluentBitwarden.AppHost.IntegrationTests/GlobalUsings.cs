@@ -15,8 +15,6 @@ global using BitwardenApi.Vault.Ciphers.Models;
 global using BitwardenApi.Vault.Ciphers.Requests;
 global using BitwardenApi.Vault.Ciphers.Responses;
 global using BitwardenApi.Vault.Folders.Responses;
-global using BitwardenApi.Vault.Collections.Models;
 global using BitwardenApi.Vault.Collections.Responses;
 global using BitwardenApi.Vault.Sync.Responses;
-global using BitwardenApi.Vault.Attachments.Models;
 global using BitwardenApi.Vault.Attachments.Responses;
