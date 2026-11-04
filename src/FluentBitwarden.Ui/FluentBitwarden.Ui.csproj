@@ -24,6 +24,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Windows\MainWindow.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
 		<ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
 	</ItemGroup>
@@ -69,5 +73,11 @@
 	<PackageReference Include="Navis.WinUI" />
 	<PackageReference Include="WinUIEx" />
 </ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Windows\MainWindow.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
 
 </Project>

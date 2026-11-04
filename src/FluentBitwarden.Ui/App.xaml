@@ -10,9 +10,6 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="ms-appx:///Styles/UIStyles.xaml" />
-
-                <sharedTemplates:OptionItemTemplates />
             </ResourceDictionary.MergedDictionaries>
 
             <toolkitConverters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
@@ -21,7 +18,6 @@
                 x:Key="InverseBoolToVis"
                 FalseValue="Visible"
                 TrueValue="Collapsed" />
-            <converters:FolderIdSelectedValueConverter x:Key="FolderIdSelectedValueConverter" />
             <toolkitConverters:EmptyObjectToObjectConverter
                 x:Key="NullToVisibilityConverter"
                 EmptyValue="Collapsed"
@@ -36,7 +32,7 @@
                 EmptyValue="False"
                 NotEmptyValue="True" />
 
-            <converters:EmptyCollectionToObjectConverter
+            <toolkitConverters:EmptyCollectionToObjectConverter
                 x:Key="EmptyCollectionToVisibilityConverter"
                 EmptyValue="Collapsed"
                 NotEmptyValue="Visible" />
