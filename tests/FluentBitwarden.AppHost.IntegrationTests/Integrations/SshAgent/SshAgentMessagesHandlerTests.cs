@@ -11,7 +11,7 @@ public sealed class SshAgentMessagesHandlerTests
     {
         var keyProvider = Substitute.For<ISshKeyProvider>();
         var identity = new SshAgentIdentity(new byte[] { 0x01, 0x02 }, "key café");
-        keyProvider.GetIdentitiesAsync().Returns((SshAgentIdentity[])[identity]);
+        keyProvider.GetIdentitiesAsync(Arg.Any<CancellationToken>()).Returns((SshAgentIdentity[])[identity]);
         var handler = new SshAgentMessagesHandler(keyProvider);
 
         SshAgentMessage response = await handler.HandleAsync(
@@ -30,7 +30,7 @@ public sealed class SshAgentMessagesHandlerTests
     public async Task RequestIdentities_fails_when_the_response_exceeds_the_frame_limit()
     {
         var keyProvider = Substitute.For<ISshKeyProvider>();
-        keyProvider.GetIdentitiesAsync().Returns(
+        keyProvider.GetIdentitiesAsync(Arg.Any<CancellationToken>()).Returns(
             (SshAgentIdentity[])[new SshAgentIdentity(ReadOnlyMemory<byte>.Empty, new string('x', SshAgentMessage.MaxLength))]);
         var handler = new SshAgentMessagesHandler(keyProvider);
 

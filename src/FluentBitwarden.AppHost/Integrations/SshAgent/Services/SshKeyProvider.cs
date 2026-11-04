@@ -1,8 +1,8 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
-using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Modules.Vault.Contracts;
+using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Contracts.Integrations.Ssh;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
@@ -12,73 +12,55 @@ using FluentBitwarden.Contracts.Settings.Models;
 namespace FluentBitwarden.AppHost.Integrations.SshAgent.Services;
 
 internal sealed class SshKeyProvider(
-    IAppSessionLeaseProvider sessionLeaseProvider,
-    IUiProcessLauncher uiProcessLauncher,
-    ISshUserActionDialogClient dialogClient,
+    IAppSessionAccessor appSessionAccessor,
+    IAppSessionOperations appSessionOperations,
+    IUserDialogService userDialogService,
     ISettingsStore settingsStore) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
-    public async ValueTask<IReadOnlyList<SshAgentIdentity>> GetIdentitiesAsync()
+    public async ValueTask<IReadOnlyList<SshAgentIdentity>> GetIdentitiesAsync(CancellationToken cancellationToken)
     {
-        await using var lease = sessionLeaseProvider.CreateLease();
-        if (lease.AppSessionState is not AppSessionState.Unlocked unlocked)
-            return [];
+        await appSessionOperations.WaitUntilUnlockedAsync(cancellationToken);
+        var unlocked = appSessionAccessor.RequireUnlockedState();
 
-        var data = unlocked.Vault.GetCiphers(SshCipherQuery).OfType<SshKeyCipher>()
+        var identities = unlocked.Vault.GetCiphers(SshCipherQuery).OfType<SshKeyCipher>()
             .Select(static c => new SshAgentIdentity(c.PublicKey.KeyBlob, c.Name))
             .ToList();
-
-        return data;
+        return identities;
     }
 
     public async ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken)
     {
-        await using (var lease = sessionLeaseProvider.CreateLease())
-        {
-            if (lease.AppSessionState is AppSessionState.NotAuthenticated)
-                return null;
-        }
+        var unlocked = appSessionAccessor.RequireUnlockedState();
+        using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, unlocked.Revoked);
+        CancellationToken operationToken = operationCancellation.Token;
 
         var userVerificationPolicy = settingsStore.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
-        UserId accountId;
-        SshUserActionRequest actionRequest;
+        if (GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } cipher || operationToken.IsCancellationRequested)
+            return null;
 
-        await using (var lease = await sessionLeaseProvider.WaitUntilUnlockedAsync(cancellationToken))
+        if (userVerificationPolicy != SensitiveActionPolicy.RequireUserAction)
         {
-            var unlocked = lease.RequireUnlockedState();
-
-            if (GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } cipher)
-                return null;
-
-            if (userVerificationPolicy != SensitiveActionPolicy.RequireUserAction)
-            {
-                uiProcessLauncher.Activate();
-                return Ed25519SshSigner.Sign(request, cipher.PrivateKey);
-            }
-
-            accountId = unlocked.Account.UserId;
-            actionRequest = new SshUserActionRequest(
-                KeyName: cipher.Name,
-                KeyFingerprint: cipher.KeyFingerprint,
-                IsForwarded: false);
+            return Ed25519SshSigner.Sign(request, cipher.PrivateKey);
         }
 
-        var userAction = await dialogClient.ShowSshDialogAsync(actionRequest, cancellationToken);
-        if (userAction != UserActionDialogOutcome.Approved)
-            return null;
+        var actionRequest = new SshUserActionRequest(
+            KeyName: cipher.Name,
+            KeyFingerprint: cipher.KeyFingerprint,
+            IsForwarded: false);
 
-        await using var activeLease = sessionLeaseProvider.CreateLease();
-        if (activeLease.AppSessionState is not AppSessionState.Unlocked unlockedAfterDialog)
-            return null;
+        UserDialogResult<SshUserActionResponse> result =
+            await userDialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+                actionRequest, operationToken);
 
-        if (unlockedAfterDialog.Account.UserId != accountId ||
-            GetCipher(unlockedAfterDialog.Vault, request.PublicKeyBlob) is not { } activeCipher)
+        if (!result.TryGetResult(out var response) || !response.Approved ||
+            GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } activeCipher ||
+            operationToken.IsCancellationRequested)
         {
             return null;
         }
 
-        uiProcessLauncher.Activate();
         return Ed25519SshSigner.Sign(request, activeCipher.PrivateKey);
     }
 

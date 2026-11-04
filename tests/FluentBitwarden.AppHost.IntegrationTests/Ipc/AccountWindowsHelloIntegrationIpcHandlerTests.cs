@@ -62,7 +62,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
 
         fixture.WindowsHello.Received(1).Disable(fixture.Account.UserId);
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
 
         fixture.WindowsHello.DidNotReceive().Disable(fixture.Account.UserId);
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -87,14 +87,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
         fixture.WindowsHello.DidNotReceive().IsEnabled(fixture.Account.UserId);
         fixture.WindowsHello.DidNotReceive().Disable(fixture.Account.UserId);
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
     public async Task Enable_forwards_the_active_user_key_and_owner_window()
     {
         await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
-        using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Lease, fixture.Account.UserId);
+        using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Accessor, fixture.Account.UserId);
         var request = new EnableWindowsHelloEnrollmentRequest(new NativeWindowHandle(0x1234));
 
         WindowsHelloEnrollmentOutcome outcome = await fixture.Handler.EnableAsync(
@@ -104,7 +104,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
         Assert.Equal(WindowsHelloEnrollmentOutcome.Enrolled, outcome);
         fixture.WindowsHello.Received(1).Enable(userKey, (IntPtr)request.OwnerWindow);
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
         Assert.Equal(WindowsHelloEnrollmentOutcome.Enrolled, outcome);
         fixture.WindowsHello.DidNotReceive().Enable(Arg.Any<UnlockedUserKey>(), Arg.Any<IntPtr>());
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
@@ -135,14 +135,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
         fixture.WindowsHello.DidNotReceive().IsEnabled(fixture.Account.UserId);
         fixture.WindowsHello.DidNotReceive().Enable(Arg.Any<UnlockedUserKey>(), Arg.Any<IntPtr>());
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
-    public async Task Enable_maps_user_cancellation_and_releases_the_session_lease()
+    public async Task Enable_maps_user_cancellation_and_disposes_the_scope_accessor()
     {
         await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
-        using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Lease, fixture.Account.UserId);
+        using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Accessor, fixture.Account.UserId);
         fixture.WindowsHello.When(service => service.Enable(userKey, Arg.Any<IntPtr>()))
             .Do(_ => throw new OperationCanceledException());
 
@@ -152,14 +152,14 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
 
         Assert.Equal(WindowsHelloEnrollmentOutcome.Cancelled, outcome);
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 
     [Fact]
-    public async Task Enable_maps_cryptographic_failures_and_releases_the_session_lease()
+    public async Task Enable_maps_cryptographic_failures_and_disposes_the_scope_accessor()
     {
         await using var fixture = CreateFixture(isSupported: true, isEnabled: false);
-        using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Lease, fixture.Account.UserId);
+        using UnlockedUserKey userKey = ConfigureAccountKeySession(fixture.Accessor, fixture.Account.UserId);
         fixture.WindowsHello.When(service => service.Enable(userKey, Arg.Any<IntPtr>()))
             .Do(_ => throw new CryptographicException("synthetic enrollment failure"));
 
@@ -169,6 +169,6 @@ public sealed class AccountWindowsHelloIntegrationIpcHandlerTests
 
         Assert.Equal(WindowsHelloEnrollmentOutcome.Failed, outcome);
         await fixture.DisposeAsync();
-        await fixture.Lease.Received(1).DisposeAsync();
+        await ((IAsyncDisposable)fixture.Accessor).Received(1).DisposeAsync();
     }
 }

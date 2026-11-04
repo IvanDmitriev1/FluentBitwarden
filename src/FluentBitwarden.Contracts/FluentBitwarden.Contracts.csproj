@@ -1,4 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>FluentBitwarden.Contracts</RootNamespace>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="MemoryPack" />
   </ItemGroup>

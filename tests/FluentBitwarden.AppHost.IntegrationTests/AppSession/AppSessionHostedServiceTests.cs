@@ -42,7 +42,7 @@ public sealed class AppSessionHostedServiceTests
         var accountService = Substitute.For<IAccountService, IDisposable>();
         accountService.GetAccounts().Returns(_ => throw new InvalidOperationException("read failed"));
         await using var provider = CreateProvider(accountService);
-        var service = new AppSessionHostedService(provider.GetRequiredService<IServiceScopeFactory>(), new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>()));
+        var service = new AppSessionHostedService(provider.GetRequiredService<IServiceScopeFactory>(), new AppSessionStore(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>(), Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>()));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.StartAsync(CancellationToken.None));
 
@@ -60,6 +60,7 @@ public sealed class AppSessionHostedServiceTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(Substitute.For<FluentBitwarden.Platform.Ipc.Abstractions.IIpcEventPublisher>());
+        services.AddSingleton(Substitute.For<FluentBitwarden.AppHost.Infrastructure.Processes.IUiProcessLauncher>());
         services.AddSingleton<AppSessionStore>();
         services.AddScoped(_ => accountService);
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });

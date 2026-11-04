@@ -13,7 +13,7 @@ internal sealed class AppSessionIpcHandler(
 {
     public Task<AppSessionStateSnapshot> GetStateAsync(
         GetAppSessionStateRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromResult(appSessionAccessor.AppSessionState.ToSnapshot);
+        Task.FromResult(appSessionAccessor.State.ToSnapshot);
 
     public Task<SessionUnlockOutcome> UnlockAsync(
         SessionUnlockRequest request, CancellationToken cancellationToken = default) =>

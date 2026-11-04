@@ -11,12 +11,12 @@ namespace FluentBitwarden.AppHost.IntegrationTests.Ipc;
 public sealed class VaultClientIpcHandlerTests
 {
     [Fact]
-    public async Task Every_vault_operation_requires_an_unlocked_session_lease()
+    public async Task Every_vault_operation_requires_an_unlocked_session_accessor()
     {
         IAppSessionAccessor accessor = Substitute.For<IAppSessionAccessor>();
-        accessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
+        accessor.State.Returns(new AppSessionState.NotAuthenticated());
         using var context = new FluentBitwarden.AppHost.IntegrationTests.Modules.Vault.VaultManagerTestContext();
-        context.SessionAccessor.AppSessionState.Returns(new AppSessionState.NotAuthenticated());
+        context.SessionAccessor.State.Returns(new AppSessionState.NotAuthenticated());
         var operationsHandler = new VaultOperationsIpcHandler(context.VaultSyncHandler);
         var cipherHandler = new VaultCipherIpcHandler(
             accessor,
@@ -38,7 +38,7 @@ public sealed class VaultClientIpcHandlerTests
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(async () =>
             await cipherHandler.DownloadCipherAttachmentAsync(default!, cancellationToken));
 
-        _ = accessor.Received(3).AppSessionState;
+        _ = accessor.Received(3).State;
     }
 
     [Fact]

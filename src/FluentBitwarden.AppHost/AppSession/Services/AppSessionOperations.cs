@@ -19,6 +19,9 @@ internal sealed class AppSessionOperations(
     public Task AuthenticateAsync(AccountProfile account, CancellationToken cancellationToken) =>
         appSessionStore.AuthenticateAsync(account, cancellationToken);
 
+    public Task WaitUntilUnlockedAsync(CancellationToken cancellationToken) =>
+        appSessionStore.WaitUntilUnlockedAsync(cancellationToken);
+
     public async Task<SessionUnlockOutcome> UnlockAsync(SessionUnlockRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

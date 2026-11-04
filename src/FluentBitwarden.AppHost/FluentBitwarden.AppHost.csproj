@@ -3,6 +3,10 @@
 
   <PropertyGroup>
     <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>FluentBitwarden.AppHost</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
     <!-- Source generation sees inherited Cipher.Attachments.FileSize, but the parser removes

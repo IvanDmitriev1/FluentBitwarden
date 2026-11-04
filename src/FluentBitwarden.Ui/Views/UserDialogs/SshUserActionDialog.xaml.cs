@@ -1,11 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Contracts.Integrations.Ssh;
 using FluentBitwarden.Contracts.Modules.Ssh;
 using FluentBitwarden.Infrastructure.UserDialogs.Abstractions;
 
 namespace FluentBitwarden.Views.UserDialogs;
 
-public sealed partial class SshUserActionDialog : ContentDialog, IUserDialog<UserActionDialogOutcome>
+public sealed partial class SshUserActionDialog : ContentDialog, IUserDialog<SshUserActionResponse>
 {
     public SshUserActionDialog(SshUserActionRequest request)
     {
@@ -13,35 +12,29 @@ public sealed partial class SshUserActionDialog : ContentDialog, IUserDialog<Use
         InitializeComponent();
     }
 
-    private UserActionDialogOutcome? _result;
-
     public SshUserActionRequest Request { get; }
 
-    public bool TryGetResult([MaybeNullWhen(false)] out UserActionDialogOutcome result)
-    {
-        if (_result is { } dialogResult)
-        {
-            result = dialogResult;
-            return true;
-        }
+    private SshUserActionResponse? _result;
 
-        result = default;
-        return false;
+    public bool TryGetResult(out SshUserActionResponse result)
+    {
+        result = _result.GetValueOrDefault();
+        return _result.HasValue;
     }
 
-    private void ApproveButton_Click(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private void ApproveButton_Click(
+        ContentDialog sender,
+        ContentDialogButtonClickEventArgs args)
     {
-        SetResult(UserActionDialogOutcome.Approved);
+        _result = new SshUserActionResponse(Approved: true);
+        Hide();
     }
 
-    private void DenyButton_Click(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private void DenyButton_Click(
+        ContentDialog sender,
+        ContentDialogButtonClickEventArgs args)
     {
-        SetResult(UserActionDialogOutcome.Denied);
-    }
-
-    private void SetResult(UserActionDialogOutcome result)
-    {
-        _result = result;
+        _result = new SshUserActionResponse(Approved: false);
         Hide();
     }
 }

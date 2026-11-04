@@ -1,10 +1,13 @@
 using FluentBitwarden.AppHost.AppSession.Contracts;
+using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.AppSession.Services;
 
-internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppSessionLeaseProvider, IAsyncDisposable
+internal sealed class AppSessionStore(
+    IIpcEventPublisher eventPublisher,
+    IUiProcessLauncher uiProcessLauncher)
 {
     private readonly Lock _lock = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -24,33 +27,17 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _gate.WaitAsync();
-
-        try
-        {
-            await _state.DisposeAsync();
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
-
-    public IAppSessionAccessor CreateLease()
+    public AppSessionState AcquireState()
     {
         lock (_lock)
         {
             var state = _state;
-
             state.AddReference();
-
-            return new AppSessionAccessor(state);
+            return state;
         }
     }
 
-    public async ValueTask<IAppSessionAccessor> WaitUntilUnlockedAsync(CancellationToken cancellationToken)
+    public async Task WaitUntilUnlockedAsync(CancellationToken cancellationToken)
     {
         while (true)
         {
@@ -62,9 +49,10 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
 
                 if (_state is AppSessionState.Unlocked)
                 {
-                    return CreateLease();
+                    return;
                 }
 
+                uiProcessLauncher.Activate();
                 changed = _changed.Task;
             }
 
@@ -81,10 +69,7 @@ internal sealed class AppSessionStore(IIpcEventPublisher eventPublisher) : IAppS
             lock (_lock)
             {
                 if (_state is not AppSessionState.NotAuthenticated)
-                {
-                    throw new InvalidOperationException(
-                        "Session is already authenticated.");
-                }
+                    throw new InvalidOperationException("Session is already authenticated.");
             }
 
             if (ct.IsCancellationRequested)

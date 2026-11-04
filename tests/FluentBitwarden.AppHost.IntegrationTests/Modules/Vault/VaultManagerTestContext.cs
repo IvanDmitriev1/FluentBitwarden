@@ -66,11 +66,11 @@ internal sealed class VaultManagerTestContext : IDisposable
 
     public VaultManagerTestKeySession CreateKeySession() => new(AccountContext.UserId);
 
-    public IAppSessionAccessor CreateLease(IUnlockedVault vault, IAccountKeySession keySession)
+    public AppSessionState.Unlocked SetSessionState(IUnlockedVault vault, IAccountKeySession keySession)
     {
         var state = new AppSessionState.Unlocked(Account, vault, keySession, Substitute.For<IServerNotificationsDispatcher>());
-        SessionAccessor.AppSessionState.Returns(state);
-        return SessionAccessor;
+        SessionAccessor.State.Returns(state);
+        return state;
     }
 
     public IUnlockedVault OpenVault()

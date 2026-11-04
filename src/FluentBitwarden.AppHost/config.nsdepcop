@@ -68,6 +68,11 @@
     From="FluentBitwarden.AppHost.AppSession.*"
     To="FluentBitwarden.AppHost.AppSession.*" />
 
+  <!-- AppSessionStore activates the UI while waiting for the session to unlock. -->
+  <Allowed
+    From="FluentBitwarden.AppHost.AppSession.Services"
+    To="FluentBitwarden.AppHost.Infrastructure.Processes" />
+
   <Allowed
     From="FluentBitwarden.AppHost.*"
     To="FluentBitwarden.AppHost.AppSession.Contracts.*" />

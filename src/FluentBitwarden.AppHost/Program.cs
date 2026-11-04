@@ -8,7 +8,6 @@ using FluentBitwarden.AppHost.Integrations.SshAgent;
 using FluentBitwarden.AppHost.Ipc;
 using FluentBitwarden.AppHost.Modules.Account;
 using FluentBitwarden.AppHost.Modules.Vault;
-using FluentBitwarden.Contracts.Integrations.Passkey;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Diagnostics;
 using FluentBitwarden.Platform.Ipc;
@@ -69,8 +68,6 @@ internal static class Program
 
         builder.Services.AddIpcEventServer(IpcConstants.AppHostEventsPipeName);
         builder.Services.AddIpcClient(IpcConstants.UiPipeName);
-
-        builder.Services.AddSingleton<IPasskeyDialogClient, PasskeyDialogClient>();
 
         builder.Services.AddHostedService<AppHostLifecycleService>();
 

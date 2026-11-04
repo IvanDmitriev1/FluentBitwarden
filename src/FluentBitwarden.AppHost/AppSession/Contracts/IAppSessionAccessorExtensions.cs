@@ -7,6 +7,6 @@ internal static class IAppSessionAccessorExtensions
     extension(IAppSessionAccessor accessor)
     {
         public AppSessionState.Unlocked RequireUnlockedState() =>
-            accessor.AppSessionState as AppSessionState.Unlocked ?? throw new UnlockedSessionRequiredException();
+            accessor.State as AppSessionState.Unlocked ?? throw new UnlockedSessionRequiredException();
     }
 }
