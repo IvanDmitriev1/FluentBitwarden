@@ -117,7 +117,7 @@ internal sealed class SshAgentServer(
                     var response = await messagesHandler.HandleAsync(message, cancellationToken);
                     await response.WriteMessageAsync(pipe, cancellationToken);
                 }
-                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException)
                 {
                     return;
                 }

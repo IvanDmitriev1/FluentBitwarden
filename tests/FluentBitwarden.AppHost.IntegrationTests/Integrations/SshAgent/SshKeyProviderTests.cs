@@ -156,6 +156,108 @@ public sealed class SshKeyProviderTests
         Assert.Null(signature);
     }
 
+    [Theory]
+    [InlineData(SensitiveActionPolicy.AllowWhenUnlocked)]
+    [InlineData(SensitiveActionPolicy.RequireUserAction)]
+    public async Task GetSignature_returns_no_signature_when_state_is_already_revoked(SensitiveActionPolicy policy)
+    {
+        var fixture = new ProviderFixture(policy);
+        fixture.State.AddReference();
+        await fixture.State.DisposeAsync();
+
+        try
+        {
+            Assert.Null(await fixture.Provider.GetSignatureAsync(fixture.CreateRequest(), CancellationToken.None));
+            _ = fixture.DialogService.DidNotReceive().ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+                Arg.Any<SshUserActionRequest>(), Arg.Any<CancellationToken>());
+        }
+        finally
+        {
+            await fixture.State.ReleaseAsync();
+        }
+    }
+
+    [Fact]
+    public async Task GetSignature_rejects_approval_completed_after_state_revocation()
+    {
+        var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
+        fixture.State.AddReference();
+        fixture.DialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+                Arg.Any<SshUserActionRequest>(), Arg.Any<CancellationToken>())
+            .Returns(async call =>
+            {
+                await fixture.State.DisposeAsync();
+                return UserDialogResult<SshUserActionResponse>.Completed(new SshUserActionResponse(true));
+            });
+
+        try
+        {
+            Assert.Null(await fixture.Provider.GetSignatureAsync(fixture.CreateRequest(), CancellationToken.None));
+        }
+        finally
+        {
+            await fixture.State.ReleaseAsync();
+        }
+    }
+
+    [Theory]
+    [InlineData("lock")]
+    [InlineData("signout")]
+    [InlineData("switch")]
+    [InlineData("reunlock")]
+    public async Task GetSignature_cancels_pending_approval_when_real_session_retires_captured_state(string transition)
+    {
+        var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
+        await using var session = new SessionTestContext();
+        await session.Store.AuthenticateAsync(fixture.Account, TestContext.Current.CancellationToken);
+        await session.Store.UnlockAsync(fixture.State);
+        await using var accessor = new AppSessionAccessor(session.Store);
+        var provider = new SshKeyProvider(accessor, session.Operations, fixture.DialogService, fixture.SettingsStore);
+        var dialogStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.DialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+                Arg.Any<SshUserActionRequest>(), Arg.Any<CancellationToken>())
+            .Returns(call =>
+            {
+                CancellationToken token = call.Arg<CancellationToken>();
+                dialogStarted.SetResult(token);
+                return WaitForDialogCancellation(token);
+            });
+        Task<SshAgentSignature?> signing = provider.GetSignatureAsync(fixture.CreateRequest(), CancellationToken.None).AsTask();
+        CancellationToken dialogToken = await dialogStarted.Task.WaitAsync(TestContext.Current.CancellationToken);
+
+        if (transition == "lock")
+        {
+            await session.Store.LockAsync(TestContext.Current.CancellationToken);
+        }
+        else if (transition == "signout")
+        {
+            await session.Store.SignOutAsync(TestContext.Current.CancellationToken);
+        }
+        else if (transition == "switch")
+        {
+            await session.Store.LockAsync(TestContext.Current.CancellationToken);
+            await session.Store.SignOutAsync(TestContext.Current.CancellationToken);
+            var secondAccount = AccountTestData.Profile(AccountTestData.SecondUserId, "second@example.test", "second");
+            await session.Store.AuthenticateAsync(secondAccount, TestContext.Current.CancellationToken);
+            await session.Store.UnlockAsync(CreateAccessor(secondAccount, fixture.Key.CreateCipher()).State);
+        }
+        else if (transition == "reunlock")
+        {
+            await session.Store.LockAsync(TestContext.Current.CancellationToken);
+            await session.Store.UnlockAsync(CreateAccessor(fixture.Account, fixture.Key.CreateCipher()).State);
+        }
+
+        Assert.Same(fixture.State, accessor.State);
+        Assert.True(dialogToken.IsCancellationRequested);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => signing);
+    }
+
+    private static async Task<UserDialogResult<SshUserActionResponse>> WaitForDialogCancellation(CancellationToken token)
+    {
+        await Task.Delay(Timeout.Infinite, token);
+        return UserDialogResult<SshUserActionResponse>.Cancelled;
+    }
+
     [Fact]
     public async Task GetSignature_returns_no_signature_if_the_approved_key_was_replaced()
     {

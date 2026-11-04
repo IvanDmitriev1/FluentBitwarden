@@ -33,11 +33,11 @@ internal sealed class SshKeyProvider(
     public async ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken)
     {
         var unlocked = appSessionAccessor.RequireUnlockedState();
-        UserId accountId = unlocked.Account.UserId;
+        using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, unlocked.Revoked);
+        CancellationToken operationToken = operationCancellation.Token;
 
         var userVerificationPolicy = settingsStore.Get(AppSettingKeys.SshAgent.UserVerificationPolicyKey);
-
-        if (GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } cipher)
+        if (GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } cipher || operationToken.IsCancellationRequested)
             return null;
 
         if (userVerificationPolicy != SensitiveActionPolicy.RequireUserAction)
@@ -50,14 +50,13 @@ internal sealed class SshKeyProvider(
             KeyFingerprint: cipher.KeyFingerprint,
             IsForwarded: false);
 
-        var result = await userDialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(actionRequest, cancellationToken);
-        if (!result.TryGetResult(out var response) || !response.Approved)
-        {
-            return null;
-        }
+        UserDialogResult<SshUserActionResponse> result =
+            await userDialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+                actionRequest, operationToken);
 
-        if (unlocked.Account.UserId != accountId ||
-            GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } activeCipher)
+        if (!result.TryGetResult(out var response) || !response.Approved ||
+            GetCipher(unlocked.Vault, request.PublicKeyBlob) is not { } activeCipher ||
+            operationToken.IsCancellationRequested)
         {
             return null;
         }

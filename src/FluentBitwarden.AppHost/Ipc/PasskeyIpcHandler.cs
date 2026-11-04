@@ -15,13 +15,16 @@ internal sealed class PasskeyIpcHandler(
     public async Task<PasskeyAssertionResponse> SelectCredentialAsync(PasskeyGetAssertionRequest request, CancellationToken cancellationToken)
     {
         await appSessionOperations.WaitUntilUnlockedAsync(cancellationToken);
-        _ = appSessionAccessor.RequireUnlockedState();
+        var unlocked = appSessionAccessor.RequireUnlockedState();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, unlocked.Revoked);
+        CancellationToken operationToken = cts.Token;
+        operationToken.ThrowIfCancellationRequested();
 
         var result =
             await userDialogService.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
-                new PasskeySelectCredentialRequest(request.RpId),
-                cancellationToken);
+                new PasskeySelectCredentialRequest(request.RpId), operationToken);
 
+        operationToken.ThrowIfCancellationRequested();
         var credential = result.GetResultOrThrow();
 
         var (authenticatorData, signature) =
