@@ -1,7 +1,7 @@
-using FluentBitwarden.Windows;
+using FluentBitwarden.Ui.Windows;
 using WinUIEx;
 
-namespace FluentBitwarden;
+namespace FluentBitwarden.Ui;
 
 public partial class App
 {

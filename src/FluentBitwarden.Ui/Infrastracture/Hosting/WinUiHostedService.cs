@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastracture.Hosting;
 
 internal sealed class WinUiHostedService<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TApplication>(

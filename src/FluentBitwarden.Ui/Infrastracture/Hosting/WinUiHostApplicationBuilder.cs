@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Infrastracture.Hosting.Abstractions;
+using FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastracture.Hosting;
 
 public sealed class WinUiHostApplicationBuilder<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TApplication>

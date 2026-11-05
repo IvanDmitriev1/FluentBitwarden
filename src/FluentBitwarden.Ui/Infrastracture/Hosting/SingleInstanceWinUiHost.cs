@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Infrastracture.Hosting.Abstractions;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 
-namespace FluentBitwarden.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastracture.Hosting;
 
 internal sealed class SingleInstanceWinUiHost<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]  TApplication>(IHost host, string instanceKey) : IWinUiHost

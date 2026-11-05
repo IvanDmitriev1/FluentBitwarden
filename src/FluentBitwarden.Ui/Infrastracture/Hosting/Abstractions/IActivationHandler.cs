@@ -1,6 +1,6 @@
 using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.Infrastracture.Hosting.Abstractions;
+namespace FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
 
 public interface IActivationHandler
 {

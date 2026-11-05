@@ -2,7 +2,7 @@
   <Import Project="..\..\FluentBitwarden.WindowsApp.props" />
 
   <PropertyGroup>
-    <RootNamespace>FluentBitwarden</RootNamespace>
+  <RootNamespace>FluentBitwarden.Ui</RootNamespace>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<UseWinUI>true</UseWinUI>
 	<WinUISDKReferences>false</WinUISDKReferences>

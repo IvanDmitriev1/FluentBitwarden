@@ -1,6 +1,6 @@
-using FluentBitwarden.Infrastracture.Hosting;
+using FluentBitwarden.Ui.Infrastracture.Hosting;
 
-namespace FluentBitwarden;
+namespace FluentBitwarden.Ui;
 
 public static class Program
 {

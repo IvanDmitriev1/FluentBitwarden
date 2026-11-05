@@ -2,31 +2,86 @@
 
 ## Scope and role
 
-Root instructions apply. This WinUI 3 process owns windows, pages, dialogs, and presentation state; all business state comes from AppHost IPC, so it can be closed and relaunched without changing the unlocked session. Its root namespace is FluentBitwarden, not FluentBitwarden.Ui.
+Root instructions apply. This WinUI 3 process owns windows, pages, dialogs, and presentation state; all business state comes from AppHost IPC, so it can be closed and relaunched without changing the unlocked session.
 
-## Local map and MVVM
+## Project structure
 
-- App.xaml.cs and Program.cs: composition, activation, and exception wiring.
-- Application/: app-level window and session coordination.
-- Views/: XAML pages and [ViewRegistration.cs](Views/ViewRegistration.cs).
-- ViewModels/: feature view models and navigation intents.
-- Infrastructure/: remote clients, navigation, dialogs, converters, validation, and window helpers.
-- Controls/, Templates/, Styles/, and AttachedProperties/: reusable presentation infrastructure.
+```text
+FluentBitwarden.Ui/
+├── Program.cs                 # Entry point, host startup
+├── App.xaml(.cs)              # XAML resources
+├── Access/
+│   ├── Setup/                 # Sign-in and confirmation
+│   └── Unlock/                # Vault unlocking
+├── Infrastructure/            # Services, helpers, and extensions
+├── Windows/                   
+├── Shell/                     # Unlocked layout and Frame
+├── Features/                  
+├── Dialogs/                   # Dialog service, hosts, views
+├── Controls/                  # Shared reusable controls
+├── Styles/                    # Resource dictionaries
+├── Themes/                    # Custom control templates
+├── Converters/                # Binding converters
+├── Assets/                    # Images, icons
+└── Strings/                   # Localization
+```
 
-View models are sealed partial, derive from ObservableObject, use primary-constructor injection, and use CommunityToolkit source-generated [ObservableProperty] and [RelayCommand]. Pages have parameterless constructors because WinUI creates them; resolve only their view model from App.Current, assign DataContext, and keep all other behavior out of code-behind. Register view models, never pages.
+Structure is the intended convention. Inspect existing files before creating or moving anything.
 
-Pages derive from LifecyclePage. Implement IPageLifecycleAware or IPageLifecycleAware<TIntent> and honor the supplied cancellation token; navigation can unload the page while it is loading. Keep intents small records in the feature's ViewModels/<Feature>/Models/ directory.
+## Architecture and MVVM
 
-## Integration and XAML
+- Follow MVVM. Views handle presentation; view models handle presentation state and commands.
+- Use `CommunityToolkit.Mvvm` with `[ObservableProperty]` and `[RelayCommand]`.
+- Use constructor injection through .NET Generic Host.
+- Keep code-behind limited to initialization and WinUI-specific behavior.
+- Keep view models independent of `Window`, `Page`, `Frame`, and visual controls.
+- Keep feature-specific code inside its feature directory. Move code to shared folders only when genuinely reused.
+- Keep authoritative state in AppHost. UI holds disposable presentation state only.
+- Use asynchronous IPC calls with cancellation. Never block the UI thread.
+- Organize UI code by feature. Keep views, view models, and feature-specific controls together. Use shared folders only for cross-feature components. Introduce subfolders when they improve navigation; avoid empty or single-file organizational layers. Keep AppHost state behind typed IPC clients.
 
-Use only IXxxClient interfaces from Contracts; Infrastructure/Clients/Remote* implementations remain thin IIpcClient pass-throughs. Marshal event callbacks to App.Current.DispatcherQueue. Never reference AppHost.
+## Shell and navigation
 
-Use x:Bind for new XAML where possible. Use {ThemeResource} rather than hard-coded page colors, put reusable styles/templates/controls in their matching folders, and put XAML-only behavior in AttachedProperties/. Custom controls use DependencyPropertyGenerator and PART_ constants.
+- `MainWindow` hosts `SetupView` or `UnlockView` or `ShellView` based on AppHost session state.
+- `ShellView` owns persistent layout and a `Frame` for feature navigation.
+- Each navigable feature has one `FeatureNamePage.xaml` directly in its feature directory.
+- Place feature-specific reusable views in `Features/<Feature>/Views/`.
+- Use `INavigationService` for navigation. Do not navigate directly from view models.
+- Clear navigation history and sensitive presentation state when AppHost locks.
+- Rebuild UI state from AppHost after restart or reconnection.
 
-## Dialog hosting
+## Windows and dialogs
 
-Feature dialogs are fresh XAML-backed ContentDialog types under Views/UserDialogs/. Construct them on the UI thread and present them only through IUiDialogCoordinator, which serializes presentation, assigns the active window XamlRoot, handles cancellation, and closes the overlay after completion. Dialogs implementing IUserDialog<TResult> own their typed result; ordinary ContentDialog instances return ContentDialogResult. Both window modes use popup placement.
+- `MainWindow`: single primary application window.
+- `CompactWindow`: generic, non-resizable window for independent content.
+- `OverlayWindow`: standalone window for prompts when needed.
+- `IWindowManager` owns window creation, tracking, visibility, and closing.
+- `IDialogService` presents reusable dialogs inside `MainWindow` or `OverlayWindow`.
+- Dialog content must not depend on its presentation location.
+- Keep dialogs and independent windows outside shell navigation.
+- Dispatch all WinUI operations to the UI thread.
+- Dispose subscriptions and cancel pending operations when views close.
 
-## Verification and completion
+## XAML and styling
 
-Run the repository CI build for UI or contract changes. There are no UI test projects in the repository. Verify lifecycle cancellation, correct view-model registration, and the relevant theme/accessibility behavior.
+- Prefer compiled `{x:Bind}` over runtime `{Binding}`.
+- Specify binding modes explicitly: OneTime, OneWay, or TwoWay.
+- Use strongly typed view models and explicit binding modes.
+- Use `x:DataType` for compiled bindings in `DataTemplate`.
+- Prefer commands over event handlers for application actions.
+- Use `ThemeResource` and shared styles instead of hardcoded colors and dimensions.
+- Put reusable styles in `Styles/`; default templated-control styles in `Themes/Generic.xaml`.
+- Use `UserControl` for composed UI and templated controls when customizable templates are required.
+- Preserve keyboard navigation, accessibility, localization, and light/dark themes.
+
+## Implementation rules
+
+- Read relevant feature files and nearby patterns before editing.
+- Make smallest coherent change at correct ownership boundary.
+- Avoid duplicate services, unnecessary abstractions, and speculative scaffolding.
+- Do not edit generated files.
+- Handle IPC disconnects, cancellation, loading, and failures.
+- Never log or persist secrets in presentation state.
+- Test view-model logic without UI dependencies.
+- Build and verify XAML after changes.
+- Follow existing conventions unless change explicitly requires restructuring.

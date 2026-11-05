@@ -1,7 +1,7 @@
-using FluentBitwarden.Infrastracture.Hosting.Abstractions;
+using FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
 using Microsoft.Extensions.Hosting;
 
-namespace FluentBitwarden.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastracture.Hosting;
 
 internal sealed class WinUiHost(IHost host) : IWinUiHost
 {

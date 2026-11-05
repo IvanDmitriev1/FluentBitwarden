@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Infrastracture.Hosting.Abstractions;
+namespace FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
 
 public interface IWinUiHost
 {
