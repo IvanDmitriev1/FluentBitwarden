@@ -24,10 +24,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="Windows\MainWindow.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
 		<ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
 	</ItemGroup>
@@ -44,6 +40,7 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\icon.svg" />
   </ItemGroup>
 
 	<ItemGroup>
@@ -72,12 +69,6 @@
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
 	<PackageReference Include="Navis.WinUI" />
 	<PackageReference Include="WinUIEx" />
-</ItemGroup>
-
-	<ItemGroup>
-	  <Page Update="Windows\MainWindow.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
 	</ItemGroup>
 
 </Project>

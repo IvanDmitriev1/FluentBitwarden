@@ -1,20 +1,18 @@
 using System.Diagnostics.CodeAnalysis;
-using AsyncAwaitBestPractices;
 using CommunityToolkit.WinUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
 
-namespace FluentBitwarden.Ui.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastructure.Hosting;
 
 internal sealed class WinUiHostedService<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TApplication>(
     IServiceProvider services,
     IHostApplicationLifetime lifetime,
-    ILogger<WinUiHostedService<TApplication>> logger) : IHostedService
-    where TApplication : Application
+    ILogger<WinUiHostedService<TApplication>> logger) : IHostedLifecycleService
+    where TApplication : Microsoft.UI.Xaml.Application
 {
     private readonly TaskCompletionSource _ready = new(
         TaskCreationOptions.RunContinuationsAsynchronously);
@@ -25,7 +23,7 @@ internal sealed class WinUiHostedService<
     private DispatcherQueue? _dispatcher;
     private TApplication? _application;
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Task StartingAsync(CancellationToken cancellationToken)
     {
         var thread = new Thread(RunApplication)
         {
@@ -39,6 +37,21 @@ internal sealed class WinUiHostedService<
         return _ready.Task.WaitAsync(cancellationToken);
     }
 
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StartedAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StoppingAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         var dispatcher = Volatile.Read(ref _dispatcher);
@@ -48,6 +61,11 @@ internal sealed class WinUiHostedService<
         }
 
         await _stopped.Task.WaitAsync(cancellationToken);
+    }
+
+    public Task StoppedAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
     public void RunOnUiThread(Action action)
@@ -61,7 +79,7 @@ internal sealed class WinUiHostedService<
     {
         try
         {
-            Application.Start(_ =>
+            Microsoft.UI.Xaml.Application.Start(_ =>
             {
                 var dispatcher = DispatcherQueue.GetForCurrentThread();
                 var context = new DispatcherQueueSynchronizationContext(dispatcher);

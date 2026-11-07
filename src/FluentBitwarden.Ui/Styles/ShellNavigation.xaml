@@ -1,0 +1,45 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="ShellNavigationSelectionBrush" Color="#FFD6E6FA" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelectedPressed" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewDefaultPaneBackground" ResourceKey="SidebarBrush" />
+            <StaticResource x:Key="NavigationViewExpandedPaneBackground" ResourceKey="SidebarBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <StaticResource x:Key="ShellNavigationSelectionBrush" ResourceKey="AccentSubtleBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelectedPressed" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewDefaultPaneBackground" ResourceKey="SidebarBrush" />
+            <StaticResource x:Key="NavigationViewExpandedPaneBackground" ResourceKey="SidebarBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="ShellNavigationSelectionBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelected" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelectedPointerOver" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewItemBackgroundSelectedPressed" ResourceKey="ShellNavigationSelectionBrush" />
+            <StaticResource x:Key="NavigationViewDefaultPaneBackground" ResourceKey="SidebarBrush" />
+            <StaticResource x:Key="NavigationViewExpandedPaneBackground" ResourceKey="SidebarBrush" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <Style x:Key="ShellNavigationViewItemStyle" TargetType="NavigationViewItem" BasedOn="{StaticResource DefaultNavigationViewItemStyle}">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
+    </Style>
+    <Style x:Key="ShellNavigationViewStyle" TargetType="NavigationView">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{ThemeResource PaneBrush}" />
+        <Setter Property="OpenPaneLength" Value="228" />
+        <Setter Property="PaneDisplayMode" Value="Auto" />
+        <Setter Property="MenuItemContainerStyle" Value="{StaticResource ShellNavigationViewItemStyle}" />
+    </Style>
+</ResourceDictionary>

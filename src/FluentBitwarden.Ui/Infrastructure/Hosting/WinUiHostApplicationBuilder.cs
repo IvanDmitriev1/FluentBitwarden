@@ -1,25 +1,29 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
+using Windows.ApplicationModel.Activation;
+using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.Ui.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastructure.Hosting;
 
 public sealed class WinUiHostApplicationBuilder<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TApplication>
     : IHostApplicationBuilder
-    where TApplication : Application
+    where TApplication : Microsoft.UI.Xaml.Application
 {
     private readonly HostApplicationBuilder _builder;
     private string? _instanceKey;
 
     internal WinUiHostApplicationBuilder()
     {
-        _builder = Host.CreateApplicationBuilder();
+        var launchActivatedEvent = AppInstance.GetCurrent().GetActivatedEventArgs().Data as ILaunchActivatedEventArgs;
+        string[] args = launchActivatedEvent?.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [];
+
+        _builder = Host.CreateApplicationBuilder(args);
     }
 
     public IConfigurationManager Configuration =>
@@ -47,7 +51,7 @@ public sealed class WinUiHostApplicationBuilder<
         _builder.ConfigureContainer(factory, configure);
 
 
-    public WinUiHostApplicationBuilder<TApplication> UseSingleInstance(string key)
+    public WinUiHostApplicationBuilder<TApplication> UseSingleInstanceKey(string key)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 

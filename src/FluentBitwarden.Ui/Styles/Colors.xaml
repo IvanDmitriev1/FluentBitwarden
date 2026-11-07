@@ -1,0 +1,159 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="SystemAccentColor">#FF0057FF</Color>
+            <SolidColorBrush x:Key="CanvasBrush" Color="#00FFFFFF" />
+            <StaticResource x:Key="PaneBrush" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="SidebarBrush" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="InputBackgroundBrush" ResourceKey="ControlFillColorDefaultBrush" />
+            <StaticResource x:Key="CardBackgroundBrush" ResourceKey="SolidBackgroundFillColorQuarternaryBrush" />
+            <StaticResource x:Key="PaneDividerBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+            <StaticResource x:Key="HairlineBrush" ResourceKey="ControlStrokeColorDefaultBrush" />
+            <StaticResource x:Key="TextPrimaryBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="TextSecondaryBrush" ResourceKey="TextFillColorSecondaryBrush" />
+            <SolidColorBrush x:Key="AccentBrush" Color="#FF0057FF" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#FF1769FF" />
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#FF0046D1" />
+            <SolidColorBrush x:Key="AccentDisabledBrush" Color="#FF879DC5" />
+            <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="LinkBrush" Color="#FF0057FF" />
+            <StaticResource x:Key="AccentSubtleBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="FocusStrokeBrush" ResourceKey="FocusStrokeColorOuterBrush" />
+            <StaticResource x:Key="HoverBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="PressedBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="DisabledControlBrush" ResourceKey="ControlFillColorDisabledBrush" />
+            <StaticResource x:Key="DisabledTextBrush" ResourceKey="TextFillColorDisabledBrush" />
+            <StaticResource x:Key="ShortcutBrush" ResourceKey="ControlFillColorTertiaryBrush" />
+            <StaticResource x:Key="FilterPillBrush" ResourceKey="ControlFillColorDefaultBrush" />
+            <StaticResource x:Key="FilterPillHoverBrush" ResourceKey="ControlFillColorSecondaryBrush" />
+            <StaticResource x:Key="FavoriteBrush" ResourceKey="SystemFillColorCautionBrush" />
+            <StaticResource x:Key="DangerBrush" ResourceKey="SystemFillColorCriticalBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="HoverBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="PressedBrush" />
+            <StaticResource x:Key="ButtonBackgroundDisabled" ResourceKey="DisabledControlBrush" />
+            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="HairlineBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
+            <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
+            <StaticResource x:Key="AccentButtonBackground" ResourceKey="AccentBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundPointerOver" ResourceKey="AccentHoverBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundPressed" ResourceKey="AccentPressedBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundDisabled" ResourceKey="AccentDisabledBrush" />
+            <StaticResource x:Key="AccentButtonForeground" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundPointerOver" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundPressed" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrush" ResourceKey="AccentBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushPointerOver" ResourceKey="AccentHoverBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushPressed" ResourceKey="AccentPressedBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushDisabled" ResourceKey="AccentDisabledBrush" />
+            <StaticResource x:Key="SelectorBarItemForegroundSelected" ResourceKey="LinkBrush" />
+            <StaticResource x:Key="SelectorBarItemPillFill" ResourceKey="AccentBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <Color x:Key="SystemAccentColor">#FF2861EB</Color>
+            <SolidColorBrush x:Key="CanvasBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="PaneBrush" Color="#FF2B2B2B" />
+            <SolidColorBrush x:Key="SidebarBrush" Color="#FF242424" />
+            <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FF323232" />
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF323232" />
+            <StaticResource x:Key="PaneDividerBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+            <StaticResource x:Key="HairlineBrush" ResourceKey="ControlStrokeColorDefaultBrush" />
+            <StaticResource x:Key="TextPrimaryBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="TextSecondaryBrush" ResourceKey="TextFillColorSecondaryBrush" />
+            <SolidColorBrush x:Key="AccentBrush" Color="#FF2861EB" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#FF3671F2" />
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#FF1B50CF" />
+            <SolidColorBrush x:Key="AccentDisabledBrush" Color="#FF65789A" />
+            <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="LinkBrush" Color="#FF8AB4FF" />
+            <SolidColorBrush x:Key="AccentSubtleBrush" Color="#FF2D4666" />
+            <StaticResource x:Key="FocusStrokeBrush" ResourceKey="FocusStrokeColorOuterBrush" />
+            <StaticResource x:Key="HoverBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="PressedBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="DisabledControlBrush" ResourceKey="ControlFillColorDisabledBrush" />
+            <StaticResource x:Key="DisabledTextBrush" ResourceKey="TextFillColorDisabledBrush" />
+            <SolidColorBrush x:Key="ShortcutBrush" Color="#FF424242" />
+            <SolidColorBrush x:Key="FilterPillBrush" Color="#FF363636" />
+            <StaticResource x:Key="FilterPillHoverBrush" ResourceKey="ControlFillColorSecondaryBrush" />
+            <SolidColorBrush x:Key="FavoriteBrush" Color="#FFFFC83D" />
+            <StaticResource x:Key="DangerBrush" ResourceKey="SystemFillColorCriticalBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="HoverBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="PressedBrush" />
+            <StaticResource x:Key="ButtonBackgroundDisabled" ResourceKey="DisabledControlBrush" />
+            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="HairlineBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
+            <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
+            <StaticResource x:Key="AccentButtonBackground" ResourceKey="AccentBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundPointerOver" ResourceKey="AccentHoverBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundPressed" ResourceKey="AccentPressedBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundDisabled" ResourceKey="AccentDisabledBrush" />
+            <StaticResource x:Key="AccentButtonForeground" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundPointerOver" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundPressed" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrush" ResourceKey="AccentBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushPointerOver" ResourceKey="AccentHoverBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushPressed" ResourceKey="AccentPressedBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushDisabled" ResourceKey="AccentDisabledBrush" />
+            <StaticResource x:Key="SelectorBarItemForegroundSelected" ResourceKey="LinkBrush" />
+            <StaticResource x:Key="SelectorBarItemPillFill" ResourceKey="AccentBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="CanvasBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="PaneBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="SidebarBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="InputBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="PaneDividerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="HairlineBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="AccentBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="AccentDisabledBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+            <SolidColorBrush x:Key="AccentTextBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+            <SolidColorBrush x:Key="LinkBrush" Color="{ThemeResource SystemColorHotlightColor}" />
+            <SolidColorBrush x:Key="AccentSubtleBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="FocusStrokeBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="HoverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="PressedBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="DisabledControlBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+            <SolidColorBrush x:Key="DisabledTextBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+            <SolidColorBrush x:Key="ShortcutBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="FilterPillBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="FilterPillHoverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="FavoriteBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="DangerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="HoverBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="PressedBrush" />
+            <StaticResource x:Key="ButtonBackgroundDisabled" ResourceKey="CanvasBrush" />
+            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="ButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="HairlineBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
+            <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
+            <StaticResource x:Key="AccentButtonBackground" ResourceKey="AccentBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundPointerOver" ResourceKey="AccentHoverBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundPressed" ResourceKey="AccentPressedBrush" />
+            <StaticResource x:Key="AccentButtonBackgroundDisabled" ResourceKey="CanvasBrush" />
+            <StaticResource x:Key="AccentButtonForeground" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundPointerOver" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundPressed" ResourceKey="AccentTextBrush" />
+            <StaticResource x:Key="AccentButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrush" ResourceKey="AccentBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushPointerOver" ResourceKey="FocusStrokeBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
+            <StaticResource x:Key="AccentButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
+            <StaticResource x:Key="SelectorBarItemForegroundSelected" ResourceKey="LinkBrush" />
+            <StaticResource x:Key="SelectorBarItemPillFill" ResourceKey="FocusStrokeBrush" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

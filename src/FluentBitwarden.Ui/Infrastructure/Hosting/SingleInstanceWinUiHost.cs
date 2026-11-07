@@ -1,17 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using FluentBitwarden.Ui.Infrastracture.Hosting.Abstractions;
+using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 
-namespace FluentBitwarden.Ui.Infrastracture.Hosting;
+namespace FluentBitwarden.Ui.Infrastructure.Hosting;
 
 internal sealed class SingleInstanceWinUiHost<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]  TApplication>(IHost host, string instanceKey) : IWinUiHost
-    where TApplication : Application
+    where TApplication : Microsoft.UI.Xaml.Application
 {
     private Microsoft.Win32.SafeHandles.SafeFileHandle? _redirectEventHandle;
 

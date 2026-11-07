@@ -1,0 +1,160 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <StaticResource x:Key="VaultListBackgroundBrush" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <SolidColorBrush x:Key="SelectionBrush" Color="#FFD6E6FA" />
+            <StaticResource x:Key="SelectedTextBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="HoverBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="PressedBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelected" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemForegroundSelected" ResourceKey="SelectedTextBrush" />
+            <StaticResource x:Key="ListViewItemFocusBorderBrush" ResourceKey="FocusStrokeBrush" />
+            <x:Double x:Key="ListViewItemDisabledThemeOpacity">0.5</x:Double>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="VaultListBackgroundBrush" Color="#FF202020" />
+            <SolidColorBrush x:Key="SelectionBrush" Color="#FF2D4666" />
+            <StaticResource x:Key="SelectedTextBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="HoverBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="PressedBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelected" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemForegroundSelected" ResourceKey="SelectedTextBrush" />
+            <StaticResource x:Key="ListViewItemFocusBorderBrush" ResourceKey="FocusStrokeBrush" />
+            <x:Double x:Key="ListViewItemDisabledThemeOpacity">0.5</x:Double>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="VaultListBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="SelectionBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="SelectedTextBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
+            <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="HoverBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="PressedBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelected" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="SelectionBrush" />
+            <StaticResource x:Key="ListViewItemForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ListViewItemForegroundPointerOver" ResourceKey="SelectedTextBrush" />
+            <StaticResource x:Key="ListViewItemForegroundSelected" ResourceKey="SelectedTextBrush" />
+            <StaticResource x:Key="ListViewItemFocusBorderBrush" ResourceKey="FocusStrokeBrush" />
+            <x:Double x:Key="ListViewItemDisabledThemeOpacity">0.5</x:Double>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">False</x:Boolean>
+    <Style x:Key="VaultGroupHeaderStyle" TargetType="ListViewHeaderItem">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="AllowFocusOnInteraction" Value="False" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="MinHeight" Value="20" />
+    </Style>
+    <Style
+        x:Key="VaultListViewItemStyle"
+        BasedOn="{StaticResource DefaultListViewItemStyle}"
+        TargetType="ListViewItem">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="MinHeight" Value="56" />
+        <Setter Property="FocusVisualPrimaryThickness" Value="2" />
+        <Setter Property="FocusVisualSecondaryThickness" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    </Style>
+    <Style x:Key="VaultListViewStyle" TargetType="ListView">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="18,0,12,0" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource VaultListViewItemStyle}" />
+        <Setter Property="SelectionMode" Value="Single" />
+    </Style>
+    <Style x:Key="FilterPillStyle" TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource TextSecondaryBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <Border
+                            x:Name="Pill"
+                            Background="{ThemeResource FilterPillBrush}"
+                            BorderBrush="{ThemeResource HairlineBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14" />
+                        <ContentPresenter
+                            x:Name="ContentPresenter"
+                            Margin="{TemplateBinding Padding}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}" />
+                        <Border
+                            x:Name="FocusVisual"
+                            BorderBrush="{ThemeResource FocusStrokeBrush}"
+                            BorderThickness="2"
+                            CornerRadius="14"
+                            IsHitTestVisible="False"
+                            Opacity="0" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Pill.BorderBrush" Value="{ThemeResource FocusStrokeBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Pill.Opacity" Value="0.8" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="ContentPresenter.Opacity" Value="0.5" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualState x:Name="Checked">
+                                    <VisualState.Setters>
+                                        <Setter Target="Pill.Background" Value="{ThemeResource AccentSubtleBrush}" />
+                                        <Setter Target="Pill.BorderBrush" Value="{ThemeResource AccentSubtleBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextPrimaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked">
+                                    <VisualState.Setters>
+                                        <Setter Target="Pill.Background" Value="{ThemeResource FilterPillBrush}" />
+                                        <Setter Target="Pill.BorderBrush" Value="{ThemeResource HairlineBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="FocusStates">
+                                <VisualState x:Name="Focused">
+                                    <VisualState.Setters>
+                                        <Setter Target="FocusVisual.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Unfocused" />
+                                <VisualState x:Name="PointerFocused" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

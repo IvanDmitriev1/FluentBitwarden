@@ -1,4 +1,5 @@
 using FluentBitwarden.AppHost.Application.Abstractions;
+using FluentBitwarden.Contracts.Infrastructure.UiActivation;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.ProcessManager;
 using FluentBitwarden.Platform.Settings;
@@ -11,8 +12,8 @@ public sealed class UiProcessLauncher(IHostApplicationLifetime applicationLifeti
     private const string ExeName = "FluentBitwarden.Ui.exe";
     private const string ExeDirectoryName = "FluentBitwarden.Ui";
 
-    public void ActivateMainWindow() => LunchProcess(string.Empty);
-    public void ActivateOverlay() => LunchProcess("--overlay");
+    public void ActivateMainWindow() => LunchProcess(UiActivationCommand.OpenCommand.Argument);
+    public void ActivateOverlay() => LunchProcess(UiActivationCommand.OverlayCommand.Argument);
 
     public void TerminateApplication()
     {
