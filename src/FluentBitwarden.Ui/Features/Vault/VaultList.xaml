@@ -47,6 +47,10 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
     <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">False</x:Boolean>
+
+
+
+
     <Style x:Key="VaultGroupHeaderStyle" TargetType="ListViewHeaderItem">
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="AllowFocusOnInteraction" Value="False" />
@@ -54,6 +58,7 @@
         <Setter Property="Margin" Value="0" />
         <Setter Property="MinHeight" Value="20" />
     </Style>
+
     <Style
         x:Key="VaultListViewItemStyle"
         BasedOn="{StaticResource DefaultListViewItemStyle}"
@@ -68,6 +73,7 @@
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
     </Style>
+
     <Style x:Key="VaultListViewStyle" TargetType="ListView">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -75,6 +81,7 @@
         <Setter Property="ItemContainerStyle" Value="{StaticResource VaultListViewItemStyle}" />
         <Setter Property="SelectionMode" Value="Single" />
     </Style>
+
     <Style x:Key="FilterPillStyle" TargetType="RadioButton">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="12" />

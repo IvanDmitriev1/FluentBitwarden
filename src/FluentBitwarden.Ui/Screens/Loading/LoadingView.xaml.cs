@@ -1,4 +1,3 @@
-using DependencyPropertyGenerator;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Screens.Loading;

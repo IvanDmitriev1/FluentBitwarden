@@ -41,36 +41,44 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}" />
     </Style>
+
     <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     </Style>
+
     <Style TargetType="PasswordBox" BasedOn="{StaticResource DefaultPasswordBoxStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     </Style>
+
     <Style TargetType="AutoSuggestBox" BasedOn="{StaticResource DefaultAutoSuggestBoxStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     </Style>
+
     <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     </Style>
+
     <Style TargetType="NavigationViewItem" BasedOn="{StaticResource DefaultNavigationViewItemStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     </Style>
+
     <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
     </Style>
+
     <Style TargetType="RadioButton" BasedOn="{StaticResource DefaultRadioButtonStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
     </Style>
+
     <Style TargetType="ToolTip" BasedOn="{StaticResource DefaultToolTipStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="12" />

@@ -1,15 +1,14 @@
 using CommunityToolkit.WinUI;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
-using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Infrastructure.UserDialog.Abstractions;
-using FluentBitwarden.Ui.Infrastructure.Windowing;
+using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
 using FluentBitwarden.Ui.Windows;
 using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
 
 namespace FluentBitwarden.Ui.Infrastructure.UserDialog;
 
-internal sealed class UserDialogPresenter(IApplicationController applicationController) : IUserDialogPresenter
+internal sealed class UserDialogPresenter(IWindowManager windowManager) : IUserDialogPresenter
 {
     private readonly SemaphoreSlim _presentationGate = new(1, 1);
 
@@ -36,14 +35,14 @@ internal sealed class UserDialogPresenter(IApplicationController applicationCont
     {
         await _presentationGate.WaitAsync(cancellationToken);
 
-        bool mainWindow = applicationController.ActiveWindow is MainWindow;
-        ContentDialogPlacement dialogPlacement = applicationController.ActiveWindow is MainWindow
+        bool mainWindow = windowManager.ActiveWindow is MainWindow;
+        ContentDialogPlacement dialogPlacement = windowManager.ActiveWindow is MainWindow
             ? ContentDialogPlacement.Popup
             : ContentDialogPlacement.InPlace;
 
         try
         {
-            var dialogPresentable = applicationController.ActiveWindow as IDialogProvidable;
+            var dialogPresentable = windowManager.ActiveWindow as IDialogHost;
             ArgumentNullException.ThrowIfNull(dialogPresentable);
 
             contentDialog.XamlRoot = dialogPresentable.XamlRoot;
@@ -60,9 +59,9 @@ internal sealed class UserDialogPresenter(IApplicationController applicationCont
         finally
         {
             if (mainWindow)
-                applicationController.ActiveWindow.Minimize();
+                windowManager.ActiveWindow.Minimize();
             else
-                applicationController.ActiveWindow.Close();
+                windowManager.ActiveWindow.Close();
 
             _presentationGate.Release();
         }

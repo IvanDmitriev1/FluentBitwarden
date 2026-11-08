@@ -4,5 +4,5 @@ namespace FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 
 public interface IActivationHandler
 {
-    void Handle(AppActivationArguments args);
+    void HandleActivation(AppActivationArguments args);
 }

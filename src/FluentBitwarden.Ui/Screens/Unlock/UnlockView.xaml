@@ -1,7 +1,19 @@
 <UserControl
     x:Class="FluentBitwarden.Ui.Screens.Unlock.UnlockView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviours="using:FluentBitwarden.Ui.Controls.Behaviours"
+    xmlns:controls="using:FluentBitwarden.Ui.Controls"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:unlock="using:FluentBitwarden.Ui.Screens.Unlock"
+    KeyboardAcceleratorPlacementMode="Hidden">
+
+    <interactivity:Interaction.Behaviors>
+        <interactivity:EventTriggerBehavior EventName="Loaded">
+            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.InitializeCommand, Mode=OneTime}" />
+        </interactivity:EventTriggerBehavior>
+    </interactivity:Interaction.Behaviors>
+
     <Border
         Width="420"
         Padding="24"
@@ -33,6 +45,62 @@
                     Text="{x:Bind ViewModel.SelectedAccount.Email, Mode=OneWay, FallbackValue=''}"
                     TextAlignment="Center" />
             </StackPanel>
+
+            <Grid ColumnSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <controls:PasswordBoxEx
+                    x:Name="PasswordBox"
+                    x:Uid="AccountUnlockPasswordBox"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    ActionButtonCommand="{x:Bind ViewModel.UnlockCommand}"
+                    AutomationProperties.AutomationId="AccountUnlockPasswordBox"
+                    Command="{x:Bind ViewModel.UnlockCommand}"
+                    IsEnabled="{x:Bind ViewModel.IsUnlocking, Converter={StaticResource BoolNegationConverter}, Mode=OneWay}">
+                    <interactivity:Interaction.Behaviors>
+                        <behaviours:FocusBehavior FocusOnLoad="True" FocusRequest="{x:Bind ViewModel.PasswordFocusRequest, Mode=OneWay}" />
+                        <unlock:PasswordActionIconBehavior EmptyGlyph="&#xE8D7;" NonEmptyGlyph="&#xE72A;" />
+                    </interactivity:Interaction.Behaviors>
+                </controls:PasswordBoxEx>
+
+                <Button
+                    x:Name="WindowsHelloButton"
+                    x:Uid="AccountUnlockWindowsHelloButton"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Padding="0"
+                    AutomationProperties.AutomationId="AccountUnlockWindowsHelloButton"
+                    Command="{x:Bind ViewModel.UnlockWithWindowsHelloCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Visibility="{x:Bind ViewModel.IsWindowHelloButtonVisible, Converter={StaticResource BoolToVisConverter}, Mode=OneWay}">
+                    <FontIcon
+                        FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                        FontSize="16"
+                        Glyph="&#xEB68;" />
+                </Button>
+
+
+                <InfoBar
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="0,6,0,0"
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.Error, Converter={StaticResource StringToBoolConverter}, Mode=OneWay}"
+                    Message="{x:Bind ViewModel.Error, Mode=OneWay}"
+                    Severity="Error" />
+            </Grid>
 
         </StackPanel>
     </Border>

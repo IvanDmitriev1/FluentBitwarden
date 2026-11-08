@@ -37,7 +37,7 @@ internal sealed class SingleInstanceWinUiHost<
     private void KeyInstanceOnActivated(object? sender, AppActivationArguments e)
     {
         var handler = Services.GetRequiredService<IActivationHandler>();
-        Services.GetRequiredService<WinUiHostedService<TApplication>>().RunOnUiThread(() => handler.Handle(e));
+        Services.GetRequiredService<WinUiHostedService<TApplication>>().RunOnUiThread(() => handler.HandleActivation(e));
     }
 
     // Do the redirection on another thread, and use a non-blocking

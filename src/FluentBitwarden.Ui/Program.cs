@@ -5,12 +5,12 @@ using FluentBitwarden.Contracts.Modules.Vault.Folders;
 using FluentBitwarden.Contracts.Modules.Vault.Operations;
 using FluentBitwarden.Platform;
 using FluentBitwarden.Platform.Ipc;
-using FluentBitwarden.Ui.Application;
-using FluentBitwarden.Ui.Application.Abstractions;
-using FluentBitwarden.Ui.Infrastructure.Extensions;
 using FluentBitwarden.Ui.Infrastructure.Hosting;
 using FluentBitwarden.Ui.Infrastructure.RemoteHandlers;
+using FluentBitwarden.Ui.Infrastructure.Windowing;
 using FluentBitwarden.Ui.Screens;
+using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Navis.WinUI.Extensions;
 
@@ -31,6 +31,7 @@ public static class Program
 
         builder.Services.AddSingleton<IAccountClient, RemoteAccountClient>();
         builder.Services.AddSingleton<IAppSessionClient, RemoteAppSessionClient>();
+        builder.Services.AddSingleton<IMessenger, WeakReferenceMessenger>();
         builder.Services.AddSingleton<IAccountWindowsHelloIntegrationClient, RemoteWindowsHelloUnlockClient>();
         builder.Services.AddSingleton<IVaultOperationsClient, RemoteVaultOperationsClient>();
         builder.Services.AddSingleton<IVaultCipherClient, RemoteVaultCipherClient>();
@@ -39,8 +40,10 @@ public static class Program
         builder.Services.AddIpcServer(IpcConstants.UiPipeName, handlers =>
             handlers.Add<UserDialogRequestHandler>());
 
-        builder.Services.AddHostedSingleton<ApplicationController, IApplicationController>();
+        builder.Services.AddSingleton<IWindowManager, WindowManager>();
         builder.Services.AddSingleton<AppRootViewModel>();
+        builder.Services.AddHostedService(static serviceProvider =>
+            serviceProvider.GetRequiredService<AppRootViewModel>());
 
         var host = builder.Build();
         host.Run();

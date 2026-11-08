@@ -27,12 +27,15 @@
             <StaticResource x:Key="NavigationViewExpandedPaneBackground" ResourceKey="SidebarBrush" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
+
+
     <Style x:Key="ShellNavigationViewItemStyle" TargetType="NavigationViewItem" BasedOn="{StaticResource DefaultNavigationViewItemStyle}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="MinHeight" Value="40" />
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     </Style>
+
     <Style x:Key="ShellNavigationViewStyle" TargetType="NavigationView">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
