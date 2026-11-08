@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Ui.Windows;
 
-public sealed partial class MainWindow : WinUIEx.WindowEx, IDialogHost
+public sealed partial class MainWindow : WinUIEx.WindowEx, IDialogHost, IThemeChangeable
 {
     public MainWindow()
     {
@@ -19,4 +19,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IDialogHost
     public XamlRoot XamlRoot => RootElement.XamlRoot;
 
     public AppRootViewModel ViewModel { get; }
+
+    public void ApplyTheme(ElementTheme themeMode) => RootElement.RequestedTheme = themeMode;
 }

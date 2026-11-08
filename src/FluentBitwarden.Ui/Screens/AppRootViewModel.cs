@@ -18,16 +18,17 @@ public sealed partial class AppRootViewModel(
     IMessenger messenger,
     IAppSessionClient appSessionClient,
     IIpcExceptionNotifier exceptionNotifier,
-    IIpcEventClient eventClient) : ObservableRecipient(messenger), IHostedService, IRecipient<AppRootNavigationRequest>
+    IIpcEventClient eventClient) : ObservableRecipient(messenger), IHostedService,
+    IRecipient<AppRootNavigationRequest>, IRecipient<AppRootSessionRefreshRequest>
 {
-    private IDisposable? _sessionStateChangedSubscription;
+    private AppSessionStateSnapshot? _appliedSession;
 
     [ObservableProperty]
     public partial object Content { get; private set; } = new LoadingViewModel();
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _sessionStateChangedSubscription = eventClient.Subscribe<AppSessionStateChangedEvent>((e, _) =>
+        _ = eventClient.Subscribe<AppSessionStateChangedEvent>((e, _) =>
             App.Current.DispatcherQueue.EnqueueAsync(() => UpdateContent(e.StateSnapshot)));
 
         exceptionNotifier.UnlockedSessionRequired += OnUnlockedSessionRequired;
@@ -39,20 +40,13 @@ public sealed partial class AppRootViewModel(
         });
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        _sessionStateChangedSubscription?.Dispose();
-        _sessionStateChangedSubscription = null;
-        exceptionNotifier.UnlockedSessionRequired -= OnUnlockedSessionRequired;
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-        IsActive = false;
-        return Task.CompletedTask;
-    }
-
-    void IRecipient<AppRootNavigationRequest>.Receive(AppRootNavigationRequest message)
-    {
+    void IRecipient<AppRootNavigationRequest>.Receive(AppRootNavigationRequest message) =>
         UpdateContent(message.State);
-    }
+
+    void IRecipient<AppRootSessionRefreshRequest>.Receive(AppRootSessionRefreshRequest message) =>
+        App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync).SafeFireAndForget();
 
     private void OnUnlockedSessionRequired(UnlockedSessionRequiredException exception) =>
         App.Current.DispatcherQueue.EnqueueAsync(RefreshSessionAsync).SafeFireAndForget();
@@ -60,17 +54,24 @@ public sealed partial class AppRootViewModel(
     private async Task RefreshSessionAsync()
     {
         var session = await appSessionClient.GetStateAsync(new GetAppSessionStateRequest(), CancellationToken.None);
-        UpdateContent(session);
+        if (IsActive)
+            UpdateContent(session);
     }
 
     private void UpdateContent(AppSessionStateSnapshot session)
     {
+        if (!IsActive || Equals(_appliedSession, session))
+            return;
+
+        (Content as IDisposable)?.Dispose();
+        _appliedSession = session;
         Content = session switch
         {
-            AppSessionStateSnapshot.NotAuthenticated => new SetupViewModel(),
-            AppSessionStateSnapshot.Locked locked => Content =
+            AppSessionStateSnapshot.NotAuthenticated => serviceProvider.GetRequiredService<SetupViewModel>(),
+            AppSessionStateSnapshot.Locked locked =>
                 ActivatorUtilities.CreateInstance<UnlockViewModel>(serviceProvider, locked.Account),
-            AppSessionStateSnapshot.Unlocked => new ShellViewModel(),
+            AppSessionStateSnapshot.Unlocked unlocked =>
+                ActivatorUtilities.CreateInstance<ShellViewModel>(serviceProvider, unlocked.Account),
             _ => throw new ArgumentOutOfRangeException(nameof(session))
         };
     }

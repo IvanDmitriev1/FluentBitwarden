@@ -2,7 +2,7 @@ using WinUIEx;
 
 namespace FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
 
-public interface IWindowManager
+public interface IWindowManager : IThemeChangeable
 {
     WindowEx ActiveWindow { get; }
 

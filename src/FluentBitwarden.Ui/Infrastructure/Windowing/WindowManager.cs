@@ -37,6 +37,12 @@ internal sealed class WindowManager : IWindowManager
         _activeWindow.ShowAndActivate();
     }
 
+    public void ApplyTheme(ElementTheme theme)
+    {
+        if (_activeWindow is IThemeChangeable themeChangeable)
+            themeChangeable.ApplyTheme(theme);
+    }
+
     private void OnUiSettingsOnColorValuesChanged(UISettings sender, object args)
     {
         _activeWindow?.DispatcherQueue.TryEnqueue(() => ApplyTheme(_activeWindow));
@@ -53,12 +59,11 @@ internal sealed class WindowManager : IWindowManager
         _activeWindow = null;
     }
 
-    private static void ApplyTheme(WindowEx window)
+    private static void ApplyTheme(WindowEx? window)
     {
         if (window is not IThemeChangeable themeChangeable)
             return;
 
-        var theme = SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey);
-        themeChangeable.ApplyTheme(theme);
+        themeChangeable.ApplyTheme(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
     }
 }

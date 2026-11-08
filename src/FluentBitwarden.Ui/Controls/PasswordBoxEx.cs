@@ -62,6 +62,12 @@ public sealed partial class PasswordBoxEx : Control
         DefaultStyleKey = typeof(PasswordBoxEx);
     }
 
+    public void ClearPassword()
+    {
+        Password = string.Empty;
+        SyncRevealDisplay();
+    }
+
     private static void OnPasswordPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (PasswordBoxEx)d;

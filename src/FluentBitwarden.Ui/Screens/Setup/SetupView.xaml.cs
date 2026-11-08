@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Screens.Setup;
 
-[DependencyProperty("ViewModel", typeof(SetupViewModel))]
+[DependencyProperty<SetupViewModel>("ViewModel")]
 public sealed partial class SetupView : UserControl
 {
     public SetupView() => InitializeComponent();

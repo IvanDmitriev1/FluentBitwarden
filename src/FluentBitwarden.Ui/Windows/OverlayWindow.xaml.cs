@@ -7,7 +7,7 @@ using WinUIEx;
 
 namespace FluentBitwarden.Ui.Windows;
 
-public sealed partial class OverlayWindow : WinUIEx.WindowEx, IDialogHost
+public sealed partial class OverlayWindow : WinUIEx.WindowEx, IDialogHost, IThemeChangeable
 {
     public OverlayWindow()
     {
@@ -31,6 +31,8 @@ public sealed partial class OverlayWindow : WinUIEx.WindowEx, IDialogHost
 
     public AppRootViewModel ViewModel { get; }
     public XamlRoot XamlRoot => RootElement.XamlRoot;
+
+    public void ApplyTheme(ElementTheme themeMode) => RootElement.RequestedTheme = themeMode;
 
     private void EscapeKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {

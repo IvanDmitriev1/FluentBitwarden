@@ -9,7 +9,9 @@ using FluentBitwarden.Ui.Infrastructure.Hosting;
 using FluentBitwarden.Ui.Infrastructure.RemoteHandlers;
 using FluentBitwarden.Ui.Infrastructure.Windowing;
 using FluentBitwarden.Ui.Screens;
+using FluentBitwarden.Ui.Screens.Setup;
 using CommunityToolkit.Mvvm.Messaging;
+using FluentBitwarden.Ui.Features.Settings;
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Navis.WinUI.Extensions;
@@ -44,6 +46,9 @@ public static class Program
         builder.Services.AddSingleton<AppRootViewModel>();
         builder.Services.AddHostedService(static serviceProvider =>
             serviceProvider.GetRequiredService<AppRootViewModel>());
+
+        builder.Services.AddTransient<SetupViewModel>();
+        builder.Services.AddTransient<SettingsPageViewModel>();
 
         var host = builder.Build();
         host.Run();
