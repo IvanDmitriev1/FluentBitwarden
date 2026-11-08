@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using Windows.ApplicationModel.Activation;
+using FluentBitwarden.Ui.Screens;
 using WinUIEx;
 
 namespace FluentBitwarden.Ui.Application;

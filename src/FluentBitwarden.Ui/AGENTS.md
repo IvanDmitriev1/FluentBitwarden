@@ -10,13 +10,14 @@ Root instructions apply. This WinUI 3 process owns windows, pages, dialogs, and 
 FluentBitwarden.Ui/
 ├── Program.cs                 # Entry point, host startup
 ├── App.xaml(.cs)              # XAML resources
-├── Access/
+├── Screens/                   # Top-level application content
+│   ├── Shell/                 # Unlocked layout and Frame
 │   ├── Setup/                 # Sign-in and confirmation
-│   └── Unlock/                # Vault unlocking
+│   ├── Unlock/                # Vault unlocking
+│   └── Loading/               # Loading and readiness presentation
 ├── Infrastructure/            # Services, helpers, and extensions
-├── Windows/                   
-├── Shell/                     # Unlocked layout and Frame
-├── Features/                  
+├── Windows/                   # Native Main and Overlay hosts
+├── Features/                  # Feature pages displayed inside Shell
 ├── Dialogs/                   # Dialog service, hosts, views
 ├── Controls/                  # Shared reusable controls
 ├── Styles/                    # Resource dictionaries
@@ -27,6 +28,8 @@ FluentBitwarden.Ui/
 ```
 
 Structure is the intended convention. Inspect existing files before creating or moving anything.
+
+Keep each screen's view, code-behind, view model, and screen-specific controls together under `Screens/<Screen>/`. Put native window hosts in `Windows/`, feature pages in `Features/`, and prompt content in `Dialogs/`.
 
 ## Architecture and MVVM
 
@@ -56,7 +59,7 @@ Structure is the intended convention. Inspect existing files before creating or 
 - `CompactWindow`: generic, non-resizable window for independent content.
 - `OverlayWindow`: standalone window for prompts when needed.
 - `IWindowManager` owns window creation, tracking, visibility, and closing.
-- `IDialogService` presents reusable dialogs inside `MainWindow` or `OverlayWindow`.
+- `IUserDialogPresenter` presents reusable dialogs inside `MainWindow` or `OverlayWindow`.
 - Dialog content must not depend on its presentation location.
 - Keep dialogs and independent windows outside shell navigation.
 - Dispatch all WinUI operations to the UI thread.
@@ -64,7 +67,7 @@ Structure is the intended convention. Inspect existing files before creating or 
 
 ## XAML and styling
 
-- Prefer compiled `{x:Bind}` over runtime `{Binding}`.
+- Always use compiled `{x:Bind}` over runtime `{Binding}`!
 - Specify binding modes explicitly: OneTime, OneWay, or TwoWay.
 - Use strongly typed view models and explicit binding modes.
 - Use `x:DataType` for compiled bindings in `DataTemplate`.

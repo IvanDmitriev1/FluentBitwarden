@@ -11,6 +11,8 @@
                 <ResourceDictionary Source="ms-appx:///Styles/Metrics.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/Controls.xaml" />
                 <ResourceDictionary Source="ms-appx:///Converters/Converters.xaml" />
+
+                <ResourceDictionary Source="ms-appx:///Screens/RootTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

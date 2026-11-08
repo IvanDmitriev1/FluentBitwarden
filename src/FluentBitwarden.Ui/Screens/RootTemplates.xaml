@@ -1,0 +1,30 @@
+<ResourceDictionary
+    x:Class="FluentBitwarden.Ui.Screens.RootTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loading="using:FluentBitwarden.Ui.Screens.Loading"
+    xmlns:local="using:FluentBitwarden.Ui.Screens"
+    xmlns:setup="using:FluentBitwarden.Ui.Screens.Setup"
+    xmlns:shell="using:FluentBitwarden.Ui.Screens.Shell"
+    xmlns:unlock="using:FluentBitwarden.Ui.Screens.Unlock">
+
+    <DataTemplate x:Key="LoadingTemplate" x:DataType="loading:LoadingViewModel">
+        <loading:LoadingView ViewModel="{x:Bind}" />
+    </DataTemplate>
+    <DataTemplate x:Key="SetupTemplate" x:DataType="setup:SetupViewModel">
+        <setup:SetupView ViewModel="{x:Bind}" />
+    </DataTemplate>
+    <DataTemplate x:Key="UnlockTemplate" x:DataType="unlock:UnlockViewModel">
+        <unlock:UnlockView ViewModel="{x:Bind}" />
+    </DataTemplate>
+    <DataTemplate x:Key="ShellTemplate" x:DataType="shell:ShellViewModel">
+        <shell:ShellView ViewModel="{x:Bind}" />
+    </DataTemplate>
+
+    <local:RootTemplateSelector
+        x:Key="RootTemplateSelector"
+        LoadingTemplate="{StaticResource LoadingTemplate}"
+        SetupTemplate="{StaticResource SetupTemplate}"
+        ShellTemplate="{StaticResource ShellTemplate}"
+        UnlockTemplate="{StaticResource UnlockTemplate}" />
+</ResourceDictionary>

@@ -1,5 +1,6 @@
-using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Infrastructure.Windowing;
+using FluentBitwarden.Ui.Screens;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Ui.Windows;
@@ -10,6 +11,9 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IDialogProvidable
     {
         ViewModel = App.Current.GetRequiredService<AppRootViewModel>();
         InitializeComponent();
+
+        ExtendsContentIntoTitleBar = true;
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
     }
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;

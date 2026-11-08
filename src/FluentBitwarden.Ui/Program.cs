@@ -7,8 +7,10 @@ using FluentBitwarden.Platform;
 using FluentBitwarden.Platform.Ipc;
 using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Application.Abstractions;
+using FluentBitwarden.Ui.Infrastructure.Extensions;
 using FluentBitwarden.Ui.Infrastructure.Hosting;
 using FluentBitwarden.Ui.Infrastructure.RemoteHandlers;
+using FluentBitwarden.Ui.Screens;
 using Microsoft.Extensions.DependencyInjection;
 using Navis.WinUI.Extensions;
 
@@ -37,7 +39,7 @@ public static class Program
         builder.Services.AddIpcServer(IpcConstants.UiPipeName, handlers =>
             handlers.Add<UserDialogRequestHandler>());
 
-        builder.Services.AddSingleton<IApplicationController, ApplicationController>();
+        builder.Services.AddHostedSingleton<ApplicationController, IApplicationController>();
         builder.Services.AddSingleton<AppRootViewModel>();
 
         var host = builder.Build();

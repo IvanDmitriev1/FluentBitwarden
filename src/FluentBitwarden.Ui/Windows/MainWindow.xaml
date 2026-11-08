@@ -6,13 +6,14 @@
     xmlns:application="using:FluentBitwarden.Ui.Application"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:screens="using:FluentBitwarden.Ui.Screens"
     xmlns:winUiEx="using:WinUIEx"
     Title="Bitwarden"
     Width="1120"
     Height="680"
     MinWidth="900"
     MinHeight="520"
-    x:DataType="application:AppRootViewModel"
+    x:DataType="screens:AppRootViewModel"
     PersistenceId="MainWindow"
     mc:Ignorable="d">
 
@@ -20,6 +21,38 @@
         <MicaBackdrop />
     </winUiEx:WindowEx.SystemBackdrop>
 
-    <Grid x:Name="RootElement" />
+    <Grid x:Name="RootElement">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TitleBar
+            x:Name="AppTitleBar"
+            Title="FluentBitwarden"
+            Grid.Row="0"
+            Height="48">
+            <TitleBar.Resources>
+                <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
+            </TitleBar.Resources>
+
+            <TitleBar.IconSource>
+                <ImageIconSource ImageSource="/Assets/icon.svg" />
+            </TitleBar.IconSource>
+
+            <TitleBar.Content>
+                <Grid Margin="128,0,0,0">
+                    <!--  title-bar content  -->
+                </Grid>
+            </TitleBar.Content>
+        </TitleBar>
+
+        <ContentControl
+            Grid.Row="1"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
+            Content="{x:Bind ViewModel.Content, Mode=OneWay}"
+            ContentTemplateSelector="{StaticResource RootTemplateSelector}" />
+    </Grid>
 
 </winUiEx:WindowEx>
