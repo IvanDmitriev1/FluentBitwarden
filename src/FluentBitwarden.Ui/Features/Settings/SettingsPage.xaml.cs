@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
-
 namespace FluentBitwarden.Ui.Features.Settings;
 
 public sealed partial class SettingsPage : Page

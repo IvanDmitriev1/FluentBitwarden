@@ -1,5 +1,4 @@
 using FluentBitwarden.Contracts.Settings.Models;
-using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Ui.Infrastructure;
 

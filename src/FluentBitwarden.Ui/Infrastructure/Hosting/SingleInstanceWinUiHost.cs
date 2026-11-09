@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;

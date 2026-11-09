@@ -2,6 +2,7 @@
     x:Class="FluentBitwarden.Ui.Screens.Shell.ShellView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentBitwarden.Ui.Screens.Shell.Controls"
     xmlns:nav="using:Navis.WinUI"
     xmlns:settings="using:FluentBitwarden.Ui.Features.Settings"
     xmlns:shell="using:FluentBitwarden.Ui.Screens.Shell"
@@ -64,7 +65,7 @@
 
             <nav:TitleBarNavigation.PersistentContent>
                 <Grid Margin="128,0,0,0">
-                    <TextBlock Text="TODO" />
+                    <controls:VaultCipherSearchBox VaultCipherSelectedCommand="{x:Bind ViewModel.VaultCipherSelectedCommand}" />
                 </Grid>
             </nav:TitleBarNavigation.PersistentContent>
         </Frame>

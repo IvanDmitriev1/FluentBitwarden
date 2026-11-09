@@ -1,8 +1,13 @@
 global using System;
 global using System.Collections.Generic;
+global using System.Diagnostics.CodeAnalysis;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using BitwardenApi.Vault.Ciphers.Models;
 global using BitwardenApi.Vault.Folders.Models;
 global using AsyncAwaitBestPractices;
+global using CommunityToolkit.Mvvm.ComponentModel;
 global using DependencyPropertyGenerator;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.UI.Xaml;
+global using Microsoft.UI.Xaml.Controls;

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using CommunityToolkit.Mvvm.ComponentModel;
 using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.Ui.Features.Settings.Models;

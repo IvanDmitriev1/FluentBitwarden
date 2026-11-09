@@ -1,11 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using Windows.ApplicationModel.Activation;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Windows.AppLifecycle;
 
 namespace FluentBitwarden.Ui.Infrastructure.Hosting;

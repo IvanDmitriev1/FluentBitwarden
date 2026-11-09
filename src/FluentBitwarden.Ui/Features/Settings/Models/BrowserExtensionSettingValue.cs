@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.Integrations;
 

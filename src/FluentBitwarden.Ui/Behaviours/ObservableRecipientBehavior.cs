@@ -1,5 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.UI.Xaml;
 using Microsoft.Xaml.Interactivity;
 
 namespace FluentBitwarden.Ui.Controls.Behaviours;

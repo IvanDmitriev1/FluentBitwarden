@@ -1,8 +1,6 @@
 using FluentBitwarden.Ui.Screens.Setup.Steps.Email;
 using FluentBitwarden.Ui.Screens.Setup.Steps.Password;
 using FluentBitwarden.Ui.Screens.Setup.Steps.TwoFactor;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Screens.Setup;
 

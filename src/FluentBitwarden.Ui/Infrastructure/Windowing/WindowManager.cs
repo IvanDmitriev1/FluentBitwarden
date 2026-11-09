@@ -1,6 +1,5 @@
 using FluentBitwarden.Platform.Settings;
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
-using Microsoft.UI.Xaml;
 using Windows.UI.ViewManagement;
 using WinUIEx;
 

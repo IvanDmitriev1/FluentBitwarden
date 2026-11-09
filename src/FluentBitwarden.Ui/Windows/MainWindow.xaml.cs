@@ -1,7 +1,6 @@
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
 using FluentBitwarden.Ui.Screens;
 using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
 
 namespace FluentBitwarden.Ui.Windows;
 

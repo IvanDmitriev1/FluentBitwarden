@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
-
 namespace FluentBitwarden.Ui.Screens.Unlock;
 
 [DependencyProperty<UnlockViewModel>("ViewModel")]

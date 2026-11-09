@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Reflection;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Accounts;
@@ -10,7 +9,6 @@ using FluentBitwarden.Platform.Infrastructure.Extensions;
 using FluentBitwarden.Ui.Features.Settings.Models;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
-using Microsoft.UI.Xaml;
 using Navis.WinUI.Abstractions;
 using Windows.ApplicationModel;
 using Windows.Storage;

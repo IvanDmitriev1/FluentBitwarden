@@ -2,8 +2,6 @@ using FluentBitwarden.Ui.Screens.Loading;
 using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Ui.Screens.Shell;
 using FluentBitwarden.Ui.Screens.Unlock;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace FluentBitwarden.Ui.Screens;
 

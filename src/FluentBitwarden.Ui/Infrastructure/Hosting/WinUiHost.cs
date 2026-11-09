@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

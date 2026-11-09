@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.Unlock;
@@ -6,7 +5,6 @@ using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
-using Microsoft.Extensions.Logging;
 using WinUIEx;
 
 namespace FluentBitwarden.Ui.Screens.Unlock;

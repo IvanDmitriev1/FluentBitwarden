@@ -3,7 +3,6 @@ using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Ui.Infrastructure.UserDialog.Abstractions;
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
 using FluentBitwarden.Ui.Windows;
-using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
 
 namespace FluentBitwarden.Ui.Infrastructure.UserDialog;

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace FluentBitwarden.Ui.Infrastructure.UserDialog.Abstractions;
 
 internal interface IUserDialog<TResult>

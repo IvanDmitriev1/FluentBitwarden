@@ -1,4 +1,3 @@
-using Microsoft.UI.Xaml;
 using Microsoft.Xaml.Interactivity;
 
 namespace FluentBitwarden.Ui.Controls.Behaviours;
