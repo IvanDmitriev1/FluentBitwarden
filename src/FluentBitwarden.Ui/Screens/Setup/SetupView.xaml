@@ -2,7 +2,7 @@
     x:Class="FluentBitwarden.Ui.Screens.Setup.SetupView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:behaviours="using:FluentBitwarden.Ui.Controls.Behaviours"
+    xmlns:behaviours="using:FluentBitwarden.Ui.Behaviours"
     xmlns:email="using:FluentBitwarden.Ui.Screens.Setup.Steps.Email"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:password="using:FluentBitwarden.Ui.Screens.Setup.Steps.Password"

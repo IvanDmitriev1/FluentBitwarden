@@ -1,6 +1,7 @@
+using FluentBitwarden.Ui.Controls;
 using Microsoft.Xaml.Interactivity;
 
-namespace FluentBitwarden.Ui.Controls.Behaviours;
+namespace FluentBitwarden.Ui.Behaviours;
 
 [DependencyProperty<int>("ResetRequest")]
 public sealed partial class PasswordClearBehavior : Behavior<PasswordBoxEx>

@@ -24,8 +24,8 @@
             <StaticResource x:Key="DisabledControlBrush" ResourceKey="ControlFillColorDisabledBrush" />
             <StaticResource x:Key="DisabledTextBrush" ResourceKey="TextFillColorDisabledBrush" />
             <StaticResource x:Key="ShortcutBrush" ResourceKey="ControlFillColorTertiaryBrush" />
-            <StaticResource x:Key="FilterPillBrush" ResourceKey="ControlFillColorDefaultBrush" />
-            <StaticResource x:Key="FilterPillHoverBrush" ResourceKey="ControlFillColorSecondaryBrush" />
+            <StaticResource x:Key="PillBackgroundBrush" ResourceKey="ControlFillColorDefaultBrush" />
+            <StaticResource x:Key="PillHoverBrush" ResourceKey="ControlFillColorSecondaryBrush" />
             <StaticResource x:Key="FavoriteBrush" ResourceKey="SystemFillColorCautionBrush" />
             <StaticResource x:Key="DangerBrush" ResourceKey="SystemFillColorCriticalBrush" />
             <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="HoverBrush" />
@@ -76,8 +76,8 @@
             <StaticResource x:Key="DisabledControlBrush" ResourceKey="ControlFillColorDisabledBrush" />
             <StaticResource x:Key="DisabledTextBrush" ResourceKey="TextFillColorDisabledBrush" />
             <SolidColorBrush x:Key="ShortcutBrush" Color="#FF424242" />
-            <SolidColorBrush x:Key="FilterPillBrush" Color="#FF363636" />
-            <StaticResource x:Key="FilterPillHoverBrush" ResourceKey="ControlFillColorSecondaryBrush" />
+            <SolidColorBrush x:Key="PillBackgroundBrush" Color="#FF363636" />
+            <StaticResource x:Key="PillHoverBrush" ResourceKey="ControlFillColorSecondaryBrush" />
             <SolidColorBrush x:Key="FavoriteBrush" Color="#FFFFC83D" />
             <StaticResource x:Key="DangerBrush" ResourceKey="SystemFillColorCriticalBrush" />
             <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="HoverBrush" />
@@ -127,8 +127,8 @@
             <SolidColorBrush x:Key="DisabledControlBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
             <SolidColorBrush x:Key="DisabledTextBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
             <SolidColorBrush x:Key="ShortcutBrush" Color="{ThemeResource SystemColorWindowColor}" />
-            <SolidColorBrush x:Key="FilterPillBrush" Color="{ThemeResource SystemColorWindowColor}" />
-            <SolidColorBrush x:Key="FilterPillHoverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+            <SolidColorBrush x:Key="PillBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="PillHoverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="FavoriteBrush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="DangerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
             <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="HoverBrush" />

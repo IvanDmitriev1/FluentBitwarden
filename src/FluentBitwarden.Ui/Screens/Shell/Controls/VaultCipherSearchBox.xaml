@@ -6,6 +6,7 @@
     xmlns:controls="using:FluentBitwarden.Ui.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
     mc:Ignorable="d">
@@ -14,20 +15,29 @@
         <ResourceDictionary>
             <x:String x:Key="VaultCipherSearchBoxPlaceholderText">Search</x:String>
             <x:String x:Key="VaultCipherSearchBoxAutomationName">Search vault</x:String>
-
-            <x:Double x:Key="VaultCipherAutosuggestItemTemplateIconSize">22</x:Double>
         </ResourceDictionary>
     </UserControl.Resources>
 
+    <interactivity:Interaction.Behaviors>
+        <interactivity:EventTriggerBehavior EventName="Unloaded">
+            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.CancelPendingSearchCommand, Mode=OneWay}" />
+        </interactivity:EventTriggerBehavior>
+    </interactivity:Interaction.Behaviors>
+
     <AutoSuggestBox
-        x:Name="SearchBox"
         AutomationProperties.AutomationId="VaultCipherSearchBox"
         AutomationProperties.Name="{StaticResource VaultCipherSearchBoxAutomationName}"
+        ItemsSource="{x:Bind ViewModel.Suggestions, Mode=OneWay}"
         PlaceholderText="{StaticResource VaultCipherSearchBoxPlaceholderText}"
         QueryIcon="Find"
-        QuerySubmitted="AutoSuggestBox_OnQuerySubmitted"
-        TextChanged="AutoSuggestBox_OnTextChanged"
+        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay}"
         UpdateTextOnSelect="False">
+
+        <interactivity:Interaction.Behaviors>
+            <interactivity:EventTriggerBehavior EventName="QuerySubmitted">
+                <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.VaultCipherSelectedCommand, Mode=OneWay}" />
+            </interactivity:EventTriggerBehavior>
+        </interactivity:Interaction.Behaviors>
 
         <AutoSuggestBox.ItemTemplate>
             <DataTemplate x:DataType="models:Cipher">
@@ -37,7 +47,7 @@
                     Spacing="8">
                     <controls:SiteIcon
                         FallbackGlyph="{x:Bind extensions:VaultCipherExtensions.GetDefaultGlyph((models:Cipher))}"
-                        Size="{StaticResource VaultCipherAutosuggestItemTemplateIconSize}"
+                        Size="22"
                         Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri((models:Cipher))}" />
 
                     <TextBlock

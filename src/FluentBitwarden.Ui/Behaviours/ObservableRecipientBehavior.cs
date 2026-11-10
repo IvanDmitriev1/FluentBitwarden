@@ -1,6 +1,6 @@
 using Microsoft.Xaml.Interactivity;
 
-namespace FluentBitwarden.Ui.Controls.Behaviours;
+namespace FluentBitwarden.Ui.Behaviours;
 
 public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
 {
@@ -12,7 +12,6 @@ public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
 
         AssociatedObject.Loaded += OnLoaded;
         AssociatedObject.Unloaded += OnUnloaded;
-        AssociatedObject.DataContextChanged += OnDataContextChanged;
         UpdateRecipient();
     }
 
@@ -20,7 +19,6 @@ public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
     {
         AssociatedObject.Loaded -= OnLoaded;
         AssociatedObject.Unloaded -= OnUnloaded;
-        AssociatedObject.DataContextChanged -= OnDataContextChanged;
         DeactivateRecipient();
 
         base.OnDetaching();
@@ -29,8 +27,6 @@ public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
     private void OnLoaded(object sender, RoutedEventArgs e) => UpdateRecipient();
 
     private void OnUnloaded(object sender, RoutedEventArgs e) => DeactivateRecipient();
-
-    private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args) => UpdateRecipient();
 
     private void UpdateRecipient()
     {
@@ -53,7 +49,6 @@ public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
     {
         ObservableRecipient? recipient = _recipient;
         _recipient = null;
-        if (recipient is not null)
-            recipient.IsActive = false;
+        recipient?.IsActive = false;
     }
 }

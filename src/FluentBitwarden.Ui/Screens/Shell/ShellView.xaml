@@ -65,7 +65,7 @@
 
             <nav:TitleBarNavigation.PersistentContent>
                 <Grid Margin="128,0,0,0">
-                    <controls:VaultCipherSearchBox VaultCipherSelectedCommand="{x:Bind ViewModel.VaultCipherSelectedCommand}" />
+                    <controls:VaultCipherSearchBox />
                 </Grid>
             </nav:TitleBarNavigation.PersistentContent>
         </Frame>

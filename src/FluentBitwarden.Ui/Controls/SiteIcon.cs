@@ -81,6 +81,7 @@ public sealed partial class SiteIcon : ContentControl
         if (Uri is null || !double.IsFinite(Size) || Size <= 0)
         {
             Watch(false);
+            SetImage(null);
             return;
         }
 

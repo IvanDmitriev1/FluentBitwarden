@@ -62,7 +62,6 @@ public sealed partial class AppRootViewModel(
         if (!IsActive || Equals(_appliedSession, session))
             return;
 
-        (Content as IDisposable)?.Dispose();
         _appliedSession = session;
         Content = session switch
         {

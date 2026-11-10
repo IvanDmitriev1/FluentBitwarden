@@ -6,6 +6,7 @@
     xmlns:controls="using:FluentBitwarden.Ui.Controls"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:unlock="using:FluentBitwarden.Ui.Screens.Unlock"
+    xmlns:behaviours1="using:FluentBitwarden.Ui.Behaviours"
     KeyboardAcceleratorPlacementMode="Hidden">
 
     <interactivity:Interaction.Behaviors>
@@ -67,8 +68,8 @@
                     Command="{x:Bind ViewModel.UnlockCommand}"
                     IsEnabled="{x:Bind ViewModel.IsUnlocking, Converter={StaticResource BoolNegationConverter}, Mode=OneWay}">
                     <interactivity:Interaction.Behaviors>
-                        <behaviours:FocusBehavior FocusOnLoad="True" FocusRequest="{x:Bind ViewModel.PasswordFocusRequest, Mode=OneWay}" />
-                        <unlock:PasswordActionIconBehavior EmptyGlyph="&#xE8D7;" NonEmptyGlyph="&#xE72A;" />
+                        <behaviours1:FocusBehavior FocusOnLoad="True" FocusRequest="{x:Bind ViewModel.PasswordFocusRequest, Mode=OneWay}" />
+                        <behaviours1:PasswordActionIconBehavior EmptyGlyph="&#xE8D7;" NonEmptyGlyph="&#xE72A;" />
                     </interactivity:Interaction.Behaviors>
                 </controls:PasswordBoxEx>
 

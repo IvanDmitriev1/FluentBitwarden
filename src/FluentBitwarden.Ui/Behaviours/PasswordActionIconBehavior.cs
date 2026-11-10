@@ -1,7 +1,7 @@
 using FluentBitwarden.Ui.Controls;
 using Microsoft.Xaml.Interactivity;
 
-namespace FluentBitwarden.Ui.Screens.Unlock;
+namespace FluentBitwarden.Ui.Behaviours;
 
 [DependencyProperty<string>("EmptyGlyph", DefaultValue = "")]
 [DependencyProperty<string>("NonEmptyGlyph", DefaultValue = "")]

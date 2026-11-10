@@ -1,21 +1,41 @@
 <Page
     x:Class="FluentBitwarden.Ui.Features.Vault.VaultPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Padding="24">
-        <StackPanel
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Spacing="8">
-            <TextBlock
-                HorizontalAlignment="Center"
-                Style="{StaticResource TitleLargeTextBlockStyle}"
-                Text="Vault" />
-            <TextBlock
-                Foreground="{ThemeResource TextSecondaryBrush}"
-                Text="The vault view is not implemented yet."
-                TextAlignment="Center"
-                TextWrapping="Wrap" />
-        </StackPanel>
-    </Grid>
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:contracts="using:BitwardenApi.Vault.Ciphers.Models"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+    <SplitView
+        x:Name="MainSplitView"
+        DisplayMode="Inline"
+        IsPaneOpen="True"
+        OpenPaneLength="380"
+        PaneBackground="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+
+        <SplitView.Pane>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <controls:PropertySizer
+                    Grid.Column="1"
+                    Width="8"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Binding="{x:Bind MainSplitView.OpenPaneLength, Mode=TwoWay}"
+                    Maximum="600"
+                    Minimum="180"
+                    Orientation="Vertical" />
+            </Grid>
+
+        </SplitView.Pane>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+        </Grid>
+    </SplitView>
 </Page>

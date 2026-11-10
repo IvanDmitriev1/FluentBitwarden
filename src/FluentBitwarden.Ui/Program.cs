@@ -10,6 +10,7 @@ using FluentBitwarden.Ui.Infrastructure.RemoteHandlers;
 using FluentBitwarden.Ui.Infrastructure.Windowing;
 using FluentBitwarden.Ui.Screens;
 using FluentBitwarden.Ui.Screens.Setup;
+using FluentBitwarden.Ui.Screens.Shell.Controls;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentBitwarden.Ui.Features.Settings;
 using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
@@ -49,6 +50,7 @@ public static class Program
 
         builder.Services.AddTransient<SetupViewModel>();
         builder.Services.AddTransient<SettingsPageViewModel>();
+        builder.Services.AddTransient<VaultCipherSearchBoxViewModel>();
 
         var host = builder.Build();
         host.Run();

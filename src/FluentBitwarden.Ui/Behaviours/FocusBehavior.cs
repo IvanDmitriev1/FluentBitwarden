@@ -1,6 +1,6 @@
 using Microsoft.Xaml.Interactivity;
 
-namespace FluentBitwarden.Ui.Controls.Behaviours;
+namespace FluentBitwarden.Ui.Behaviours;
 
 [DependencyProperty<bool>("FocusOnLoad")]
 [DependencyProperty<int>("FocusRequest")]
