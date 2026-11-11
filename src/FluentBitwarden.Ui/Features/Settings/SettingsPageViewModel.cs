@@ -8,7 +8,7 @@ using FluentBitwarden.Contracts.Settings.Models;
 using FluentBitwarden.Platform.Infrastructure.Extensions;
 using FluentBitwarden.Ui.Features.Settings.Models;
 using FluentBitwarden.Ui.Infrastructure;
-using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
+using FluentBitwarden.Ui.Windows.Abstractions;
 using Navis.WinUI.Abstractions;
 using Windows.ApplicationModel;
 using Windows.Storage;

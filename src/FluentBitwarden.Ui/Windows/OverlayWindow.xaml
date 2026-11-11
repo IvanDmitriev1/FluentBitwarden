@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:nav="using:Navis.WinUI"
     xmlns:winUi="using:Navis.WinUI"
     xmlns:winUiEx="using:WinUIEx"
     Title="FluentBitwarden"
@@ -31,6 +32,11 @@
             Grid.Row="0"
             Background="Transparent"
             Canvas.ZIndex="1000" />
+
+        <Frame
+            x:Name="RootNavigationFrame"
+            Grid.Row="1"
+            nav:NavigationHost.IsEnabled="True" />
 
 
     </Grid>

@@ -7,16 +7,16 @@ public sealed partial class VaultPageViewModel : ObservableObject, INavigationAw
 {
     public ValueTask OnNavigatedToAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return ValueTask.CompletedTask;
     }
 
     public ValueTask OnNavigatedToAsync(VaultCipherNavigationIntent parameter, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return ValueTask.CompletedTask;
     }
 
     public ValueTask OnNavigatedFromAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return ValueTask.CompletedTask;
     }
 }

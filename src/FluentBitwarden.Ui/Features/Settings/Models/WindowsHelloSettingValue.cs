@@ -3,8 +3,7 @@ using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
-using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
-using WinUIEx;
+using FluentBitwarden.Ui.Windows.Abstractions;
 
 namespace FluentBitwarden.Ui.Features.Settings.Models;
 
@@ -71,8 +70,7 @@ public sealed partial class WindowsHelloSettingValue(
             if (enabled)
             {
                 WindowsHelloEnrollmentOutcome outcome = await windowsHelloClient.EnableAsync(
-                    new EnableWindowsHelloEnrollmentRequest(new NativeWindowHandle(
-                        windowManager.ActiveWindow.GetWindowHandle().ToInt64())));
+                    new EnableWindowsHelloEnrollmentRequest(windowManager.NativeWindowHandle));
                 if (outcome != WindowsHelloEnrollmentOutcome.Enrolled)
                     IsEnabled = false;
             }

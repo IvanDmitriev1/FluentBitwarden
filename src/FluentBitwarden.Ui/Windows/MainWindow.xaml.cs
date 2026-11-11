@@ -1,14 +1,12 @@
-using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
-using FluentBitwarden.Ui.Screens;
+using FluentBitwarden.Ui.Windows.Abstractions;
 using Microsoft.UI.Windowing;
 
 namespace FluentBitwarden.Ui.Windows;
 
-public sealed partial class MainWindow : WinUIEx.WindowEx, IDialogHost, IThemeChangeable
+public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeChangeable
 {
     public MainWindow()
     {
-        ViewModel = App.Current.GetRequiredService<AppRootViewModel>();
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
@@ -17,7 +15,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IDialogHost, IThemeCh
 
     public XamlRoot XamlRoot => RootElement.XamlRoot;
 
-    public AppRootViewModel ViewModel { get; }
+    public Frame RootFrame => RootNavigationFrame;
 
     public void ApplyTheme(ElementTheme themeMode) => RootElement.RequestedTheme = themeMode;
 }

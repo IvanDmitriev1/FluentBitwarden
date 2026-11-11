@@ -45,8 +45,8 @@ Keep each screen's view, code-behind, view model, and screen-specific controls t
 
 ## Shell and navigation
 
-- `MainWindow` hosts `SetupView` or `UnlockView` or `ShellView` based on AppHost session state.
-- `ShellView` owns persistent layout and a `Frame` for feature navigation.
+- `MainWindow` hosts `SetupPage` or `UnlockPage` or `ShellPage` based on AppHost session state.
+- `ShellPage` owns persistent layout and a `Frame` for feature navigation.
 - Each navigable feature has one `FeatureNamePage.xaml` directly in its feature directory.
 - Place feature-specific reusable views in `Features/<Feature>/Views/`.
 - Use `INavigationService` for navigation. Do not navigate directly from view models.
@@ -59,7 +59,6 @@ Keep each screen's view, code-behind, view model, and screen-specific controls t
 - `CompactWindow`: generic, non-resizable window for independent content.
 - `OverlayWindow`: standalone window for prompts when needed.
 - `IWindowManager` owns window creation, tracking, visibility, and closing.
-- `IUserDialogPresenter` presents reusable dialogs inside `MainWindow` or `OverlayWindow`.
 - Dialog content must not depend on its presentation location.
 - Keep dialogs and independent windows outside shell navigation.
 - Dispatch all WinUI operations to the UI thread.

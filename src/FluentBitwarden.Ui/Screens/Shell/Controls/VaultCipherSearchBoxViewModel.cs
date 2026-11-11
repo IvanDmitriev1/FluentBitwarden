@@ -107,7 +107,7 @@ public sealed partial class VaultCipherSearchBoxViewModel(
         SearchText = string.Empty;
 
         var selection = new VaultCipherSelection(args.QueryText, cipher);
-        navigation.Navigate<VaultPage, VaultCipherNavigationIntent>(
+        navigation.Child?.Navigate<VaultPage, VaultCipherNavigationIntent>(
             new ShowVaultCipherIntent(selection.QueryText, selection.SelectedItem));
     }
 

@@ -1,7 +1,7 @@
 using FluentBitwarden.Contracts.Infrastructure.UiActivation;
+using FluentBitwarden.Ui.Application;
+using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
-using FluentBitwarden.Ui.Infrastructure.Windowing.Abstractions;
-using FluentBitwarden.Ui.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
@@ -11,17 +11,15 @@ namespace FluentBitwarden.Ui;
 
 public partial class App : IActivationHandler
 {
-    public App(IServiceProvider serviceProvider, IWindowManager windowManager)
+    public App(IServiceProvider serviceProvider)
     {
         InitializeComponent();
 
         _serviceProvider = serviceProvider;
-        _windowManager = windowManager;
         DispatcherQueue = DispatcherQueue.GetForCurrentThread();
     }
 
     private readonly IServiceProvider _serviceProvider;
-    private readonly IWindowManager _windowManager;
 
     public new static App Current => (App)Microsoft.UI.Xaml.Application.Current;
 
@@ -34,24 +32,11 @@ public partial class App : IActivationHandler
 
     public void HandleActivation(AppActivationArguments arguments)
     {
-        if (arguments.Data is not ILaunchActivatedEventArgs launchArgs)
-        {
-            _windowManager.ReplaceWindow<MainWindow>();
-            return;
-        }
+        var command = arguments.Data is ILaunchActivatedEventArgs launchArgs
+            ? UiActivationCommand.Parse(launchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            : new UiActivationCommand.OpenCommand();
 
-        var args = launchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var command = UiActivationCommand.Parse(args);
-        switch (command)
-        {
-            case UiActivationCommand.OpenCommand:
-                _windowManager.ReplaceWindow<MainWindow>();
-                break;
-            case UiActivationCommand.OverlayCommand:
-                _windowManager.ReplaceWindow<OverlayWindow>();
-                break;
-        }
-
-        //TODO implement opening vault item
+        var session = GetRequiredService<AppSessionMonitor>().CurrentSession;
+        GetRequiredService<IAppRouter>().Activate(command, session);
     }
 }
