@@ -16,6 +16,10 @@ indent_size = 4
 [*.{xml,csproj,props,targets,nsdepcop,editorconfig,json,xaml}]
 indent_size = 2
 
+[*.xaml]
+indent_style = space
+indent_size = 4
+
 # ---------------------------------------------------------------------------------------------
 # NsDepCop — module-boundary enforcement severity (centralized here; configs hold the rules).
 # Enforced: a boundary breach fails the build.

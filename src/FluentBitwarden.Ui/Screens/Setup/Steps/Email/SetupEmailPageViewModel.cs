@@ -43,6 +43,7 @@ public sealed partial class SetupEmailPageViewModel(
     public partial string? AuthenticationError { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ContinueCommand))]
     public partial bool IsBusy { get; private set; }
 
     public bool IsCustomServerSelected => SelectedServer?.IsCustom == true;
@@ -72,7 +73,9 @@ public sealed partial class SetupEmailPageViewModel(
         return ValueTask.CompletedTask;
     }
 
-    [RelayCommand]
+    private bool CanContinue => !IsBusy;
+
+    [RelayCommand(CanExecute = nameof(CanContinue))]
     private void Continue()
     {
         Validate();

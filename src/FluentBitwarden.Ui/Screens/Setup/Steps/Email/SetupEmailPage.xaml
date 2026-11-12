@@ -1,73 +1,138 @@
 <Page
-    x:Class="FluentBitwarden.Ui.Screens.Setup.Steps.Email.SetupEmailPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:setup="using:FluentBitwarden.Ui.Screens.Setup.Steps.Email"
-    NavigationCacheMode="Disabled"
-    x:DataType="setup:SetupEmailPageViewModel">
-    <StackPanel Spacing="14">
-        <StackPanel Spacing="4">
-            <TextBlock Style="{StaticResource TitleLargeTextBlockStyle}" Text="Sign in to Bitwarden" />
-            <TextBlock
-                Foreground="{ThemeResource TextSecondaryBrush}"
-                Text="Enter your account details to continue."
-                TextWrapping="Wrap" />
-        </StackPanel>
+	x:Class="FluentBitwarden.Ui.Screens.Setup.Steps.Email.SetupEmailPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+	xmlns:ui="using:FluentBitwarden.Ui.Controls"
+	xmlns:setup="using:FluentBitwarden.Ui.Screens.Setup.Steps.Email"
+	NavigationCacheMode="Disabled">
+	<StackPanel Spacing="22">
+		<StackPanel HorizontalAlignment="Center" Spacing="4">
+			<TextBlock
+				HorizontalAlignment="Center"
+				Style="{StaticResource TitleLargeTextBlockStyle}"
+				Text="Login to Bitwarden"
+				TextAlignment="Center" />
+			<TextBlock
+				Foreground="{ThemeResource TextSecondaryBrush}"
+				Text="Enter your email and choose the server to continue."
+				TextAlignment="Center"
+				TextWrapping="Wrap" />
+		</StackPanel>
 
-        <TextBox
-            Header="Email address"
-            IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
-            PlaceholderText="you@example.com"
-            Text="{x:Bind ViewModel.Email, Mode=TwoWay}" />
-        <InfoBar
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.EmailError, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
-            Message="{x:Bind ViewModel.EmailError, Mode=OneWay}"
-            Severity="Error" />
+		<StackPanel Spacing="8">
+			<ui:TextBoxEx
+				Command="{x:Bind ViewModel.ContinueCommand, Mode=OneTime}"
+				InputScope="EmailSmtpAddress"
+				Header="Email"
+				IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
+				PlaceholderText="name@example.com"
+				Text="{x:Bind ViewModel.Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+				<ui:TextBoxEx.Icon>
+					<FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Glyph="&#xE715;" />
+				</ui:TextBoxEx.Icon>
+			</ui:TextBoxEx>
+			<InfoBar
+				IsClosable="False"
+				IsOpen="{x:Bind ViewModel.EmailError, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
+				Message="{x:Bind ViewModel.EmailError, Mode=OneWay}"
+				Severity="Error" />
+		</StackPanel>
 
-        <ComboBox
-            Header="Server"
-            IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
-            ItemsSource="{x:Bind ViewModel.Servers, Mode=OneTime}"
-            SelectedItem="{x:Bind ViewModel.SelectedServer, Mode=TwoWay}">
-            <ComboBox.ItemTemplate>
-                <DataTemplate x:DataType="setup:SetupServerOption">
-                    <TextBlock Text="{x:Bind Title, Mode=OneTime}" />
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-        </ComboBox>
-        <TextBox
-            Header="Self-hosted server URL"
-            IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
-            PlaceholderText="https://vault.example.com"
-            Text="{x:Bind ViewModel.CustomServerUrl, Mode=TwoWay}"
-            Visibility="{x:Bind ViewModel.IsCustomServerSelected, Mode=OneWay, Converter={StaticResource BoolToVisConverter}}" />
-        <InfoBar
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.ServerError, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
-            Message="{x:Bind ViewModel.ServerError, Mode=OneWay}"
-            Severity="Error" />
+		<StackPanel Spacing="8">
+			<TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Server" />
+			<controls:Segmented
+				HorizontalAlignment="Stretch"
+				IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
+				ItemsSource="{x:Bind ViewModel.Servers, Mode=OneTime}"
+				SelectedItem="{x:Bind ViewModel.SelectedServer, Mode=TwoWay}">
+				<controls:Segmented.ItemTemplate>
+					<DataTemplate x:DataType="setup:SetupServerOption">
+						<StackPanel Padding="10,6" Spacing="2">
+							<TextBlock FontWeight="SemiBold" Text="{x:Bind Title, Mode=OneTime}" />
+							<TextBlock
+								FontSize="12"
+								Opacity="0.65"
+								Text="{x:Bind Host, Mode=OneTime}"
+								Visibility="{x:Bind Host, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+						</StackPanel>
+					</DataTemplate>
+				</controls:Segmented.ItemTemplate>
+			</controls:Segmented>
+		</StackPanel>
 
-        <InfoBar
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.AuthenticationError, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
-            Message="{x:Bind ViewModel.AuthenticationError, Mode=OneWay}"
-            Severity="Error" />
+		<StackPanel Spacing="4" Visibility="{x:Bind ViewModel.IsCustomServerSelected, Mode=OneWay, Converter={StaticResource BoolToVisConverter}}">
+			<ui:TextBoxEx
+				Command="{x:Bind ViewModel.ContinueCommand, Mode=OneTime}"
+				Header="Server URL"
+				IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
+				PlaceholderText="https://vault.example.com"
+				Text="{x:Bind ViewModel.CustomServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+				<ui:TextBoxEx.Icon>
+					<FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Glyph="&#xE909;" />
+				</ui:TextBoxEx.Icon>
+			</ui:TextBoxEx>
+			<TextBlock
+				Foreground="{ThemeResource TextSecondaryBrush}"
+				Style="{StaticResource CaptionTextBlockStyle}"
+				Text="Use your self-hosted server URL if you are not using the official cloud."
+				TextWrapping="Wrap" />
+		</StackPanel>
 
-        <StackPanel Spacing="8">
-            <Button
-                HorizontalAlignment="Stretch"
-                AutomationProperties.Name="Continue with master password"
-                Command="{x:Bind ViewModel.ContinueCommand, Mode=OneTime}"
-                Content="Continue with master password"
-                IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
-                Style="{StaticResource AccentButtonStyle}" />
-            <Button
-                HorizontalAlignment="Stretch"
-                AutomationProperties.Name="Sign in with a passkey"
-                Command="{x:Bind ViewModel.AuthenticateWithPasskeyCommand, Mode=OneTime}"
-                Content="Sign in with a passkey"
-                IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}" />
-        </StackPanel>
-    </StackPanel>
+		<InfoBar
+			IsClosable="False"
+			IsOpen="{x:Bind ViewModel.ServerError, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
+			Message="{x:Bind ViewModel.ServerError, Mode=OneWay}"
+			Severity="Error" />
+		<InfoBar
+			IsClosable="False"
+			IsOpen="{x:Bind ViewModel.AuthenticationError, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
+			Message="{x:Bind ViewModel.AuthenticationError, Mode=OneWay}"
+			Severity="Error" />
+
+		<StackPanel Spacing="8">
+			<Button
+				Height="36"
+				HorizontalAlignment="Stretch"
+				AutomationProperties.Name="Continue with master password"
+				Command="{x:Bind ViewModel.ContinueCommand, Mode=OneTime}"
+				Content="Continue"
+				Style="{StaticResource AccentButtonStyle}" />
+
+			<Grid ColumnSpacing="28">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition />
+				</Grid.ColumnDefinitions>
+				<Border
+					Height="1"
+					VerticalAlignment="Center"
+					Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+				<TextBlock Grid.Column="1" Text="or" />
+				<Border
+					Grid.Column="2"
+					Height="1"
+					VerticalAlignment="Center"
+					Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+			</Grid>
+
+			<Button
+				HorizontalAlignment="Stretch"
+				AutomationProperties.Name="Sign in with a passkey"
+				Command="{x:Bind ViewModel.AuthenticateWithPasskeyCommand, Mode=OneTime}"
+				IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
+				<StackPanel
+					HorizontalAlignment="Center"
+					Orientation="Horizontal"
+					Spacing="8">
+					<FontIcon
+						FontFamily="{ThemeResource SymbolThemeFontFamily}"
+						FontSize="16"
+						Glyph="&#xE928;" />
+					<TextBlock Text="Sign in with passkey" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
+	</StackPanel>
 </Page>

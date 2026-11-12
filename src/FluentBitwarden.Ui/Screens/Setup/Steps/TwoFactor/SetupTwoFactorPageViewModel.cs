@@ -27,6 +27,9 @@ public sealed partial class SetupTwoFactorPageViewModel(
     public partial string Email { get; private set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string ServerDisplayName { get; private set; } = string.Empty;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(UnsupportedProvidersMessage))]
     [NotifyPropertyChangedFor(nameof(HasUnsupportedProviders))]
     public partial string UnsupportedProvidersText { get; private set; } = string.Empty;
@@ -39,6 +42,7 @@ public sealed partial class SetupTwoFactorPageViewModel(
     public bool HasUnsupportedProviders => !string.IsNullOrEmpty(UnsupportedProvidersText);
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SubmitCommand))]
     [NotifyPropertyChangedFor(nameof(SelectedProvider))]
     [NotifyPropertyChangedFor(nameof(CanSubmit))]
     public partial SetupTwoFactorProviderOption? SelectedProviderOption { get; set; }
@@ -46,6 +50,7 @@ public sealed partial class SetupTwoFactorPageViewModel(
     public IdentityTwoFactorProviderType SelectedProvider => SelectedProviderOption?.Provider ?? default;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SubmitCommand))]
     [NotifyPropertyChangedFor(nameof(CanSubmit))]
     public partial string Code { get; set; } = string.Empty;
 
@@ -53,6 +58,7 @@ public sealed partial class SetupTwoFactorPageViewModel(
     public partial string? Error { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SubmitCommand))]
     [NotifyPropertyChangedFor(nameof(CanSubmit))]
     public partial bool IsBusy { get; private set; }
 
@@ -77,6 +83,7 @@ public sealed partial class SetupTwoFactorPageViewModel(
         _challenge = challenge;
         _serverAuthorizationHash = parameters.Challenge.ServerAuthorizationHash;
         Email = parameters.Challenge.Email;
+        ServerDisplayName = parameters.EmailState.SelectedServer?.Title ?? string.Empty;
 
         SupportedProviders = challenge.Providers
             .Select(static option => option.Provider)
@@ -109,6 +116,7 @@ public sealed partial class SetupTwoFactorPageViewModel(
         _emailState = null;
         _serverAuthorizationHash = string.Empty;
         Email = string.Empty;
+        ServerDisplayName = string.Empty;
         SupportedProviders = [];
         UnsupportedProvidersText = string.Empty;
         IsBusy = false;
@@ -122,7 +130,7 @@ public sealed partial class SetupTwoFactorPageViewModel(
             navigator.GoBackToEmail(emailState);
     }
 
-    [RelayCommand(AllowConcurrentExecutions = false)]
+    [RelayCommand(CanExecute = nameof(CanSubmit), AllowConcurrentExecutions = false)]
     private async Task SubmitAsync()
     {
         if (IsBusy)

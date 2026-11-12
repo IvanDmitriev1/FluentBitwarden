@@ -10,6 +10,8 @@ public sealed record SetupServerOption(string Title, BitwardenEnvironment? Envir
 
     public bool IsCustom => Environment is null;
 
+    public string? Host => Environment?.VaultBase.Host;
+
     public BitwardenEnvironment ToEnvironment(string customServerUrl)
     {
         if (Environment is not null)

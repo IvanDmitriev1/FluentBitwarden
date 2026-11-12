@@ -1,0 +1,28 @@
+{
+  "IndentSize": 4,
+  "IndentWithTabs": false,
+  "AttributesTolerance": 2,
+  "KeepFirstAttributeOnSameLine": false,
+  "MaxAttributesPerLine": 1,
+  "PutEndingBracketOnNewLine": false,
+  "SpaceBeforeClosingSlash": true,
+  "EnableAttributeReordering": true,
+  "OrderAttributesByName": true,
+  "AttributeOrderingRuleGroups": [
+    "x:Class",
+    "xmlns, xmlns:x",
+    "xmlns:*",
+    "x:Key, x:Name, x:Uid, x:DataType",
+    "Grid.Row, Grid.RowSpan, Grid.Column, Grid.ColumnSpan",
+    "Width, Height, MinWidth, MinHeight, MaxWidth, MaxHeight",
+    "Margin, Padding, HorizontalAlignment, VerticalAlignment, HorizontalContentAlignment, VerticalContentAlignment",
+    "*:*, *"
+  ],
+  "FormatMarkupExtension": true,
+  "NoNewLineMarkupExtensions": "x:Bind, Binding",
+  "ThicknessSeparator": 2,
+  "ReorderGridChildren": false,
+  "ReorderCanvasChildren": false,
+  "ReorderVSM": 0,
+  "FormatOnSave": true
+}
