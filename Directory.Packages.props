@@ -64,6 +64,7 @@
     <PackageVersion Include="Shmuelie.WinRTServer" Version="2.2.1" />
   </ItemGroup>
   <ItemGroup Label="Test Dependencies">
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools.WinApp.UIAutomation" Version="0.8.0" />
     <PackageVersion Include="coverlet.MTP" Version="10.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" />

@@ -1,21 +1,23 @@
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
-using FluentBitwarden.Platform.Settings;
 
 namespace FluentBitwarden.Ui.Features.Settings.Models;
 
 public sealed partial class SettingValue<T> : ObservableObject where T : notnull
 {
-    public SettingValue(SettingKey<T> key, Action<T>? afterChanged = null)
+    public SettingValue(ISettingsStore settingsStore, SettingKey<T> key, Action<T>? afterChanged = null)
     {
+        _settingsStore = settingsStore;
         _key = key;
         _afterChanged = afterChanged;
 
         _suppressChange = true;
-        Value = SettingsStore.Instance.Get(_key);
+        Value = _settingsStore.Get(_key);
         _suppressChange = false;
     }
 
     private readonly SettingKey<T> _key;
+    private readonly ISettingsStore _settingsStore;
     private readonly Action<T>? _afterChanged;
     private bool _suppressChange;
 
@@ -27,7 +29,7 @@ public sealed partial class SettingValue<T> : ObservableObject where T : notnull
         _suppressChange = true;
         try
         {
-            Value = SettingsStore.Instance.Get(_key);
+            Value = _settingsStore.Get(_key);
         }
         finally
         {
@@ -42,13 +44,13 @@ public sealed partial class SettingValue<T> : ObservableObject where T : notnull
         if (_suppressChange)
             return;
 
-        SettingsStore.Instance.Set(_key, value);
+        _settingsStore.Set(_key, value);
         _afterChanged?.Invoke(value);
     }
 }
 
 public static class SettingValueExtension
 {
-    public static SettingValue<T> CreateSettingValue<T>(this SettingKey<T> key, Action<T>? afterChanged = null)
-        where T : notnull => new(key, afterChanged);
+    public static SettingValue<T> CreateSettingValue<T>(this SettingKey<T> key, ISettingsStore settingsStore, Action<T>? afterChanged = null)
+        where T : notnull => new(settingsStore, key, afterChanged);
 }

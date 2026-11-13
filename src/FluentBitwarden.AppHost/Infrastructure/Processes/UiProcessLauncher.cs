@@ -2,12 +2,11 @@ using FluentBitwarden.AppHost.Application.Abstractions;
 using FluentBitwarden.Contracts.Infrastructure.UiActivation;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.ProcessManager;
-using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.Hosting;
 
 namespace FluentBitwarden.AppHost.Infrastructure.Processes;
 
-public sealed class UiProcessLauncher(IHostApplicationLifetime applicationLifetime) : ProcessManager(ExeName, ExeDirectoryName), IUiProcessLauncher, IAppHostTermination
+public sealed class UiProcessLauncher(IHostApplicationLifetime applicationLifetime, ISettingsStore settingsStore) : ProcessManager(ExeName, ExeDirectoryName), IUiProcessLauncher, IAppHostTermination
 {
     private const string ExeName = "FluentBitwarden.Ui.exe";
     private const string ExeDirectoryName = "FluentBitwarden.Ui";
@@ -43,7 +42,7 @@ public sealed class UiProcessLauncher(IHostApplicationLifetime applicationLifeti
     {
         base.OnProcessExited();
 
-        if (SettingsStore.Instance.Get(AppSettingKeys.App.CloseToTrayKey))
+        if (settingsStore.Get(AppSettingKeys.App.CloseToTrayKey))
             return;
 
         applicationLifetime.StopApplication();

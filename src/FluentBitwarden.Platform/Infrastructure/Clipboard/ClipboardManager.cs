@@ -1,4 +1,3 @@
-using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
 using Windows.ApplicationModel.DataTransfer;
 using WindowsClipboard = Windows.ApplicationModel.DataTransfer.Clipboard;
@@ -13,7 +12,7 @@ public static class ClipboardManager
     private static string? _lastCopiedText;
     private static int _generation;
 
-    public static void SetText(string? text)
+    public static void SetText(string? text, ClipboardClearDelay delay)
     {
         if (string.IsNullOrWhiteSpace(text))
             return;
@@ -30,7 +29,7 @@ public static class ClipboardManager
             };
 
             WindowsClipboard.SetContentWithOptions(package, options);
-            ScheduleClear(text);
+            ScheduleClear(text, delay);
         });
     }
 
@@ -46,13 +45,12 @@ public static class ClipboardManager
         WindowsClipboard.Clear();
     });
 
-    private static void ScheduleClear(string copiedText)
+    private static void ScheduleClear(string copiedText, ClipboardClearDelay delay)
     {
         StopClearTimer();
         _lastCopiedText = copiedText;
         int generation = unchecked(++_generation);
 
-        var delay = Settings.SettingsStore.Instance.Get(AppSettingKeys.Clipboard.ClearDelayKey);
         if (delay == ClipboardClearDelay.Never)
             return;
 

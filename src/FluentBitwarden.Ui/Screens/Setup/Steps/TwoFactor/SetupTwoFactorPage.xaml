@@ -59,6 +59,7 @@
                     TextWrapping="Wrap"
                     Visibility="{x:Bind ViewModel.HasUnsupportedProviders, Mode=OneWay, Converter={StaticResource BoolToVisConverter}}" />
                 <ui:TextBoxEx
+                    AutomationProperties.AutomationId="SetupVerificationCodeTextBox"
                     Command="{x:Bind ViewModel.SubmitCommand, Mode=OneTime}"
                     Header="Verification code"
                     IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"

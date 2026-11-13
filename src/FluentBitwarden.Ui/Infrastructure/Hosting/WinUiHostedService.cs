@@ -1,102 +1,113 @@
 using CommunityToolkit.WinUI;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.UI.Dispatching;
 
 namespace FluentBitwarden.Ui.Infrastructure.Hosting;
 
 internal sealed class WinUiHostedService<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TApplication>(
-    IServiceProvider services,
+    Func<TApplication> createApplication,
     IHostApplicationLifetime lifetime,
     ILogger<WinUiHostedService<TApplication>> logger) : IHostedLifecycleService
     where TApplication : Microsoft.UI.Xaml.Application
 {
-    private readonly TaskCompletionSource _ready = new(
-        TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly WinUiThread _thread = new(createApplication);
 
-    private readonly TaskCompletionSource _stopped = new(
-        TaskCreationOptions.RunContinuationsAsynchronously);
+    public bool HasLiveDispatcher => _thread.Dispatcher is not null && !_thread.Completion.IsCompleted;
 
-    private DispatcherQueue? _dispatcher;
-    private TApplication? _application;
-
-    public Task StartingAsync(CancellationToken cancellationToken)
+    public async Task StartingAsync(CancellationToken cancellationToken)
     {
-        var thread = new Thread(RunApplication)
+        _ = StopHostOnExitAsync();
+        try
         {
-            Name = "WinUI Thread",
-            IsBackground = true
-        };
-
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-
-        return _ready.Task.WaitAsync(cancellationToken);
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task StartedAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task StoppingAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        var dispatcher = Volatile.Read(ref _dispatcher);
-        if (!_stopped.Task.IsCompleted && dispatcher is not null)
+            await _thread.StartAsync(cancellationToken);
+        }
+        catch (Exception startupError)
         {
-            dispatcher.TryEnqueue(() => _application?.Exit());
+            logger.LogError(startupError, "WinUI application failed to start.");
+            using var shutdown = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            try
+            {
+                await _thread.StopAsync(shutdown.Token);
+            }
+            catch (Exception shutdownError)
+            {
+                if (ReferenceEquals(startupError, shutdownError))
+                {
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(startupError).Throw();
+                }
+
+                logger.LogError(shutdownError, "WinUI shutdown failed after startup failure.");
+                throw new AggregateException("WinUI startup and shutdown both failed.", startupError, shutdownError);
+            }
+
+            throw;
+        }
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StopAsync(CancellationToken cancellationToken) => _thread.StopAsync(cancellationToken);
+
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public void RunOnUiThread(Action action) => RunOnUiThreadAsync(action).SafeFireAndForget();
+
+    public Task RunOnUiThreadAsync(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        return GetDispatcher().EnqueueAsync(action);
+    }
+
+    public Task RunOnUiThreadAsync(Func<Task> action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        var dispatcher = GetDispatcher();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        if (!dispatcher.TryEnqueue(async () =>
+        {
+            try
+            {
+                await action();
+                completion.TrySetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        }))
+        {
+            completion.TrySetException(new InvalidOperationException("The UI dispatcher is shutting down."));
         }
 
-        await _stopped.Task.WaitAsync(cancellationToken);
+        return completion.Task;
     }
 
-    public Task StoppedAsync(CancellationToken cancellationToken)
+    public Task<T> RunOnUiThreadAsync<T>(Func<T> action)
     {
-        return Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(action);
+        return GetDispatcher().EnqueueAsync(action);
     }
 
-    public void RunOnUiThread(Action action)
-    {
-        ArgumentNullException.ThrowIfNull(_dispatcher);
+    private Microsoft.UI.Dispatching.DispatcherQueue GetDispatcher() =>
+        _thread.Dispatcher ?? throw new InvalidOperationException("The UI dispatcher is not ready.");
 
-        _dispatcher.EnqueueAsync(action).SafeFireAndForget();
-    }
-
-    private void RunApplication()
+    private async Task StopHostOnExitAsync()
     {
         try
         {
-            Microsoft.UI.Xaml.Application.Start(_ =>
-            {
-                var dispatcher = DispatcherQueue.GetForCurrentThread();
-                var context = new DispatcherQueueSynchronizationContext(dispatcher);
-                SynchronizationContext.SetSynchronizationContext(context);
-
-                Volatile.Write(ref _dispatcher, dispatcher);
-                _application = ActivatorUtilities.CreateInstance<TApplication>(services);
-
-                _ready.TrySetResult();
-            });
+            await _thread.Completion;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            logger.LogError(e, "WinUI application failed.");
-            _ready.TrySetException(e);
+            logger.LogError(exception, "WinUI application failed.");
         }
         finally
         {
-            _stopped.TrySetResult();
             lifetime.StopApplication();
         }
     }

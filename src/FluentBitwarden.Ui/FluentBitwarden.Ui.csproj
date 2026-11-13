@@ -11,6 +11,10 @@
 	<NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="FluentBitwarden.Ui.Tests" />
+  </ItemGroup>
+
 	<!-- Publish Properties -->
 	<PropertyGroup>
 		<TrimMode Condition="'$(PublishTrimmed)' == 'true'">partial</TrimMode>

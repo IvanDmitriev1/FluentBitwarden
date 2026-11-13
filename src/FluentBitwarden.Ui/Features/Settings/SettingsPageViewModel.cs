@@ -18,24 +18,25 @@ namespace FluentBitwarden.Ui.Features.Settings;
 public sealed partial class SettingsPageViewModel(
     IAppSessionClient appSessionClient,
     IAccountWindowsHelloIntegrationClient windowsHelloClient,
-    IWindowManager windowManager) : ObservableObject, INavigationAware
+    IWindowManager windowManager,
+    ISettingsStore settingsStore) : ObservableObject, INavigationAware
 {
-    public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(windowManager.ApplyTheme);
-    public SettingValue<string> Language { get; } = UiSettingKeys.Appearance.LanguageKey.CreateSettingValue();
-    public SettingValue<bool> CloseToTray { get; } = AppSettingKeys.App.CloseToTrayKey.CreateSettingValue();
-    public SettingValue<VaultTimeout> VaultTimeout { get; } = AppSettingKeys.Security.VaultTimeoutKey.CreateSettingValue();
-    public SettingValue<VaultTimeoutTrigger> VaultTimeoutTrigger { get; } = AppSettingKeys.Security.VaultTimeoutTriggerKey.CreateSettingValue();
-    public SettingValue<bool> LockWhenSystemLocks { get; } = AppSettingKeys.Security.LockWhenSystemLocksKey.CreateSettingValue();
-    public SettingValue<bool> LockWhenDeviceSleeps { get; } = AppSettingKeys.Security.LockWhenDeviceSleepsKey.CreateSettingValue();
-    public SettingValue<bool> LockWhenAppHiddenToTray { get; } = AppSettingKeys.Security.LockWhenAppHiddenToTrayKey.CreateSettingValue();
-    public SettingValue<ClipboardClearDelay> ClipboardClearDelay { get; } = AppSettingKeys.Clipboard.ClearDelayKey.CreateSettingValue();
-    public SettingValue<bool> ClipboardClearOnLock { get; } = AppSettingKeys.Clipboard.ClearOnLockKey.CreateSettingValue();
-    public SettingValue<SensitiveActionPolicy> PasskeyUserVerificationPolicy { get; } = AppSettingKeys.Passkeys.UserVerificationPolicyKey.CreateSettingValue();
-    public SettingValue<SensitiveActionPolicy> SshUserVerificationPolicy { get; } = AppSettingKeys.SshAgent.UserVerificationPolicyKey.CreateSettingValue();
+    public SettingValue<ElementTheme> Theme { get; } = UiSettingKeys.Appearance.ThemeKey.CreateSettingValue(settingsStore, windowManager.ApplyTheme);
+    public SettingValue<string> Language { get; } = UiSettingKeys.Appearance.LanguageKey.CreateSettingValue(settingsStore);
+    public SettingValue<bool> CloseToTray { get; } = AppSettingKeys.App.CloseToTrayKey.CreateSettingValue(settingsStore);
+    public SettingValue<VaultTimeout> VaultTimeout { get; } = AppSettingKeys.Security.VaultTimeoutKey.CreateSettingValue(settingsStore);
+    public SettingValue<VaultTimeoutTrigger> VaultTimeoutTrigger { get; } = AppSettingKeys.Security.VaultTimeoutTriggerKey.CreateSettingValue(settingsStore);
+    public SettingValue<bool> LockWhenSystemLocks { get; } = AppSettingKeys.Security.LockWhenSystemLocksKey.CreateSettingValue(settingsStore);
+    public SettingValue<bool> LockWhenDeviceSleeps { get; } = AppSettingKeys.Security.LockWhenDeviceSleepsKey.CreateSettingValue(settingsStore);
+    public SettingValue<bool> LockWhenAppHiddenToTray { get; } = AppSettingKeys.Security.LockWhenAppHiddenToTrayKey.CreateSettingValue(settingsStore);
+    public SettingValue<ClipboardClearDelay> ClipboardClearDelay { get; } = AppSettingKeys.Clipboard.ClearDelayKey.CreateSettingValue(settingsStore);
+    public SettingValue<bool> ClipboardClearOnLock { get; } = AppSettingKeys.Clipboard.ClearOnLockKey.CreateSettingValue(settingsStore);
+    public SettingValue<SensitiveActionPolicy> PasskeyUserVerificationPolicy { get; } = AppSettingKeys.Passkeys.UserVerificationPolicyKey.CreateSettingValue(settingsStore);
+    public SettingValue<SensitiveActionPolicy> SshUserVerificationPolicy { get; } = AppSettingKeys.SshAgent.UserVerificationPolicyKey.CreateSettingValue(settingsStore);
     public WindowsHelloSettingValue WindowsHello { get; } = new(appSessionClient, windowsHelloClient, windowManager);
 
-    public PasskeyPluginSettingValue PasskeyPlugin { get; } = new();
-    public BrowserExtensionSettingValue BrowserExtension { get; } = new();
+    public PasskeyPluginSettingValue PasskeyPlugin { get; } = new(settingsStore);
+    public BrowserExtensionSettingValue BrowserExtension { get; } = new(settingsStore);
     public string AppVersion { get; } = ResolveAppVersion();
 
     public async ValueTask OnNavigatedToAsync(CancellationToken cancellationToken)

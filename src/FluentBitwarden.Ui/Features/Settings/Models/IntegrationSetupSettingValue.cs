@@ -1,3 +1,4 @@
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
 
 namespace FluentBitwarden.Ui.Features.Settings.Models;
@@ -6,8 +7,8 @@ public abstract partial class IntegrationSetupSettingValue : ObservableObject
 {
     private bool _isLoading = true;
 
-    protected IntegrationSetupSettingValue(SettingKey<bool> enabledKey) =>
-        Enabled = enabledKey.CreateSettingValue(OnEnabledChanged);
+    protected IntegrationSetupSettingValue(ISettingsStore settingsStore, SettingKey<bool> enabledKey) =>
+        Enabled = enabledKey.CreateSettingValue(settingsStore, OnEnabledChanged);
 
     public SettingValue<bool> Enabled { get; }
 

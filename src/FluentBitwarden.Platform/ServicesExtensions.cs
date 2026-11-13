@@ -1,4 +1,8 @@
 using System.Net;
+using FluentBitwarden.Contracts.Settings;
+using FluentBitwarden.Platform.Settings;
+using FluentBitwarden.Platform.Settings.Composition;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
 using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +27,8 @@ public static class ServicesExtensions
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
         });
 
+        services.TryAddSingleton<ICompositeSettingsStore, ApplicationDataSettingsStore>();
+        services.TryAddSingleton<ISettingsStore>(static provider => provider.GetRequiredService<ICompositeSettingsStore>());
         services.AddSingleton<INetworkStatus, WindowsNetworkStatus>();
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
         return services;

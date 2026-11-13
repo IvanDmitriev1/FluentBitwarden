@@ -1,5 +1,5 @@
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
-using FluentBitwarden.Platform.Settings;
+using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Windows.Abstractions;
 using Navis.WinUI;
@@ -11,8 +11,13 @@ namespace FluentBitwarden.Ui.Windows;
 
 internal sealed class WindowManager : IWindowManager
 {
-    public WindowManager() => _uiSettings.ColorValuesChanged += OnUiSettingsOnColorValuesChanged;
+    public WindowManager(ISettingsStore settingsStore)
+    {
+        _settingsStore = settingsStore;
+        _uiSettings.ColorValuesChanged += OnUiSettingsOnColorValuesChanged;
+    }
 
+    private readonly ISettingsStore _settingsStore;
     private readonly UISettings _uiSettings = new();
     private WindowEx? _currentWindow;
 
@@ -92,11 +97,11 @@ internal sealed class WindowManager : IWindowManager
         return true;
     }
 
-    private static void ApplyTheme(WindowEx? window)
+    private void ApplyTheme(WindowEx? window)
     {
         if (window is not IThemeChangeable themeChangeable)
             return;
 
-        themeChangeable.ApplyTheme(SettingsStore.Instance.Get(UiSettingKeys.Appearance.ThemeKey));
+        themeChangeable.ApplyTheme(_settingsStore.Get(UiSettingKeys.Appearance.ThemeKey));
     }
 }

@@ -5,7 +5,6 @@ using FluentBitwarden.AppHost.Infrastructure.Processes;
 using FluentBitwarden.AppHost.Infrastructure.Tray;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.Integrations;
-using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Windows.AppLifecycle;
 
@@ -23,6 +22,7 @@ internal sealed class AppHostLifecycleService : IHostedLifecycleService
     private readonly IUiProcessLauncher _uiProcessLauncher;
     private readonly IDatabaseInitializationService _databaseInitializationService;
 
+    private readonly ISettingsStore _settingsStore;
     private readonly AppTray _appTray;
     private readonly AppActivationHandler _activationHandler;
 
@@ -36,6 +36,7 @@ internal sealed class AppHostLifecycleService : IHostedLifecycleService
         IDatabaseInitializationService databaseInitializationService,
         AppActivationHandler activationHandler,
         AppTray appTray,
+        ISettingsStore settingsStore,
         AppActivationArguments initialActivationArguments)
     {
         _applicationLifetime = applicationLifetime;
@@ -44,6 +45,7 @@ internal sealed class AppHostLifecycleService : IHostedLifecycleService
         _initialActivationArguments = initialActivationArguments;
         _activationHandler = activationHandler;
         _appTray = appTray;
+        _settingsStore = settingsStore;
 
         _messageLoopThread = new Thread(MessageLoopThread)
         {
@@ -58,7 +60,7 @@ internal sealed class AppHostLifecycleService : IHostedLifecycleService
     {
         _databaseInitializationService.Initialize();
 
-        if (SettingsStore.Instance.Get(AppSettingKeys.App.SetupCompletedKey))
+        if (_settingsStore.Get(AppSettingKeys.App.SetupCompletedKey))
         {
             return Task.CompletedTask;
         }
@@ -67,10 +69,10 @@ internal sealed class AppHostLifecycleService : IHostedLifecycleService
         {
             PasskeyPluginSetupService.EnsureRegisteredAsync().SafeFireAndForget();
 
-            SettingsStore.Instance.Set(AppSettingKeys.Passkeys.PluginEnabledKey, true);
+            _settingsStore.Set(AppSettingKeys.Passkeys.PluginEnabledKey, true);
         }
 
-        SettingsStore.Instance.Set(AppSettingKeys.App.SetupCompletedKey, true);
+        _settingsStore.Set(AppSettingKeys.App.SetupCompletedKey, true);
         return Task.CompletedTask;
     }
 

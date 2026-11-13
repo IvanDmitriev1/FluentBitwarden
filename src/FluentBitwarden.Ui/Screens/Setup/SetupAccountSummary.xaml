@@ -27,6 +27,7 @@
 					FontSize="16"
 					Glyph="&#xE715;" />
 				<TextBlock
+					AutomationProperties.AutomationId="SetupAccountEmail"
 					Grid.Column="1"
 					VerticalAlignment="Center"
 					Text="{x:Bind Email, Mode=OneWay}"

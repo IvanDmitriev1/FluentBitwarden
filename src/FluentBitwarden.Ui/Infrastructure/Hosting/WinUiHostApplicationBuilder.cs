@@ -59,7 +59,8 @@ public sealed class WinUiHostApplicationBuilder<
 
     public IWinUiHost Build()
     {
-        Services.AddHostedService<WinUiHostedService<TApplication>>();
+        Services.AddWinUiHostedService<TApplication>(static serviceProvider =>
+            serviceProvider.GetRequiredService<TApplication>());
 
         IHost host = _builder.Build();
 

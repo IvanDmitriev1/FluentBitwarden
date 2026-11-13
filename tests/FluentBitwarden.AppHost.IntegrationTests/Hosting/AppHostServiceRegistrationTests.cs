@@ -18,7 +18,6 @@ using FluentBitwarden.AppHost.Modules.Vault;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Infrastructure.UserDialog;
 using FluentBitwarden.Platform.Ipc;
-using FluentBitwarden.Platform.Settings;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -38,7 +37,7 @@ public sealed class AppHostServiceRegistrationTests
 
         builder.Services.AddApplicationServices();
         builder.Services.AddLogging();
-        builder.Services.AddSingleton<ISettingsStore>(_ => SettingsStore.Instance);
+        builder.Services.AddSingleton(Substitute.For<ISettingsStore>());
         builder.Services.AddSingleton<IUserDialogService, UserDialogService>();
 
         builder.Services.AddSingleton<ISqliteConnectionFactory>(new SqliteConnectionFactory("unused.db"));

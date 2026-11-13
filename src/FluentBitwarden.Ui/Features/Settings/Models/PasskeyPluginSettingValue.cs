@@ -3,8 +3,8 @@ using FluentBitwarden.Platform.Infrastructure.Integrations;
 
 namespace FluentBitwarden.Ui.Features.Settings.Models;
 
-public sealed partial class PasskeyPluginSettingValue()
-    : IntegrationSetupSettingValue(AppSettingKeys.Passkeys.PluginEnabledKey)
+public sealed partial class PasskeyPluginSettingValue(ISettingsStore settingsStore)
+    : IntegrationSetupSettingValue(settingsStore, AppSettingKeys.Passkeys.PluginEnabledKey)
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanToggle))]

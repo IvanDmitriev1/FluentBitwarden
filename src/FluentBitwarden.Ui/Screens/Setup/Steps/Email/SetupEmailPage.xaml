@@ -22,6 +22,7 @@
 
 		<StackPanel Spacing="8">
 			<ui:TextBoxEx
+				AutomationProperties.AutomationId="SetupEmailTextBox"
 				Command="{x:Bind ViewModel.ContinueCommand, Mode=OneTime}"
 				InputScope="EmailSmtpAddress"
 				Header="Email"
@@ -94,6 +95,7 @@
 			<Button
 				Height="36"
 				HorizontalAlignment="Stretch"
+				AutomationProperties.AutomationId="SetupContinueButton"
 				AutomationProperties.Name="Continue with master password"
 				Command="{x:Bind ViewModel.ContinueCommand, Mode=OneTime}"
 				Content="Continue"

@@ -1,8 +1,8 @@
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Contracts.Settings.Models;
-using FluentBitwarden.Platform.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace FluentBitwarden.Platform.Diagnostics;
 
@@ -16,13 +16,17 @@ public static class LoggingServiceCollectionExtensions
     /// <param name="logName">Names the process log file, e.g. "apphost" writes Logs\apphost.log.</param>
     public static IServiceCollection AddAppLogging(this IServiceCollection services, string logName)
     {
-        LogLevels levels = SettingsStore.Instance.Get(AppSettingKeys.Diagnostics.LogLevelsKey);
-
         return services.AddLogging(builder =>
         {
             builder.ClearProviders();
             builder.SetMinimumLevel(LogLevel.Trace);
-            builder.AddFilter(level => LogLevelsExtensions.IsEnabled(levels, level));
+            builder.Services.AddSingleton<IConfigureOptions<LoggerFilterOptions>>(static provider =>
+            {
+                var settings = provider.GetRequiredService<ISettingsStore>();
+                LogLevels levels = settings.Get(AppSettingKeys.Diagnostics.LogLevelsKey);
+                return new ConfigureOptions<LoggerFilterOptions>(
+                    options => options.AddFilter(level => LogLevelsExtensions.IsEnabled(levels, level)));
+            });
             builder.Services.AddSingleton<ILoggerProvider>(_ => new FileLoggerProvider(logName));
         });
     }

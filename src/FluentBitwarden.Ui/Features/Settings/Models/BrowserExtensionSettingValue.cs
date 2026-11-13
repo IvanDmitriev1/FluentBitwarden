@@ -3,8 +3,8 @@ using FluentBitwarden.Platform.Infrastructure.Integrations;
 
 namespace FluentBitwarden.Ui.Features.Settings.Models;
 
-public sealed partial class BrowserExtensionSettingValue()
-    : IntegrationSetupSettingValue(AppSettingKeys.Browser.ExtensionEnabledKey)
+public sealed partial class BrowserExtensionSettingValue(ISettingsStore settingsStore)
+    : IntegrationSetupSettingValue(settingsStore, AppSettingKeys.Browser.ExtensionEnabledKey)
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasStatusMessage))]

@@ -1,5 +1,6 @@
 using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 using FluentBitwarden.Platform.SiteIcons;
+using FluentBitwarden.Contracts.Settings;
 
 namespace FluentBitwarden.CommandPalette.VaultListItems;
 
@@ -8,7 +9,7 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
     public LoginVaultCipherListItem(
         LoginCipher cipher,
         ISiteIconCache siteIconCache,
-        IUiProcessManager uiProcessManager)
+        IUiProcessManager uiProcessManager, ISettingsStore settingsStore)
     {
         Title = cipher.Name;
         Subtitle = string.IsNullOrWhiteSpace(cipher.Username)
@@ -22,7 +23,7 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
             return;
         }
 
-        var commands = CreateCommands(cipher, uiProcessManager);
+        var commands = CreateCommands(cipher, uiProcessManager, settingsStore);
         var primaryCommand = commands[0];
 
         Command = primaryCommand;
@@ -31,18 +32,18 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
             MoreCommands = moreCommands;
     }
 
-    private static List<ICommand> CreateCommands(LoginCipher cipher, IUiProcessManager uiProcessManager)
+    private static List<ICommand> CreateCommands(LoginCipher cipher, IUiProcessManager uiProcessManager, ISettingsStore settingsStore)
     {
         var commands = new List<ICommand>(4);
 
-        if (CreateCopyCommand(cipher.Password, "Password") is { } passwordCommand)
+        if (CreateCopyCommand(cipher.Password, "Password", settingsStore) is { } passwordCommand)
             commands.Add(passwordCommand);
 
-        if (CreateCopyCommand(cipher.Username, "Username") is { } usernameCommand)
+        if (CreateCopyCommand(cipher.Username, "Username", settingsStore) is { } usernameCommand)
             commands.Add(usernameCommand);
 
         if (cipher.Totp is not null)
-            commands.Add(new CopyVaultValueCommand(cipher.Totp.ComputeTotp, "TOTP"));
+            commands.Add(new CopyVaultValueCommand(cipher.Totp.ComputeTotp, "TOTP", settingsStore));
 
         commands.Add(new OpenItemCommand(cipher, uiProcessManager));
 
@@ -77,8 +78,8 @@ internal sealed partial class LoginVaultCipherListItem : ListItem
         return Icons.Login;
     }
 
-    private static ICommand? CreateCopyCommand(string? value, string valueName) =>
+    private static ICommand? CreateCopyCommand(string? value, string valueName, ISettingsStore settingsStore) =>
         string.IsNullOrWhiteSpace(value)
             ? null
-            : new CopyVaultValueCommand(value, valueName);
+            : new CopyVaultValueCommand(value, valueName, settingsStore);
 }
