@@ -1,72 +1,72 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <UserControl
-    x:Class="FluentBitwarden.Ui.Screens.Shell.Controls.VaultCipherSearchBox"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:FluentBitwarden.Ui.Controls"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions"
-    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
-    mc:Ignorable="d">
+	x:Class="FluentBitwarden.Ui.Screens.Shell.Controls.VaultCipherSearchBox"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions"
+	xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
+	mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <x:String x:Key="VaultCipherSearchBoxPlaceholderText">Search</x:String>
-            <x:String x:Key="VaultCipherSearchBoxAutomationName">Search vault</x:String>
-        </ResourceDictionary>
-    </UserControl.Resources>
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<x:String x:Key="VaultCipherSearchBoxPlaceholderText">Search</x:String>
+			<x:String x:Key="VaultCipherSearchBoxAutomationName">Search vault</x:String>
+		</ResourceDictionary>
+	</UserControl.Resources>
 
-    <interactivity:Interaction.Behaviors>
-        <interactivity:EventTriggerBehavior EventName="Unloaded">
-            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.CancelPendingSearchCommand, Mode=OneWay}" />
-        </interactivity:EventTriggerBehavior>
-    </interactivity:Interaction.Behaviors>
+	<interactivity:Interaction.Behaviors>
+		<interactivity:EventTriggerBehavior EventName="Unloaded">
+			<interactivity:InvokeCommandAction Command="{x:Bind ViewModel.CancelPendingSearchCommand, Mode=OneWay}" />
+		</interactivity:EventTriggerBehavior>
+	</interactivity:Interaction.Behaviors>
 
-    <AutoSuggestBox
-        AutomationProperties.AutomationId="VaultCipherSearchBox"
-        AutomationProperties.Name="{StaticResource VaultCipherSearchBoxAutomationName}"
-        ItemsSource="{x:Bind ViewModel.Suggestions, Mode=OneWay}"
-        PlaceholderText="{StaticResource VaultCipherSearchBoxPlaceholderText}"
-        QueryIcon="Find"
-        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay}"
-        UpdateTextOnSelect="False">
+	<AutoSuggestBox
+		AutomationProperties.AutomationId="VaultCipherSearchBox"
+		AutomationProperties.Name="{StaticResource VaultCipherSearchBoxAutomationName}"
+		ItemsSource="{x:Bind ViewModel.Suggestions, Mode=OneWay}"
+		PlaceholderText="{StaticResource VaultCipherSearchBoxPlaceholderText}"
+		QueryIcon="Find"
+		Text="{x:Bind ViewModel.SearchText, Mode=TwoWay}"
+		UpdateTextOnSelect="False">
 
-        <interactivity:Interaction.Behaviors>
-            <interactivity:EventTriggerBehavior EventName="QuerySubmitted">
-                <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.VaultCipherSelectedCommand, Mode=OneWay}" />
-            </interactivity:EventTriggerBehavior>
-        </interactivity:Interaction.Behaviors>
+		<interactivity:Interaction.Behaviors>
+			<interactivity:EventTriggerBehavior EventName="QuerySubmitted">
+				<interactivity:InvokeCommandAction Command="{x:Bind ViewModel.VaultCipherSelectedCommand, Mode=OneWay}" />
+			</interactivity:EventTriggerBehavior>
+		</interactivity:Interaction.Behaviors>
 
-        <AutoSuggestBox.ItemTemplate>
-            <DataTemplate x:DataType="models:Cipher">
-                <StackPanel
-                    Padding="0,4"
-                    Orientation="Horizontal"
-                    Spacing="8">
-                    <controls:SiteIcon
-                        FallbackGlyph="{x:Bind extensions:VaultCipherExtensions.GetDefaultGlyph((models:Cipher))}"
-                        Size="22"
-                        Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri((models:Cipher))}" />
+		<AutoSuggestBox.ItemTemplate>
+			<DataTemplate x:DataType="models:Cipher">
+				<StackPanel
+					Padding="0,4"
+					Orientation="Horizontal"
+					Spacing="8">
+					<controls:SiteIcon
+						FallbackGlyph="{x:Bind extensions:VaultCipherExtensions.GetDefaultGlyph((models:Cipher))}"
+						Size="22"
+						Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri((models:Cipher))}" />
 
-                    <TextBlock
-                        AutomationProperties.AutomationId="VaultCipherSuggestionName"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="{x:Bind Name}"
-                        TextTrimming="CharacterEllipsis" />
+					<TextBlock
+						AutomationProperties.AutomationId="VaultCipherSuggestionName"
+						Style="{StaticResource BodyStrongTextBlockStyle}"
+						Text="{x:Bind Name}"
+						TextTrimming="CharacterEllipsis" />
 
-                    <TextBlock
-                        x:Name="SubTitle"
-                        x:Load="{x:Bind extensions:VaultCipherExtensions.HasSubtitle((models:Cipher))}"
-                        Opacity="0.72"
-                        Text="{x:Bind extensions:VaultCipherExtensions.GetSubtitle((models:Cipher))}"
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+					<TextBlock
+						x:Name="SubTitle"
+						x:Load="{x:Bind extensions:VaultCipherExtensions.HasSubtitle((models:Cipher))}"
+						Opacity="0.72"
+						Text="{x:Bind extensions:VaultCipherExtensions.GetSubtitle((models:Cipher))}"
+						TextTrimming="CharacterEllipsis" />
+				</StackPanel>
 
-            </DataTemplate>
-        </AutoSuggestBox.ItemTemplate>
+			</DataTemplate>
+		</AutoSuggestBox.ItemTemplate>
 
-    </AutoSuggestBox>
+	</AutoSuggestBox>
 
 </UserControl>

@@ -11,6 +11,7 @@ using FluentBitwarden.Ui.Windows.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Windows.SDK.BuildTools.WinApp.UIAutomation;
+using FluentBitwarden.Ui.Features.Vault;
 
 namespace FluentBitwarden.Ui.Tests.TestInfrastructure;
 
@@ -174,6 +175,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
 
     public void ConfigureAuthenticatorRejection() => _composition.ConfigureAuthenticatorRejection();
     public void ConfigureUnlockRejection(string reason) => _composition.ConfigureUnlockRejection(reason);
+    public void SetVaultBrowseState(VaultBrowseState state) => _composition.SetVaultBrowseState(state);
 
     public IAppSessionClient AppSessionClient => _composition.AppSessionClient;
     public IVaultCipherClient VaultCipherClient => _composition.VaultCipherClient;
@@ -218,6 +220,20 @@ public sealed class DesktopUiFixture : IAsyncLifetime
                 (nint)(long)app.GetRequiredService<IWindowManager>().NativeWindowHandle,
                 app.GetRequiredService<IUiAutomation>());
         }).WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
-        return new DesktopAutomation(ui, UiTarget.FromWindowHandle(handle));
+        return new DesktopAutomation(ui, UiTarget.FromWindowHandle(handle), _services!.GetRequiredService<IMouseInput>());
+    }
+
+    public async Task SendKeysAsync(string keys, CancellationToken cancellationToken)
+    {
+        var handle = await _winUi.RunOnUiThreadAsync(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return (long)App.Current.GetRequiredService<IWindowManager>().NativeWindowHandle;
+        }).WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+
+        _services!.GetRequiredService<IKeyboardInput>().Send(
+            handle,
+            KeyStringParser.Parse(keys),
+            KeyTransport.SendInput);
     }
 }

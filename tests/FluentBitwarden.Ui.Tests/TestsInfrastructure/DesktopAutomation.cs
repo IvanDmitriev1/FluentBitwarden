@@ -4,7 +4,7 @@ using Microsoft.Windows.SDK.BuildTools.WinApp.UIAutomation;
 
 namespace FluentBitwarden.Ui.Tests.TestInfrastructure;
 
-public sealed class DesktopAutomation(IUiAutomation ui, UiTarget target)
+public sealed class DesktopAutomation(IUiAutomation ui, UiTarget target, IMouseInput mouseInput)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(25);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(100);
@@ -118,6 +118,18 @@ public sealed class DesktopAutomation(IUiAutomation ui, UiTarget target)
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken, cancellationToken);
         await ui.InvokeAsync(target, element, linked.Token);
+    }
+
+    public async Task ClickAsync(UiElement element, CancellationToken cancellationToken = default)
+    {
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken, cancellationToken);
+        linked.Token.ThrowIfCancellationRequested();
+        mouseInput.Click(
+            (int)(element.X + element.Width / 2),
+            (int)(element.Y + element.Height / 2),
+            doubleClick: false,
+            rightClick: false,
+            settleMs: 0);
     }
 
     private static TimeoutException CreateTimeoutException(UiSelector selector, string condition, string lastState)

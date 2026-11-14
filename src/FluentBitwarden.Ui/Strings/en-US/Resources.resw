@@ -24,4 +24,43 @@
   <data name="AccountUnlockWindowsHelloButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Unlock with Windows Hello</value>
   </data>
+  <data name="VaultListQueryBar.CloseSearchToolTip" xml:space="preserve">
+    <value>Close search</value>
+  </data>
+  <data name="VaultListQueryBar.FilterToolTip" xml:space="preserve">
+    <value>Filter by category</value>
+  </data>
+  <data name="VaultListQueryBar.OpenSearchToolTip" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="VaultListQueryBar.SearchPlaceholderText" xml:space="preserve">
+    <value>Search vault</value>
+  </data>
+  <data name="VaultListQueryBar.SortToolTip" xml:space="preserve">
+    <value>Sort</value>
+  </data>
+  <data name="VaultListAllCategories.Text" xml:space="preserve">
+    <value>All Categories</value>
+  </data>
+  <data name="VaultListLogins.Text" xml:space="preserve">
+    <value>Logins</value>
+  </data>
+  <data name="VaultListCreditCards.Text" xml:space="preserve">
+    <value>Credit Cards</value>
+  </data>
+  <data name="VaultListIdentities.Text" xml:space="preserve">
+    <value>Identities</value>
+  </data>
+  <data name="VaultListNotes.Text" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="VaultListNameAscending.Text" xml:space="preserve">
+    <value>Name A–Z</value>
+  </data>
+  <data name="VaultListNameDescending.Text" xml:space="preserve">
+    <value>Name Z–A</value>
+  </data>
+  <data name="VaultListSshKeys.Text" xml:space="preserve">
+    <value>SSH Keys</value>
+  </data>
 </root>

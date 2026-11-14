@@ -1,15 +1,15 @@
-using System.Collections.ObjectModel;
+using System.Windows.Input;
+using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml.Input;
-using BitwardenApi.Primitives.Ids;
-using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
+using VirtualKey = Windows.System.VirtualKey;
 
 namespace FluentBitwarden.Ui.Features.Vault.VaultCipherList;
 
-[DependencyProperty<string>("SearchText")]
+[DependencyProperty<IEnumerable<Cipher>>("ItemsSource")]
 [DependencyProperty<Cipher>("SelectedCipher")]
-[DependencyProperty<bool>("IsSearchFieldOpen")]
-[DependencyProperty<VaultCipherQuery>("Query")]
-[DependencyProperty<CipherId>("RequestedCipherId")]
+[DependencyProperty<string>("SearchText", DefaultValue = "")]
+[DependencyProperty<ICommand>("CategoryChangedCommand")]
+[DependencyProperty<ICommand>("SortChangedCommand")]
 public sealed partial class VaultCipherListView : UserControl
 {
     public VaultCipherListView()
@@ -17,10 +17,26 @@ public sealed partial class VaultCipherListView : UserControl
         InitializeComponent();
     }
 
-    public ObservableCollection<Cipher> FilteredCiphers { get; } = [];
-
-    private void FocusSearch_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    private void CipherList_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        VaultSearch.Focus(FocusState.Keyboard);
+        if (sender is not ListView listView)
+            return;
+
+        if (e.Key == VirtualKey.Escape && listView.SelectedItem is not null)
+        {
+            listView.SelectedItem = null;
+            e.Handled = true;
+        }
+    }
+
+    private void CipherList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListView { SelectedItem: Cipher selected } listView)
+            return;
+
+        if (!listView.IsLoaded || !ReferenceEquals(listView.SelectedItem, selected))
+            return;
+
+        listView.SmoothScrollIntoViewWithItemAsync(selected).SafeFireAndForget();
     }
 }

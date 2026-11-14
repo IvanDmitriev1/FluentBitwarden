@@ -1,74 +1,90 @@
 <Page
-    x:Class="FluentBitwarden.Ui.Screens.Shell.ShellPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:FluentBitwarden.Ui.Screens.Shell.Controls"
-    xmlns:nav="using:Navis.WinUI"
-    xmlns:settings="using:FluentBitwarden.Ui.Features.Settings"
-    xmlns:shell="using:FluentBitwarden.Ui.Screens.Shell"
-    xmlns:vault="using:FluentBitwarden.Ui.Features.Vault"
-    x:DataType="shell:ShellPageViewModel"
-    NavigationCacheMode="Disabled">
-    <Page.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ms-appx:///Screens/Shell/ShellNavigation.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Page.Resources>
+	x:Class="FluentBitwarden.Ui.Screens.Shell.ShellPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
+	xmlns:controls="using:FluentBitwarden.Ui.Screens.Shell.Controls"
+	xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+	xmlns:nav="using:Navis.WinUI"
+	xmlns:settings="using:FluentBitwarden.Ui.Features.Settings"
+	xmlns:shell="using:FluentBitwarden.Ui.Screens.Shell"
+	xmlns:vault="using:FluentBitwarden.Ui.Features.Vault"
+	KeyboardAcceleratorPlacementMode="Hidden"
+	NavigationCacheMode="Disabled">
 
-    <NavigationView
-        x:Name="ShellNavigationView"
-        nav:NavigationViewProperties.Frame="{x:Bind ContentFrame}"
-        nav:TitleBarNavigation.IsPaneTarget="True"
-        AutomationProperties.AutomationId="ShellNavigationView"
-        AutomationProperties.Name="Main navigation"
-        IsBackButtonVisible="Collapsed"
-        IsPaneToggleButtonVisible="False"
-        IsSettingsVisible="False"
-        Style="{StaticResource ShellNavigationViewStyle}">
-        <NavigationView.Header>
-            <TextBlock
-                Margin="12,8"
-                AutomationProperties.Name="Signed in account"
-                Text="{x:Bind ViewModel.Account.Email, Mode=OneWay}" />
-        </NavigationView.Header>
+	<Page.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="ms-appx:///Screens/Shell/ShellNavigation.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Page.Resources>
 
-        <NavigationView.MenuItems>
-            <NavigationViewItem
-                nav:Navigate.To="{nav:XamlType TypeName=vault:VaultPage}"
-                AutomationProperties.Name="Vault"
-                Content="Vault"
-                Icon="Library" />
-            <NavigationViewItem
-                Content="Generator"
-                Icon="Shuffle"
-                IsEnabled="False" />
-            <NavigationViewItem
-                Content="Send"
-                Icon="Send"
-                IsEnabled="False" />
-        </NavigationView.MenuItems>
+	<Page.KeyboardAccelerators>
+		<KeyboardAccelerator
+			Invoked="FindKeyboardAccelerator_Invoked"
+			Key="F"
+			Modifiers="Control" />
+	</Page.KeyboardAccelerators>
 
-        <NavigationView.FooterMenuItems>
-            <NavigationViewItem
-                nav:Navigate.To="{nav:XamlType TypeName=settings:SettingsPage}"
-                AutomationProperties.Name="Settings"
-                Content="Settings"
-                Icon="Setting" />
-        </NavigationView.FooterMenuItems>
+	<interactivity:Interaction.Behaviors>
+		<behaviors:FocusBehavior>
+			<behaviors:FocusTarget Control="{x:Bind VaultCipherSearchBox}" />
+		</behaviors:FocusBehavior>
+	</interactivity:Interaction.Behaviors>
 
-        <Frame
-            x:Name="ContentFrame"
-            nav:NavigationHost.InitialPage="{nav:XamlType TypeName=vault:VaultPage}"
-            nav:NavigationHost.IsEnabled="True"
-            nav:TitleBarNavigation.IsBackTarget="True">
+	<NavigationView
+		x:Name="ShellNavigationView"
+		nav:NavigationViewProperties.Frame="{x:Bind ContentFrame}"
+		nav:TitleBarNavigation.IsPaneTarget="True"
+		AutomationProperties.AutomationId="ShellNavigationView"
+		AutomationProperties.Name="Main navigation"
+		IsBackButtonVisible="Collapsed"
+		IsPaneToggleButtonVisible="False"
+		IsSettingsVisible="False"
+		Style="{StaticResource ShellNavigationViewStyle}">
+		<NavigationView.MenuItems>
+			<NavigationViewItem
+				nav:Navigate.To="{nav:XamlType TypeName=vault:VaultPage}"
+				AutomationProperties.Name="Vault"
+				Content="Vault"
+				Icon="Library" />
+			<NavigationViewItem
+				Content="Generator"
+				Icon="Shuffle"
+				IsEnabled="False" />
+			<NavigationViewItem
+				Content="Send"
+				Icon="Send"
+				IsEnabled="False" />
+		</NavigationView.MenuItems>
 
-            <nav:TitleBarNavigation.PersistentContent>
-                <Grid Margin="128,0,0,0">
-                    <controls:VaultCipherSearchBox x:Name="VaultCipherSearchBox" />
-                </Grid>
-            </nav:TitleBarNavigation.PersistentContent>
-        </Frame>
-    </NavigationView>
+		<NavigationView.FooterMenuItems>
+			<NavigationViewItem
+				nav:Navigate.To="{nav:XamlType TypeName=settings:SettingsPage}"
+				AutomationProperties.Name="Settings"
+				Content="Settings"
+				Icon="Setting" />
+		</NavigationView.FooterMenuItems>
+
+		<Frame
+			x:Name="ContentFrame"
+			nav:NavigationHost.InitialPage="{nav:XamlType TypeName=vault:VaultPage}"
+			nav:NavigationHost.IsEnabled="True"
+			nav:TitleBarNavigation.IsBackTarget="True">
+
+			<nav:TitleBarNavigation.PersistentContent>
+				<Grid Margin="128,0,0,0">
+					<controls:VaultCipherSearchBox x:Name="VaultCipherSearchBox" />
+				</Grid>
+			</nav:TitleBarNavigation.PersistentContent>
+
+			<nav:TitleBarNavigation.PersistentRightHeader>
+				<Button
+					Margin="20,0,0,0"
+					Content="New Item"
+					Style="{StaticResource AccentButtonStyle}" />
+			</nav:TitleBarNavigation.PersistentRightHeader>
+		</Frame>
+	</NavigationView>
 </Page>

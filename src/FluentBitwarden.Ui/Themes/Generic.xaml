@@ -3,5 +3,6 @@
         <ResourceDictionary Source="ms-appx:///Themes/Controls/PasswordBoxExStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Controls/SiteIconStyle.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Controls/TextBoxExStyle.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/Controls/ListQueryBarStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

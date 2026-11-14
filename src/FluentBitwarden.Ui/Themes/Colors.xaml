@@ -35,7 +35,6 @@
             <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextPrimaryBrush" />
             <StaticResource x:Key="ButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
             <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="HairlineBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
             <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
             <StaticResource x:Key="AccentButtonBackground" ResourceKey="AccentBrush" />
             <StaticResource x:Key="AccentButtonBackgroundPointerOver" ResourceKey="AccentHoverBrush" />
@@ -87,7 +86,6 @@
             <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextPrimaryBrush" />
             <StaticResource x:Key="ButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
             <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="HairlineBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
             <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
             <StaticResource x:Key="AccentButtonBackground" ResourceKey="AccentBrush" />
             <StaticResource x:Key="AccentButtonBackgroundPointerOver" ResourceKey="AccentHoverBrush" />
@@ -138,7 +136,6 @@
             <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="AccentTextBrush" />
             <StaticResource x:Key="ButtonForegroundDisabled" ResourceKey="DisabledTextBrush" />
             <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="HairlineBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="FocusStrokeBrush" />
             <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="DisabledControlBrush" />
             <StaticResource x:Key="AccentButtonBackground" ResourceKey="AccentBrush" />
             <StaticResource x:Key="AccentButtonBackgroundPointerOver" ResourceKey="AccentHoverBrush" />

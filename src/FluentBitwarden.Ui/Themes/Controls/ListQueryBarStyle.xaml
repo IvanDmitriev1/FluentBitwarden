@@ -1,0 +1,157 @@
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls">
+	<x:String x:Key="ListQueryBarSearchGlyph">&#xE721;</x:String>
+	<x:String x:Key="ListQueryBarSortGlyph">&#xE8CB;</x:String>
+	<x:String x:Key="ListQueryBarCloseGlyph">&#xE711;</x:String>
+
+	<Style TargetType="controls:ListQueryBar">
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="controls:ListQueryBar">
+					<Grid
+						Padding="{TemplateBinding Padding}"
+						Background="{TemplateBinding Background}"
+						ColumnSpacing="8">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+
+						<Grid x:Name="FilterHost">
+							<Grid.RenderTransform>
+								<TranslateTransform />
+							</Grid.RenderTransform>
+
+							<DropDownButton
+								x:Name="PART_FilterButton"
+								HorizontalAlignment="Left"
+								AutomationProperties.AutomationId="ListQueryBar.Filter"
+								AutomationProperties.Name="{TemplateBinding FilterToolTip}"
+								Background="Transparent"
+								BorderThickness="0"
+								Content="{TemplateBinding FilterContent}"
+								Flyout="{TemplateBinding FilterFlyout}"
+								ToolTipService.ToolTip="{TemplateBinding FilterToolTip}" />
+						</Grid>
+
+						<Button
+							x:Name="PART_SearchToggleButton"
+							Grid.Column="1"
+							Width="32"
+							MinHeight="32"
+							Padding="0"
+							AutomationProperties.AutomationId="ListQueryBar.SearchToggle"
+							Background="Transparent"
+							BorderThickness="0"
+							ToolTipService.ToolTip="{TemplateBinding OpenSearchToolTip}">
+							<FontIcon
+								x:Name="SearchToggleIcon"
+								FontSize="16"
+								Glyph="{StaticResource ListQueryBarSearchGlyph}" />
+						</Button>
+						<Button
+							x:Name="PART_SortButton"
+							Grid.Column="2"
+							Width="32"
+							MinHeight="32"
+							Padding="0"
+							AutomationProperties.AutomationId="ListQueryBar.Sort"
+							AutomationProperties.Name="{TemplateBinding SortToolTip}"
+							Background="Transparent"
+							BorderThickness="0"
+							Flyout="{TemplateBinding SortFlyout}"
+							ToolTipService.ToolTip="{TemplateBinding SortToolTip}">
+							<FontIcon FontSize="16" Glyph="{StaticResource ListQueryBarSortGlyph}" />
+						</Button>
+
+						<controls:TextBoxEx
+							x:Name="PART_SearchBox"
+							AutomationProperties.AutomationId="ListQueryBar.Search"
+							AutomationProperties.Name="{TemplateBinding SearchPlaceholderText}"
+							PlaceholderText="{TemplateBinding SearchPlaceholderText}"
+							Visibility="Collapsed">
+							<controls:TextBoxEx.RenderTransform>
+								<TranslateTransform />
+							</controls:TextBoxEx.RenderTransform>
+							<controls:TextBoxEx.Icon>
+								<FontIcon Glyph="{StaticResource ListQueryBarSearchGlyph}" />
+							</controls:TextBoxEx.Icon>
+						</controls:TextBoxEx>
+
+						<VisualStateManager.VisualStateGroups>
+							<VisualStateGroup x:Name="SearchStates">
+								<VisualState x:Name="Normal">
+									<Storyboard>
+										<DoubleAnimation
+											Duration="0:0:0.16"
+											From="0"
+											Storyboard.TargetName="FilterHost"
+											Storyboard.TargetProperty="Opacity"
+											To="1" />
+										<DoubleAnimation
+											Duration="0:0:0.16"
+											From="-4"
+											Storyboard.TargetName="FilterHost"
+											Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+											To="0">
+											<DoubleAnimation.EasingFunction>
+												<CubicEase EasingMode="EaseOut" />
+											</DoubleAnimation.EasingFunction>
+										</DoubleAnimation>
+
+										<ObjectAnimationUsingKeyFrames Storyboard.TargetName="FilterHost" Storyboard.TargetProperty="Visibility">
+											<DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
+										</ObjectAnimationUsingKeyFrames>
+
+										<ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_SearchBox" Storyboard.TargetProperty="Visibility">
+											<DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed" />
+										</ObjectAnimationUsingKeyFrames>
+
+										<ObjectAnimationUsingKeyFrames Storyboard.TargetName="SearchToggleIcon" Storyboard.TargetProperty="Glyph">
+											<DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource ListQueryBarSearchGlyph}" />
+										</ObjectAnimationUsingKeyFrames>
+									</Storyboard>
+								</VisualState>
+								<VisualState x:Name="SearchOpen">
+									<Storyboard>
+										<DoubleAnimation
+											Duration="0:0:0.16"
+											From="0"
+											Storyboard.TargetName="PART_SearchBox"
+											Storyboard.TargetProperty="Opacity"
+											To="1" />
+										<DoubleAnimation
+											Duration="0:0:0.16"
+											From="-4"
+											Storyboard.TargetName="PART_SearchBox"
+											Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+											To="0">
+											<DoubleAnimation.EasingFunction>
+												<CubicEase EasingMode="EaseOut" />
+											</DoubleAnimation.EasingFunction>
+										</DoubleAnimation>
+
+										<ObjectAnimationUsingKeyFrames Storyboard.TargetName="FilterHost" Storyboard.TargetProperty="Visibility">
+											<DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed" />
+										</ObjectAnimationUsingKeyFrames>
+
+										<ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_SearchBox" Storyboard.TargetProperty="Visibility">
+											<DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
+										</ObjectAnimationUsingKeyFrames>
+
+										<ObjectAnimationUsingKeyFrames Storyboard.TargetName="SearchToggleIcon" Storyboard.TargetProperty="Glyph">
+											<DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource ListQueryBarCloseGlyph}" />
+										</ObjectAnimationUsingKeyFrames>
+									</Storyboard>
+								</VisualState>
+							</VisualStateGroup>
+						</VisualStateManager.VisualStateGroups>
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+</ResourceDictionary>

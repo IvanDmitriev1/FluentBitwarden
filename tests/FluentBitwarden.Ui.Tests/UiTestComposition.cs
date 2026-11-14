@@ -1,3 +1,4 @@
+using FluentBitwarden.Ui.Features.Vault;
 using BitwardenApi.Client;
 using BitwardenApi.Identity.Models;
 using BitwardenApi.Primitives.Ids;
@@ -13,6 +14,7 @@ using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Ipc.Abstractions;
+using FluentBitwarden.Platform.Settings.Composition;
 using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
@@ -41,6 +43,7 @@ internal sealed class UiTestComposition
     private readonly IIpcEventClient _eventClient = Substitute.For<IIpcEventClient>();
     private readonly IAccountWindowsHelloIntegrationClient _windowsHelloClient = Substitute.For<IAccountWindowsHelloIntegrationClient>();
     private readonly IVaultCipherClient _vaultCipherClient = Substitute.For<IVaultCipherClient>();
+    private VaultBrowseState _vaultBrowseState = VaultBrowseState.Default;
     private AsyncIpcEventCallback<AppSessionStateChangedEvent>? _sessionChangedCallback;
     private Func<AccountAuthenticationRequest, AccountAuthenticationOutcome> _authenticationOutcome = DefaultAuthenticationOutcome;
     private string? _unlockRejection;
@@ -74,8 +77,9 @@ internal sealed class UiTestComposition
         _windowsHelloClient.GetEnrollmentAsync(Arg.Any<GetWindowsHelloEnrollmentRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(WindowsHelloEnrollmentStatus.NotEnrolled));
 
-        var settingsStore = Substitute.For<ISettingsStore>();
+        var settingsStore = Substitute.For<ICompositeSettingsStore>();
         settingsStore.Get(UiSettingKeys.Appearance.ThemeKey).Returns(ElementTheme.Default);
+        settingsStore.GetComposite(UiSettingKeys.Vault.StateKey).Returns(_ => _vaultBrowseState);
 
         services.AddSingleton<App>();
         services.AddSingleton<IActivationHandler>(static sp => sp.GetRequiredService<App>());
@@ -86,12 +90,14 @@ internal sealed class UiTestComposition
         services.AddSingleton(_vaultCipherClient);
         services.AddSingleton(Substitute.For<ISiteIconCache>());
         services.AddSingleton(Substitute.For<IIpcExceptionNotifier>());
-        services.AddSingleton(settingsStore);
+        services.AddSingleton<ICompositeSettingsStore>(settingsStore);
+        services.AddSingleton<ISettingsStore>(settingsStore);
     }
 
     public void Reset()
     {
         _sessionState = new AppSessionStateSnapshot.NotAuthenticated();
+        _vaultBrowseState = VaultBrowseState.Default;
         _authenticationOutcome = DefaultAuthenticationOutcome;
         _unlockRejection = null;
         _unlockRequest = NewUnlockRequestSource();
@@ -122,6 +128,8 @@ internal sealed class UiTestComposition
     }
 
     public void ConfigureUnlockRejection(string reason) => _unlockRejection = reason;
+
+    public void SetVaultBrowseState(VaultBrowseState state) => _vaultBrowseState = state;
 
     public async Task PublishSessionStateAsync(AppSessionStateSnapshot state, CancellationToken cancellationToken)
     {

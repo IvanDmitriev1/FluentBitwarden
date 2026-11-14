@@ -1,149 +1,119 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <UserControl
-    x:Class="FluentBitwarden.Ui.Features.Vault.VaultCipherList.VaultCipherListView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+	x:Class="FluentBitwarden.Ui.Features.Vault.VaultCipherList.VaultCipherListView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.VaultCipherList"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
+	xmlns:search="using:FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search"
+	mc:Ignorable="d"
+	KeyboardAcceleratorPlacementMode="Hidden">
 
-    <UserControl.KeyboardAccelerators>
-        <KeyboardAccelerator
-            Key="K"
-            Invoked="FocusSearch_Invoked"
-            Modifiers="Control" />
-    </UserControl.KeyboardAccelerators>
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="ms-appx:///Features/Vault/VaultCipherList/VaultListStyle.xaml" />
+				<local:VaultCipherTemplates />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
 
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ms-appx:///Features/Vault/VaultCipherList/VaultListStyle.xaml" />
-                <ResourceDictionary Source="ms-appx:///Features/Vault/VaultCipherList/VaultCipherTemplates.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
 
-        </ResourceDictionary>
-    </UserControl.Resources>
+		<controls:ListQueryBar
+			x:Name="QueryBar"
+			x:Uid="VaultListQueryBar"
+			Grid.Row="0"
+			Margin="10,10,30,10"
+			SearchText="{x:Bind SearchText, Mode=TwoWay}">
+			<controls:ListQueryBar.FilterFlyout>
+				<MenuFlyout>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListAllCategories"
+						Command="{x:Bind CategoryChangedCommand}"
+						GroupName="VaultCategory"
+						IsChecked="True">
+						<RadioMenuFlyoutItem.Icon>
+							<FontIcon Glyph="&#xE8A9;" />
+						</RadioMenuFlyoutItem.Icon>
+					</RadioMenuFlyoutItem>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListLogins"
+						Command="{x:Bind CategoryChangedCommand}"
+						CommandParameter="{x:Bind models:CipherType.Login}"
+						GroupName="VaultCategory">
+						<RadioMenuFlyoutItem.Icon>
+							<FontIcon Glyph="&#xE192;" />
+						</RadioMenuFlyoutItem.Icon>
+					</RadioMenuFlyoutItem>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListCreditCards"
+						Command="{x:Bind CategoryChangedCommand}"
+						CommandParameter="{x:Bind models:CipherType.Card}"
+						GroupName="VaultCategory">
+						<RadioMenuFlyoutItem.Icon>
+							<FontIcon Glyph="&#xE8C7;" />
+						</RadioMenuFlyoutItem.Icon>
+					</RadioMenuFlyoutItem>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListIdentities"
+						Command="{x:Bind CategoryChangedCommand}"
+						CommandParameter="{x:Bind models:CipherType.Identity}"
+						GroupName="VaultCategory">
+						<RadioMenuFlyoutItem.Icon>
+							<FontIcon Glyph="&#xE77B;" />
+						</RadioMenuFlyoutItem.Icon>
+					</RadioMenuFlyoutItem>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListNotes"
+						Command="{x:Bind CategoryChangedCommand}"
+						CommandParameter="{x:Bind models:CipherType.SecureNote}"
+						GroupName="VaultCategory">
+						<RadioMenuFlyoutItem.Icon>
+							<FontIcon Glyph="&#xE70B;" />
+						</RadioMenuFlyoutItem.Icon>
+					</RadioMenuFlyoutItem>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListSshKeys"
+						Command="{x:Bind CategoryChangedCommand}"
+						CommandParameter="{x:Bind models:CipherType.SshKey}"
+						GroupName="VaultCategory">
+						<RadioMenuFlyoutItem.Icon>
+							<FontIcon Glyph="&#xE72E;" />
+						</RadioMenuFlyoutItem.Icon>
+					</RadioMenuFlyoutItem>
+				</MenuFlyout>
+			</controls:ListQueryBar.FilterFlyout>
+			<controls:ListQueryBar.SortFlyout>
+				<MenuFlyout>
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListNameAscending"
+						Command="{x:Bind SortChangedCommand}"
+						CommandParameter="{x:Bind search:VaultCipherSortDirection.Ascending}"
+						IsChecked="True" />
+					<RadioMenuFlyoutItem
+						x:Uid="VaultListNameDescending"
+						Command="{x:Bind SortChangedCommand}"
+						CommandParameter="{x:Bind search:VaultCipherSortDirection.Descending}" />
+				</MenuFlyout>
+			</controls:ListQueryBar.SortFlyout>
+		</controls:ListQueryBar>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <Grid Grid.Row="0" ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Spacing="2">
-                <TextBlock
-                    FontSize="28"
-                    FontWeight="SemiBold"
-                    Foreground="{ThemeResource TextPrimaryBrush}"
-                    Text="All items" />
-
-                <TextBlock
-                    FontSize="14"
-                    Foreground="{ThemeResource TextSecondaryBrush}"
-                    Text="124 items" />
-            </StackPanel>
-
-            <Button
-                Grid.Column="1"
-                VerticalAlignment="Center"
-                AutomationProperties.Name="Filter vault"
-                Style="{StaticResource IconButtonStyle}"
-                ToolTipService.ToolTip="Filter vault">
-                <FontIcon
-                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                    FontSize="20"
-                    Glyph="&#xE71C;" />
-            </Button>
-        </Grid>
-
-        <Grid Grid.Row="1">
-            <AutoSuggestBox
-                x:Name="VaultSearch"
-                MinHeight="36"
-                AutomationProperties.Name="Search vault"
-                PlaceholderText="Search vault">
-
-                <AutoSuggestBox.TextBoxStyle>
-                    <Style BasedOn="{StaticResource DefaultTextBoxStyle}" TargetType="TextBox">
-                        <Setter Property="Padding" Value="34,7,84,7" />
-                        <Setter Property="FontSize" Value="14" />
-                        <Setter Property="CornerRadius" Value="8" />
-                        <Setter Property="Background" Value="{ThemeResource InputBackgroundBrush}" />
-                    </Style>
-                </AutoSuggestBox.TextBoxStyle>
-            </AutoSuggestBox>
-
-            <FontIcon
-                Margin="12,0,0,0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                AutomationProperties.AccessibilityView="Raw"
-                FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                FontSize="16"
-                Foreground="{ThemeResource TextSecondaryBrush}"
-                Glyph="&#xE721;"
-                IsHitTestVisible="False" />
-
-            <Border
-                Margin="0,0,8,0"
-                Padding="6,2"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                Background="{ThemeResource ShortcutBrush}"
-                CornerRadius="4"
-                IsHitTestVisible="False">
-                <TextBlock
-                    FontSize="12"
-                    Foreground="{ThemeResource TextSecondaryBrush}"
-                    Text="Ctrl + K" />
-            </Border>
-        </Grid>
-
-        <ScrollViewer
-            Grid.Row="2"
-            HorizontalScrollBarVisibility="Hidden"
-            HorizontalScrollMode="Enabled"
-            VerticalScrollBarVisibility="Disabled"
-            VerticalScrollMode="Disabled">
-
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <RadioButton
-                    Content="All"
-                    GroupName="VaultItemType"
-                    IsChecked="True"
-                    Style="{StaticResource PillRadioButtonStyle}" />
-                <RadioButton
-                    Content="Logins"
-                    GroupName="VaultItemType"
-                    Style="{StaticResource PillRadioButtonStyle}" />
-                <RadioButton
-                    Content="Cards"
-                    GroupName="VaultItemType"
-                    Style="{StaticResource PillRadioButtonStyle}" />
-                <RadioButton
-                    Content="Identities"
-                    GroupName="VaultItemType"
-                    Style="{StaticResource PillRadioButtonStyle}" />
-                <RadioButton
-                    Content="Notes"
-                    GroupName="VaultItemType"
-                    Style="{StaticResource PillRadioButtonStyle}" />
-            </StackPanel>
-        </ScrollViewer>
-
-        <ListView
-            Grid.Row="3"
-            ItemTemplate="{StaticResource VaultCipherTemplate}"
-            ItemsSource="{x:Bind FilteredCiphers, Mode=OneWay}"
-            SelectedItem="{x:Bind SelectedCipher, Mode=TwoWay}"
-            Style="{StaticResource VaultListViewStyle}" />
-    </Grid>
+		<ListView
+			x:Name="CipherList"
+			Grid.Row="1"
+			ItemTemplate="{StaticResource VaultCipherTemplate}"
+			ItemsSource="{x:Bind ItemsSource, Mode=OneWay}"
+			KeyDown="CipherList_KeyDown"
+			SelectedItem="{x:Bind SelectedCipher, Mode=TwoWay}"
+			SelectionChanged="CipherList_SelectionChanged"
+			Style="{StaticResource VaultListViewStyle}" />
+	</Grid>
 </UserControl>

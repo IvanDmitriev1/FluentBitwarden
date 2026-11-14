@@ -3,7 +3,6 @@ using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using CommunityToolkit.Mvvm.Input;
 using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Features.Vault.Intents;
-using FluentBitwarden.Ui.Screens.Shell.Models;
 using Navis.WinUI.Abstractions;
 
 namespace FluentBitwarden.Ui.Screens.Shell.Controls;
@@ -106,9 +105,8 @@ public sealed partial class VaultCipherSearchBoxViewModel(
         Suggestions = [];
         SearchText = string.Empty;
 
-        var selection = new VaultCipherSelection(args.QueryText, cipher);
         navigation.Child?.Navigate<VaultPage, VaultCipherNavigationIntent>(
-            new ShowVaultCipherIntent(selection.QueryText, selection.SelectedItem));
+            new ShowVaultCipherIntent(args.QueryText, cipher.Id));
     }
 
     private void InvalidatePendingSearch()

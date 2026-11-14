@@ -1,4 +1,6 @@
 using FluentBitwarden.Contracts.Settings.Models;
+using FluentBitwarden.Platform.Settings.Composition;
+using FluentBitwarden.Ui.Features.Vault;
 
 namespace FluentBitwarden.Ui.Infrastructure;
 
@@ -15,7 +17,7 @@ public static class UiSettingKeys
 
     public static class Vault
     {
-        /*public static readonly CompositeSettingKey<VaultBrowseState> StateKey =
-            new("vault.state", VaultBrowseState.Default);*/
+        public static readonly CompositeSettingKey<VaultBrowseState> StateKey =
+            new("vault.state", VaultBrowseState.Default);
     }
 }

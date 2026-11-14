@@ -1,41 +1,51 @@
 <Page
-    x:Class="FluentBitwarden.Ui.Features.Vault.VaultPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:contracts="using:BitwardenApi.Vault.Ciphers.Models"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
-    <SplitView
-        x:Name="MainSplitView"
-        DisplayMode="Inline"
-        IsPaneOpen="True"
-        OpenPaneLength="380"
-        PaneBackground="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+	x:Class="FluentBitwarden.Ui.Features.Vault.VaultPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:contracts="using:BitwardenApi.Vault.Ciphers.Models"
+	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+	xmlns:vault="using:FluentBitwarden.Ui.Features.Vault.VaultCipherList">
+	<SplitView
+		x:Name="MainSplitView"
+		DisplayMode="Inline"
+		IsPaneOpen="True"
+		OpenPaneLength="380"
+		PaneBackground="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
 
-        <SplitView.Pane>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+		<SplitView.Pane>
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
 
-                <controls:PropertySizer
-                    Grid.Column="1"
-                    Width="8"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    Binding="{x:Bind MainSplitView.OpenPaneLength, Mode=TwoWay}"
-                    Maximum="600"
-                    Minimum="180"
-                    Orientation="Vertical" />
-            </Grid>
+				<vault:VaultCipherListView
+					AutomationProperties.AutomationId="VaultCipherListView"
+					Grid.Column="0"
+					CategoryChangedCommand="{x:Bind ViewModel.CategoryChangedCommand}"
+					ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
+					SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay}"
+					SelectedCipher="{x:Bind ViewModel.SelectedCipher, Mode=TwoWay}"
+					SortChangedCommand="{x:Bind ViewModel.SortChangedCommand}" />
 
-        </SplitView.Pane>
+				<controls:PropertySizer
+					Grid.Column="1"
+					Width="8"
+					HorizontalAlignment="Left"
+					VerticalAlignment="Stretch"
+					Binding="{x:Bind MainSplitView.OpenPaneLength, Mode=TwoWay}"
+					Maximum="600"
+					Minimum="180"
+					Orientation="Vertical" />
+			</Grid>
 
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-        </Grid>
-    </SplitView>
+		</SplitView.Pane>
+
+		<Grid>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+		</Grid>
+	</SplitView>
 </Page>
