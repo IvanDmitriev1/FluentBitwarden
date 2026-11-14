@@ -79,10 +79,39 @@ public sealed class DesktopAutomation(IUiAutomation ui, UiTarget target)
         throw CreateTimeoutException(selector, condition, lastState);
     }
 
+    public async Task WaitAbsentAsync(UiSelector selector, CancellationToken cancellationToken = default)
+    {
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken, cancellationToken);
+        try
+        {
+            var element = await ui.FindSingleElementAsync(target, selector, requireUnique: true, ct: linked.Token);
+            Assert.Null(element);
+        }
+        catch (UiElementNotFoundException)
+        {
+        }
+    }
+
     public async Task SetValueAsync(UiElement element, string value, CancellationToken cancellationToken = default)
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken, cancellationToken);
         await ui.SetValueAsync(target, element, value, linked.Token);
+    }
+
+    public async Task FocusAsync(UiElement element, CancellationToken cancellationToken = default)
+    {
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken, cancellationToken);
+        await ui.FocusAsync(target, element, linked.Token);
+    }
+
+    public async Task<object?> PropertyAsync(
+        UiElement element,
+        string propertyName,
+        CancellationToken cancellationToken = default)
+    {
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken, cancellationToken);
+        var properties = await ui.GetPropertiesAsync(target, element, propertyName, linked.Token);
+        return properties.GetValueOrDefault(propertyName);
     }
 
     public async Task InvokeAsync(UiElement element, CancellationToken cancellationToken = default)

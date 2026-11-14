@@ -5,6 +5,8 @@ using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Hosting;
 using FluentBitwarden.Ui.Screens.Loading;
+using FluentBitwarden.Contracts.AppSession;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Ui.Windows.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -65,7 +67,9 @@ public sealed class DesktopUiFixture : IAsyncLifetime
         services.AddLogging();
         services.AddWinAppUiAutomation();
         _services = services.BuildServiceProvider();
-        return _services.GetRequiredService<App>();
+        var app = _services.GetRequiredService<App>();
+        app.DispatcherShutdownMode = Microsoft.UI.Xaml.DispatcherShutdownMode.OnExplicitShutdown;
+        return app;
     }
 
     private Task TeardownAsync()
@@ -134,7 +138,12 @@ public sealed class DesktopUiFixture : IAsyncLifetime
     {
         _composition.Reset();
         var signedOut = new AppSessionStateSnapshot.NotAuthenticated();
-        await NavigateAsync(null, cancellationToken);
+        await RunOnUiThreadAsync(() =>
+        {
+            var app = App.Current;
+            app.GetRequiredService<IWindowManager>().EnsureWindow(WindowKind.Main);
+            app.GetRequiredService<IAppRouter>().Navigate(null);
+        }, cancellationToken);
         // Let the previous setup frame unload and detach before creating another one.
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(LifecycleTimeout);
@@ -154,9 +163,20 @@ public sealed class DesktopUiFixture : IAsyncLifetime
             if (app.GetRequiredService<IWindowManager>().WindowNavigation.CurrentPageType == typeof(LoadingPage))
                 app.GetRequiredService<IAppRouter>().Navigate(signedOut);
         }, cancellationToken);
+
+        var automation = await AutomationAsync(cancellationToken);
+        await automation.WaitAsync(
+            UiSelectors.ById("SetupEmailTextBox"),
+            "enabled and visible after resetting to sign-in",
+            static element => element.IsEnabled && !element.IsOffscreen,
+            cancellationToken);
     }
 
     public void ConfigureAuthenticatorRejection() => _composition.ConfigureAuthenticatorRejection();
+    public void ConfigureUnlockRejection(string reason) => _composition.ConfigureUnlockRejection(reason);
+
+    public IAppSessionClient AppSessionClient => _composition.AppSessionClient;
+    public IVaultCipherClient VaultCipherClient => _composition.VaultCipherClient;
 
     public Task<SessionUnlockRequest> WaitForUnlockRequestAsync(CancellationToken cancellationToken) =>
         _composition.WaitForUnlockRequestAsync(cancellationToken);
@@ -170,6 +190,13 @@ public sealed class DesktopUiFixture : IAsyncLifetime
 
     public Task NavigateAsync(AppSessionStateSnapshot? state, CancellationToken cancellationToken) =>
         RunOnUiThreadAsync(() => App.Current.GetRequiredService<IAppRouter>().Navigate(state), cancellationToken);
+
+    public Task RefreshSessionAsync(CancellationToken cancellationToken) =>
+        _winUi.RunOnUiThreadAsync(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return App.Current.GetRequiredService<IAppSession>().RefreshSessionAsync(cancellationToken);
+        });
 
     public Task PublishSessionStateAsync(AppSessionStateSnapshot state, CancellationToken cancellationToken) =>
         _composition.PublishSessionStateAsync(state, cancellationToken);

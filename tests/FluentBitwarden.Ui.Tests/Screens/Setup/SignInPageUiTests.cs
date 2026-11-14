@@ -188,7 +188,7 @@ public sealed class SignInPageUiTests(DesktopUiFixture desktop)
             cancellationToken);
         await automation.InvokeAsync(verifyButton, cancellationToken);
         await automation.WaitAsync(
-            UiSelectors.ById(UiTestComposition.Rejection),
+            UiSelectors.ById("SetupTwoFactorError"),
             "visible rejection matches",
             element => !element.IsOffscreen && element.Name == UiTestComposition.Rejection,
             cancellationToken);

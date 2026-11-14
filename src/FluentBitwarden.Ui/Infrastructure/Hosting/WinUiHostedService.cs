@@ -93,8 +93,16 @@ internal sealed class WinUiHostedService<
         return GetDispatcher().EnqueueAsync(action);
     }
 
-    private Microsoft.UI.Dispatching.DispatcherQueue GetDispatcher() =>
-        _thread.Dispatcher ?? throw new InvalidOperationException("The UI dispatcher is not ready.");
+    private Microsoft.UI.Dispatching.DispatcherQueue GetDispatcher()
+    {
+        if (_thread.Completion.IsCompleted)
+        {
+            _thread.Completion.GetAwaiter().GetResult();
+            throw new InvalidOperationException("The WinUI application has exited.");
+        }
+
+        return _thread.Dispatcher ?? throw new InvalidOperationException("The UI dispatcher is not ready.");
+    }
 
     private async Task StopHostOnExitAsync()
     {

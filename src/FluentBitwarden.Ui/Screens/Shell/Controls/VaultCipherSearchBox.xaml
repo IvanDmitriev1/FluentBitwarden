@@ -51,6 +51,7 @@
                         Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri((models:Cipher))}" />
 
                     <TextBlock
+                        AutomationProperties.AutomationId="VaultCipherSuggestionName"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="{x:Bind Name}"
                         TextTrimming="CharacterEllipsis" />

@@ -68,6 +68,8 @@
                     Text="{x:Bind ViewModel.Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
             <InfoBar
+                AutomationProperties.AutomationId="SetupTwoFactorError"
+                AutomationProperties.Name="{x:Bind ViewModel.Error, Mode=OneWay}"
                 IsClosable="False"
                 IsOpen="{x:Bind ViewModel.Error, Mode=OneWay, Converter={StaticResource StringToBoolConverter}}"
                 Message="{x:Bind ViewModel.Error, Mode=OneWay}"

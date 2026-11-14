@@ -88,6 +88,8 @@
 
 
                 <InfoBar
+                    AutomationProperties.AutomationId="UnlockError"
+                    AutomationProperties.Name="{x:Bind ViewModel.Error, Mode=OneWay}"
                     Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"

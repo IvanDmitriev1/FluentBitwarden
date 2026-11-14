@@ -1,6 +1,7 @@
 using BitwardenApi.Client;
 using BitwardenApi.Identity.Models;
 using BitwardenApi.Primitives.Ids;
+using BitwardenApi.Vault.Ciphers.Models;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
@@ -9,8 +10,10 @@ using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Ipc.Abstractions;
+using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,25 +40,34 @@ internal sealed class UiTestComposition
     private readonly IAccountClient _accountClient = Substitute.For<IAccountClient>();
     private readonly IIpcEventClient _eventClient = Substitute.For<IIpcEventClient>();
     private readonly IAccountWindowsHelloIntegrationClient _windowsHelloClient = Substitute.For<IAccountWindowsHelloIntegrationClient>();
+    private readonly IVaultCipherClient _vaultCipherClient = Substitute.For<IVaultCipherClient>();
     private AsyncIpcEventCallback<AppSessionStateChangedEvent>? _sessionChangedCallback;
     private Func<AccountAuthenticationRequest, AccountAuthenticationOutcome> _authenticationOutcome = DefaultAuthenticationOutcome;
+    private string? _unlockRejection;
     private AppSessionStateSnapshot _sessionState = new AppSessionStateSnapshot.NotAuthenticated();
     private TaskCompletionSource<SessionUnlockRequest> _unlockRequest = NewUnlockRequestSource();
+
+    public IAppSessionClient AppSessionClient => _appSessionClient;
+    public IVaultCipherClient VaultCipherClient => _vaultCipherClient;
 
     public void AddTestServices(IServiceCollection services)
     {
         _appSessionClient.GetStateAsync(Arg.Any<GetAppSessionStateRequest>(), Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromResult(_sessionState));
+            .Returns(GetSessionStateAsync);
         _appSessionClient.UnlockAsync(Arg.Any<SessionUnlockRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
                 _unlockRequest.TrySetResult(call.Arg<SessionUnlockRequest>());
-                return Task.FromResult<SessionUnlockOutcome>(new SessionUnlockOutcome.Success());
+                return Task.FromResult<SessionUnlockOutcome>(_unlockRejection is { } rejection
+                    ? new SessionUnlockOutcome.Failure(rejection)
+                    : new SessionUnlockOutcome.Success());
             });
         _accountClient.GetAccountsAsync(Arg.Any<GetAccountsRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(Array.Empty<AccountProfile>()));
+        _vaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
+            .Returns(SearchCiphersAsync);
         _accountClient.AuthenticateAsync(Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>())
-            .Returns(call => Task.FromResult(_authenticationOutcome(call.Arg<AccountAuthenticationRequest>())));
+            .Returns(AuthenticateAsync);
         _eventClient.Subscribe<AppSessionStateChangedEvent>(Arg.Do<AsyncIpcEventCallback<AppSessionStateChangedEvent>>(
                 callback => _sessionChangedCallback = callback))
             .Returns(Substitute.For<IDisposable>());
@@ -71,7 +83,8 @@ internal sealed class UiTestComposition
         services.AddSingleton(_accountClient);
         services.AddSingleton(_eventClient);
         services.AddSingleton(_windowsHelloClient);
-        services.AddSingleton(Substitute.For<IVaultCipherClient>());
+        services.AddSingleton(_vaultCipherClient);
+        services.AddSingleton(Substitute.For<ISiteIconCache>());
         services.AddSingleton(Substitute.For<IIpcExceptionNotifier>());
         services.AddSingleton(settingsStore);
     }
@@ -80,10 +93,16 @@ internal sealed class UiTestComposition
     {
         _sessionState = new AppSessionStateSnapshot.NotAuthenticated();
         _authenticationOutcome = DefaultAuthenticationOutcome;
+        _unlockRejection = null;
         _unlockRequest = NewUnlockRequestSource();
+        _appSessionClient.GetStateAsync(Arg.Any<GetAppSessionStateRequest>(), Arg.Any<CancellationToken>())
+            .Returns(GetSessionStateAsync);
+        _vaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
+            .Returns(SearchCiphersAsync);
         _appSessionClient.ClearReceivedCalls();
         _accountClient.ClearReceivedCalls();
         _windowsHelloClient.ClearReceivedCalls();
+        _vaultCipherClient.ClearReceivedCalls();
     }
 
     public void ConfigureAuthenticatorRejection()
@@ -102,6 +121,8 @@ internal sealed class UiTestComposition
         };
     }
 
+    public void ConfigureUnlockRejection(string reason) => _unlockRejection = reason;
+
     public async Task PublishSessionStateAsync(AppSessionStateSnapshot state, CancellationToken cancellationToken)
     {
         _sessionState = state;
@@ -115,6 +136,13 @@ internal sealed class UiTestComposition
 
     public static AccountProfile CreateAccount(string? email = null) =>
         Account with { Email = email ?? TestInfrastructure.TestCredentials.Email };
+
+    private Task<AppSessionStateSnapshot> GetSessionStateAsync(NSubstitute.Core.CallInfo _) => Task.FromResult(_sessionState);
+
+    private Task<Cipher[]> SearchCiphersAsync(NSubstitute.Core.CallInfo _) => Task.FromResult(Array.Empty<Cipher>());
+
+    private Task<AccountAuthenticationOutcome> AuthenticateAsync(NSubstitute.Core.CallInfo call) =>
+        Task.FromResult(_authenticationOutcome(call.Arg<AccountAuthenticationRequest>()));
 
     private static AccountAuthenticationOutcome DefaultAuthenticationOutcome(AccountAuthenticationRequest request) =>
         request is AccountAuthenticationRequest.Password
