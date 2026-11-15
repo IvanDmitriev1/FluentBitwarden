@@ -4,9 +4,6 @@ namespace FluentBitwarden.Ui.Tests.Screens.Shell;
 
 internal static class VaultCipherSearchBoxViewModelTestSupport
 {
-    public static TaskCompletionSource<T> NewSource<T>() =>
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
-
     public static Task<Cipher[]> StartSearch(
         TaskCompletionSource<bool> started,
         TaskCompletionSource<Cipher[]> response)
@@ -32,12 +29,5 @@ internal static class VaultCipherSearchBoxViewModelTestSupport
             deadline.Token);
         while (!condition())
             await Task.Delay(10, linked.Token);
-    }
-
-    public static Cipher CreateCipher(string name)
-    {
-        Cipher cipher = Cipher.CreateBlankCipher(CipherType.Login);
-        cipher.Name = name;
-        return cipher;
     }
 }

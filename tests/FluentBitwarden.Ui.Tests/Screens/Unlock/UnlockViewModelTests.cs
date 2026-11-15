@@ -1,5 +1,3 @@
-using BitwardenApi.Client;
-using BitwardenApi.Primitives.Ids;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
@@ -15,10 +13,7 @@ namespace FluentBitwarden.Ui.Tests.Screens.Unlock;
 [Trait("Category", "Unit")]
 public sealed class UnlockViewModelTests
 {
-    private static readonly AccountProfile Account = new(
-        UserId.Parse("11111111-1111-1111-1111-111111111111"),
-        TestCredentials.Email,
-        BitwardenEnvironment.Europe);
+    private static readonly AccountProfile Account = TestAccounts.CreateEuropean();
     private readonly IAppSessionClient _sessionClient = Substitute.For<IAppSessionClient>();
     private readonly IAccountWindowsHelloIntegrationClient _helloClient = Substitute.For<IAccountWindowsHelloIntegrationClient>();
     private readonly IWindowManager _windowManager = Substitute.For<IWindowManager>();
@@ -51,8 +46,8 @@ public sealed class UnlockViewModelTests
     public async Task PasswordUnlockSendsTypedRequestAndRejectionRestoresIdleStateAndFocus()
     {
         await NavigateToAccountAsync();
-        var response = new TaskCompletionSource<SessionUnlockOutcome>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var requestStarted = new TaskCompletionSource<SessionUnlockRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = TestTaskSources.CreateAsyncContinuationSource<SessionUnlockOutcome>();
+        var requestStarted = TestTaskSources.CreateAsyncContinuationSource<SessionUnlockRequest>();
         _sessionClient.UnlockAsync(Arg.Any<SessionUnlockRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
@@ -107,8 +102,8 @@ public sealed class UnlockViewModelTests
     [Fact]
     public async Task LateEnrollmentResultAfterLeavingPageDoesNotShowWindowsHello()
     {
-        var response = new TaskCompletionSource<WindowsHelloEnrollmentStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var requestStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = TestTaskSources.CreateAsyncContinuationSource<WindowsHelloEnrollmentStatus>();
+        var requestStarted = TestTaskSources.CreateAsyncContinuationSource<CancellationToken>();
         _helloClient.GetEnrollmentAsync(Arg.Any<GetWindowsHelloEnrollmentRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {

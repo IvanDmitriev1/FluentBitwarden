@@ -5,6 +5,7 @@
 	xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
 	xmlns:controls="using:FluentBitwarden.Ui.Screens.Shell.Controls"
 	xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+	xmlns:myBehaviours="using:FluentBitwarden.Ui.Behaviours"
 	xmlns:nav="using:Navis.WinUI"
 	xmlns:settings="using:FluentBitwarden.Ui.Features.Settings"
 	xmlns:shell="using:FluentBitwarden.Ui.Screens.Shell"
@@ -21,10 +22,10 @@
 	</Page.Resources>
 
 	<Page.KeyboardAccelerators>
-		<KeyboardAccelerator
-			Invoked="FindKeyboardAccelerator_Invoked"
+		<myBehaviours:FocusKeyboardAccelerator
 			Key="F"
-			Modifiers="Control" />
+			Modifiers="Control"
+			Target="{x:Bind VaultCipherSearchBox}" />
 	</Page.KeyboardAccelerators>
 
 	<interactivity:Interaction.Behaviors>

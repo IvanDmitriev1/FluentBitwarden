@@ -9,8 +9,7 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
 	xmlns:search="using:FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search"
-	mc:Ignorable="d"
-	KeyboardAcceleratorPlacementMode="Hidden">
+	mc:Ignorable="d">
 
 	<UserControl.Resources>
 		<ResourceDictionary>
@@ -109,11 +108,13 @@
 		<ListView
 			x:Name="CipherList"
 			Grid.Row="1"
+			IsItemClickEnabled="False"
 			ItemTemplate="{StaticResource VaultCipherTemplate}"
 			ItemsSource="{x:Bind ItemsSource, Mode=OneWay}"
 			KeyDown="CipherList_KeyDown"
-			SelectedItem="{x:Bind SelectedCipher, Mode=TwoWay}"
 			SelectionChanged="CipherList_SelectionChanged"
+			SelectionMode="Single"
+			SingleSelectionFollowsFocus="True"
 			Style="{StaticResource VaultListViewStyle}" />
 	</Grid>
 </UserControl>

@@ -6,6 +6,7 @@ using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Features.Vault.Intents;
 using FluentBitwarden.Platform.Settings.Composition;
 using FluentBitwarden.Ui.Infrastructure;
+using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -57,9 +58,9 @@ public sealed class VaultPageViewModelTests
     {
         var client = Substitute.For<IVaultCipherClient>();
         var settings = Substitute.For<ICompositeSettingsStore>();
-        var first = CreateCipher("first");
-        var second = CreateCipher("second");
-        var sortedResults = new TaskCompletionSource<Cipher[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var first = TestCiphers.CreateLogin("first");
+        var second = TestCiphers.CreateLogin("second");
+        var sortedResults = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
         client.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<VaultCipherQuery>().SortDirection == VaultCipherSortDirection.Descending
                 ? sortedResults.Task
@@ -72,7 +73,7 @@ public sealed class VaultPageViewModelTests
 
         var sort = viewModel.SortChangedCommand.ExecuteAsync(VaultCipherSortDirection.Descending);
         viewModel.SelectedCipher = second;
-        sortedResults.SetResult([CreateCipher("first"), CreateCipher("second")]);
+        sortedResults.SetResult([TestCiphers.CreateLogin("first"), TestCiphers.CreateLogin("second")]);
         await sort.WaitAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(second.Id, viewModel.SelectedCipher?.Id);
@@ -89,7 +90,7 @@ public sealed class VaultPageViewModelTests
         {
             SearchText = "example",
         };
-        var cipher = CreateCipher("selected");
+        var cipher = TestCiphers.CreateLogin("selected");
 
         viewModel.SelectedCipher = cipher;
         viewModel.SelectedCipher = null;
@@ -106,7 +107,7 @@ public sealed class VaultPageViewModelTests
         var cancellationToken = TestContext.Current.CancellationToken;
         var client = Substitute.For<IVaultCipherClient>();
         var settings = Substitute.For<ICompositeSettingsStore>();
-        var cipher = CreateCipher("requested");
+        var cipher = TestCiphers.CreateLogin("requested");
         client.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Cipher[]>([cipher]));
         var viewModel = new VaultPageViewModel(client, settings, NullLogger<VaultPageViewModel>.Instance);
@@ -125,7 +126,7 @@ public sealed class VaultPageViewModelTests
         var cancellationToken = TestContext.Current.CancellationToken;
         var client = Substitute.For<IVaultCipherClient>();
         var settings = Substitute.For<ICompositeSettingsStore>();
-        var savedCipher = CreateCipher("saved");
+        var savedCipher = TestCiphers.CreateLogin("saved");
         settings.GetComposite(UiSettingKeys.Vault.StateKey)
             .Returns(new VaultBrowseState("saved query", savedCipher.Id));
         client.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
@@ -239,12 +240,5 @@ public sealed class VaultPageViewModelTests
         settings.DidNotReceive().SetComposite(
             Arg.Any<CompositeSettingKey<VaultBrowseState>>(), Arg.Any<VaultBrowseState>());
         _ = settings.DidNotReceive().RemoveComposite(Arg.Any<CompositeSettingKey<VaultBrowseState>>());
-    }
-
-    private static Cipher CreateCipher(string id)
-    {
-        var cipher = Cipher.CreateBlankCipher(CipherType.Login);
-        cipher.Id = new CipherId(id);
-        return cipher;
     }
 }

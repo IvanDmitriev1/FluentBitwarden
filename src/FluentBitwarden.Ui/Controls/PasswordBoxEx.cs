@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Windows.System;
 
@@ -6,10 +7,21 @@ namespace FluentBitwarden.Ui.Controls;
 
 [TemplatePart(Name = PartPasswordTextBox, Type = typeof(TextBox))]
 [TemplatePart(Name = PartRevealButton, Type = typeof(Button))]
+[TemplatePart(Name = PartHideButton, Type = typeof(Button))]
 [TemplatePart(Name = PartActionButton, Type = typeof(Button))]
 [TemplatePart(Name = PartHeaderContentPresenter, Type = typeof(ContentPresenter))]
+[TemplateVisualState(Name = "Normal", GroupName = "CommonStates")]
+[TemplateVisualState(Name = "PointerOver", GroupName = "CommonStates")]
+[TemplateVisualState(Name = "Focused", GroupName = "CommonStates")]
+[TemplateVisualState(Name = "Disabled", GroupName = "CommonStates")]
+[TemplateVisualState(Name = "ActionButtonHidden", GroupName = "ActionButtonStates")]
+[TemplateVisualState(Name = "ActionButtonVisible", GroupName = "ActionButtonStates")]
+[TemplateVisualState(Name = "PasswordEmpty", GroupName = "PasswordStates")]
+[TemplateVisualState(Name = "PasswordWhitespace", GroupName = "PasswordStates")]
+[TemplateVisualState(Name = "PasswordNotEmpty", GroupName = "PasswordStates")]
+[TemplateVisualState(Name = "PasswordHidden", GroupName = "RevealStates")]
+[TemplateVisualState(Name = "PasswordRevealed", GroupName = "RevealStates")]
 [DependencyProperty<string>("PlaceholderText", DefaultValue = "")]
-[DependencyProperty<object>("ActionButtonContent")]
 [DependencyProperty<string>("ActionButtonToolTip")]
 [DependencyProperty<ICommand>("ActionButtonCommand")]
 [DependencyProperty<bool>("IsPasswordRevealed")]
@@ -27,25 +39,25 @@ public sealed partial class PasswordBoxEx : Control
 
     private const string PartPasswordTextBox = "PART_PasswordTextBox";
     private const string PartRevealButton = "PART_RevealButton";
+    private const string PartHideButton = "PART_HideButton";
     private const string PartActionButton = "PART_ActionButton";
     private const string PartHeaderContentPresenter = "HeaderContentPresenter";
 
-    private const string RevealGlyph = "\uE890"; // Eye open
-    private const string HideGlyph = "\uED1A"; // Eye closed
     private const char PasswordBullet = '\u2022'; // Bullet character
 
     private TextBox? _passwordTextBox;
     private Button? _revealButton;
-    private FontIcon? _revealIcon;
+    private Button? _hideButton;
     private Button? _actionButton;
     private ContentPresenter? _headerContentPresenter;
 
     private bool _isPointerOver;
 
     private bool HasInnerFocus =>
-        _passwordTextBox?.FocusState != FocusState.Unfocused ||
-        _revealButton?.FocusState != FocusState.Unfocused ||
-        _actionButton?.FocusState != FocusState.Unfocused;
+        _passwordTextBox is { FocusState: not FocusState.Unfocused } ||
+        _revealButton is { FocusState: not FocusState.Unfocused } ||
+        _hideButton is { FocusState: not FocusState.Unfocused } ||
+        _actionButton is { FocusState: not FocusState.Unfocused };
 
     public EventHandler<PasswordBoxEx, string>? PasswordChanged;
 
@@ -75,14 +87,9 @@ public sealed partial class PasswordBoxEx : Control
         control.UpdatePasswordState();
     }
 
-    partial void OnActionButtonContentChanged()
-    {
-        if (_actionButton is null)
-            return;
+    partial void OnActionButtonCommandChanged() => UpdateActionButtonState();
 
-        Visibility visibility = ActionButtonContent is null ? Visibility.Collapsed : Visibility.Visible;
-        _actionButton.Visibility = visibility;
-    }
+    partial void OnActionButtonToolTipChanged() => UpdateActionButtonAutomationName();
 
     partial void OnHeaderChanged()
     {
@@ -117,6 +124,13 @@ public sealed partial class PasswordBoxEx : Control
             _revealButton.Click -= OnRevealButtonClick;
         }
 
+        if (_hideButton is not null)
+        {
+            _hideButton.GotFocus -= OnButtonFocusChanged;
+            _hideButton.LostFocus -= OnButtonFocusChanged;
+            _hideButton.Click -= OnRevealButtonClick;
+        }
+
         if (_actionButton is not null)
         {
             _actionButton.GotFocus -= OnButtonFocusChanged;
@@ -129,7 +143,7 @@ public sealed partial class PasswordBoxEx : Control
 
         _passwordTextBox = GetTemplateChild(PartPasswordTextBox) as TextBox;
         _revealButton = GetTemplateChild(PartRevealButton) as Button;
-        _revealIcon = _revealButton?.Content as FontIcon;
+        _hideButton = GetTemplateChild(PartHideButton) as Button;
         _actionButton = GetTemplateChild(PartActionButton) as Button;
         _headerContentPresenter = GetTemplateChild(PartHeaderContentPresenter) as ContentPresenter;
 
@@ -147,6 +161,13 @@ public sealed partial class PasswordBoxEx : Control
             _revealButton.Click += OnRevealButtonClick;
         }
 
+        if (_hideButton is not null)
+        {
+            _hideButton.GotFocus += OnButtonFocusChanged;
+            _hideButton.LostFocus += OnButtonFocusChanged;
+            _hideButton.Click += OnRevealButtonClick;
+        }
+
         if (_actionButton is not null)
         {
             _actionButton.GotFocus += OnButtonFocusChanged;
@@ -159,8 +180,8 @@ public sealed partial class PasswordBoxEx : Control
 
         SyncRevealDisplay();
         OnHeaderChanged();
-        OnActionButtonContentChanged();
-
+        UpdateActionButtonState();
+        UpdateActionButtonAutomationName();
         UpdateVisualState(false);
         UpdatePasswordState(false);
     }
@@ -186,6 +207,7 @@ public sealed partial class PasswordBoxEx : Control
 
         base.OnKeyDown(e);
     }
+
 
 
     private void OnTextBoxTextChanging(TextBox sender, TextBoxTextChangingEventArgs args)
@@ -232,6 +254,21 @@ public sealed partial class PasswordBoxEx : Control
         UpdateVisualState();
     }
 
+    private void UpdateActionButtonState()
+    {
+        var state = ActionButtonCommand is null ? "ActionButtonHidden" : "ActionButtonVisible";
+
+        VisualStateManager.GoToState(this, state, false);
+    }
+
+    private void UpdateActionButtonAutomationName()
+    {
+        if (_actionButton is null)
+            return;
+
+        AutomationProperties.SetName(_actionButton, ActionButtonToolTip);
+    }
+
     private void UpdateVisualState(bool useTransitions = true)
     {
         const string stateNormal = "Normal";
@@ -251,7 +288,7 @@ public sealed partial class PasswordBoxEx : Control
     {
         var state = string.IsNullOrEmpty(Password)
             ? "PasswordEmpty"
-            : "PasswordNotEmpty";
+            : string.IsNullOrWhiteSpace(Password) ? "PasswordWhitespace" : "PasswordNotEmpty";
 
         VisualStateManager.GoToState(this, state, useTransitions);
     }
@@ -259,10 +296,10 @@ public sealed partial class PasswordBoxEx : Control
 
     private void SyncRevealDisplay()
     {
+        VisualStateManager.GoToState(this, IsPasswordRevealed ? "PasswordRevealed" : "PasswordHidden", false);
         if (_passwordTextBox is null)
             return;
 
-        _revealIcon?.Glyph = IsPasswordRevealed ? HideGlyph : RevealGlyph;
         _passwordTextBox.TextChanging -= OnTextBoxTextChanging;
 
         _passwordTextBox.Text = IsPasswordRevealed

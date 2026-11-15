@@ -31,12 +31,38 @@ public sealed partial class VaultCipherListView : UserControl
 
     private void CipherList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is not ListView { SelectedItem: Cipher selected } listView)
-            return;
-
-        if (!listView.IsLoaded || !ReferenceEquals(listView.SelectedItem, selected))
-            return;
-
-        listView.SmoothScrollIntoViewWithItemAsync(selected).SafeFireAndForget();
+        if (sender is ListView listView && !ReferenceEquals(SelectedCipher, listView.SelectedItem))
+            SelectedCipher = listView.SelectedItem as Cipher;
     }
+
+    partial void OnSelectedCipherChanged()
+    {
+        var listView = CipherList;
+        var selected = SelectedCipher;
+        if (ReferenceEquals(listView.SelectedItem, selected))
+            return;
+
+        listView.SelectedItem = selected;
+        if (listView.IsLoaded && selected is not null && ReferenceEquals(listView.SelectedItem, selected))
+            ScrollAndFocusAsync(listView, selected).SafeFireAndForget();
+    }
+
+    private static Task ScrollAndFocusAsync(ListView listView, Cipher selected)
+    {
+        if (listView.ContainerFromItem(selected) is null)
+        {
+            listView.ScrollIntoView(selected);
+            listView.UpdateLayout();
+        }
+
+        if (ReferenceEquals(listView.SelectedItem, selected) &&
+            listView.ContainerFromItem(selected) is ListViewItem row)
+        {
+            row.Focus(FocusState.Keyboard);
+        }
+
+        return listView.SmoothScrollIntoViewWithItemAsync(
+            selected, ScrollItemPlacement.Center);
+    }
+
 }

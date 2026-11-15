@@ -1,7 +1,5 @@
 using FluentBitwarden.Ui.Features.Vault;
-using BitwardenApi.Client;
 using BitwardenApi.Identity.Models;
-using BitwardenApi.Primitives.Ids;
 using BitwardenApi.Vault.Ciphers.Models;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
@@ -18,6 +16,7 @@ using FluentBitwarden.Platform.Settings.Composition;
 using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
+using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using NSubstitute;
@@ -29,15 +28,6 @@ internal sealed class UiTestComposition
     public const string Rejection = "UI test sign-in rejected.";
     public const string AuthorizationHash = "synthetic-ui-test-authorization-hash";
 
-    public static readonly AccountProfile Account = new(
-        UserId.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-        TestInfrastructure.TestCredentials.Email,
-        new BitwardenEnvironment(
-            new Uri("https://api.ui-test.example.test"),
-            new Uri("https://identity.ui-test.example.test"),
-            new Uri("https://notifications.ui-test.example.test"),
-            new Uri("https://vault.ui-test.example.test")));
-
     private readonly IAppSessionClient _appSessionClient = Substitute.For<IAppSessionClient>();
     private readonly IAccountClient _accountClient = Substitute.For<IAccountClient>();
     private readonly IIpcEventClient _eventClient = Substitute.For<IIpcEventClient>();
@@ -48,7 +38,7 @@ internal sealed class UiTestComposition
     private Func<AccountAuthenticationRequest, AccountAuthenticationOutcome> _authenticationOutcome = DefaultAuthenticationOutcome;
     private string? _unlockRejection;
     private AppSessionStateSnapshot _sessionState = new AppSessionStateSnapshot.NotAuthenticated();
-    private TaskCompletionSource<SessionUnlockRequest> _unlockRequest = NewUnlockRequestSource();
+    private TaskCompletionSource<SessionUnlockRequest> _unlockRequest = TestTaskSources.CreateAsyncContinuationSource<SessionUnlockRequest>();
 
     public IAppSessionClient AppSessionClient => _appSessionClient;
     public IVaultCipherClient VaultCipherClient => _vaultCipherClient;
@@ -100,7 +90,7 @@ internal sealed class UiTestComposition
         _vaultBrowseState = VaultBrowseState.Default;
         _authenticationOutcome = DefaultAuthenticationOutcome;
         _unlockRejection = null;
-        _unlockRequest = NewUnlockRequestSource();
+        _unlockRequest = TestTaskSources.CreateAsyncContinuationSource<SessionUnlockRequest>();
         _appSessionClient.GetStateAsync(Arg.Any<GetAppSessionStateRequest>(), Arg.Any<CancellationToken>())
             .Returns(GetSessionStateAsync);
         _vaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
@@ -142,9 +132,6 @@ internal sealed class UiTestComposition
     public Task<SessionUnlockRequest> WaitForUnlockRequestAsync(CancellationToken cancellationToken) =>
         _unlockRequest.Task.WaitAsync(cancellationToken);
 
-    public static AccountProfile CreateAccount(string? email = null) =>
-        Account with { Email = email ?? TestInfrastructure.TestCredentials.Email };
-
     private Task<AppSessionStateSnapshot> GetSessionStateAsync(NSubstitute.Core.CallInfo _) => Task.FromResult(_sessionState);
 
     private Task<Cipher[]> SearchCiphersAsync(NSubstitute.Core.CallInfo _) => Task.FromResult(Array.Empty<Cipher>());
@@ -160,7 +147,4 @@ internal sealed class UiTestComposition
         }
             ? new AccountAuthenticationOutcome.InvalidCredentials(Rejection)
             : new AccountAuthenticationOutcome.InvalidCredentials("Unexpected test credentials.");
-
-    private static TaskCompletionSource<SessionUnlockRequest> NewUnlockRequestSource() =>
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
 }

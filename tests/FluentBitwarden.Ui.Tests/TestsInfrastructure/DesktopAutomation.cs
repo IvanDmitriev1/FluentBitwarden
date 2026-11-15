@@ -6,7 +6,7 @@ namespace FluentBitwarden.Ui.Tests.TestInfrastructure;
 
 public sealed class DesktopAutomation(IUiAutomation ui, UiTarget target, IMouseInput mouseInput)
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(25);
+    internal static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(100);
     private const int ElementNotAvailable = unchecked((int)0x80040201);
 
@@ -77,6 +77,13 @@ public sealed class DesktopAutomation(IUiAutomation ui, UiTarget target, IMouseI
         }
 
         throw CreateTimeoutException(selector, condition, lastState);
+    }
+
+    public async Task<UiElement> FindListItemAncestorAsync(UiElement element, CancellationToken cancellationToken)
+    {
+        var selector = Assert.IsType<string>(element.Selector);
+        var ancestors = await ui.InspectAncestorsAsync(target, selector, cancellationToken);
+        return Assert.Single(ancestors, ancestor => ancestor.Type == "ListItem");
     }
 
     public async Task WaitAbsentAsync(UiSelector selector, CancellationToken cancellationToken = default)

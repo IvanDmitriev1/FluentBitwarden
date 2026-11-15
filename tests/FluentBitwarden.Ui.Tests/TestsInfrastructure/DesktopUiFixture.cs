@@ -5,6 +5,7 @@ using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Hosting;
 using FluentBitwarden.Ui.Screens.Loading;
+using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Ui.Windows.Abstractions;
@@ -65,6 +66,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
         var services = new ServiceCollection();
         _composition.AddTestServices(services);
         services.AddUiServices();
+        services.AddSingleton<App, DesktopTestApp>();
         services.AddLogging();
         services.AddWinAppUiAutomation();
         _services = services.BuildServiceProvider();
@@ -139,15 +141,52 @@ public sealed class DesktopUiFixture : IAsyncLifetime
     {
         _composition.Reset();
         var signedOut = new AppSessionStateSnapshot.NotAuthenticated();
+        bool needsChildDetach = false;
+        bool alreadySignedOut = false;
         await RunOnUiThreadAsync(() =>
         {
             var app = App.Current;
-            app.GetRequiredService<IWindowManager>().EnsureWindow(WindowKind.Main);
-            app.GetRequiredService<IAppRouter>().Navigate(null);
+            var windowManager = app.GetRequiredService<IWindowManager>();
+            windowManager.EnsureWindow(WindowKind.Main);
+            var navigation = windowManager.WindowNavigation;
+            needsChildDetach = navigation.Child is not null || navigation.CurrentPageType == typeof(SetupPage);
+            alreadySignedOut = app.GetRequiredService<IAppSession>().CurrentSession == signedOut;
         }, cancellationToken);
-        // Let the previous setup frame unload and detach before creating another one.
+
+        if (needsChildDetach)
+            await DetachChildAsync(cancellationToken);
+
+        await _composition.PublishSessionStateAsync(signedOut, cancellationToken);
+        // The session monitor skips navigation when the session state is unchanged.
+        if (alreadySignedOut)
+            await NavigateAsync(signedOut, cancellationToken);
+
+        var automation = await AutomationAsync(cancellationToken);
+        try
+        {
+            await automation.WaitAsync(
+                UiSelectors.ById("SetupEmailTextBox"),
+                "enabled and visible after resetting to sign-in",
+                static element => element.IsEnabled && !element.IsOffscreen,
+                cancellationToken);
+        }
+        catch (TimeoutException exception)
+        {
+            string pages = "";
+            await RunOnUiThreadAsync(() =>
+            {
+                var navigation = App.Current.GetRequiredService<IWindowManager>().WindowNavigation;
+                pages = $"Window page: {navigation.CurrentPageType?.Name ?? "none"}. Child page: {navigation.Child?.CurrentPageType?.Name ?? "none"}.";
+            }, cancellationToken);
+            throw new TimeoutException($"{exception.Message} {pages}", exception);
+        }
+    }
+
+    private async Task DetachChildAsync(CancellationToken cancellationToken)
+    {
+        await NavigateAsync(null, cancellationToken);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        deadline.CancelAfter(LifecycleTimeout);
+        deadline.CancelAfter(DesktopAutomation.Timeout);
         while (!await _winUi.RunOnUiThreadAsync(() =>
         {
             var navigation = App.Current.GetRequiredService<IWindowManager>().WindowNavigation;
@@ -157,20 +196,6 @@ public sealed class DesktopUiFixture : IAsyncLifetime
             await Task.Delay(25, deadline.Token);
         }
 
-        await _composition.PublishSessionStateAsync(signedOut, cancellationToken);
-        await RunOnUiThreadAsync(() =>
-        {
-            var app = App.Current;
-            if (app.GetRequiredService<IWindowManager>().WindowNavigation.CurrentPageType == typeof(LoadingPage))
-                app.GetRequiredService<IAppRouter>().Navigate(signedOut);
-        }, cancellationToken);
-
-        var automation = await AutomationAsync(cancellationToken);
-        await automation.WaitAsync(
-            UiSelectors.ById("SetupEmailTextBox"),
-            "enabled and visible after resetting to sign-in",
-            static element => element.IsEnabled && !element.IsOffscreen,
-            cancellationToken);
     }
 
     public void ConfigureAuthenticatorRejection() => _composition.ConfigureAuthenticatorRejection();
@@ -200,8 +225,20 @@ public sealed class DesktopUiFixture : IAsyncLifetime
             return App.Current.GetRequiredService<IAppSession>().RefreshSessionAsync(cancellationToken);
         });
 
-    public Task PublishSessionStateAsync(AppSessionStateSnapshot state, CancellationToken cancellationToken) =>
-        _composition.PublishSessionStateAsync(state, cancellationToken);
+    public async Task PublishSessionStateAsync(AppSessionStateSnapshot state, CancellationToken cancellationToken)
+    {
+        if (state is AppSessionStateSnapshot.Unlocked && await _winUi.RunOnUiThreadAsync(() =>
+        {
+            var windows = App.Current.GetRequiredService<IWindowManager>();
+            return windows.ActiveWindow == WindowKind.Main &&
+                windows.WindowNavigation.CurrentPageType == typeof(SetupPage);
+        }).WaitAsync(cancellationToken))
+        {
+            await DetachChildAsync(cancellationToken);
+        }
+
+        await _composition.PublishSessionStateAsync(state, cancellationToken);
+    }
 
     public Task<bool> IsLoadingPageHostedAsync(CancellationToken cancellationToken) =>
         _winUi.RunOnUiThreadAsync(() =>

@@ -3,7 +3,6 @@ using BitwardenApi.Identity.Models;
 using BitwardenApi.Primitives.Ids;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Ui.Screens.Setup.Steps.Email;
@@ -93,7 +92,7 @@ public sealed class SetupTwoFactorViewModelTests
         await NavigateToChallengeAsync(IdentityTwoFactorProviderType.Authenticator);
         _viewModel.Code = "654321";
         _accountClient.AuthenticateAsync(Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<AccountAuthenticationOutcome>(new AccountAuthenticationOutcome.Success(CreateAccount())));
+            .Returns(Task.FromResult<AccountAuthenticationOutcome>(new AccountAuthenticationOutcome.Success(TestAccounts.CreateEuropean())));
 
         await _viewModel.SubmitCommand.ExecuteAsync(null);
 
@@ -130,9 +129,4 @@ public sealed class SetupTwoFactorViewModelTests
                 new SetupEmailParameters(TestCredentials.Email, SetupServerOption.Eu, string.Empty)),
             CancellationToken.None).AsTask();
     }
-
-    private static AccountProfile CreateAccount() => new(
-        UserId.Parse("11111111-1111-1111-1111-111111111111"),
-        TestCredentials.Email,
-        BitwardenEnvironment.Europe);
 }

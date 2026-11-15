@@ -35,7 +35,7 @@
 
 		<interactivity:Interaction.Behaviors>
 			<interactivity:EventTriggerBehavior EventName="QuerySubmitted">
-				<interactivity:InvokeCommandAction Command="{x:Bind ViewModel.VaultCipherSelectedCommand, Mode=OneWay}" />
+				<interactivity:InvokeCommandAction Command="{x:Bind ViewModel.VaultCipherSelectedCommand}" />
 			</interactivity:EventTriggerBehavior>
 		</interactivity:Interaction.Behaviors>
 

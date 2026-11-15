@@ -17,9 +17,8 @@ public sealed class MainWindowSessionUiTests(DesktopUiFixture desktop)
         var cancellationToken = TestContext.Current.CancellationToken;
         await desktop.ResetToSignedOutAsync(cancellationToken);
 
-        var account = UiTestComposition.CreateAccount();
-        Cipher cipher = Cipher.CreateBlankCipher(CipherType.Login);
-        cipher.Name = "Synthetic UI search result";
+        var account = TestAccounts.CreateDesktop();
+        Cipher cipher = TestCiphers.CreateLogin(name: "Synthetic UI search result");
         desktop.VaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Cipher[]>([cipher]));
         await desktop.PublishSessionStateAsync(new AppSessionStateSnapshot.Unlocked(account), cancellationToken);
@@ -62,7 +61,7 @@ public sealed class MainWindowSessionUiTests(DesktopUiFixture desktop)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await desktop.ResetToSignedOutAsync(cancellationToken);
-        var account = UiTestComposition.CreateAccount();
+        var account = TestAccounts.CreateDesktop();
         await desktop.PublishSessionStateAsync(new AppSessionStateSnapshot.Unlocked(account), cancellationToken);
         var automation = await desktop.AutomationAsync(cancellationToken);
         await automation.WaitAsync(
@@ -71,8 +70,8 @@ public sealed class MainWindowSessionUiTests(DesktopUiFixture desktop)
             static element => !element.IsOffscreen,
             cancellationToken);
 
-        var delayedResponse = new TaskCompletionSource<AppSessionStateSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var refreshStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var delayedResponse = TestTaskSources.CreateAsyncContinuationSource<AppSessionStateSnapshot>();
+        var refreshStarted = TestTaskSources.CreateAsyncContinuationSource<bool>();
         desktop.AppSessionClient.GetStateAsync(Arg.Any<GetAppSessionStateRequest>(), Arg.Any<CancellationToken>())
             .Returns(_ =>
             {
@@ -113,7 +112,7 @@ public sealed class MainWindowSessionUiTests(DesktopUiFixture desktop)
         var cancellationToken = TestContext.Current.CancellationToken;
         await desktop.ResetToSignedOutAsync(cancellationToken);
         desktop.ConfigureUnlockRejection("Synthetic unlock rejection.");
-        var account = UiTestComposition.CreateAccount();
+        var account = TestAccounts.CreateDesktop();
         await desktop.PublishSessionStateAsync(new AppSessionStateSnapshot.Locked(account), cancellationToken);
 
         var automation = await desktop.AutomationAsync(cancellationToken);
@@ -152,7 +151,7 @@ public sealed class MainWindowSessionUiTests(DesktopUiFixture desktop)
         await desktop.NavigateAsync(null, cancellationToken);
         Assert.True(await desktop.IsLoadingPageHostedAsync(cancellationToken));
 
-        var account = UiTestComposition.CreateAccount();
+        var account = TestAccounts.CreateDesktop();
         await desktop.PublishSessionStateAsync(new AppSessionStateSnapshot.Locked(account), cancellationToken);
         var automation = await desktop.AutomationAsync(cancellationToken);
         var passwordInput = UiSelectors.ById("PasswordBoxInput", "AccountUnlockPasswordBox");

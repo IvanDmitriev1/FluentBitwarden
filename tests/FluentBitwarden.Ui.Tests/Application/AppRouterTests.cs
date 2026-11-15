@@ -1,4 +1,3 @@
-using BitwardenApi.Client;
 using BitwardenApi.Primitives.Ids;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.Infrastructure.UiActivation;
@@ -18,10 +17,7 @@ namespace FluentBitwarden.Ui.Tests.Application;
 [Trait("Category", "Unit")]
 public sealed class AppRouterTests
 {
-    private static readonly AccountProfile Account = new(
-        UserId.Parse("11111111-1111-1111-1111-111111111111"),
-        TestCredentials.Email,
-        BitwardenEnvironment.Europe);
+    private static readonly AccountProfile Account = TestAccounts.CreateEuropean();
 
     [Fact]
     public void MainWindowRoutesNullStateToLoading()

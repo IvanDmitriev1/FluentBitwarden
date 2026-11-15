@@ -15,6 +15,9 @@
   <data name="AccountUnlockPasswordBox.ActionButtonToolTip" xml:space="preserve">
     <value>Unlock</value>
   </data>
+  <data name="AccountUnlockPasswordBox.PlaceholderText" xml:space="preserve">
+    <value>Enter your password</value>
+  </data>
   <data name="AccountUnlockPasswordBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Master password</value>
   </data>
@@ -23,6 +26,21 @@
   </data>
   <data name="AccountUnlockWindowsHelloButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Unlock with Windows Hello</value>
+  </data>
+  <data name="PasswordBoxExHideButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Hide password</value>
+  </data>
+  <data name="PasswordBoxExHideButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Hide password</value>
+  </data>
+  <data name="PasswordBoxExRevealButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Show password</value>
+  </data>
+  <data name="PasswordBoxExRevealButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Show password</value>
+  </data>
+  <data name="SetupMasterPasswordBox.PlaceholderText" xml:space="preserve">
+    <value>Enter your password</value>
   </data>
   <data name="VaultListQueryBar.CloseSearchToolTip" xml:space="preserve">
     <value>Close search</value>

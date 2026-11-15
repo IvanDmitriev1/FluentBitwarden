@@ -2,6 +2,7 @@ using BitwardenApi.Vault.Ciphers.Models;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Ui.Screens.Shell.Controls;
+using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using Navis.WinUI.Abstractions;
 using NSubstitute;
 
@@ -24,8 +25,8 @@ public sealed class VaultCipherSearchBoxViewModelTests
     [Fact]
     public async Task SearchTrimsTextAndLimitsSuggestions()
     {
-        var response = VaultCipherSearchBoxViewModelTestSupport.NewSource<Cipher[]>();
-        var request = VaultCipherSearchBoxViewModelTestSupport.NewSource<VaultCipherQuery>();
+        var response = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
+        var request = TestTaskSources.CreateAsyncContinuationSource<VaultCipherQuery>();
         _vaultClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
@@ -38,7 +39,7 @@ public sealed class VaultCipherSearchBoxViewModelTests
         VaultCipherQuery query = await request.Task;
         Assert.Equal("bank", query.SearchText);
         Assert.Equal(8, query.Limit);
-        var expected = VaultCipherSearchBoxViewModelTestSupport.CreateCipher("Bank result");
+        var expected = TestCiphers.CreateLogin(name: "Bank result");
         response.SetResult([expected]);
         await VaultCipherSearchBoxViewModelTestSupport.WaitUntilAsync(
             () => ReferenceEquals(_viewModel.Suggestions.SingleOrDefault(), expected));
@@ -47,7 +48,7 @@ public sealed class VaultCipherSearchBoxViewModelTests
     [Fact]
     public void WhitespaceSearchClearsSuggestionsWithoutCallingVault()
     {
-        _viewModel.Suggestions = [VaultCipherSearchBoxViewModelTestSupport.CreateCipher("old suggestion")];
+        _viewModel.Suggestions = [TestCiphers.CreateLogin(name: "old suggestion")];
 
         _viewModel.SearchText = "   ";
 
@@ -59,10 +60,10 @@ public sealed class VaultCipherSearchBoxViewModelTests
     [Fact]
     public async Task OlderSearchResultCannotReplaceNewerSuggestions()
     {
-        var older = VaultCipherSearchBoxViewModelTestSupport.NewSource<Cipher[]>();
-        var newer = VaultCipherSearchBoxViewModelTestSupport.NewSource<Cipher[]>();
-        var olderStarted = VaultCipherSearchBoxViewModelTestSupport.NewSource<CancellationToken>();
-        var newerStarted = VaultCipherSearchBoxViewModelTestSupport.NewSource<CancellationToken>();
+        var older = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
+        var newer = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
+        var olderStarted = TestTaskSources.CreateAsyncContinuationSource<CancellationToken>();
+        var newerStarted = TestTaskSources.CreateAsyncContinuationSource<CancellationToken>();
         _vaultClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
@@ -80,12 +81,12 @@ public sealed class VaultCipherSearchBoxViewModelTests
         CancellationToken olderToken = await olderStarted.Task;
         Task newerSearch = _viewModel.SearchCommand.ExecuteAsync("B");
         _ = await newerStarted.Task;
-        var expected = VaultCipherSearchBoxViewModelTestSupport.CreateCipher("B result");
+        var expected = TestCiphers.CreateLogin(name: "B result");
         newer.SetResult([expected]);
         await VaultCipherSearchBoxViewModelTestSupport.WaitUntilAsync(
             () => ReferenceEquals(_viewModel.Suggestions.SingleOrDefault(), expected));
 
-        older.SetResult([VaultCipherSearchBoxViewModelTestSupport.CreateCipher("A result")]);
+        older.SetResult([TestCiphers.CreateLogin(name: "A result")]);
         await Task.WhenAll(olderSearch, newerSearch);
         Assert.Same(expected, Assert.Single(_viewModel.Suggestions));
         Assert.True(olderToken.IsCancellationRequested);
@@ -94,15 +95,15 @@ public sealed class VaultCipherSearchBoxViewModelTests
     [Fact]
     public async Task CancelClearsSearchAndIgnoresLateResponse()
     {
-        var response = VaultCipherSearchBoxViewModelTestSupport.NewSource<Cipher[]>();
-        var started = VaultCipherSearchBoxViewModelTestSupport.NewSource<CancellationToken>();
+        var response = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
+        var started = TestTaskSources.CreateAsyncContinuationSource<CancellationToken>();
         _vaultClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(call => VaultCipherSearchBoxViewModelTestSupport.StartSearch(started, response, call.Arg<CancellationToken>()));
 
         Task search = _viewModel.SearchCommand.ExecuteAsync("search");
         CancellationToken token = await started.Task;
         _viewModel.CancelPendingSearchCommand.Execute(null);
-        response.SetResult([VaultCipherSearchBoxViewModelTestSupport.CreateCipher("late result")]);
+        response.SetResult([TestCiphers.CreateLogin(name: "late result")]);
         await search;
 
         Assert.True(token.IsCancellationRequested);
@@ -113,10 +114,10 @@ public sealed class VaultCipherSearchBoxViewModelTests
     [Fact]
     public async Task SearchFailureDoesNotPreventLaterSearch()
     {
-        var failed = VaultCipherSearchBoxViewModelTestSupport.NewSource<Cipher[]>();
-        var recovered = VaultCipherSearchBoxViewModelTestSupport.NewSource<Cipher[]>();
-        var failedStarted = VaultCipherSearchBoxViewModelTestSupport.NewSource<bool>();
-        var recoveredStarted = VaultCipherSearchBoxViewModelTestSupport.NewSource<bool>();
+        var failed = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
+        var recovered = TestTaskSources.CreateAsyncContinuationSource<Cipher[]>();
+        var failedStarted = TestTaskSources.CreateAsyncContinuationSource<bool>();
+        var recoveredStarted = TestTaskSources.CreateAsyncContinuationSource<bool>();
         _vaultClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<VaultCipherQuery>().SearchText switch
             {
@@ -131,7 +132,7 @@ public sealed class VaultCipherSearchBoxViewModelTests
         await failedSearch;
         Task recoverySearch = _viewModel.SearchCommand.ExecuteAsync("recovery");
         await recoveredStarted.Task;
-        var expected = VaultCipherSearchBoxViewModelTestSupport.CreateCipher("Recovered result");
+        var expected = TestCiphers.CreateLogin(name: "Recovered result");
         recovered.SetResult([expected]);
         await VaultCipherSearchBoxViewModelTestSupport.WaitUntilAsync(
             () => ReferenceEquals(_viewModel.Suggestions.SingleOrDefault(), expected));

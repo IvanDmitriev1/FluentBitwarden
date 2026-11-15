@@ -1,5 +1,3 @@
-using BitwardenApi.Client;
-using BitwardenApi.Primitives.Ids;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
@@ -15,10 +13,7 @@ namespace FluentBitwarden.Ui.Tests.Features.Settings;
 [Trait("Category", "Unit")]
 public sealed class WindowsHelloSettingValueTests
 {
-    private static readonly AccountProfile Account = new(
-        UserId.Parse("11111111-1111-1111-1111-111111111111"),
-        TestCredentials.Email,
-        BitwardenEnvironment.Europe);
+    private static readonly AccountProfile Account = TestAccounts.CreateEuropean();
 
     private readonly IAppSessionClient _sessionClient = Substitute.For<IAppSessionClient>();
     private readonly IAccountWindowsHelloIntegrationClient _helloClient = Substitute.For<IAccountWindowsHelloIntegrationClient>();
@@ -86,7 +81,7 @@ public sealed class WindowsHelloSettingValueTests
     public async Task EnablingSendsNativeWindowHandleAndKeepsEnrolledState()
     {
         const long handle = 2468;
-        var started = WindowsHelloSettingValueTestSupport.NewSource<EnableWindowsHelloEnrollmentRequest>();
+        var started = TestTaskSources.CreateAsyncContinuationSource<EnableWindowsHelloEnrollmentRequest>();
         await LoadActiveAccountAsync(WindowsHelloEnrollmentStatus.NotEnrolled);
         _windowManager.NativeWindowHandle.Returns(new NativeWindowHandle(handle));
         _helloClient.EnableAsync(Arg.Any<EnableWindowsHelloEnrollmentRequest>(), Arg.Any<CancellationToken>())
@@ -126,8 +121,8 @@ public sealed class WindowsHelloSettingValueTests
             .Returns(Task.FromResult<AppSessionStateSnapshot>(new AppSessionStateSnapshot.Locked(Account)));
         _helloClient.GetEnrollmentAsync(Arg.Any<GetWindowsHelloEnrollmentRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(WindowsHelloEnrollmentStatus.Enrolled));
-        var started = WindowsHelloSettingValueTestSupport.NewSource<bool>();
-        var disableResponse = WindowsHelloSettingValueTestSupport.NewSource<bool>();
+        var started = TestTaskSources.CreateAsyncContinuationSource<bool>();
+        var disableResponse = TestTaskSources.CreateAsyncContinuationSource<bool>();
         _helloClient.DisableAsync(Arg.Any<DisableWindowsHelloEnrollmentRequest>(), Arg.Any<CancellationToken>())
             .Returns(_ =>
             {
@@ -136,7 +131,7 @@ public sealed class WindowsHelloSettingValueTests
             });
         await _value.LoadAsync(TestContext.Current.CancellationToken);
 
-        var restored = WindowsHelloSettingValueTestSupport.NewSource<bool>();
+        var restored = TestTaskSources.CreateAsyncContinuationSource<bool>();
         _value.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(_value.IsEnabled) && _value.IsEnabled)

@@ -29,9 +29,6 @@ public sealed partial class SetupPasswordPageViewModel(
     [ObservableProperty]
     public partial bool IsBusy { get; private set; }
 
-    [ObservableProperty]
-    public partial int PasswordResetRequest { get; private set; }
-
     public ValueTask OnNavigatedToAsync(CancellationToken cancellationToken)
     {
         _frameCancellationToken = cancellationToken;
@@ -46,7 +43,6 @@ public sealed partial class SetupPasswordPageViewModel(
         Email = parameters.Email;
         ServerDisplayName = parameters.ServerDisplayName;
         Error = null;
-        PasswordResetRequest++;
         return ValueTask.CompletedTask;
     }
 
@@ -59,7 +55,6 @@ public sealed partial class SetupPasswordPageViewModel(
         ServerDisplayName = string.Empty;
         Error = null;
         IsBusy = false;
-        PasswordResetRequest++;
         return ValueTask.CompletedTask;
     }
 
@@ -73,29 +68,22 @@ public sealed partial class SetupPasswordPageViewModel(
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task LoginAsync(string? password)
     {
-        try
+        if (IsBusy)
+            return;
+
+        if (string.IsNullOrWhiteSpace(password))
         {
-            if (IsBusy)
-                return;
-
-            if (string.IsNullOrWhiteSpace(password))
-            {
-                Error = "Enter your master password.";
-                return;
-            }
-
-            if (_context is not { } context)
-                return;
-
-            using var operation = CancellationTokenSource.CreateLinkedTokenSource(_frameCancellationToken);
-            _operationCancellation = operation;
-            Error = null;
-            await AuthenticateAsync(new AccountAuthenticationRequest.Password(context, Email, password), operation.Token);
+            Error = "Enter your master password.";
+            return;
         }
-        finally
-        {
-            PasswordResetRequest++;
-        }
+
+        if (_context is not { } context)
+            return;
+
+        using var operation = CancellationTokenSource.CreateLinkedTokenSource(_frameCancellationToken);
+        _operationCancellation = operation;
+        Error = null;
+        await AuthenticateAsync(new AccountAuthenticationRequest.Password(context, Email, password), operation.Token);
     }
 
     private async Task AuthenticateAsync(AccountAuthenticationRequest request, CancellationToken cancellationToken)

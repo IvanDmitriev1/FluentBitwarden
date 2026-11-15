@@ -26,20 +26,19 @@ public sealed class SetupPasswordViewModelTests
     }
 
     [Fact]
-    public async Task BlankPasswordDoesNotCallIpcAndRequestsPasswordReset()
+    public async Task BlankPasswordDoesNotCallIpc()
     {
         await NavigateToPasswordAsync();
 
         await _viewModel.LoginCommand.ExecuteAsync("  ");
 
         Assert.Equal("Enter your master password.", _viewModel.Error);
-        Assert.Equal(2, _viewModel.PasswordResetRequest);
         await _accountClient.DidNotReceive().AuthenticateAsync(
             Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task RejectedPasswordShowsErrorResetsInputAndSendsAccountArguments()
+    public async Task RejectedPasswordShowsErrorAndSendsAccountArguments()
     {
         await NavigateToPasswordAsync();
         _accountClient.AuthenticateAsync(Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>())
@@ -49,7 +48,6 @@ public sealed class SetupPasswordViewModelTests
 
         Assert.Equal("Rejected.", _viewModel.Error);
         Assert.False(_viewModel.IsBusy);
-        Assert.Equal(2, _viewModel.PasswordResetRequest);
         await _accountClient.Received(1).AuthenticateAsync(
             Arg.Is<AccountAuthenticationRequest>(request =>
                 request.GetType() == typeof(AccountAuthenticationRequest.Password) &&
@@ -60,17 +58,16 @@ public sealed class SetupPasswordViewModelTests
     }
 
     [Fact]
-    public async Task SuccessfulPasswordLoginRefreshesSessionAndResetsInput()
+    public async Task SuccessfulPasswordLoginRefreshesSession()
     {
         await NavigateToPasswordAsync();
         _accountClient.AuthenticateAsync(Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<AccountAuthenticationOutcome>(new AccountAuthenticationOutcome.Success(CreateAccount())));
+            .Returns(Task.FromResult<AccountAuthenticationOutcome>(new AccountAuthenticationOutcome.Success(TestAccounts.CreateEuropean())));
 
         await _viewModel.LoginCommand.ExecuteAsync("entered-password");
 
         Assert.Null(_viewModel.Error);
         Assert.False(_viewModel.IsBusy);
-        Assert.Equal(2, _viewModel.PasswordResetRequest);
         await _sessionRefresher.Received(1).RefreshSessionAsync(Arg.Any<CancellationToken>());
     }
 
@@ -95,15 +92,14 @@ public sealed class SetupPasswordViewModelTests
             parameters.Context == context &&
             parameters.Challenge == challenge &&
             parameters.EmailState == emailState));
-        Assert.Equal(2, _viewModel.PasswordResetRequest);
     }
 
     [Fact]
     public async Task LeavingPageCancelsLoginAndIgnoresLateRejection()
     {
         await NavigateToPasswordAsync();
-        var response = new TaskCompletionSource<AccountAuthenticationOutcome>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var requestStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = TestTaskSources.CreateAsyncContinuationSource<AccountAuthenticationOutcome>();
+        var requestStarted = TestTaskSources.CreateAsyncContinuationSource<CancellationToken>();
         _accountClient.AuthenticateAsync(Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
@@ -120,7 +116,6 @@ public sealed class SetupPasswordViewModelTests
         Assert.True(requestToken.IsCancellationRequested);
         Assert.Null(_viewModel.Error);
         Assert.False(_viewModel.IsBusy);
-        Assert.Equal(3, _viewModel.PasswordResetRequest);
     }
 
     private Task NavigateToPasswordAsync() => _viewModel.OnNavigatedToAsync(
@@ -134,8 +129,4 @@ public sealed class SetupPasswordViewModelTests
     private static SetupEmailParameters CreateEmailState() =>
         new(TestCredentials.Email, SetupServerOption.Eu, string.Empty);
 
-    private static FluentBitwarden.Contracts.Modules.Accounts.StoredAccount.AccountProfile CreateAccount() => new(
-        UserId.Parse("11111111-1111-1111-1111-111111111111"),
-        TestCredentials.Email,
-        BitwardenEnvironment.Europe);
 }
