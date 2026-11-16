@@ -16,7 +16,7 @@ public sealed class AccountIpcHandlerTests
         accountService.AuthenticateAsync(Arg.Any<AccountAuthenticationRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<AccountAuthenticationOutcome>(new AccountAuthenticationOutcome.Success(account)));
         var sessionOperations = Substitute.For<IAppSessionOperations>();
-        var handler = new AccountIpcHandler(accountService, sessionOperations);
+        var handler = new AccountIpcHandler(accountService, sessionOperations, Substitute.For<IAppSessionAccessor>());
 
         AccountAuthenticationOutcome result = await handler.AuthenticateAsync(null!, TestContext.Current.CancellationToken);
 

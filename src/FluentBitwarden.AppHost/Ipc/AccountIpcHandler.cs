@@ -6,11 +6,23 @@ using FluentBitwarden.Platform.Ipc.Abstractions;
 
 namespace FluentBitwarden.AppHost.Ipc;
 
-internal sealed class AccountIpcHandler(IAccountService accountService, IAppSessionOperations appSessionOperations) : IAccountClient, IIpcRequestsHandler
+internal sealed class AccountIpcHandler(
+    IAccountService accountService,
+    IAppSessionOperations appSessionOperations,
+    IAppSessionAccessor sessionAccessor) : IAccountClient, IIpcRequestsHandler
 {
     public Task<AccountProfile[]> GetAccountsAsync(
         GetAccountsRequest request, CancellationToken cancellationToken = default) =>
         Task.FromResult(accountService.GetAccounts());
+
+    public Task<AccountProfileDetails?> GetActiveAccountProfileDetailsAsync(
+        GetActiveAccountProfileDetailsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var account = sessionAccessor.RequireUnlockedState().Account;
+        return Task.FromResult(accountService.GetAccountProfileDetails(account.UserId));
+    }
 
     public async Task<AccountAuthenticationOutcome> AuthenticateAsync(
         AccountAuthenticationRequest request, CancellationToken cancellationToken = default)

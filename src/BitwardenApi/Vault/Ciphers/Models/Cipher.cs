@@ -24,6 +24,9 @@ public abstract partial class Cipher
     [StronglyTypedIdFormatter<FolderId>]
     public FolderId FolderId { get; set; }
 
+    [StronglyTypedIdFormatter<OrganizationId>]
+    public OrganizationId OrganizationId { get; set; }
+
     public required string Name { get; set; }
     public string? Notes { get; set; }
     public required bool Favorite { get; set; }

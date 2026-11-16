@@ -73,12 +73,45 @@
     <value>Notes</value>
   </data>
   <data name="VaultListNameAscending.Text" xml:space="preserve">
-    <value>Name A–Z</value>
+    <value>Name AРІР‚вЂњZ</value>
   </data>
   <data name="VaultListNameDescending.Text" xml:space="preserve">
-    <value>Name Z–A</value>
+    <value>Name ZРІР‚вЂњA</value>
   </data>
   <data name="VaultListSshKeys.Text" xml:space="preserve">
     <value>SSH Keys</value>
+  </data>
+  <data name="VaultDetailsLoading.Text" xml:space="preserve">
+    <value>Loading item detailsРІР‚В¦</value>
+  </data>
+  <data name="VaultDetailsUnavailable.Text" xml:space="preserve">
+    <value>This item is unavailable.</value>
+  </data>
+  <data name="VaultDetailsFailed.Text" xml:space="preserve">
+    <value>CouldnРІР‚в„ўt load item details.</value>
+  </data>
+  <data name="VaultDetailsTypeLogin" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="VaultDetailsTypeSecureNote" xml:space="preserve">
+    <value>Secure note</value>
+  </data>
+  <data name="VaultDetailsTypeCard" xml:space="preserve">
+    <value>Card</value>
+  </data>
+  <data name="VaultDetailsTypeIdentity" xml:space="preserve">
+    <value>Identity</value>
+  </data>
+  <data name="VaultDetailsTypeSshKey" xml:space="preserve">
+    <value>SSH key</value>
+  </data>
+  <data name="VaultScopePersonal.Text" xml:space="preserve">
+    <value>Personal vault</value>
+  </data>
+  <data name="VaultScopePersonalVault" xml:space="preserve">
+    <value>Personal vault</value>
+  </data>
+  <data name="VaultScopeOrganization" xml:space="preserve">
+    <value>Organization</value>
   </data>
 </root>

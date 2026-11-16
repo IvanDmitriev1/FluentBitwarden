@@ -1,4 +1,4 @@
-namespace FluentBitwarden.Ui.Features.Vault.VaultCipherList;
+namespace FluentBitwarden.Ui.Features.Vault.CipherList;
 
 public sealed partial class VaultCipherTemplates : ResourceDictionary
 {

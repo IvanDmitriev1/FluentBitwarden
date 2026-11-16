@@ -1,6 +1,9 @@
 using BitwardenApi.Primitives.Ids;
 using BitwardenApi.Vault.Ciphers.Models;
+using FluentBitwarden.Contracts.AppSession.State;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
+using FluentBitwarden.Ui.Features.Settings;
 using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Features.Vault.Intents;
 using FluentBitwarden.Ui.Tests.TestInfrastructure;
@@ -139,6 +142,55 @@ public sealed class VaultPageUiTests(DesktopUiFixture desktop)
         Assert.True(Assert.IsType<bool>(await automation.PropertyAsync(focusedSettings, "HasKeyboardFocus", cancellationToken)));
         Assert.False(Assert.IsType<bool>(await automation.PropertyAsync(searchBox, "HasKeyboardFocus", cancellationToken)));
     }
+
+    [Fact]
+    public async Task ExplicitSelectionShowsDetailsAndFilteringAndLockClearThem()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await desktop.ResetToSignedOutAsync(cancellationToken);
+        var cipher = TestCiphers.CreateLogin("detail-target", "Details target");
+        desktop.VaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<Cipher[]>(call.Arg<VaultCipherQuery>().SearchText == "no match" ? [] : [cipher]));
+
+        var automation = await StartUnlockedAsync(cancellationToken);
+        await desktop.RunOnUiThreadAsync(() =>
+        {
+            var navigation = App.Current.GetRequiredService<Navis.WinUI.Abstractions.INavigation>().Child;
+            Assert.NotNull(navigation);
+            navigation.Navigate<SettingsPage>();
+            Assert.Equal(typeof(SettingsPage), navigation.CurrentPageType);
+        }, cancellationToken);
+
+        await NavigateToCipherAsync(cipher.Id, cancellationToken);
+        await automation.WaitAsync(
+            UiSelectors.ById("VaultDetailsName"),
+            "selected cipher name is visible", element => element.Name == cipher.Name && !element.IsOffscreen, cancellationToken);
+        _ = await desktop.VaultCipherClient.DidNotReceive().GetCipherAsync(
+            Arg.Any<GetVaultCipherRequest>(), Arg.Any<CancellationToken>());
+
+        var search = await automation.WaitAsync(
+            UiSelectors.ById("ListQueryBar.Search"),
+            "vault list search is visible", element => !element.IsOffscreen, cancellationToken);
+        await automation.SetValueAsync(search, "no match", cancellationToken);
+        await automation.WaitAbsentAsync(UiSelectors.ById("VaultDetailsName"), cancellationToken);
+
+        await NavigateToCipherAsync(cipher.Id, cancellationToken);
+        await automation.WaitAsync(
+            UiSelectors.ById("VaultDetailsName"),
+            "selected cipher name is visible before locking", element => element.Name == cipher.Name && !element.IsOffscreen, cancellationToken);
+
+        await desktop.PublishSessionStateAsync(new AppSessionStateSnapshot.Locked(TestAccounts.CreateDesktop()), cancellationToken);
+        await automation.WaitAsync(
+            UiSelectors.ById("PasswordBoxInput", "AccountUnlockPasswordBox"),
+            "lock replaces the vault shell", element => element.IsEnabled && !element.IsOffscreen, cancellationToken);
+    }
+
+    private Task NavigateToCipherAsync(CipherId id, CancellationToken cancellationToken) =>
+        desktop.RunOnUiThreadAsync(() =>
+        {
+            App.Current.GetRequiredService<Navis.WinUI.Abstractions.INavigation>()
+                .Child?.Navigate<VaultPage, VaultCipherNavigationIntent>(new ShowVaultCipherIntent("details", id));
+        }, cancellationToken);
 
     private async Task<DesktopAutomation> StartUnlockedAsync(CancellationToken cancellationToken)
     {

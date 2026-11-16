@@ -12,6 +12,11 @@ internal sealed class RemoteAccountClient(IIpcClient ipcClient) : IAccountClient
         CancellationToken cancellationToken = default) =>
         ipcClient.SendAsync<GetAccountsRequest, AccountProfile[]>(request, cancellationToken);
 
+    public Task<AccountProfileDetails?> GetActiveAccountProfileDetailsAsync(
+        GetActiveAccountProfileDetailsRequest request,
+        CancellationToken cancellationToken = default) =>
+        ipcClient.SendAsync<GetActiveAccountProfileDetailsRequest, AccountProfileDetails?>(request, cancellationToken);
+
     public Task<AccountAuthenticationOutcome> AuthenticateAsync(
         AccountAuthenticationRequest request,
         CancellationToken cancellationToken = default) =>

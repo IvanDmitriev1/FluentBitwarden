@@ -1,9 +1,9 @@
-using System.Windows.Input;
 using CommunityToolkit.WinUI;
+using System.Windows.Input;
 using Microsoft.UI.Xaml.Input;
 using VirtualKey = Windows.System.VirtualKey;
 
-namespace FluentBitwarden.Ui.Features.Vault.VaultCipherList;
+namespace FluentBitwarden.Ui.Features.Vault.CipherList;
 
 [DependencyProperty<IEnumerable<Cipher>>("ItemsSource")]
 [DependencyProperty<Cipher>("SelectedCipher")]
@@ -12,10 +12,7 @@ namespace FluentBitwarden.Ui.Features.Vault.VaultCipherList;
 [DependencyProperty<ICommand>("SortChangedCommand")]
 public sealed partial class VaultCipherListView : UserControl
 {
-    public VaultCipherListView()
-    {
-        InitializeComponent();
-    }
+    public VaultCipherListView() => InitializeComponent();
 
     private void CipherList_KeyDown(object sender, KeyRoutedEventArgs e)
     {
@@ -55,14 +52,10 @@ public sealed partial class VaultCipherListView : UserControl
             listView.UpdateLayout();
         }
 
-        if (ReferenceEquals(listView.SelectedItem, selected) &&
-            listView.ContainerFromItem(selected) is ListViewItem row)
-        {
+        if (ReferenceEquals(listView.SelectedItem, selected) && listView.ContainerFromItem(selected) is ListViewItem row)
             row.Focus(FocusState.Keyboard);
-        }
 
-        return listView.SmoothScrollIntoViewWithItemAsync(
-            selected, ScrollItemPlacement.Center);
+        return listView.SmoothScrollIntoViewWithItemAsync(selected, ScrollItemPlacement.Center);
     }
 
 }

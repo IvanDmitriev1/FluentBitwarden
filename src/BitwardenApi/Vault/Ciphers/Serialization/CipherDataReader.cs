@@ -84,6 +84,7 @@ public sealed class CipherDataReader
         Cipher cipher = Cipher.CreateBlankCipher(response.VaultCipherType);
         cipher.Id = response.Id;
         cipher.FolderId = response.FolderId;
+        cipher.OrganizationId = response.OrganizationId;
         cipher.Favorite = response.Favorite;
         cipher.Reprompt = response.Reprompt;
         cipher.RevisionDate = response.RevisionDate;

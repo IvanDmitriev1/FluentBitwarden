@@ -1,3 +1,4 @@
+using FluentBitwarden.Contracts.Modules.Vault.Organizations;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Accounts;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
@@ -31,6 +32,7 @@ public static class Program
         builder.Services.AddSingleton<IVaultOperationsClient, RemoteVaultOperationsClient>();
         builder.Services.AddSingleton<IVaultCipherClient, RemoteVaultCipherClient>();
         builder.Services.AddSingleton<IVaultFolderClient, RemoteVaultFolderClient>();
+        builder.Services.AddSingleton<IVaultOrganizationClient, RemoteVaultOrganizationClient>();
 
         builder.Services.AddIpcServer(IpcConstants.UiPipeName, static _ => { });
         builder.Services.AddUiServices();

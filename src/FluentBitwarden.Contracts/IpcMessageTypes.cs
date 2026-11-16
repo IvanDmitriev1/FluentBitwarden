@@ -26,12 +26,14 @@ public static class IpcMessageTypes
         public const ushort FolderChanged = 112;
         public const ushort Changed = 113;
         public const ushort FolderDeleted = 114;
+        public const ushort GetOrganizationName = 115;
     }
 
     public static class Account
     {
         public const ushort LogIn = 201;
         public const ushort GetAccounts = 202;
+        public const ushort GetActiveAccountProfileDetails = 203;
     }
 
     public static class Session

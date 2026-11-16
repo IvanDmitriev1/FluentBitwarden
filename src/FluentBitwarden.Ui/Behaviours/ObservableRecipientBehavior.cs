@@ -12,7 +12,7 @@ public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
 
         AssociatedObject.Loaded += OnLoaded;
         AssociatedObject.Unloaded += OnUnloaded;
-        UpdateRecipient();
+        ActivateRecipient();
     }
 
     protected override void OnDetaching()
@@ -24,25 +24,14 @@ public sealed class ObservableRecipientBehavior : Behavior<FrameworkElement>
         base.OnDetaching();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e) => UpdateRecipient();
+    private void OnLoaded(object sender, RoutedEventArgs e) => ActivateRecipient();
 
     private void OnUnloaded(object sender, RoutedEventArgs e) => DeactivateRecipient();
 
-    private void UpdateRecipient()
+    private void ActivateRecipient()
     {
-        ObservableRecipient? recipient = AssociatedObject.IsLoaded
-            ? AssociatedObject.DataContext as ObservableRecipient
-            : null;
-
-        if (ReferenceEquals(_recipient, recipient))
-            return;
-
-        DeactivateRecipient();
-        if (recipient is null)
-            return;
-
-        _recipient = recipient;
-        recipient.IsActive = true;
+        _recipient ??= AssociatedObject.DataContext as ObservableRecipient;
+        _recipient?.IsActive = true;
     }
 
     private void DeactivateRecipient()

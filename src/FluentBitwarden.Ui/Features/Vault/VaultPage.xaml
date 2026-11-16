@@ -2,9 +2,23 @@
 	x:Class="FluentBitwarden.Ui.Features.Vault.VaultPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:contracts="using:BitwardenApi.Vault.Ciphers.Models"
+	xmlns:behaviours="using:FluentBitwarden.Ui.Behaviours"
+	xmlns:control1="using:FluentBitwarden.Ui.Features.Vault.CipherList"
+	xmlns:control2="using:FluentBitwarden.Ui.Features.Vault.CipherDetailsView"
+	xmlns:control3="using:FluentBitwarden.Ui.Features.Vault.ScopeSelector"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-	xmlns:vault="using:FluentBitwarden.Ui.Features.Vault.VaultCipherList">
+	xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+	xmlns:nav="using:Navis.WinUI">
+
+	<nav:TitleBarNavigation.RightHeader>
+		<Button Margin="20,0,0,0" Style="{StaticResource AccentButtonStyle}">
+			<StackPanel Orientation="Horizontal" Spacing="6">
+				<SymbolIcon Symbol="Add" />
+				<TextBlock VerticalAlignment="Center" Text="New Item" />
+			</StackPanel>
+		</Button>
+	</nav:TitleBarNavigation.RightHeader>
+
 	<SplitView
 		x:Name="MainSplitView"
 		DisplayMode="Inline"
@@ -19,9 +33,9 @@
 					<ColumnDefinition Width="Auto" />
 				</Grid.ColumnDefinitions>
 
-				<vault:VaultCipherListView
-					AutomationProperties.AutomationId="VaultCipherListView"
+				<control1:VaultCipherListView
 					Grid.Column="0"
+					AutomationProperties.AutomationId="VaultCipherListView"
 					CategoryChangedCommand="{x:Bind ViewModel.CategoryChangedCommand}"
 					ItemsSource="{x:Bind ViewModel.FilteredCiphers, Mode=OneWay}"
 					SearchText="{x:Bind ViewModel.SearchText, Mode=TwoWay}"
@@ -41,11 +55,55 @@
 
 		</SplitView.Pane>
 
-		<Grid>
+		<Grid Padding="10" Visibility="{x:Bind ViewModel.SelectedCipher, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
 			</Grid.RowDefinitions>
+
+			<Grid Grid.Row="0" ColumnSpacing="24">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" MinWidth="48" />
+				</Grid.ColumnDefinitions>
+
+				<control3:VaultScopeSelectorView
+					Grid.Column="0"
+					AccountName="{x:Bind ViewModel.PersonalVaultAccountName, Mode=OneWay}"
+					FolderName="{x:Bind ViewModel.FolderName, Mode=OneWay}" />
+
+				<CommandBar
+					Grid.Column="1"
+					HorizontalAlignment="Right"
+					DefaultLabelPosition="Right"
+					IsDynamicOverflowEnabled="True">
+					<CommandBar.Resources>
+						<ResourceDictionary>
+							<ResourceDictionary.ThemeDictionaries>
+								<ResourceDictionary x:Key="Light">
+									<StaticResource x:Key="CommandBarBackgroundOpen" ResourceKey="ControlFillColorTransparentBrush" />
+									<Thickness x:Key="CommandBarBorderThicknessOpen">0</Thickness>
+								</ResourceDictionary>
+								<ResourceDictionary x:Key="Dark">
+									<StaticResource x:Key="CommandBarBackgroundOpen" ResourceKey="ControlFillColorTransparentBrush" />
+									<Thickness x:Key="CommandBarBorderThicknessOpen">0</Thickness>
+								</ResourceDictionary>
+							</ResourceDictionary.ThemeDictionaries>
+						</ResourceDictionary>
+					</CommandBar.Resources>
+					<AppBarButton Icon="Edit" Label="Edit" />
+					<AppBarButton Icon="Share" Label="Share" />
+					<CommandBar.SecondaryCommands>
+						<AppBarButton Icon="Setting" Label="Settings" />
+					</CommandBar.SecondaryCommands>
+				</CommandBar>
+			</Grid>
+
+			<control2:VaultCipherDetailsView
+				Grid.Row="1"
+				Margin="10"
+				AutomationProperties.AutomationId="VaultCipherDetailsPane"
+				Cipher="{x:Bind ViewModel.SelectedCipher, Mode=OneWay}" />
 		</Grid>
 	</SplitView>
 </Page>

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using FluentBitwarden.AppHost.Modules.Vault.Contracts;
 using Dapper;
 using FluentBitwarden.AppHost.Modules.Vault.Internal;
 using FluentBitwarden.AppHost.Modules.Vault.Persistence.Mappers;
@@ -6,7 +7,7 @@ using Microsoft.Data.Sqlite;
 
 namespace FluentBitwarden.AppHost.Modules.Vault.Persistence;
 
-internal sealed class VaultReaderRepository(IDbSession dbSession)
+internal sealed class VaultReaderRepository(IDbSession dbSession) : IVaultOrganizationReader
 {
     public delegate void CipherHandler(ref readonly CipherResponse dto, ReadOnlySpan<byte> payload);
 
@@ -27,6 +28,16 @@ internal sealed class VaultReaderRepository(IDbSession dbSession)
 
         return rows.Select(static row => VaultFolderMapper.ToDomain(row)).ToArray();
     }
+
+    public string? GetOrganizationName(UserId userId, OrganizationId organizationId) =>
+        dbSession.Connection.QuerySingleOrDefault<string>(
+            """
+            SELECT organization_name
+            FROM vault_organization
+            WHERE user_id = @UserId AND organization_id = @OrganizationId;
+            """,
+            new { UserId = userId.ToString(), OrganizationId = organizationId.ToString() },
+            transaction: dbSession.Transaction);
 
     public Dictionary<OrganizationId, AsymmetricEncString> LoadOrganizationKeys(UserId userId)
     {

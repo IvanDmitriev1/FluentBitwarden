@@ -1,7 +1,7 @@
+using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Features.Settings;
-using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Screens.Loading;
 using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Ui.Screens.Setup.Steps.Email;
@@ -36,8 +36,8 @@ internal static class UiServiceCollectionExtensions
         services.AddTransient<UnlockPageViewModel>();
         services.AddTransient<ShellPageViewModel>();
         services.AddTransient<SettingsPageViewModel>();
-        services.AddTransient<VaultPageViewModel>();
         services.AddTransient<VaultCipherSearchBoxViewModel>();
+        services.AddTransient<VaultPageViewModel>();
 
         return services;
     }

@@ -79,13 +79,6 @@
 					<controls:VaultCipherSearchBox x:Name="VaultCipherSearchBox" />
 				</Grid>
 			</nav:TitleBarNavigation.PersistentContent>
-
-			<nav:TitleBarNavigation.PersistentRightHeader>
-				<Button
-					Margin="20,0,0,0"
-					Content="New Item"
-					Style="{StaticResource AccentButtonStyle}" />
-			</nav:TitleBarNavigation.PersistentRightHeader>
 		</Frame>
 	</NavigationView>
 </Page>

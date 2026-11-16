@@ -14,6 +14,10 @@ public interface IAccountClient
         GetAccountsRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<AccountProfileDetails?> GetActiveAccountProfileDetailsAsync(
+        GetActiveAccountProfileDetailsRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<AccountAuthenticationOutcome> AuthenticateAsync(
         AccountAuthenticationRequest request,
         CancellationToken cancellationToken = default);

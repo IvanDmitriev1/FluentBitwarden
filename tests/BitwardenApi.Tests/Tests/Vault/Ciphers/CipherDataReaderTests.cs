@@ -26,6 +26,7 @@ public sealed partial class CipherDataReaderTests
         var dto = new CipherResponse
         {
             Id = CipherId.Parse("synthetic-cipher"),
+            OrganizationId = OrganizationId.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
             FolderId = FolderId.Parse("synthetic-folder"),
             VaultCipherType = CipherType.Login,
             RevisionDate = revisionDate,
@@ -44,6 +45,7 @@ public sealed partial class CipherDataReaderTests
         Assert.Equal("synthetic-password", parsed.Password);
         Assert.Equal(dto.Id, parsed.Id);
         Assert.Equal(dto.FolderId, parsed.FolderId);
+        Assert.Equal(dto.OrganizationId, parsed.OrganizationId);
         Assert.Equal(dto.Favorite, parsed.Favorite);
         Assert.Equal(dto.Reprompt, parsed.Reprompt);
         Assert.Equal(revisionDate, parsed.RevisionDate);

@@ -12,6 +12,7 @@ internal static class VaultModuleServiceCollection
     {
         services.AddPlatformServices();
         services.AddScoped<VaultReaderRepository>();
+        services.AddScoped<IVaultOrganizationReader>(static sp => sp.GetRequiredService<VaultReaderRepository>());
         services.AddScoped<VaultSyncStateRepository>();
         services.AddScoped<VaultWriterRepository>();
 

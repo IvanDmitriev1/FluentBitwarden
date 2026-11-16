@@ -1,3 +1,4 @@
+using FluentBitwarden.Contracts.Modules.Vault.Organizations;
 using FluentBitwarden.Ui.Features.Vault;
 using BitwardenApi.Identity.Models;
 using BitwardenApi.Vault.Ciphers.Models;
@@ -10,6 +11,7 @@ using FluentBitwarden.Contracts.Modules.Accounts.Authentication;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
+using FluentBitwarden.Contracts.Modules.Vault.Folders;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Platform.Settings.Composition;
@@ -78,6 +80,8 @@ internal sealed class UiTestComposition
         services.AddSingleton(_eventClient);
         services.AddSingleton(_windowsHelloClient);
         services.AddSingleton(_vaultCipherClient);
+        services.AddSingleton(Substitute.For<IVaultFolderClient>());
+        services.AddSingleton(Substitute.For<IVaultOrganizationClient>());
         services.AddSingleton(Substitute.For<ISiteIconCache>());
         services.AddSingleton(Substitute.For<IIpcExceptionNotifier>());
         services.AddSingleton<ICompositeSettingsStore>(settingsStore);

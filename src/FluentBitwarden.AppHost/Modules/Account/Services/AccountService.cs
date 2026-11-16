@@ -22,6 +22,8 @@ internal sealed class AccountService(
 
     public AccountProfile? GetAccount(UserId userId) => accountProfileRepository.GetById(userId);
 
+    public AccountProfileDetails? GetAccountProfileDetails(UserId userId) => accountProfileRepository.GetProfileDetails(userId);
+
     public async Task<AccountAuthenticationOutcome> AuthenticateAsync(AccountAuthenticationRequest request, CancellationToken cancellationToken)
     {
         var result = await accountAuthenticatorService.AuthenticateAsync(request, cancellationToken);

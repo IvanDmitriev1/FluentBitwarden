@@ -95,6 +95,7 @@ internal static class Program
         handlers.Add<VaultOperationsIpcHandler>();
         handlers.Add<VaultCipherIpcHandler>();
         handlers.Add<VaultFolderIpcHandler>();
+        handlers.Add<VaultOrganizationIpcHandler>();
         handlers.Add<PasskeyIpcHandler>();
     }
 

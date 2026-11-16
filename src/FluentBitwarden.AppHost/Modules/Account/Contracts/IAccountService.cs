@@ -7,6 +7,7 @@ public interface IAccountService
 {
     AccountProfile[] GetAccounts();
     AccountProfile? GetAccount(UserId userId);
+    AccountProfileDetails? GetAccountProfileDetails(UserId userId);
 
     Task<AccountAuthenticationOutcome> AuthenticateAsync(AccountAuthenticationRequest request, CancellationToken cancellationToken);
     Task<AccountSessionTokens> RefreshSessionTokensAsync(BitwardenAccountContext accountContext);

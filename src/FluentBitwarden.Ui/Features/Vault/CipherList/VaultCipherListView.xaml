@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <UserControl
-	x:Class="FluentBitwarden.Ui.Features.Vault.VaultCipherList.VaultCipherListView"
+	x:Class="FluentBitwarden.Ui.Features.Vault.CipherList.VaultCipherListView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+
 	xmlns:controls="using:FluentBitwarden.Ui.Controls"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.VaultCipherList"
+
+	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.CipherList"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:models="using:BitwardenApi.Vault.Ciphers.Models"
 	xmlns:search="using:FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search"
 	mc:Ignorable="d">
-
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<ResourceDictionary Source="ms-appx:///Features/Vault/VaultCipherList/VaultListStyle.xaml" />
+				<ResourceDictionary Source="ms-appx:///Features/Vault/CipherList/VaultListStyle.xaml" />
 				<local:VaultCipherTemplates />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
@@ -94,12 +95,12 @@
 				<MenuFlyout>
 					<RadioMenuFlyoutItem
 						x:Uid="VaultListNameAscending"
-						Command="{x:Bind SortChangedCommand}"
+					Command="{x:Bind SortChangedCommand}"
 						CommandParameter="{x:Bind search:VaultCipherSortDirection.Ascending}"
 						IsChecked="True" />
 					<RadioMenuFlyoutItem
 						x:Uid="VaultListNameDescending"
-						Command="{x:Bind SortChangedCommand}"
+					Command="{x:Bind SortChangedCommand}"
 						CommandParameter="{x:Bind search:VaultCipherSortDirection.Descending}" />
 				</MenuFlyout>
 			</controls:ListQueryBar.SortFlyout>

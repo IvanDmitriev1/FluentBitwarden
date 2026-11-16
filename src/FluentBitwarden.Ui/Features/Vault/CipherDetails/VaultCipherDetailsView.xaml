@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+	x:Class="FluentBitwarden.Ui.Features.Vault.CipherDetailsView.VaultCipherDetailsView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls"
+	xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions">
+	<Grid>
+		<ScrollViewer>
+			<StackPanel Spacing="8">
+				<Grid ColumnSpacing="12">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
+
+					<controls:SiteIcon
+						Grid.Column="0"
+						FallbackGlyph="{x:Bind extensions:VaultCipherExtensions.GetDefaultGlyph(Cipher), Mode=OneWay}"
+						Size="24"
+						Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri(Cipher), Mode=OneWay}" />
+
+					<TextBlock
+						Grid.Column="1"
+						VerticalAlignment="Center"
+						AutomationProperties.AutomationId="VaultDetailsName"
+						Style="{StaticResource TitleTextBlockStyle}"
+						Text="{x:Bind Cipher.Name, Mode=OneWay}" />
+				</Grid>
+			</StackPanel>
+		</ScrollViewer>
+	</Grid>
+</UserControl>
