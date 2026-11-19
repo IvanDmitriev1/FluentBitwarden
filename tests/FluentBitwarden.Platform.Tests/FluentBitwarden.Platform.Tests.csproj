@@ -6,6 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
     <ProjectReference Include="..\..\src\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
+    <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
 </Project>

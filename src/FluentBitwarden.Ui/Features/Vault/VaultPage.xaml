@@ -3,9 +3,9 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviours="using:FluentBitwarden.Ui.Behaviours"
+	xmlns:cipherDetails="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
 	xmlns:control1="using:FluentBitwarden.Ui.Features.Vault.CipherList"
-	xmlns:control2="using:FluentBitwarden.Ui.Features.Vault.CipherDetailsView"
-	xmlns:control3="using:FluentBitwarden.Ui.Features.Vault.ScopeSelector"
+	xmlns:control2="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
 	xmlns:nav="using:Navis.WinUI">
@@ -67,7 +67,7 @@
 					<ColumnDefinition Width="*" MinWidth="48" />
 				</Grid.ColumnDefinitions>
 
-				<control3:VaultScopeSelectorView
+				<cipherDetails:VaultCipherLocationView
 					Grid.Column="0"
 					AccountName="{x:Bind ViewModel.PersonalVaultAccountName, Mode=OneWay}"
 					FolderName="{x:Bind ViewModel.FolderName, Mode=OneWay}" />
@@ -93,9 +93,6 @@
 					</CommandBar.Resources>
 					<AppBarButton Icon="Edit" Label="Edit" />
 					<AppBarButton Icon="Share" Label="Share" />
-					<CommandBar.SecondaryCommands>
-						<AppBarButton Icon="Setting" Label="Settings" />
-					</CommandBar.SecondaryCommands>
 				</CommandBar>
 			</Grid>
 

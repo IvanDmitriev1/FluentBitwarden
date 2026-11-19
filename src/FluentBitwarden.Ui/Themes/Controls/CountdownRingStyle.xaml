@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls">
+
+	<Style TargetType="controls:CountdownRing">
+		<Setter Property="IsTabStop" Value="False" />
+		<Setter Property="NormalRingBrush" Value="{ThemeResource CountdownRingNormalBrush}" />
+		<Setter Property="WarningRingBrush" Value="{ThemeResource CountdownRingWarningBrush}" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="controls:CountdownRing">
+					<Border
+						Padding="5,2"
+						HorizontalAlignment="Left"
+						VerticalAlignment="Center"
+						Background="{ThemeResource PillBackgroundBrush}"
+						CornerRadius="10">
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<Grid
+								Width="14"
+								Height="14"
+								VerticalAlignment="Center"
+								AutomationProperties.AccessibilityView="Raw">
+								<Ellipse Stroke="{ThemeResource HairlineBrush}" StrokeThickness="3" />
+								<Path
+									x:Name="PART_Arc"
+									Stretch="None"
+									StrokeEndLineCap="Round"
+									StrokeStartLineCap="Round"
+									StrokeThickness="3" />
+							</Grid>
+							<TextBlock
+								x:Name="PART_Label"
+								MinWidth="16"
+								VerticalAlignment="Center"
+								AutomationProperties.AccessibilityView="Content"
+								FontSize="12"
+								FontWeight="SemiBold"
+								Foreground="{ThemeResource TextSecondaryBrush}"
+								TextAlignment="Center"
+								Typography.NumeralAlignment="Tabular" />
+						</StackPanel>
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+	<ResourceDictionary.ThemeDictionaries>
+		<ResourceDictionary x:Key="Light">
+			<SolidColorBrush x:Key="CountdownRingNormalBrush" Color="#FF2E7D32" />
+			<SolidColorBrush x:Key="CountdownRingWarningBrush" Color="#FFC43E21" />
+		</ResourceDictionary>
+		<ResourceDictionary x:Key="Dark">
+			<SolidColorBrush x:Key="CountdownRingNormalBrush" Color="#FF81C784" />
+			<SolidColorBrush x:Key="CountdownRingWarningBrush" Color="#FFF06140" />
+		</ResourceDictionary>
+		<ResourceDictionary x:Key="HighContrast">
+			<SolidColorBrush x:Key="CountdownRingNormalBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+			<SolidColorBrush x:Key="CountdownRingWarningBrush" Color="{ThemeResource SystemColorHotlightColor}" />
+		</ResourceDictionary>
+	</ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

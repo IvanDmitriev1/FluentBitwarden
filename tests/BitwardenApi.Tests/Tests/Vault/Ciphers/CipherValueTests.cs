@@ -33,7 +33,7 @@ public sealed class CipherValueTests
         Assert.Equal(
             "otpauth://totp/?secret=GEZDGNBVGY3TQOJQ&algorithm=SHA256&digits=8&period=45",
             value.ToStorageString());
-        Assert.Matches("^[0-9]{8}$", value.ComputeTotp());
+        Assert.Matches("^[0-9]{8}$", value.ToString());
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class CipherValueTests
         Assert.Equal(
             "otpauth://hotp/?secret=GEZDGNBVGY3TQOJQ&algorithm=SHA512&digits=7&period=31",
             value.ToStorageString());
-        Assert.Matches("^[0-9]{7}$", value.ComputeTotp());
+        Assert.Matches("^[0-9]{7}$", value.ToString());
     }
 
     [Fact]

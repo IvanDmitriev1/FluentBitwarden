@@ -12,6 +12,7 @@ using FluentBitwarden.Ui.Windows.Abstractions;
 using Navis.WinUI.Abstractions;
 using Windows.ApplicationModel;
 using Windows.Storage;
+using Path = System.IO.Path;
 
 namespace FluentBitwarden.Ui.Features.Settings;
 

@@ -40,7 +40,7 @@ public sealed partial class TotpValue(TotpValue.State state)
         }
     }
 
-    public string ComputeTotp() => _totp.ComputeTotp();
+    public override string ToString() => _totp.ComputeTotp();
 
     /// <summary>
     /// Renders the value back to the storable secret string: a bare Base32 secret for default

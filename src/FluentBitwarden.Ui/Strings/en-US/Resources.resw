@@ -73,10 +73,10 @@
     <value>Notes</value>
   </data>
   <data name="VaultListNameAscending.Text" xml:space="preserve">
-    <value>Name AРІР‚вЂњZ</value>
+    <value>Name A to Z</value>
   </data>
   <data name="VaultListNameDescending.Text" xml:space="preserve">
-    <value>Name ZРІР‚вЂњA</value>
+    <value>Name Z to A</value>
   </data>
   <data name="VaultListSshKeys.Text" xml:space="preserve">
     <value>SSH Keys</value>
@@ -113,5 +113,200 @@
   </data>
   <data name="VaultScopeOrganization" xml:space="preserve">
     <value>Organization</value>
+  </data>
+  <data name="VaultUsernameField.Label" xml:space="preserve">
+    <value>username</value>
+  </data>
+  <data name="VaultPasswordRow.Label" xml:space="preserve">
+    <value>password</value>
+  </data>
+  <data name="VaultUsernameField.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultTotpRow.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultTotpRow.Label" xml:space="preserve">
+    <value>TOTP</value>
+  </data>
+  <data name="VaultPasswordRow.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultSecureNoteNotes.Label" xml:space="preserve">
+    <value>notes</value>
+  </data>
+  <data name="VaultSecureNoteNotes.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultCardCardholderName.Label" xml:space="preserve">
+    <value>cardholder name</value>
+  </data>
+  <data name="VaultCardCardholderName.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultCardBrand.Label" xml:space="preserve">
+    <value>brand</value>
+  </data>
+  <data name="VaultCardBrand.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultCardNumber.Label" xml:space="preserve">
+    <value>card number</value>
+  </data>
+  <data name="VaultCardNumber.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultCardExpMonth.Label" xml:space="preserve">
+    <value>expiration month</value>
+  </data>
+  <data name="VaultCardExpMonth.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultCardExpYear.Label" xml:space="preserve">
+    <value>expiration year</value>
+  </data>
+  <data name="VaultCardExpYear.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultCardCode.Label" xml:space="preserve">
+    <value>security code</value>
+  </data>
+  <data name="VaultCardCode.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityTitle.Label" xml:space="preserve">
+    <value>title</value>
+  </data>
+  <data name="VaultIdentityTitle.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityFirstName.Label" xml:space="preserve">
+    <value>first name</value>
+  </data>
+  <data name="VaultIdentityFirstName.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityMiddleName.Label" xml:space="preserve">
+    <value>middle name</value>
+  </data>
+  <data name="VaultIdentityMiddleName.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityLastName.Label" xml:space="preserve">
+    <value>last name</value>
+  </data>
+  <data name="VaultIdentityLastName.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityAddress1.Label" xml:space="preserve">
+    <value>address line 1</value>
+  </data>
+  <data name="VaultIdentityAddress1.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityAddress2.Label" xml:space="preserve">
+    <value>address line 2</value>
+  </data>
+  <data name="VaultIdentityAddress2.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityAddress3.Label" xml:space="preserve">
+    <value>address line 3</value>
+  </data>
+  <data name="VaultIdentityAddress3.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityCity.Label" xml:space="preserve">
+    <value>city</value>
+  </data>
+  <data name="VaultIdentityCity.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityState.Label" xml:space="preserve">
+    <value>state or province</value>
+  </data>
+  <data name="VaultIdentityState.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityPostalCode.Label" xml:space="preserve">
+    <value>postal code</value>
+  </data>
+  <data name="VaultIdentityPostalCode.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityCountry.Label" xml:space="preserve">
+    <value>country</value>
+  </data>
+  <data name="VaultIdentityCountry.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityCompany.Label" xml:space="preserve">
+    <value>company</value>
+  </data>
+  <data name="VaultIdentityCompany.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityEmail.Label" xml:space="preserve">
+    <value>email</value>
+  </data>
+  <data name="VaultIdentityEmail.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityPhone.Label" xml:space="preserve">
+    <value>phone</value>
+  </data>
+  <data name="VaultIdentityPhone.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentitySsn.Label" xml:space="preserve">
+    <value>SSN</value>
+  </data>
+  <data name="VaultIdentitySsn.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityUsername.Label" xml:space="preserve">
+    <value>username</value>
+  </data>
+  <data name="VaultIdentityUsername.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityPassportNumber.Label" xml:space="preserve">
+    <value>passport number</value>
+  </data>
+  <data name="VaultIdentityPassportNumber.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultIdentityLicenseNumber.Label" xml:space="preserve">
+    <value>license number</value>
+  </data>
+  <data name="VaultIdentityLicenseNumber.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultSshFingerprint.Label" xml:space="preserve">
+    <value>fingerprint</value>
+  </data>
+  <data name="VaultSshFingerprint.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultSshPublicKey.Label" xml:space="preserve">
+    <value>public key</value>
+  </data>
+  <data name="VaultSshPublicKey.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultSshPrivateKey.Label" xml:space="preserve">
+    <value>private key</value>
+  </data>
+  <data name="VaultSshPrivateKey.ActionText" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="VaultPasswordFieldRevealMenuItem.Text" xml:space="preserve">
+    <value>Reveal</value>
+  </data>
+  <data name="VaultPasswordFieldConcealMenuItem.Text" xml:space="preserve">
+    <value>Conceal</value>
+  </data>
+  <data name="FieldActionRowActionsButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>More actions</value>
   </data>
 </root>

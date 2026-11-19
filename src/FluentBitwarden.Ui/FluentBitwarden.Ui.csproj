@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Themes\Controls\TotpCodeControlStyle.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="FluentBitwarden.Ui.Tests" />
   </ItemGroup>
 
@@ -73,6 +77,12 @@
 	<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
 	<PackageReference Include="Navis.WinUI" />
 	<PackageReference Include="WinUIEx" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Themes\Controls\TotpCodeControlStyle.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 </Project>

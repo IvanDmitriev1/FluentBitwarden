@@ -4,6 +4,7 @@ using FluentBitwarden.Platform.Settings;
 using FluentBitwarden.Platform.Settings.Composition;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using FluentBitwarden.Platform.Infrastructure.Connectivity;
+using FluentBitwarden.Platform.Infrastructure.Clipboard;
 using FluentBitwarden.Platform.SiteIcons;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +30,7 @@ public static class ServicesExtensions
 
         services.TryAddSingleton<ICompositeSettingsStore, ApplicationDataSettingsStore>();
         services.TryAddSingleton<ISettingsStore>(static provider => provider.GetRequiredService<ICompositeSettingsStore>());
+        services.TryAddSingleton<IClipboardManager, WindowsClipboardManager>();
         services.AddSingleton<INetworkStatus, WindowsNetworkStatus>();
         services.AddSingleton<ISiteIconCache, SiteIconCache>();
         return services;

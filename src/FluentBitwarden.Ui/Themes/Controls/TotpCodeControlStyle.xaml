@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls">
+
+	<Style TargetType="controls:TotpCodeControl">
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="controls:TotpCodeControl">
+					<StackPanel Orientation="Horizontal" Spacing="6">
+						<TextBlock
+							x:Name="PART_Code"
+							VerticalAlignment="Center"
+							Style="{StaticResource BodyLargeTextBlockStyle}" />
+
+						<controls:CountdownRing x:Name="PART_CountdownRing" />
+					</StackPanel>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+</ResourceDictionary>

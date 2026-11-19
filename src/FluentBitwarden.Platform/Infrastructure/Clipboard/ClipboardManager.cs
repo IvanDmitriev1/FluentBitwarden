@@ -28,8 +28,26 @@ public static class ClipboardManager
                 IsRoamable = false,
             };
 
-            WindowsClipboard.SetContentWithOptions(package, options);
-            ScheduleClear(text, delay);
+            if (!WindowsClipboard.SetContentWithOptions(package, options))
+            {
+                Debug.WriteLine("Clipboard write failed; auto-clear state unchanged.");
+                return;
+            }
+
+            StopClearTimer();
+            int generation = unchecked(++_generation);
+            if (delay == ClipboardClearDelay.Never)
+            {
+                _lastCopiedText = null;
+                return;
+            }
+
+            _lastCopiedText = text;
+            _clearTimer = new Timer(
+                _ => Executor.Post(() => ClearIfUnchanged(generation)),
+                null,
+                TimeSpan.FromSeconds((uint)delay),
+                Timeout.InfiniteTimeSpan);
         });
     }
 
@@ -44,22 +62,6 @@ public static class ClipboardManager
         _lastCopiedText = null;
         WindowsClipboard.Clear();
     });
-
-    private static void ScheduleClear(string copiedText, ClipboardClearDelay delay)
-    {
-        StopClearTimer();
-        _lastCopiedText = copiedText;
-        int generation = unchecked(++_generation);
-
-        if (delay == ClipboardClearDelay.Never)
-            return;
-
-        _clearTimer = new Timer(
-            _ => Executor.Post(() => ClearIfUnchanged(generation)),
-            null,
-            TimeSpan.FromSeconds((uint)delay),
-            Timeout.InfiniteTimeSpan);
-    }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types",
         Justification = "Intentional log-and-continue boundary; a timer-driven best-effort clipboard clear must not throw on the timer thread.")]

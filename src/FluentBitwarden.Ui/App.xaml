@@ -2,7 +2,8 @@
 <Application
     x:Class="FluentBitwarden.Ui.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviours="using:FluentBitwarden.Ui.Behaviours">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -11,6 +12,7 @@
                 <ResourceDictionary Source="ms-appx:///Themes/Metrics.xaml" />
                 <ResourceDictionary Source="ms-appx:///Themes/Controls.xaml" />
                 <ResourceDictionary Source="ms-appx:///Converters/Converters.xaml" />
+                <behaviours:CopyTextCommandResources />
 
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

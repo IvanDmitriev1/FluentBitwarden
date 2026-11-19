@@ -8,11 +8,13 @@ using FluentBitwarden.Ui.Screens.Loading;
 using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers;
+using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Ui.Windows.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Windows.SDK.BuildTools.WinApp.UIAutomation;
 using FluentBitwarden.Ui.Features.Vault;
+using FluentBitwarden.Platform.Settings.Composition;
 
 namespace FluentBitwarden.Ui.Tests.TestInfrastructure;
 
@@ -24,6 +26,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
     private readonly IHost _host;
     private readonly WinUiHostedService<App> _winUi;
     private ServiceProvider? _services;
+    private VaultPageViewModel? _vaultPageViewModel;
     private Task? _teardownTask;
 
     public DesktopUiFixture()
@@ -66,6 +69,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
         var services = new ServiceCollection();
         _composition.AddTestServices(services);
         services.AddUiServices();
+        services.AddTransient<VaultPageViewModel>(sp => _vaultPageViewModel = ActivatorUtilities.CreateInstance<VaultPageViewModel>(sp));
         services.AddSingleton<App, DesktopTestApp>();
         services.AddLogging();
         services.AddWinAppUiAutomation();
@@ -182,7 +186,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
         }
     }
 
-    private async Task DetachChildAsync(CancellationToken cancellationToken)
+    internal async Task DetachChildAsync(CancellationToken cancellationToken)
     {
         await NavigateAsync(null, cancellationToken);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -201,6 +205,16 @@ public sealed class DesktopUiFixture : IAsyncLifetime
     public void ConfigureAuthenticatorRejection() => _composition.ConfigureAuthenticatorRejection();
     public void ConfigureUnlockRejection(string reason) => _composition.ConfigureUnlockRejection(reason);
     public void SetVaultBrowseState(VaultBrowseState state) => _composition.SetVaultBrowseState(state);
+    public VaultBrowseState VaultBrowseState => _composition.VaultBrowseState;
+    internal ICompositeSettingsStore SettingsStore => _composition.SettingsStore;
+
+    internal Task SortVaultAsync(VaultCipherSortDirection direction, CancellationToken cancellationToken) =>
+        _winUi.RunOnUiThreadAsync(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var viewModel = _vaultPageViewModel ?? throw new InvalidOperationException("The vault page has not been created.");
+            return viewModel.SortChangedCommand.ExecuteAsync(direction);
+        }).WaitAsync(DesktopAutomation.Timeout, cancellationToken);
 
     public IAppSessionClient AppSessionClient => _composition.AppSessionClient;
     public IVaultCipherClient VaultCipherClient => _composition.VaultCipherClient;

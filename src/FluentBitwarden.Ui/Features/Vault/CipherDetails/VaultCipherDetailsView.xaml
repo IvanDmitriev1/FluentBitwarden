@@ -1,34 +1,57 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <UserControl
-	x:Class="FluentBitwarden.Ui.Features.Vault.CipherDetailsView.VaultCipherDetailsView"
+	x:Class="FluentBitwarden.Ui.Features.Vault.CipherDetails.VaultCipherDetailsView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:cipherDetails="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
 	xmlns:controls="using:FluentBitwarden.Ui.Controls"
-	xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions">
-	<Grid>
-		<ScrollViewer>
-			<StackPanel Spacing="8">
-				<Grid ColumnSpacing="12">
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="Auto" />
-						<ColumnDefinition Width="*" />
-						<ColumnDefinition Width="Auto" />
-					</Grid.ColumnDefinitions>
+	xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions"
+	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
+	xmlns:attachments="using:BitwardenApi.Vault.Attachments.Models">
 
-					<controls:SiteIcon
-						Grid.Column="0"
-						FallbackGlyph="{x:Bind extensions:VaultCipherExtensions.GetDefaultGlyph(Cipher), Mode=OneWay}"
-						Size="24"
-						Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri(Cipher), Mode=OneWay}" />
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<cipherDetails:VaultCipherDetailsTemplates />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
 
-					<TextBlock
-						Grid.Column="1"
-						VerticalAlignment="Center"
-						AutomationProperties.AutomationId="VaultDetailsName"
-						Style="{StaticResource TitleTextBlockStyle}"
-						Text="{x:Bind Cipher.Name, Mode=OneWay}" />
-				</Grid>
-			</StackPanel>
-		</ScrollViewer>
-	</Grid>
+	<ScrollViewer>
+		<StackPanel Spacing="12">
+			<Grid ColumnSpacing="12">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+
+				<controls:SiteIcon
+					Grid.Column="0"
+					FallbackGlyph="{x:Bind extensions:VaultCipherExtensions.GetDefaultGlyph(Cipher), Mode=OneWay}"
+					Size="24"
+					Uri="{x:Bind extensions:VaultCipherExtensions.GetDefaultSiteIconUri(Cipher), Mode=OneWay}" />
+
+				<TextBlock
+					Grid.Column="1"
+					VerticalAlignment="Center"
+					AutomationProperties.AutomationId="VaultDetailsName"
+					Style="{StaticResource TitleTextBlockStyle}"
+					Text="{x:Bind Cipher.Name, Mode=OneWay}" />
+			</Grid>
+
+			<ContentControl
+				HorizontalContentAlignment="Stretch"
+				Content="{x:Bind Cipher, Mode=OneWay}"
+				ContentTemplateSelector="{StaticResource VaultCipherDetailsTemplateSelector}" />
+
+			<controls:CardGroup ItemsSource="{x:Bind Cipher.Attachments, Mode=OneWay}">
+				<controls:CardGroup.ItemTemplate>
+					<DataTemplate x:DataType="attachments:CipherAttachment">
+						<controls:FieldActionRow CommandParameter="{x:Bind}" Content="{x:Bind FileName}" />
+					</DataTemplate>
+				</controls:CardGroup.ItemTemplate>
+			</controls:CardGroup>
+		</StackPanel>
+	</ScrollViewer>
 </UserControl>

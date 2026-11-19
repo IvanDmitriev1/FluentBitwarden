@@ -1,7 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:controls="using:FluentBitwarden.Ui.Controls">
+
 	<x:String x:Key="ListQueryBarSearchGlyph">&#xE721;</x:String>
 	<x:String x:Key="ListQueryBarSortGlyph">&#xE8CB;</x:String>
 	<x:String x:Key="ListQueryBarCloseGlyph">&#xE711;</x:String>

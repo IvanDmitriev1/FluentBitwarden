@@ -15,6 +15,7 @@ using FluentBitwarden.Contracts.Modules.Vault.Folders;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Ipc.Abstractions;
 using FluentBitwarden.Platform.Settings.Composition;
+using FluentBitwarden.Platform.Infrastructure.Clipboard;
 using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
@@ -35,7 +36,8 @@ internal sealed class UiTestComposition
     private readonly IIpcEventClient _eventClient = Substitute.For<IIpcEventClient>();
     private readonly IAccountWindowsHelloIntegrationClient _windowsHelloClient = Substitute.For<IAccountWindowsHelloIntegrationClient>();
     private readonly IVaultCipherClient _vaultCipherClient = Substitute.For<IVaultCipherClient>();
-    private VaultBrowseState _vaultBrowseState = VaultBrowseState.Default;
+    private readonly IClipboardManager _clipboardManager = Substitute.For<IClipboardManager>();
+    private VaultBrowseState? _vaultBrowseState;
     private AsyncIpcEventCallback<AppSessionStateChangedEvent>? _sessionChangedCallback;
     private Func<AccountAuthenticationRequest, AccountAuthenticationOutcome> _authenticationOutcome = DefaultAuthenticationOutcome;
     private string? _unlockRejection;
@@ -44,6 +46,7 @@ internal sealed class UiTestComposition
 
     public IAppSessionClient AppSessionClient => _appSessionClient;
     public IVaultCipherClient VaultCipherClient => _vaultCipherClient;
+    public ICompositeSettingsStore SettingsStore { get; } = Substitute.For<ICompositeSettingsStore>();
 
     public void AddTestServices(IServiceCollection services)
     {
@@ -69,9 +72,11 @@ internal sealed class UiTestComposition
         _windowsHelloClient.GetEnrollmentAsync(Arg.Any<GetWindowsHelloEnrollmentRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(WindowsHelloEnrollmentStatus.NotEnrolled));
 
-        var settingsStore = Substitute.For<ICompositeSettingsStore>();
-        settingsStore.Get(UiSettingKeys.Appearance.ThemeKey).Returns(ElementTheme.Default);
-        settingsStore.GetComposite(UiSettingKeys.Vault.StateKey).Returns(_ => _vaultBrowseState);
+        SettingsStore.Get(UiSettingKeys.Appearance.ThemeKey).Returns(ElementTheme.Default);
+        SettingsStore.GetComposite(UiSettingKeys.Vault.StateKey).Returns(_ => VaultBrowseState);
+        SettingsStore.SetComposite(UiSettingKeys.Vault.StateKey, Arg.Do<VaultBrowseState>(SetVaultBrowseState));
+        SettingsStore.RemoveComposite(UiSettingKeys.Vault.StateKey)
+            .Returns(_ => Interlocked.Exchange(ref _vaultBrowseState, null) is not null);
 
         services.AddSingleton<App>();
         services.AddSingleton<IActivationHandler>(static sp => sp.GetRequiredService<App>());
@@ -80,18 +85,19 @@ internal sealed class UiTestComposition
         services.AddSingleton(_eventClient);
         services.AddSingleton(_windowsHelloClient);
         services.AddSingleton(_vaultCipherClient);
+        services.AddSingleton(_clipboardManager);
         services.AddSingleton(Substitute.For<IVaultFolderClient>());
         services.AddSingleton(Substitute.For<IVaultOrganizationClient>());
         services.AddSingleton(Substitute.For<ISiteIconCache>());
         services.AddSingleton(Substitute.For<IIpcExceptionNotifier>());
-        services.AddSingleton<ICompositeSettingsStore>(settingsStore);
-        services.AddSingleton<ISettingsStore>(settingsStore);
+        services.AddSingleton(SettingsStore);
+        services.AddSingleton<ISettingsStore>(SettingsStore);
     }
 
     public void Reset()
     {
         _sessionState = new AppSessionStateSnapshot.NotAuthenticated();
-        _vaultBrowseState = VaultBrowseState.Default;
+        Volatile.Write(ref _vaultBrowseState, null);
         _authenticationOutcome = DefaultAuthenticationOutcome;
         _unlockRejection = null;
         _unlockRequest = TestTaskSources.CreateAsyncContinuationSource<SessionUnlockRequest>();
@@ -103,6 +109,7 @@ internal sealed class UiTestComposition
         _accountClient.ClearReceivedCalls();
         _windowsHelloClient.ClearReceivedCalls();
         _vaultCipherClient.ClearReceivedCalls();
+        SettingsStore.ClearReceivedCalls();
     }
 
     public void ConfigureAuthenticatorRejection()
@@ -123,7 +130,9 @@ internal sealed class UiTestComposition
 
     public void ConfigureUnlockRejection(string reason) => _unlockRejection = reason;
 
-    public void SetVaultBrowseState(VaultBrowseState state) => _vaultBrowseState = state;
+    public void SetVaultBrowseState(VaultBrowseState state) => Volatile.Write(ref _vaultBrowseState, state);
+
+    public VaultBrowseState VaultBrowseState => Volatile.Read(ref _vaultBrowseState) ?? UiSettingKeys.Vault.StateKey.DefaultValue;
 
     public async Task PublishSessionStateAsync(AppSessionStateSnapshot state, CancellationToken cancellationToken)
     {

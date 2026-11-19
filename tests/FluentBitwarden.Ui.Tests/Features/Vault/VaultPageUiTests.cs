@@ -6,6 +6,7 @@ using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Ui.Features.Settings;
 using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Features.Vault.Intents;
+using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using Microsoft.Windows.SDK.BuildTools.WinApp.UIAutomation;
 using NSubstitute;
@@ -17,6 +18,7 @@ namespace FluentBitwarden.Ui.Tests.Features.Vault;
 public sealed class VaultPageUiTests(DesktopUiFixture desktop)
 {
     private static readonly UiSelector SearchBox = UiSelectors.ById("TextBox", "VaultCipherSearchBox");
+    private static readonly UiSelector ListSearchBox = UiSelectors.ById("ListQueryBar.Search");
 
     [Fact]
     public async Task RestoringSavedSelectionKeepsFocusInSearchBox()
@@ -33,6 +35,98 @@ public sealed class VaultPageUiTests(DesktopUiFixture desktop)
 
         Assert.False(Assert.IsType<bool>(await automation.PropertyAsync(row, "HasKeyboardFocus", cancellationToken)));
         Assert.True(Assert.IsType<bool>(await automation.PropertyAsync(row, "IsSelected", cancellationToken)));
+    }
+
+    [Fact]
+    public async Task RowSelectionAndFilterSurviveReopeningTheVaultShell()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await desktop.ResetToSignedOutAsync(cancellationToken);
+        var cipher = TestCiphers.CreateLogin("persisted-selection", "Persisted selection");
+        const string filter = "saved";
+        var expected = new VaultBrowseState(filter, cipher.Id);
+        desktop.VaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<Cipher[]>(
+                call.Arg<VaultCipherQuery>() is { Limit: null, SearchText: filter } ? [cipher] : []));
+
+        var automation = await StartUnlockedAsync(cancellationToken);
+        await EnterListFilterAsync(automation, expected.SearchText, cancellationToken);
+        await ClickCipherRowAsync(automation, cipher.Name, cancellationToken);
+        Assert.Equal(expected, desktop.VaultBrowseState);
+
+        await desktop.DetachChildAsync(cancellationToken);
+        Assert.Equal(expected, desktop.VaultBrowseState);
+
+        await desktop.NavigateAsync(new AppSessionStateSnapshot.Unlocked(TestAccounts.CreateDesktop()), cancellationToken);
+        await WaitForCipherRowAsync(automation, cipher.Name, "IsSelected", cancellationToken);
+        var restoredSearch = await automation.WaitAsync(ListSearchBox, "restored filter is visible",
+            element => !element.IsOffscreen && element.Value == expected.SearchText, cancellationToken);
+        Assert.Equal(expected.SearchText, restoredSearch.Value);
+    }
+
+    [Fact]
+    public async Task EscapeClearsTheSelectedRowAndSavesTheCurrentFilter()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await desktop.ResetToSignedOutAsync(cancellationToken);
+        const string filter = "filtered";
+        var cipher = TestCiphers.CreateLogin("escape-selection", "Escape selection");
+        desktop.VaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<Cipher[]>(
+                call.Arg<VaultCipherQuery>() is { Limit: null, SearchText: filter } ? [cipher] : []));
+
+        var automation = await StartUnlockedAsync(cancellationToken);
+        await EnterListFilterAsync(automation, filter, cancellationToken);
+        await ClickCipherRowAsync(automation, cipher.Name, cancellationToken);
+        await WaitForCipherRowAsync(automation, cipher.Name, "HasKeyboardFocus", cancellationToken);
+        Assert.Equal(new VaultBrowseState(filter, cipher.Id), desktop.VaultBrowseState);
+
+        await desktop.SendKeysAsync("esc", cancellationToken);
+
+        await WaitForCipherRowAsync(automation, cipher.Name, "IsSelected", cancellationToken, expected: false);
+        Assert.Equal(new VaultBrowseState(filter, CipherId.Empty), desktop.VaultBrowseState);
+    }
+
+    [Fact]
+    public async Task SortingTheVaultListKeepsTheSelectedCipherWithoutWritingSettings()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await desktop.ResetToSignedOutAsync(cancellationToken);
+        const string filter = "sort query";
+        var first = TestCiphers.CreateLogin("sort-alpha", "Alpha account");
+        var second = TestCiphers.CreateLogin("sort-zulu", "Zulu account");
+        var ascending = new[] { first, second };
+        var descending = new[]
+        {
+            TestCiphers.CreateLogin(second.Id.ToString(), second.Name),
+            TestCiphers.CreateLogin(first.Id.ToString(), first.Name)
+        };
+        desktop.VaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<Cipher[]>(call.Arg<VaultCipherQuery>() switch
+            {
+                { Limit: null, SearchText: filter, SortDirection: VaultCipherSortDirection.Ascending } => ascending,
+                { Limit: null, SearchText: filter, SortDirection: VaultCipherSortDirection.Descending } => descending,
+                _ => []
+            }));
+
+        var expected = new VaultBrowseState(filter, first.Id);
+        desktop.SetVaultBrowseState(expected);
+        var automation = await StartUnlockedAsync(cancellationToken);
+        await WaitForCipherRowAsync(automation, first.Name, "IsSelected", cancellationToken);
+        var originalSecond = await automation.WaitAsync(CipherTitle(second.Name), "second row is visible",
+            element => !element.IsOffscreen, cancellationToken);
+        Assert.Equal(expected, desktop.VaultBrowseState);
+        desktop.SettingsStore.ClearReceivedCalls();
+
+        await desktop.SortVaultAsync(VaultCipherSortDirection.Descending, cancellationToken);
+
+        var newFirst = await automation.WaitAsync(CipherTitle(second.Name), "Zulu row has moved up",
+            element => !element.IsOffscreen && element.Y < originalSecond.Y, cancellationToken);
+        var selectedRow = await WaitForCipherRowAsync(automation, first.Name, "IsSelected", cancellationToken);
+        Assert.True(newFirst.Y < selectedRow.Y);
+        Assert.Equal(expected, desktop.VaultBrowseState);
+        desktop.SettingsStore.DidNotReceive().SetComposite(UiSettingKeys.Vault.StateKey, Arg.Any<VaultBrowseState>());
+        _ = desktop.SettingsStore.DidNotReceive().RemoveComposite(UiSettingKeys.Vault.StateKey);
     }
 
     [Fact]
@@ -205,6 +299,27 @@ public sealed class VaultPageUiTests(DesktopUiFixture desktop)
         desktop.VaultCipherClient.SearchCiphersAsync(Arg.Any<VaultCipherQuery>(), Arg.Any<CancellationToken>())
             .Returns(call => Task.FromResult(call.Arg<VaultCipherQuery>().Limit == 8 ? suggestions : vaultResults));
 
+    private async Task EnterListFilterAsync(DesktopAutomation automation, string filter, CancellationToken cancellationToken)
+    {
+        var toggle = await automation.WaitAsync(UiSelectors.ById("ListQueryBar.SearchToggle"),
+            "list search toggle is enabled and visible", element => element.IsEnabled && !element.IsOffscreen, cancellationToken);
+        await automation.InvokeAsync(toggle, cancellationToken);
+        var search = await automation.WaitAsync(ListSearchBox, "list search is enabled and visible",
+            element => element.IsEnabled && !element.IsOffscreen, cancellationToken);
+        await automation.FocusAsync(search, cancellationToken);
+        await desktop.SendKeysAsync(filter, cancellationToken);
+    }
+
+    private static async Task ClickCipherRowAsync(DesktopAutomation automation, string name, CancellationToken cancellationToken)
+    {
+        var title = await automation.WaitAsync(CipherTitle(name), "cipher title is visible",
+            element => !element.IsOffscreen, cancellationToken);
+        var row = await automation.FindListItemAncestorAsync(title, cancellationToken);
+        Assert.False(Assert.IsType<bool>(await automation.PropertyAsync(row, "IsSelected", cancellationToken)));
+        await automation.ClickAsync(title, cancellationToken);
+        await WaitForCipherRowAsync(automation, name, "IsSelected", cancellationToken);
+    }
+
     private static async Task<UiElement> WaitForKeyboardFocusAsync(
         DesktopAutomation automation,
         UiSelector selector,
@@ -226,20 +341,24 @@ public sealed class VaultPageUiTests(DesktopUiFixture desktop)
         DesktopAutomation automation,
         string name,
         string property,
-        CancellationToken cancellationToken) =>
-        WaitForRowPropertyAsync(automation, new UiSelector
-        {
-            Query = name,
-            ControlType = "Text",
-            Root = UiSelectors.ById("CipherList"),
-        }, name, property, cancellationToken);
+        CancellationToken cancellationToken,
+        bool expected = true) =>
+        WaitForRowPropertyAsync(automation, CipherTitle(name), name, property, cancellationToken, expected);
+
+    private static UiSelector CipherTitle(string name) => new()
+    {
+        Query = name,
+        ControlType = "Text",
+        Root = UiSelectors.ById("CipherList"),
+    };
 
     private static async Task<UiElement> WaitForRowPropertyAsync(
         DesktopAutomation automation,
         UiSelector titleSelector,
         string name,
         string property,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool expected = true)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(DesktopAutomation.Timeout);
@@ -249,7 +368,7 @@ public sealed class VaultPageUiTests(DesktopUiFixture desktop)
             {
                 var title = await automation.WaitAsync(titleSelector, "cipher title is present", cancellationToken: deadline.Token);
                 var row = await automation.FindListItemAncestorAsync(title, deadline.Token);
-                if (await automation.PropertyAsync(row, property, deadline.Token) is true)
+                if (await automation.PropertyAsync(row, property, deadline.Token) is bool value && value == expected)
                     return row;
 
                 await Task.Delay(TimeSpan.FromMilliseconds(100), deadline.Token);
@@ -257,7 +376,7 @@ public sealed class VaultPageUiTests(DesktopUiFixture desktop)
         }
         catch (OperationCanceledException exception) when (deadline.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
-            throw new TimeoutException($"Timed out after {DesktopAutomation.Timeout.TotalSeconds} seconds waiting for cipher row '{name}' to have {property}.", exception);
+            throw new TimeoutException($"Timed out after {DesktopAutomation.Timeout.TotalSeconds} seconds waiting for {property} on cipher row '{name}' to be {expected}.", exception);
         }
     }
 

@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+	x:Class="FluentBitwarden.Ui.Features.Vault.CipherDetails.VaultCipherDetailsTemplates"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:cipherDetails="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
+	xmlns:controls="using:FluentBitwarden.Ui.Controls"
+	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
+	xmlns:models="using:BitwardenApi.Vault.Ciphers.Models">
+
+	<DataTemplate x:Key="LoginDetailsTemplate" x:DataType="models:LoginCipher">
+		<StackPanel Spacing="12">
+			<controls:CardGroup Background="{ThemeResource CardBackgroundBrush}" BorderBrush="{ThemeResource HairlineBrush}">
+				<controls:CardGroup.Items>
+					<controls:FieldActionRow
+						x:Uid="VaultUsernameField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Username, Mode=OneTime}"
+						Content="{x:Bind Username}" />
+					<local:VaultPasswordField
+						x:Uid="VaultPasswordRow"
+						AutomationProperties.AutomationId="VaultPasswordField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind Password, Mode=OneTime}" />
+					<controls:FieldActionRow
+						x:Uid="VaultTotpRow"
+						ActionText="Copy"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Totp, Mode=OneTime}"
+						Label="TOTP"
+						Visibility="{x:Bind Totp, Mode=OneTime, Converter={StaticResource NullToVisibilityConverter}}">
+						<controls:TotpCodeControl HideCode="True" Totp="{x:Bind Totp}" />
+					</controls:FieldActionRow>
+				</controls:CardGroup.Items>
+			</controls:CardGroup>
+		</StackPanel>
+	</DataTemplate>
+
+	<DataTemplate x:Key="SecureNoteDetailsTemplate" x:DataType="models:SecureNoteCipher">
+		<StackPanel Spacing="12">
+			<controls:CardGroup Background="{ThemeResource CardBackgroundBrush}" BorderBrush="{ThemeResource HairlineBrush}">
+				<controls:CardGroup.Items>
+					<controls:FieldActionRow
+						x:Uid="VaultSecureNoteNotes"
+						AutomationProperties.AutomationId="VaultSecureNoteNotesField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Notes, Mode=OneTime}"
+						Visibility="{x:Bind Notes, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}">
+						<TextBlock
+							AutomationProperties.AutomationId="VaultSecureNoteNotesText"
+							Text="{x:Bind Notes, Mode=OneTime}"
+							TextWrapping="Wrap" />
+					</controls:FieldActionRow>
+				</controls:CardGroup.Items>
+			</controls:CardGroup>
+		</StackPanel>
+	</DataTemplate>
+
+	<DataTemplate x:Key="CardDetailsTemplate" x:DataType="models:CardCipher">
+		<StackPanel Spacing="12">
+			<controls:CardGroup Background="{ThemeResource CardBackgroundBrush}" BorderBrush="{ThemeResource HairlineBrush}">
+				<controls:CardGroup.Items>
+					<controls:FieldActionRow
+						x:Uid="VaultCardCardholderName"
+						AutomationProperties.AutomationId="VaultCardCardholderNameField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind CardholderName, Mode=OneTime}"
+						Content="{x:Bind CardholderName, Mode=OneTime}"
+						Visibility="{x:Bind CardholderName, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultCardBrand"
+						AutomationProperties.AutomationId="VaultCardBrandField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Brand, Mode=OneTime}"
+						Content="{x:Bind Brand, Mode=OneTime}"
+						Visibility="{x:Bind Brand, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<local:VaultPasswordField
+						x:Uid="VaultCardNumber"
+						AutomationProperties.AutomationId="VaultCardNumberField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind Number, Mode=OneTime}"
+						Visibility="{x:Bind Number, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultCardExpMonth"
+						AutomationProperties.AutomationId="VaultCardExpMonthField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind ExpMonth, Mode=OneTime}"
+						Content="{x:Bind ExpMonth, Mode=OneTime}"
+						Visibility="{x:Bind ExpMonth, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultCardExpYear"
+						AutomationProperties.AutomationId="VaultCardExpYearField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind ExpYear, Mode=OneTime}"
+						Content="{x:Bind ExpYear, Mode=OneTime}"
+						Visibility="{x:Bind ExpYear, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<local:VaultPasswordField
+						x:Uid="VaultCardCode"
+						AutomationProperties.AutomationId="VaultCardCodeField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind Code, Mode=OneTime}"
+						Visibility="{x:Bind Code, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+				</controls:CardGroup.Items>
+			</controls:CardGroup>
+		</StackPanel>
+	</DataTemplate>
+
+	<DataTemplate x:Key="IdentityDetailsTemplate" x:DataType="models:IdentityCipher">
+		<StackPanel Spacing="12">
+			<controls:CardGroup Background="{ThemeResource CardBackgroundBrush}" BorderBrush="{ThemeResource HairlineBrush}">
+				<controls:CardGroup.Items>
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityTitle"
+						AutomationProperties.AutomationId="VaultIdentityTitleField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Title, Mode=OneTime}"
+						Content="{x:Bind Title, Mode=OneTime}"
+						Visibility="{x:Bind Title, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityFirstName"
+						AutomationProperties.AutomationId="VaultIdentityFirstNameField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind FirstName, Mode=OneTime}"
+						Content="{x:Bind FirstName, Mode=OneTime}"
+						Visibility="{x:Bind FirstName, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityMiddleName"
+						AutomationProperties.AutomationId="VaultIdentityMiddleNameField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind MiddleName, Mode=OneTime}"
+						Content="{x:Bind MiddleName, Mode=OneTime}"
+						Visibility="{x:Bind MiddleName, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityLastName"
+						AutomationProperties.AutomationId="VaultIdentityLastNameField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind LastName, Mode=OneTime}"
+						Content="{x:Bind LastName, Mode=OneTime}"
+						Visibility="{x:Bind LastName, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityAddress1"
+						AutomationProperties.AutomationId="VaultIdentityAddress1Field"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Address1, Mode=OneTime}"
+						Content="{x:Bind Address1, Mode=OneTime}"
+						Visibility="{x:Bind Address1, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityAddress2"
+						AutomationProperties.AutomationId="VaultIdentityAddress2Field"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Address2, Mode=OneTime}"
+						Content="{x:Bind Address2, Mode=OneTime}"
+						Visibility="{x:Bind Address2, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityAddress3"
+						AutomationProperties.AutomationId="VaultIdentityAddress3Field"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Address3, Mode=OneTime}"
+						Content="{x:Bind Address3, Mode=OneTime}"
+						Visibility="{x:Bind Address3, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityCity"
+						AutomationProperties.AutomationId="VaultIdentityCityField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind City, Mode=OneTime}"
+						Content="{x:Bind City, Mode=OneTime}"
+						Visibility="{x:Bind City, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityState"
+						AutomationProperties.AutomationId="VaultIdentityStateField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind State, Mode=OneTime}"
+						Content="{x:Bind State, Mode=OneTime}"
+						Visibility="{x:Bind State, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityPostalCode"
+						AutomationProperties.AutomationId="VaultIdentityPostalCodeField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind PostalCode, Mode=OneTime}"
+						Content="{x:Bind PostalCode, Mode=OneTime}"
+						Visibility="{x:Bind PostalCode, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityCountry"
+						AutomationProperties.AutomationId="VaultIdentityCountryField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Country, Mode=OneTime}"
+						Content="{x:Bind Country, Mode=OneTime}"
+						Visibility="{x:Bind Country, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityCompany"
+						AutomationProperties.AutomationId="VaultIdentityCompanyField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Company, Mode=OneTime}"
+						Content="{x:Bind Company, Mode=OneTime}"
+						Visibility="{x:Bind Company, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityEmail"
+						AutomationProperties.AutomationId="VaultIdentityEmailField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Email, Mode=OneTime}"
+						Content="{x:Bind Email, Mode=OneTime}"
+						Visibility="{x:Bind Email, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityPhone"
+						AutomationProperties.AutomationId="VaultIdentityPhoneField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Phone, Mode=OneTime}"
+						Content="{x:Bind Phone, Mode=OneTime}"
+						Visibility="{x:Bind Phone, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<local:VaultPasswordField
+						x:Uid="VaultIdentitySsn"
+						AutomationProperties.AutomationId="VaultIdentitySsnField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind Ssn, Mode=OneTime}"
+						Visibility="{x:Bind Ssn, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultIdentityUsername"
+						AutomationProperties.AutomationId="VaultIdentityUsernameField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind Username, Mode=OneTime}"
+						Content="{x:Bind Username, Mode=OneTime}"
+						Visibility="{x:Bind Username, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<local:VaultPasswordField
+						x:Uid="VaultIdentityPassportNumber"
+						AutomationProperties.AutomationId="VaultIdentityPassportNumberField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind PassportNumber, Mode=OneTime}"
+						Visibility="{x:Bind PassportNumber, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<local:VaultPasswordField
+						x:Uid="VaultIdentityLicenseNumber"
+						AutomationProperties.AutomationId="VaultIdentityLicenseNumberField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind LicenseNumber, Mode=OneTime}"
+						Visibility="{x:Bind LicenseNumber, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+				</controls:CardGroup.Items>
+			</controls:CardGroup>
+		</StackPanel>
+	</DataTemplate>
+
+	<DataTemplate x:Key="SshKeyDetailsTemplate" x:DataType="models:SshKeyCipher">
+		<StackPanel Spacing="12">
+			<controls:CardGroup Background="{ThemeResource CardBackgroundBrush}" BorderBrush="{ThemeResource HairlineBrush}">
+				<controls:CardGroup.Items>
+					<controls:FieldActionRow
+						x:Uid="VaultSshFingerprint"
+						AutomationProperties.AutomationId="VaultSshFingerprintField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind KeyFingerprint, Mode=OneTime}"
+						Content="{x:Bind KeyFingerprint, Mode=OneTime}"
+						Visibility="{x:Bind KeyFingerprint, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+					<controls:FieldActionRow
+						x:Uid="VaultSshPublicKey"
+						AutomationProperties.AutomationId="VaultSshPublicKeyField"
+						Command="{StaticResource CopyTextCommand}"
+						CommandParameter="{x:Bind PublicKey.RawKey, Mode=OneTime}"
+						Visibility="{x:Bind PublicKey.RawKey, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}">
+						<TextBlock
+							AutomationProperties.AutomationId="VaultSshPublicKeyText"
+							Text="{x:Bind PublicKey.RawKey, Mode=OneTime}"
+							TextWrapping="Wrap" />
+					</controls:FieldActionRow>
+					<local:VaultPasswordField
+						x:Uid="VaultSshPrivateKey"
+						AutomationProperties.AutomationId="VaultSshPrivateKeyField"
+						CipherId="{x:Bind Id, Mode=OneTime}"
+						Password="{x:Bind PrivateKey, Mode=OneTime}"
+						Visibility="{x:Bind PrivateKey, Mode=OneTime, Converter={StaticResource StringVisibilityConverter}}" />
+				</controls:CardGroup.Items>
+			</controls:CardGroup>
+		</StackPanel>
+	</DataTemplate>
+
+	<cipherDetails:VaultCipherDetailsTemplateSelector
+		x:Key="VaultCipherDetailsTemplateSelector"
+		CardTemplate="{StaticResource CardDetailsTemplate}"
+		IdentityTemplate="{StaticResource IdentityDetailsTemplate}"
+		LoginTemplate="{StaticResource LoginDetailsTemplate}"
+		SecureNoteTemplate="{StaticResource SecureNoteDetailsTemplate}"
+		SshKeyTemplate="{StaticResource SshKeyDetailsTemplate}" />
+
+</ResourceDictionary>

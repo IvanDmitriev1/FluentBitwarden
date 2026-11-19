@@ -18,9 +18,15 @@ public sealed record VaultBrowseState(string SearchText, CipherId SelectedCipher
 
     public static bool TryRead(ApplicationDataCompositeValue composite, [NotNullWhen(true)] out VaultBrowseState? value)
     {
-        if (!composite.TryReadString(nameof(SearchText), out var searchText) ||
-            !composite.TryReadString(nameof(SelectedCipherId), out var selectedCipherId) ||
-            !CipherId.TryParse(selectedCipherId, null, out var cipherId))
+        if (!composite.TryReadString(nameof(SearchText), out var searchText))
+        {
+            value = null;
+            return false;
+        }
+
+        var cipherId = CipherId.Empty;
+        if (composite.TryGetValue(nameof(SelectedCipherId), out var rawCipherId) &&
+            (rawCipherId is not string selectedCipherId || !CipherId.TryParse(selectedCipherId, null, out cipherId)))
         {
             value = null;
             return false;

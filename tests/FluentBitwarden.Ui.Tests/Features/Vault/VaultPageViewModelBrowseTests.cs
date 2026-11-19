@@ -12,6 +12,7 @@ using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Windows.Storage;
 
 namespace FluentBitwarden.Ui.Tests.Features.Vault;
 
@@ -85,7 +86,7 @@ public sealed class VaultPageViewModelBrowseTests
     }
 
     [Fact]
-    public void DeselectionKeepsLastSavedSelection()
+    public void DeselectionSavesEmptySelection()
     {
         var settings = Substitute.For<ICompositeSettingsStore>();
         var viewModel = new VaultPageViewModel(
@@ -96,11 +97,52 @@ public sealed class VaultPageViewModelBrowseTests
         var cipher = TestCiphers.CreateLogin("selected");
 
         viewModel.SelectedCipher = cipher;
+        settings.ClearReceivedCalls();
         viewModel.SelectedCipher = null;
 
         Assert.Null(viewModel.SelectedCipher);
         settings.Received(1).SetComposite(
-            UiSettingKeys.Vault.StateKey, Arg.Is<VaultBrowseState>(state => state.SearchText == "example" && state.SelectedCipherId == cipher.Id));
+            UiSettingKeys.Vault.StateKey, Arg.Is<VaultBrowseState>(state => state.SearchText == "example" && state.SelectedCipherId == CipherId.Empty));
+        _ = settings.DidNotReceive().RemoveComposite(UiSettingKeys.Vault.StateKey);
+    }
+
+    [Fact]
+    public void EmptySelectionRoundTripsWithSearchText()
+    {
+        var composite = new ApplicationDataCompositeValue();
+        var state = new VaultBrowseState("example", CipherId.Empty);
+
+        VaultBrowseState.Write(composite, state);
+
+        Assert.True(VaultBrowseState.TryRead(composite, out var restored));
+        Assert.Equal(state, restored);
+    }
+
+    [Fact]
+    public void PresentNonStringSelectionIdIsRejected()
+    {
+        var composite = new ApplicationDataCompositeValue
+        {
+            [nameof(VaultBrowseState.SearchText)] = "example",
+            [nameof(VaultBrowseState.SelectedCipherId)] = 42,
+        };
+
+        Assert.False(VaultBrowseState.TryRead(composite, out _));
+    }
+
+    [Fact]
+    public async Task NavigationCleanupPreservesSavedSelection()
+    {
+        var settings = Substitute.For<ICompositeSettingsStore>();
+        var viewModel = new VaultPageViewModel(
+            Substitute.For<IVaultCipherClient>(), settings, NullLogger<VaultPageViewModel>.Instance, Substitute.For<IVaultFolderClient>(), Substitute.For<IVaultOrganizationClient>(), Substitute.For<IAccountClient>());
+        viewModel.SelectedCipher = TestCiphers.CreateLogin("selected");
+        settings.ClearReceivedCalls();
+
+        await viewModel.OnNavigatedFromAsync(TestContext.Current.CancellationToken);
+
+        settings.DidNotReceive().SetComposite(
+            Arg.Any<CompositeSettingKey<VaultBrowseState>>(), Arg.Any<VaultBrowseState>());
         _ = settings.DidNotReceive().RemoveComposite(UiSettingKeys.Vault.StateKey);
     }
 

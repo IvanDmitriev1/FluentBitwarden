@@ -23,6 +23,7 @@ public sealed partial class VaultPageViewModel(
     private AccountProfileDetails? _account;
     private Folder[] _folders = [];
     private bool _suppressSearchRefresh;
+    private bool _suppressSelectionPersistence;
     private long _loadVersion;
     private CipherType? _category;
     private VaultCipherSortDirection _sortDirection = VaultCipherSortDirection.Ascending;
@@ -155,8 +156,16 @@ public sealed partial class VaultPageViewModel(
             return;
 
         var selectedId = SelectedCipher?.Id;
-        FilteredCiphers = results;
-        SelectedCipher = selectedId is { } id ? Array.Find(results, cipher => cipher.Id == id) : null;
+        _suppressSelectionPersistence = true;
+        try
+        {
+            FilteredCiphers = results;
+            SelectedCipher = selectedId is { } id ? Array.Find(results, cipher => cipher.Id == id) : null;
+        }
+        finally
+        {
+            _suppressSelectionPersistence = false;
+        }
     }
 
     partial void OnSelectedCipherChanged(Cipher? oldValue, Cipher? newValue)
@@ -175,8 +184,11 @@ public sealed partial class VaultPageViewModel(
             }
         }
 
-        if (newValue is { Id.IsEmpty: false } && oldValue?.Id != newValue.Id)
-            settingsStore.SetComposite(UiSettingKeys.Vault.StateKey, new VaultBrowseState(SearchText, newValue.Id));
+        if (!_suppressSelectionPersistence && oldValue?.Id != newValue?.Id)
+        {
+            var selectedCipherId = newValue is { Id.IsEmpty: false } ? newValue.Id : CipherId.Empty;
+            settingsStore.SetComposite(UiSettingKeys.Vault.StateKey, new VaultBrowseState(SearchText, selectedCipherId));
+        }
     }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -205,8 +217,16 @@ public sealed partial class VaultPageViewModel(
 
     private void ClearResults()
     {
-        FilteredCiphers = [];
-        SelectedCipher = null;
+        _suppressSelectionPersistence = true;
+        try
+        {
+            SelectedCipher = null;
+            FilteredCiphers = [];
+        }
+        finally
+        {
+            _suppressSelectionPersistence = false;
+        }
     }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types",

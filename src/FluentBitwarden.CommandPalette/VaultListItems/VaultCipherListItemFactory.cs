@@ -1,17 +1,19 @@
 using FluentBitwarden.CommandPalette.Infrastructure.ProcessManagers;
 using FluentBitwarden.Platform.SiteIcons;
 using FluentBitwarden.Contracts.Settings;
+using FluentBitwarden.Platform.Infrastructure.Clipboard;
 
 namespace FluentBitwarden.CommandPalette.VaultListItems;
 
 internal sealed class VaultCipherListItemFactory(
     ISiteIconCache siteIconCache,
     IUiProcessManager uiProcessManager,
-    ISettingsStore settingsStore)
+    ISettingsStore settingsStore,
+    IClipboardManager clipboardManager)
 {
     public IListItem Create(Cipher cipher) => cipher switch
     {
-        LoginCipher login => new LoginVaultCipherListItem(login, siteIconCache, uiProcessManager, settingsStore),
+        LoginCipher login => new LoginVaultCipherListItem(login, siteIconCache, uiProcessManager, settingsStore, clipboardManager),
         SecureNoteCipher secureNote => new SecureNoteVaultCipherListItem(secureNote, uiProcessManager),
         CardCipher card => new CardVaultCipherListItem(card, uiProcessManager),
         IdentityCipher identity => new IdentityVaultCipherListItem(identity, uiProcessManager),
