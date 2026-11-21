@@ -1,5 +1,4 @@
 using FluentBitwarden.Contracts.Infrastructure.UiActivation;
-using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +35,7 @@ public partial class App : IActivationHandler
             ? UiActivationCommand.Parse(launchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             : new UiActivationCommand.OpenCommand();
 
-        var session = GetRequiredService<AppSessionMonitor>().CurrentSession;
+        var session = GetRequiredService<IAppSession>().CurrentSession;
         GetRequiredService<IAppRouter>().Activate(command, session);
     }
 }

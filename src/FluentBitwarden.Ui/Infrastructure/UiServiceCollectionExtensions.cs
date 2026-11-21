@@ -1,7 +1,9 @@
-using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Application.Abstractions;
+using FluentBitwarden.Ui.Dialogs;
+using FluentBitwarden.Ui.Dialogs.Abstractions;
 using FluentBitwarden.Ui.Features.Settings;
+using FluentBitwarden.Ui.Features.Vault;
 using FluentBitwarden.Ui.Screens.Loading;
 using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Ui.Screens.Setup.Steps.Email;
@@ -23,6 +25,8 @@ internal static class UiServiceCollectionExtensions
     {
         services.AddNavisNavigation();
         services.AddSingleton<IWindowManager, WindowManager>();
+        services.AddSingleton<IContentDialogHost>(static sp => (IContentDialogHost)sp.GetRequiredService<IWindowManager>());
+        services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IAppRouter, AppRouter>();
 
         services.AddSingleton<AppSessionMonitor>();

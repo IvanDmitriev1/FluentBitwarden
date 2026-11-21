@@ -1,7 +1,9 @@
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Contracts.Settings;
+using FluentBitwarden.Ui.Dialogs.Abstractions;
 using FluentBitwarden.Ui.Infrastructure;
 using FluentBitwarden.Ui.Windows.Abstractions;
+using Microsoft.UI;
 using Navis.WinUI;
 using Navis.WinUI.Abstractions;
 using Windows.UI.ViewManagement;
@@ -9,7 +11,7 @@ using WinUIEx;
 
 namespace FluentBitwarden.Ui.Windows;
 
-internal sealed class WindowManager : IWindowManager
+internal sealed class WindowManager : IWindowManager, IContentDialogHost
 {
     public WindowManager(ISettingsStore settingsStore)
     {
@@ -17,29 +19,29 @@ internal sealed class WindowManager : IWindowManager
         _uiSettings.ColorValuesChanged += OnUiSettingsOnColorValuesChanged;
     }
 
+    private readonly SemaphoreSlim _dialogGate = new(1, 1);
     private readonly ISettingsStore _settingsStore;
     private readonly UISettings _uiSettings = new();
-    private WindowEx? _currentWindow;
+    private WindowEx? _window;
 
-    public WindowKind? ActiveWindow => _currentWindow switch
+    private WindowEx Window => _window ?? throw new InvalidOperationException("No window is open.");
+
+    public WindowKind? CurrentWindowKind => _window switch
     {
         MainWindow => WindowKind.Main,
         OverlayWindow => WindowKind.Overlay,
-        null => null,
-        _ => throw new InvalidOperationException("Unknown window type.")
+        _ => null
     };
 
-    public NativeWindowHandle NativeWindowHandle => new(
-        (_currentWindow ?? throw new InvalidOperationException("Application is not activated.")).GetWindowHandle());
+    public WindowId WindowId => Window.AppWindow.Id;
+
+    public NativeWindowHandle NativeWindowHandle => new(Window.GetWindowHandle());
 
     public INavigation WindowNavigation
     {
         get
         {
-            if (_currentWindow is null)
-                throw new InvalidOperationException("Application is not activated.");
-
-            Frame rootFrame = _currentWindow switch
+            Frame rootFrame = Window switch
             {
                 MainWindow mainWindow => mainWindow.RootFrame,
                 OverlayWindow overlayWindow => overlayWindow.RootFrame,
@@ -50,58 +52,55 @@ internal sealed class WindowManager : IWindowManager
         }
     }
 
-    public bool EnsureWindow(WindowKind kind) => kind switch
+    public bool EnsureWindow(WindowKind kind)
     {
-        WindowKind.Main => EnsureWindow<MainWindow>(),
-        WindowKind.Overlay => EnsureWindow<OverlayWindow>(),
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
-    };
+        if (_window is { } existing)
+        {
+            existing.ShowAndActivate();
+            return false;
+        }
 
-    public void CloseActiveWindow() => _currentWindow?.Close();
+        _window = kind switch
+        {
+            WindowKind.Main => new MainWindow(),
+            WindowKind.Overlay => new OverlayWindow(),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
 
-    private void OnWindowClosed(object sender, WindowEventArgs args)
+        ApplyTheme(_settingsStore.Get(UiSettingKeys.Appearance.ThemeKey));
+        _window.ShowAndActivate();
+        return true;
+    }
+
+    public async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken)
     {
-        if (sender is not WindowEx window)
-            return;
+        if (_window is not IContentDialogHost host)
+            throw new InvalidOperationException("Unknown window type.");
 
-        window.Closed -= OnWindowClosed;
-        if (ReferenceEquals(_currentWindow, window))
-            _currentWindow = null;
+        await _dialogGate.WaitAsync(cancellationToken);
+
+        try
+        {
+            return await host.ShowDialogAsync(dialog, cancellationToken);
+        }
+        finally
+        {
+            _dialogGate.Release();
+
+            if (_dialogGate.CurrentCount == 0 && Window is OverlayWindow)
+            {
+                _window.Close();
+            }
+        }
     }
 
     public void ApplyTheme(ElementTheme theme)
     {
-        if (_currentWindow is IThemeChangeable themeChangeable)
-            themeChangeable.ApplyTheme(theme);
+        if (_window is IThemeChangeable themed)
+            themed.ApplyTheme(theme);
     }
 
     private void OnUiSettingsOnColorValuesChanged(UISettings sender, object args) =>
-        _currentWindow?.DispatcherQueue.TryEnqueue(() => ApplyTheme(_currentWindow));
+        _window?.DispatcherQueue.TryEnqueue(() => ApplyTheme(_settingsStore.Get(UiSettingKeys.Appearance.ThemeKey)));
 
-    private bool EnsureWindow<TWindow>() where TWindow : WindowEx, new()
-    {
-        if (_currentWindow is TWindow)
-        {
-            _currentWindow.ShowAndActivate();
-            return false;
-        }
-
-        CloseActiveWindow();
-
-        TWindow newWindow = new();
-        _currentWindow = newWindow;
-        newWindow.Closed += OnWindowClosed;
-
-        ApplyTheme(newWindow);
-        newWindow.ShowAndActivate();
-        return true;
-    }
-
-    private void ApplyTheme(WindowEx? window)
-    {
-        if (window is not IThemeChangeable themeChangeable)
-            return;
-
-        themeChangeable.ApplyTheme(_settingsStore.Get(UiSettingKeys.Appearance.ThemeKey));
-    }
 }

@@ -7,48 +7,69 @@ using FluentBitwarden.Ui.Screens.Setup;
 using FluentBitwarden.Ui.Screens.Shell;
 using FluentBitwarden.Ui.Screens.Unlock;
 using FluentBitwarden.Ui.Windows.Abstractions;
+using Microsoft.Extensions.Hosting;
 using Navis.WinUI.Abstractions;
 
 namespace FluentBitwarden.Ui.Application;
 
-internal sealed class AppRouter(IWindowManager windowManager) : IAppRouter
+internal sealed class AppRouter(IWindowManager windowManager, IHostApplicationLifetime lifetime) : IAppRouter
 {
     public void Activate(UiActivationCommand command, AppSessionStateSnapshot? state)
     {
-        if (command is UiActivationCommand.OverlayCommand && state is not AppSessionStateSnapshot.NotAuthenticated)
-            ActivateWindow(WindowKind.Overlay, state);
-        else
-            ActivateWindow(WindowKind.Main, state);
-    }
-
-    public void Navigate(AppSessionStateSnapshot? state)
-    {
-        if (windowManager.ActiveWindow is not { } windowKind)
+        if (lifetime.ApplicationStopping.IsCancellationRequested)
             return;
 
-        if (windowKind == WindowKind.Overlay && state is AppSessionStateSnapshot.NotAuthenticated)
+        if (windowManager.CurrentWindowKind is { } currentKind)
+        {
+            if (currentKind == WindowKind.Overlay && state is AppSessionStateSnapshot.NotAuthenticated)
+                lifetime.StopApplication();
+            else
+                windowManager.EnsureWindow(currentKind);
+
+            return;
+        }
+
+        if (command is not UiActivationCommand.OverlayCommand)
         {
             ActivateWindow(WindowKind.Main, state);
             return;
         }
 
-        RouteWindow(windowKind, state);
-        if (windowKind == WindowKind.Overlay && state is AppSessionStateSnapshot.Unlocked)
-            windowManager.CloseActiveWindow();
-    }
-
-    private void ActivateWindow(WindowKind windowKind, AppSessionStateSnapshot? state)
-    {
-        if (windowManager.EnsureWindow(windowKind))
-            RouteWindow(windowKind, state);
-    }
-
-    private void RouteWindow(WindowKind windowKind, AppSessionStateSnapshot? state)
-    {
-        if (windowKind == WindowKind.Main)
-            NavigateMainWindow(state);
+        if (state is AppSessionStateSnapshot.NotAuthenticated)
+            lifetime.StopApplication();
         else
+            ActivateWindow(WindowKind.Overlay, state);
+    }
+
+    public void Navigate(AppSessionStateSnapshot? state)
+    {
+        if (lifetime.ApplicationStopping.IsCancellationRequested)
+            return;
+
+        if (windowManager.CurrentWindowKind is not { } kind)
+            return;
+
+        if (kind == WindowKind.Overlay && state is AppSessionStateSnapshot.NotAuthenticated)
+        {
+            lifetime.StopApplication();
+            return;
+        }
+
+        RouteWindow(kind, state);
+    }
+
+    private void ActivateWindow(WindowKind kind, AppSessionStateSnapshot? state)
+    {
+        if (windowManager.EnsureWindow(kind))
+            RouteWindow(kind, state);
+    }
+
+    private void RouteWindow(WindowKind kind, AppSessionStateSnapshot? state)
+    {
+        if (kind == WindowKind.Overlay)
             NavigateOverlayWindow(state);
+        else
+            NavigateMainWindow(state);
     }
 
     private void NavigateMainWindow(AppSessionStateSnapshot? state)
@@ -71,7 +92,6 @@ internal sealed class AppRouter(IWindowManager windowManager) : IAppRouter
             default:
                 throw new ArgumentOutOfRangeException(nameof(state));
         }
-
     }
 
     private void NavigateOverlayWindow(AppSessionStateSnapshot? state)
@@ -89,6 +109,5 @@ internal sealed class AppRouter(IWindowManager windowManager) : IAppRouter
             default:
                 throw new ArgumentOutOfRangeException(nameof(state));
         }
-
     }
 }

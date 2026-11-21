@@ -1,13 +1,20 @@
+using System.Windows.Input;
 using FluentBitwarden.Contracts.Settings;
 using FluentBitwarden.Platform.Infrastructure.Clipboard;
 
 namespace FluentBitwarden.Ui.Behaviours;
 
-internal static class CopyTextCommand
+public sealed partial class CopyTextCommand : ICommand
 {
-    public static bool CanExecute(object? parameter) => parameter is not null;
+    public event EventHandler? CanExecuteChanged
+    {
+        add { }
+        remove { }
+    }
 
-    public static void Execute(object? parameter, IClipboardManager clipboardManager, ISettingsStore settingsStore)
+    public bool CanExecute(object? parameter) => parameter is not null;
+
+    public void Execute(object? parameter)
     {
         ArgumentNullException.ThrowIfNull(parameter);
 
@@ -15,6 +22,8 @@ internal static class CopyTextCommand
         if (string.IsNullOrWhiteSpace(text))
             return;
 
+        var clipboardManager = App.Current.GetRequiredService<IClipboardManager>();
+        var settingsStore = App.Current.GetRequiredService<ISettingsStore>();
         clipboardManager.SetText(text, settingsStore.Get(AppSettingKeys.Clipboard.ClearDelayKey));
     }
 }

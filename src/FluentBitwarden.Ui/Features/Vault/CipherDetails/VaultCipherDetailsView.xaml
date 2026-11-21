@@ -3,11 +3,11 @@
 	x:Class="FluentBitwarden.Ui.Features.Vault.CipherDetails.VaultCipherDetailsView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:attachments="using:BitwardenApi.Vault.Attachments.Models"
 	xmlns:cipherDetails="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
 	xmlns:controls="using:FluentBitwarden.Ui.Controls"
 	xmlns:extensions="using:FluentBitwarden.Ui.Infrastructure.Extensions"
-	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
-	xmlns:attachments="using:BitwardenApi.Vault.Attachments.Models">
+	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.CipherDetails">
 
 	<UserControl.Resources>
 		<ResourceDictionary>
@@ -48,7 +48,12 @@
 			<controls:CardGroup ItemsSource="{x:Bind Cipher.Attachments, Mode=OneWay}">
 				<controls:CardGroup.ItemTemplate>
 					<DataTemplate x:DataType="attachments:CipherAttachment">
-						<controls:FieldActionRow CommandParameter="{x:Bind}" Content="{x:Bind FileName}" />
+						<controls:FieldActionRow
+							ActionText="Download"
+							AutomationProperties.Name="{x:Bind FileName}"
+							Command="{StaticResource DownloadAttachmentCommand}"
+							CommandParameter="{x:Bind}"
+							Content="{x:Bind FileName}" />
 					</DataTemplate>
 				</controls:CardGroup.ItemTemplate>
 			</controls:CardGroup>

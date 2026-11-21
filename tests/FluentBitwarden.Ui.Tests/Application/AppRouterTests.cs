@@ -1,14 +1,13 @@
-using BitwardenApi.Primitives.Ids;
 using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.Infrastructure.UiActivation;
 using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Screens.Loading;
 using FluentBitwarden.Ui.Screens.Setup;
-using FluentBitwarden.Ui.Screens.Shell;
 using FluentBitwarden.Ui.Screens.Unlock;
 using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using FluentBitwarden.Ui.Windows.Abstractions;
+using Microsoft.Extensions.Hosting;
 using Navis.WinUI.Abstractions;
 using NSubstitute;
 
@@ -20,197 +19,96 @@ public sealed class AppRouterTests
     private static readonly AccountProfile Account = TestAccounts.CreateEuropean();
 
     [Fact]
-    public void MainWindowRoutesNullStateToLoading()
+    public void OverlayShowsLoadingUntilSessionArrives()
     {
-        var (router, windowManager, navigation) = CreateRouter();
+        var (router, manager, nav, lifetime) = CreateRouter();
 
-        router.Activate(new UiActivationCommand.OpenCommand(), null);
+        router.Activate(new UiActivationCommand.OverlayCommand(), null);
+        manager.CurrentWindowKind.Returns(WindowKind.Overlay);
+        router.Navigate(new AppSessionStateSnapshot.Locked(Account));
 
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        navigation.Received(1).Navigate<LoadingPage>(NavigationKind.Reset);
+        manager.Received(1).EnsureWindow(WindowKind.Overlay);
+        nav.Received(1).Navigate<LoadingPage>(NavigationKind.Reset);
+        nav.Received(1).Navigate<UnlockPage, AccountProfile>(Account, NavigationKind.Reset);
+        lifetime.DidNotReceive().StopApplication();
     }
 
     [Fact]
-    public void MainWindowRoutesSignedOutStateToSetup()
+    public void SignedOutOverlayStopsUiWithoutOpeningWindow()
     {
-        var (router, windowManager, navigation) = CreateRouter();
+        var (router, manager, _, lifetime) = CreateRouter();
+        using var stopping = new CancellationTokenSource();
+        lifetime.ApplicationStopping.Returns(stopping.Token);
+        lifetime.When(x => x.StopApplication()).Do(_ => stopping.Cancel());
+
+        var signedOut = new AppSessionStateSnapshot.NotAuthenticated();
+        router.Activate(new UiActivationCommand.OverlayCommand(), signedOut);
+        manager.DidNotReceive().EnsureWindow(Arg.Any<WindowKind>());
+        lifetime.Received(1).StopApplication();
+        router.Activate(new UiActivationCommand.OpenCommand(), signedOut);
+        router.Navigate(signedOut);
+        manager.DidNotReceive().EnsureWindow(Arg.Any<WindowKind>());
+        lifetime.Received(1).StopApplication();
+    }
+
+    [Fact]
+    public void NormalSignedOutLaunchOpensSetup()
+    {
+        var (router, manager, nav, lifetime) = CreateRouter();
 
         router.Activate(new UiActivationCommand.OpenCommand(), new AppSessionStateSnapshot.NotAuthenticated());
 
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        navigation.Received(1).Navigate<SetupPage>(NavigationKind.Reset);
+        manager.Received(1).EnsureWindow(WindowKind.Main);
+        nav.Received(1).Navigate<SetupPage>(NavigationKind.Reset);
+        lifetime.DidNotReceive().StopApplication();
     }
 
     [Fact]
-    public void MainWindowRoutesLockedStateToUnlockWithTheAccount()
+    public void SigningOutWithOverlayOpenStopsUiWithoutSwitchingWindows()
     {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OpenCommand(), new AppSessionStateSnapshot.Locked(Account));
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        navigation.Received(1).Navigate<UnlockPage, AccountProfile>(Account, NavigationKind.Reset);
-    }
-
-    [Fact]
-    public void MainWindowRoutesUnlockedStateToShellWithTheAccount()
-    {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OpenCommand(), new AppSessionStateSnapshot.Unlocked(Account));
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        navigation.Received(1).Navigate<ShellPage, AccountProfile>(Account, NavigationKind.Reset);
-    }
-
-    [Fact]
-    public void OpenCommandActivatesMainWindow()
-    {
-        var (router, windowManager, _) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OpenCommand(), null);
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        windowManager.DidNotReceive().EnsureWindow(WindowKind.Overlay);
-    }
-
-    [Fact]
-    public void OpenItemCommandActivatesMainWindow()
-    {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OpenItemCommand(CipherId.Parse("item-1")), new AppSessionStateSnapshot.Unlocked(Account));
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        navigation.Received(1).Navigate<ShellPage, AccountProfile>(Account, NavigationKind.Reset);
-    }
-
-    [Fact]
-    public void OverlayActivationWithNullStateRoutesToLoading()
-    {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OverlayCommand(), null);
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Overlay);
-        navigation.Received(1).Navigate<LoadingPage>(NavigationKind.Reset);
-        windowManager.DidNotReceive().CloseActiveWindow();
-    }
-
-    [Fact]
-    public void OverlayActivationWithLockedStateRoutesToUnlockWithTheAccount()
-    {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OverlayCommand(), new AppSessionStateSnapshot.Locked(Account));
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Overlay);
-        navigation.Received(1).Navigate<UnlockPage, AccountProfile>(Account, NavigationKind.Reset);
-    }
-
-    [Fact]
-    public void OverlayActivationWithUnlockedStateLoadsWithoutClosingTheWindow()
-    {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OverlayCommand(), new AppSessionStateSnapshot.Unlocked(Account));
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Overlay);
-        navigation.Received(1).Navigate<LoadingPage>(NavigationKind.Reset);
-        windowManager.DidNotReceive().CloseActiveWindow();
-    }
-
-    [Fact]
-    public void OverlayActivationWhenSignedOutUsesMainSetupWindow()
-    {
-        var (router, windowManager, navigation) = CreateRouter();
-
-        router.Activate(new UiActivationCommand.OverlayCommand(), new AppSessionStateSnapshot.NotAuthenticated());
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        windowManager.DidNotReceive().EnsureWindow(WindowKind.Overlay);
-        navigation.Received(1).Navigate<SetupPage>(NavigationKind.Reset);
-    }
-
-    [Fact]
-    public void ActivationDoesNotNavigateWhenEnsureWindowReturnsFalse()
-    {
-        var (router, windowManager, navigation) = CreateRouter(ensureWindow: false);
-
-        router.Activate(new UiActivationCommand.OpenCommand(), null);
-
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        Assert.Empty(navigation.ReceivedCalls());
-    }
-
-    [Fact]
-    public void NavigateDoesNothingWithoutAnActiveWindow()
-    {
-        var (router, windowManager, navigation) = CreateRouter(activeWindow: null);
-
-        router.Navigate(new AppSessionStateSnapshot.Unlocked(Account));
-
-        Assert.Empty(navigation.ReceivedCalls());
-        windowManager.DidNotReceive().EnsureWindow(Arg.Any<WindowKind>());
-        windowManager.DidNotReceive().CloseActiveWindow();
-    }
-
-    [Fact]
-    public void OverlayNavigationWithNullStateRoutesToLoadingWithoutClosing()
-    {
-        var (router, windowManager, navigation) = CreateRouter(WindowKind.Overlay);
-
-        router.Navigate(null);
-
-        navigation.Received(1).Navigate<LoadingPage>(NavigationKind.Reset);
-        windowManager.DidNotReceive().CloseActiveWindow();
-    }
-
-    [Fact]
-    public void OverlayNavigationWithLockedStateRoutesToUnlockWithTheAccount()
-    {
-        var (router, windowManager, navigation) = CreateRouter(WindowKind.Overlay);
-
-        router.Navigate(new AppSessionStateSnapshot.Locked(Account));
-
-        navigation.Received(1).Navigate<UnlockPage, AccountProfile>(Account, NavigationKind.Reset);
-        windowManager.DidNotReceive().CloseActiveWindow();
-    }
-
-    [Fact]
-    public void OverlayNavigationWhenSignedOutRedirectsToMainSetupWindow()
-    {
-        var (router, windowManager, navigation) = CreateRouter(WindowKind.Overlay);
+        var (router, manager, nav, lifetime) = CreateRouter(WindowKind.Overlay);
 
         router.Navigate(new AppSessionStateSnapshot.NotAuthenticated());
 
-        windowManager.Received(1).EnsureWindow(WindowKind.Main);
-        navigation.Received(1).Navigate<SetupPage>(NavigationKind.Reset);
+        manager.DidNotReceive().EnsureWindow(Arg.Any<WindowKind>());
+        Assert.Empty(nav.ReceivedCalls());
+        lifetime.Received(1).StopApplication();
     }
 
     [Fact]
-    public void OverlayNavigationWithUnlockedStateLoadsBeforeClosingTheWindow()
+    public void OverlayRequestWhileMainExistsReactivatesMainOnSignedOutState()
     {
-        var (router, windowManager, navigation) = CreateRouter(WindowKind.Overlay);
-
-        router.Navigate(new AppSessionStateSnapshot.Unlocked(Account));
-
-        Received.InOrder(() =>
-        {
-            navigation.Navigate<LoadingPage>(NavigationKind.Reset);
-            windowManager.CloseActiveWindow();
-        });
+        var (router, manager, _, lifetime) = CreateRouter(WindowKind.Main);
+        router.Activate(new UiActivationCommand.OverlayCommand(), new AppSessionStateSnapshot.NotAuthenticated());
+        manager.Received(1).EnsureWindow(WindowKind.Main);
+        lifetime.DidNotReceive().StopApplication();
     }
 
-    private static (AppRouter Router, IWindowManager WindowManager, INavigation Navigation) CreateRouter(
-        WindowKind? activeWindow = null,
-        bool ensureWindow = true)
+    [Theory]
+    [InlineData(WindowKind.Main)]
+    [InlineData(WindowKind.Overlay)]
+    public void ExistingWindowActivationDoesNotNavigateAcrossKinds(WindowKind existingKind)
     {
-        var windowManager = Substitute.For<IWindowManager>();
+        var (router, manager, nav, _) = CreateRouter(existingKind);
+        UiActivationCommand command = existingKind == WindowKind.Main
+            ? new UiActivationCommand.OverlayCommand()
+            : new UiActivationCommand.OpenCommand();
+
+        router.Activate(command, new AppSessionStateSnapshot.Locked(Account));
+
+        manager.Received(1).EnsureWindow(existingKind);
+        Assert.Empty(nav.ReceivedCalls());
+    }
+
+    private static (AppRouter Router, IWindowManager Manager, INavigation Navigation, IHostApplicationLifetime Lifetime) CreateRouter(
+        WindowKind? currentKind = null)
+    {
+        var manager = Substitute.For<IWindowManager>();
         var navigation = Substitute.For<INavigation>();
-        windowManager.ActiveWindow.Returns(activeWindow);
-        windowManager.WindowNavigation.Returns(navigation);
-        windowManager.EnsureWindow(Arg.Any<WindowKind>()).Returns(ensureWindow);
-        return (new AppRouter(windowManager), windowManager, navigation);
+        var lifetime = Substitute.For<IHostApplicationLifetime>();
+        manager.CurrentWindowKind.Returns(currentKind);
+        manager.WindowNavigation.Returns(navigation);
+        manager.EnsureWindow(Arg.Any<WindowKind>()).Returns(currentKind is null);
+        return (new AppRouter(manager, lifetime), manager, navigation, lifetime);
     }
 }

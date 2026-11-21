@@ -2,10 +2,10 @@ using FluentBitwarden.Contracts.AppSession;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Infrastructure.WindowsHello;
 using FluentBitwarden.Contracts.Modules.Accounts;
-using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using FluentBitwarden.Ui.Screens.Unlock;
 using FluentBitwarden.Ui.Tests.TestInfrastructure;
 using FluentBitwarden.Ui.Windows.Abstractions;
+using FluentBitwarden.Contracts.Modules.Accounts.StoredAccount;
 using NSubstitute;
 
 namespace FluentBitwarden.Ui.Tests.Screens.Unlock;
@@ -84,7 +84,7 @@ public sealed class UnlockViewModelTests
         _sessionClient.UnlockAsync(Arg.Any<SessionUnlockRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<SessionUnlockOutcome>(new SessionUnlockOutcome.Success()));
 
-        await NavigateToAccountAsync();
+        await _viewModel.OnNavigatedToAsync(Account, CancellationToken.None);
         Assert.True(_viewModel.IsWindowHelloButtonVisible);
         _ = _helloClient.Received(1).GetEnrollmentAsync(
             Arg.Is<GetWindowsHelloEnrollmentRequest>(request => request.UserId == Account.UserId),

@@ -3,6 +3,7 @@ using FluentBitwarden.Contracts.AppSession.State;
 using FluentBitwarden.Contracts.AppSession.Unlock;
 using FluentBitwarden.Contracts.Modules.Vault.Ciphers.Search;
 using FluentBitwarden.Ui.Tests.TestInfrastructure;
+using FluentBitwarden.Ui.Windows.Abstractions;
 using NSubstitute;
 
 namespace FluentBitwarden.Ui.Tests.Windows;
@@ -11,6 +12,25 @@ namespace FluentBitwarden.Ui.Tests.Windows;
 [Trait("Category", "Desktop")]
 public sealed class MainWindowSessionUiTests(DesktopUiFixture desktop)
 {
+    [Fact]
+    public async Task OverlayActivationReusesTheExistingWindowAndPage()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await desktop.ResetToSignedOutAsync(cancellationToken);
+
+        await desktop.RunOnUiThreadAsync(() =>
+        {
+            var windows = App.Current.GetRequiredService<IWindowManager>();
+            var handle = windows.NativeWindowHandle;
+            var navigation = windows.WindowNavigation;
+            Type? page = navigation.CurrentPageType;
+            Assert.False(windows.EnsureWindow(WindowKind.Overlay));
+            Assert.Equal(WindowKind.Main, windows.CurrentWindowKind);
+            Assert.Equal(handle, windows.NativeWindowHandle);
+            Assert.Equal(page, navigation.CurrentPageType);
+        }, cancellationToken);
+    }
+
     [Fact]
     public async Task SearchSuggestionsAndQueryAreClearedWhenTheVaultLocksAndUnlocksAgain()
     {

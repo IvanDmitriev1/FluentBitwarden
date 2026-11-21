@@ -32,7 +32,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
     public DesktopUiFixture()
     {
         var builder = Host.CreateApplicationBuilder();
-        builder.Services.AddWinUiHostedService<App>(_ => CreateApp());
+        builder.Services.AddWinUiHostedService<App>(hostServices => CreateApp(hostServices));
         _host = builder.Build();
         _winUi = (WinUiHostedService<App>)_host.Services.GetRequiredService<IHostedService>();
     }
@@ -63,10 +63,11 @@ public sealed class DesktopUiFixture : IAsyncLifetime
 
     public ValueTask DisposeAsync() => new(TeardownAsync());
 
-    private App CreateApp()
+    private App CreateApp(IServiceProvider hostServices)
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
         var services = new ServiceCollection();
+        services.AddSingleton(hostServices.GetRequiredService<IHostApplicationLifetime>());
         _composition.AddTestServices(services);
         services.AddUiServices();
         services.AddTransient<VaultPageViewModel>(sp => _vaultPageViewModel = ActivatorUtilities.CreateInstance<VaultPageViewModel>(sp));
@@ -98,8 +99,6 @@ public sealed class DesktopUiFixture : IAsyncLifetime
             {
                 if (_winUi.HasLiveDispatcher)
                 {
-                    await _winUi.RunOnUiThreadAsync(() => services.GetService<IWindowManager>()?.CloseActiveWindow())
-                        .WaitAsync(timeout.Token);
                     await _winUi.RunOnUiThreadAsync(async () => await services.DisposeAsync())
                         .WaitAsync(timeout.Token);
                 }
@@ -244,8 +243,7 @@ public sealed class DesktopUiFixture : IAsyncLifetime
         if (state is AppSessionStateSnapshot.Unlocked && await _winUi.RunOnUiThreadAsync(() =>
         {
             var windows = App.Current.GetRequiredService<IWindowManager>();
-            return windows.ActiveWindow == WindowKind.Main &&
-                windows.WindowNavigation.CurrentPageType == typeof(SetupPage);
+            return windows.WindowNavigation.CurrentPageType == typeof(SetupPage);
         }).WaitAsync(cancellationToken))
         {
             await DetachChildAsync(cancellationToken);

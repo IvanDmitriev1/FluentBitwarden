@@ -8,6 +8,8 @@
 	xmlns:local="using:FluentBitwarden.Ui.Features.Vault.CipherDetails"
 	xmlns:models="using:BitwardenApi.Vault.Ciphers.Models">
 
+	<local:DownloadAttachmentCommand x:Key="DownloadAttachmentCommand" />
+
 	<DataTemplate x:Key="LoginDetailsTemplate" x:DataType="models:LoginCipher">
 		<StackPanel Spacing="12">
 			<controls:CardGroup Background="{ThemeResource CardBackgroundBrush}" BorderBrush="{ThemeResource HairlineBrush}">
