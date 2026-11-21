@@ -13,7 +13,7 @@
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>
-    <Project Path="src/FluentBitwarden.CommandPalette/FluentBitwarden.CommandPalette.csproj">
+    <Project Path="src/FluentBitwarden.CmdPal/FluentBitwarden.CmdPal.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>

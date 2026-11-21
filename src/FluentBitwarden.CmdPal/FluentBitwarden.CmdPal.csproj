@@ -2,7 +2,7 @@
 	<Import Project="..\..\FluentBitwarden.WindowsApp.props" />
 
   <PropertyGroup>
-    <RootNamespace>FluentBitwarden.CommandPalette</RootNamespace>
+    <RootNamespace>FluentBitwarden.CmdPal</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>
     <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
@@ -11,21 +11,13 @@
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
-    <Content Include="..\FluentBitwarden.Ui\Assets\StoreLogo.png" Link="Assets\StoreLogo.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FluentBitwarden.Contracts\FluentBitwarden.Contracts.csproj" />
-    <ProjectReference Include="..\FluentBitwarden.Platform\FluentBitwarden.Platform.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="AsyncAwaitBestPractices" />
     <PackageReference Include="Microsoft.CommandPalette.Extensions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" />
     <PackageReference Include="Shmuelie.WinRTServer" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" />
   </ItemGroup>
 </Project>

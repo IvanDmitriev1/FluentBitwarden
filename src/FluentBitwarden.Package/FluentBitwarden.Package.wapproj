@@ -56,9 +56,9 @@
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.AppHost\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
-    <ProjectReference Include="..\FluentBitwarden.CommandPalette\FluentBitwarden.CommandPalette.csproj">
+    <ProjectReference Include="..\FluentBitwarden.CmdPal\FluentBitwarden.CmdPal.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
-      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.CommandPalette\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
+      <PublishProfile>$(MSBuildThisFileDirectory)..\FluentBitwarden.CmdPal\Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
     <ProjectReference Include="..\FluentBitwarden.ComServer\FluentBitwarden.ComServer.vcxproj" />
     <ProjectReference Include="..\BrowserExtension\FluentBitwarden.BrowseProxy\FluentBitwarden.BrowseProxy.csproj">

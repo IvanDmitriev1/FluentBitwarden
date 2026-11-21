@@ -133,11 +133,11 @@
 
 		<!-- Windows Command Palette extension. -->
 		<Application Id="CommandPaletteExtensionApp"
-					 Executable="FluentBitwarden.CommandPalette\FluentBitwarden.CommandPalette.exe"
+					 Executable="FluentBitwarden.CmdPal\FluentBitwarden.CmdPal.exe"
 					 EntryPoint="windows.fullTrustApplication">
 			<uap:VisualElements
 			  DisplayName="FluentBitwarden Command Palette"
-			  Description="Search FluentBitwarden logins from Windows Command Palette"
+			  Description="FluentBitwarden Command Palette placeholder; no commands available."
 			  BackgroundColor="transparent"
 			  Square150x150Logo="Images\Square150x150Logo.png"
 			  Square44x44Logo="Images\Square44x44Logo.png"
@@ -149,7 +149,7 @@
 				<com:Extension Category="windows.comServer">
 					<com:ComServer>
 						<com:ExeServer
-						  Executable="FluentBitwarden.CommandPalette\FluentBitwarden.CommandPalette.exe"
+						  Executable="FluentBitwarden.CmdPal\FluentBitwarden.CmdPal.exe"
 						  Arguments="-RegisterProcessAsComServer"
 						  DisplayName="FluentBitwarden Command Palette">
 							<com:Class
@@ -165,7 +165,7 @@
 					  Id="FluentBitwardenCommandPalette"
 					  PublicFolder="Public"
 					  DisplayName="FluentBitwarden"
-					  Description="Search FluentBitwarden logins">
+					  Description="FluentBitwarden Command Palette placeholder; no commands available.">
 						<uap3:Properties>
 							<CmdPalProvider>
 								<Activation>

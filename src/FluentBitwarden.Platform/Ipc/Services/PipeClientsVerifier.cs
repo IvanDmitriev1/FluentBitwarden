@@ -13,7 +13,7 @@ internal sealed class PipeClientsVerifier(ILogger<PipeClientsVerifier> logger) :
         "FluentBitwarden.Ui.exe",
         "FluentBitwarden.AppHost.exe",
         "FluentBitwarden.BrowseProxy.exe",
-        "FluentBitwarden.CommandPalette.exe",
+        "FluentBitwarden.CmdPal.exe",
     ];
     public IpcAuthenticationLevel IsExpectedClient(NamedPipeServerStream pipe)
     {
