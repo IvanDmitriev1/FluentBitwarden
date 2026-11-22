@@ -3,8 +3,8 @@ namespace FluentBitwarden.Contracts.Modules.Ssh;
 [MemoryPackable]
 public sealed partial record SshUserActionRequest(
     string KeyName,
-    string KeyFingerprint,
-    bool IsForwarded) : IIpcRequestMessage
+    bool IsForwarded,
+    string? Destination) : IIpcRequestMessage
 {
     public static ushort MessageType => IpcMessageTypes.Ui.ShowSshDialog;
 }

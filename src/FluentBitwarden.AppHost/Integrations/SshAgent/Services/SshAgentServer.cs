@@ -97,6 +97,7 @@ internal sealed class SshAgentServer(
         try
         {
             await using NamedPipeServerStream _ = pipe;
+            var connectionState = new SshAgentConnectionState();
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -114,7 +115,7 @@ internal sealed class SshAgentServer(
                     await using var scope = scopeFactory.CreateAsyncScope();
                     var messagesHandler = scope.ServiceProvider.GetRequiredService<ISshAgentMessagesHandler>();
 
-                    var response = await messagesHandler.HandleAsync(message, cancellationToken);
+                    var response = await messagesHandler.HandleAsync(message, connectionState, cancellationToken);
                     await response.WriteMessageAsync(pipe, cancellationToken);
                 }
                 catch (OperationCanceledException)

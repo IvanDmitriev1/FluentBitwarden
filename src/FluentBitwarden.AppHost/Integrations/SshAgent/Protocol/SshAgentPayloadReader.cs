@@ -9,6 +9,17 @@ internal ref struct SshAgentPayloadReader(ReadOnlyMemory<byte> buffer)
     public readonly int Remaining => buffer.Length - _position;
     public readonly bool End => Remaining == 0;
 
+    public bool TryReadByte(out byte value)
+    {
+        value = 0;
+
+        if (Remaining < 1)
+            return false;
+
+        value = buffer.Span[_position++];
+        return true;
+    }
+
     public bool TryReadUInt32(out uint value)
     {
         value = 0;

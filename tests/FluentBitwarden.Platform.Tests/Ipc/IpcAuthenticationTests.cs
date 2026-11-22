@@ -5,13 +5,15 @@ namespace FluentBitwarden.Platform.Tests.Ipc;
 
 public class IpcAuthenticationTests
 {
-    [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
-    public async Task Rejected_authentication_denies_dispatch_and_leaves_the_handler_untouched()
+    [Theory(Timeout = IpcTestHost.TimeoutMilliseconds)]
+    [InlineData(IpcAuthenticationLevel.Rejected)]
+    [InlineData(IpcAuthenticationLevel.PackagedExternalProxy)]
+    public async Task Clients_outside_the_package_cannot_dispatch_requests(IpcAuthenticationLevel authenticationLevel)
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();
         await using var host = await IpcTestHostFactory.StartAsync<ImmediateEchoHandler>(
-            IpcAuthenticationLevel.Rejected,
+            authenticationLevel,
             services => services.AddSingleton(state),
             testCancellation);
 
@@ -25,7 +27,7 @@ public class IpcAuthenticationTests
     }
 
     [Fact(Timeout = IpcTestHost.TimeoutMilliseconds)]
-    public async Task Accepted_authentication_reaches_the_registered_endpoint()
+    public async Task Same_package_authentication_reaches_the_registered_endpoint()
     {
         CancellationToken testCancellation = TestContext.Current.CancellationToken;
         var state = new ImmediateEchoHandlerState();

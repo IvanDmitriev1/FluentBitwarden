@@ -33,6 +33,20 @@ public sealed class AppRouterTests
         lifetime.DidNotReceive().StopApplication();
     }
 
+    [Theory]
+    [InlineData("--overlay", null)]
+    [InlineData(null, "--overlay")]
+    public void OverlayLaunchOpensOverlayWhenUnlockedAndNoWindowExists(string? processArgument, string? launchArguments)
+    {
+        var (router, manager, _, _) = CreateRouter();
+
+        var command = UiActivationCommandParser.ParseInitial(processArgument is null ? [] : [processArgument], launchArguments);
+        router.Activate(command, new AppSessionStateSnapshot.Unlocked(Account));
+
+        manager.Received(1).EnsureWindow(WindowKind.Overlay);
+        manager.DidNotReceive().EnsureWindow(WindowKind.Main);
+    }
+
     [Fact]
     public void SignedOutOverlayStopsUiWithoutOpeningWindow()
     {

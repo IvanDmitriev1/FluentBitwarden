@@ -14,7 +14,7 @@ public sealed class UserDialogServiceTests
     {
         IIpcClient ipc = Substitute.For<IIpcClient>();
         IUiProcessLauncher launcher = Substitute.For<IUiProcessLauncher>();
-        var request = new SshUserActionRequest("key", "fingerprint", false);
+        var request = new SshUserActionRequest("key", false, null);
         using var cancellation = new CancellationTokenSource();
         var expected = UserDialogResult<SshUserActionResponse>.Completed(new(true));
         ipc.SendAsync<SshUserActionRequest, UserDialogResult<SshUserActionResponse>>(request, cancellation.Token)
@@ -38,7 +38,7 @@ public sealed class UserDialogServiceTests
         var service = new UserDialogService(ipc, Substitute.For<IUiProcessLauncher>());
 
         var result = await service.ShowAsync<SshUserActionResponse, SshUserActionRequest>(
-            new("key", "fingerprint", false), TestContext.Current.CancellationToken);
+            new("key", false, null), TestContext.Current.CancellationToken);
 
         Assert.False(result.TryGetResult(out _));
     }
@@ -56,7 +56,7 @@ public sealed class UserDialogServiceTests
                 : Task.FromResult(UserDialogResult<SshUserActionResponse>.Completed(new(true))));
         IUiProcessLauncher launcher = Substitute.For<IUiProcessLauncher>();
         var service = new UserDialogService(ipc, launcher);
-        var request = new SshUserActionRequest("key", "fingerprint", false);
+        var request = new SshUserActionRequest("key", false, null);
 
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         Task<UserDialogResult<SshUserActionResponse>> first = service.ShowAsync<SshUserActionResponse, SshUserActionRequest>(request, cancellationToken);
@@ -86,7 +86,7 @@ public sealed class UserDialogServiceTests
                 ? Task.FromException<UserDialogResult<SshUserActionResponse>>(new IOException("IPC unavailable"))
                 : Task.FromResult(UserDialogResult<SshUserActionResponse>.Completed(new(true))));
         var service = new UserDialogService(ipc, Substitute.For<IUiProcessLauncher>());
-        var request = new SshUserActionRequest("key", "fingerprint", false);
+        var request = new SshUserActionRequest("key", false, null);
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
         await Assert.ThrowsAsync<IOException>(() => service.ShowAsync<SshUserActionResponse, SshUserActionRequest>(request, cancellationToken));

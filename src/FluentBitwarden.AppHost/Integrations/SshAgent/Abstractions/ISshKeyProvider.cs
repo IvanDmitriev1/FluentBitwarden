@@ -6,5 +6,9 @@ internal interface ISshKeyProvider
 {
     ValueTask<IReadOnlyList<SshAgentIdentity>> GetIdentitiesAsync(CancellationToken cancellationToken);
 
-    ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken);
+    ValueTask<SshAgentSignature?> GetSignatureAsync(
+        SshAgentSignRequest request,
+        SshAgentSessionBinding? sessionBinding,
+        bool isForwarded,
+        CancellationToken cancellationToken);
 }

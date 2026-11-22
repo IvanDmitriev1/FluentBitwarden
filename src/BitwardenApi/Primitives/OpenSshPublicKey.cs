@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MemoryPack;
 
 using BitwardenApi.Encoding;
@@ -13,6 +14,18 @@ public readonly partial record struct OpenSshPublicKey(
     public static OpenSshPublicKey Empty { get; } = new OpenSshPublicKey(string.Empty, []);
     public static OpenSshPublicKey CreateUnparsed(string rawKey) => new(rawKey, []);
 
+    [MemoryPackIgnore]
+    [JsonIgnore]
+    public string Algorithm
+    {
+        get
+        {
+            var rawKey = RawKey.AsSpan();
+            int separator = rawKey.IndexOf(' ');
+            return separator > 0 ? rawKey[..separator].ToString() : string.Empty;
+        }
+    }
+
     public static bool TryParse(string rawKey, out OpenSshPublicKey publicKey)
     {
         publicKey = default;
@@ -27,7 +40,6 @@ public readonly partial record struct OpenSshPublicKey(
 
         Span<Range> ranges = stackalloc Range[blocks + 1];
         int writtenSplit = rawKeySpan.Split(ranges, ' ');
-        ReadOnlySpan<char> algorithmSpan = rawKeySpan[ranges[0]];
 
         ReadOnlySpan<char> keySpan = rawKeySpan[ranges[1]];
         if (!Base64Extensions.TryConvertFromBase64Chars(keySpan, out var keyBlob))

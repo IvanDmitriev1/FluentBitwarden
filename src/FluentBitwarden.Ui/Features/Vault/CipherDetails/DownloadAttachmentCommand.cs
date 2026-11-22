@@ -32,7 +32,8 @@ public sealed partial class DownloadAttachmentCommand : ICommand
         try
         {
             var dialogService = App.Current.GetRequiredService<IDialogService>();
-            await dialogService.ShowAsync<MessageDialog, (string, string), MessageDialogResult>(("Attachment download failed", "The attachment could not be saved."));
+            await dialogService.ShowAsync<MessageDialog, MessageDialogArgs, MessageDialogResult>(
+                new("Attachment download failed", "The attachment could not be saved."));
 
 
             var windowManager = App.Current.GetRequiredService<IWindowManager>();
@@ -55,7 +56,7 @@ public sealed partial class DownloadAttachmentCommand : ICommand
         catch (Exception)
         {
             var dialogService = App.Current.GetRequiredService<IDialogService>();
-            await dialogService.ShowAsync<MessageDialog, (string, string), MessageDialogResult>(("Attachment download failed", "The attachment could not be saved."));
+            await dialogService.ShowAsync<MessageDialog, MessageDialogArgs, MessageDialogResult>(new("Attachment download failed", "The attachment could not be saved."));
         }
     }
 }

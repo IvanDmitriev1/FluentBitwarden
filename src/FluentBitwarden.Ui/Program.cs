@@ -34,7 +34,7 @@ public static class Program
         builder.Services.AddSingleton<IVaultFolderClient, RemoteVaultFolderClient>();
         builder.Services.AddSingleton<IVaultOrganizationClient, RemoteVaultOrganizationClient>();
 
-        builder.Services.AddIpcServer(IpcConstants.UiPipeName, static _ => { });
+        builder.Services.AddIpcServer(IpcConstants.UiPipeName, RegisterIpcHandlers);
         builder.Services.AddUiServices();
         builder.Services.AddHostedService(static sp => sp.GetRequiredService<AppSessionMonitor>());
 
@@ -43,4 +43,17 @@ public static class Program
 
         return 0;
     }
+
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification =
+            "IPC handler registration is the documented reflection boundary. The statically registered handler and its required public members are preserved by Add<THandler>().")]
+    [UnconditionalSuppressMessage(
+        "AOT",
+        "IL3050",
+        Justification =
+            "IPC endpoint creation intentionally closes generic endpoint types at registration time.")]
+    private static void RegisterIpcHandlers(IpcRpcHandlerBuilder handlers) =>
+        handlers.Add<SshKeyApprovalIpcHandler>();
 }

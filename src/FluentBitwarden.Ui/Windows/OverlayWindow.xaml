@@ -17,25 +17,15 @@
 		<MicaBackdrop />
 	</winUiEx:WindowEx.SystemBackdrop>
 
-	<Grid x:Name="RootElement" KeyboardAcceleratorPlacementMode="Hidden">
+	<Grid
+		x:Name="RootElement"
+		KeyboardAcceleratorPlacementMode="Hidden"
+		Loaded="RootElement_Loaded">
+
 		<Grid.KeyboardAccelerators>
 			<KeyboardAccelerator Invoked="EscapeKeyboardAccelerator_Invoked" Key="Escape" />
 		</Grid.KeyboardAccelerators>
 
-		<Grid.RowDefinitions>
-			<RowDefinition Height="32" />
-			<RowDefinition Height="*" />
-		</Grid.RowDefinitions>
-
-		<Grid
-			x:Name="DragArea"
-			Grid.Row="0"
-			Background="Transparent"
-			Canvas.ZIndex="1000" />
-
-		<Frame
-			x:Name="RootNavigationFrame"
-			Grid.Row="1"
-			nav:NavigationHost.IsEnabled="True" />
+		<Frame x:Name="RootNavigationFrame" nav:NavigationHost.IsEnabled="True" />
 	</Grid>
 </winUiEx:WindowEx>

@@ -1,10 +1,10 @@
 using FluentBitwarden.Contracts.Infrastructure.UiActivation;
+using FluentBitwarden.Ui.Application;
 using FluentBitwarden.Ui.Application.Abstractions;
 using FluentBitwarden.Ui.Infrastructure.Hosting.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.AppLifecycle;
-using Windows.ApplicationModel.Activation;
 
 namespace FluentBitwarden.Ui;
 
@@ -26,15 +26,18 @@ public partial class App : IActivationHandler
 
     public T GetRequiredService<T>() where T : notnull => _serviceProvider.GetRequiredService<T>();
 
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) =>
-        HandleActivation(AppInstance.GetCurrent().GetActivatedEventArgs());
-
-    public void HandleActivation(AppActivationArguments arguments)
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        var command = arguments.Data is ILaunchActivatedEventArgs launchArgs
-            ? UiActivationCommand.Parse(launchArgs.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-            : new UiActivationCommand.OpenCommand();
+        var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
+        Activate(UiActivationCommandParser.ParseInitial(
+            Environment.GetCommandLineArgs()[1..], UiActivationCommandParser.GetLaunchArguments(activation)));
+    }
 
+    public void HandleActivation(AppActivationArguments arguments) =>
+        Activate(UiActivationCommandParser.ParseLaunchArguments(UiActivationCommandParser.GetLaunchArguments(arguments)));
+
+    private void Activate(UiActivationCommand command)
+    {
         var session = GetRequiredService<IAppSession>().CurrentSession;
         GetRequiredService<IAppRouter>().Activate(command, session);
     }

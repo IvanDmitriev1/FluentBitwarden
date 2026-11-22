@@ -4,5 +4,8 @@ namespace FluentBitwarden.AppHost.Integrations.SshAgent.Abstractions;
 
 internal interface ISshAgentMessagesHandler
 {
-    Task<SshAgentMessage> HandleAsync(SshAgentMessage message, CancellationToken cancellationToken);
+    Task<SshAgentMessage> HandleAsync(
+        SshAgentMessage message,
+        SshAgentConnectionState connectionState,
+        CancellationToken cancellationToken);
 }

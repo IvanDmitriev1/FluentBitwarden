@@ -79,6 +79,8 @@ public sealed class SshKeyProviderTests
 
         await Assert.ThrowsAsync<UnlockedSessionRequiredException>(() => fixture.Provider.GetSignatureAsync(
             fixture.CreateRequest(),
+            null,
+            false,
             CancellationToken.None).AsTask());
     }
 
@@ -90,6 +92,8 @@ public sealed class SshKeyProviderTests
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
             fixture.CreateRequest(data),
+            null,
+            false,
             CancellationToken.None);
 
         Assert.NotNull(signature);
@@ -103,23 +107,73 @@ public sealed class SshKeyProviderTests
     public async Task GetSignature_prompts_and_signs_after_user_approval()
     {
         var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
-        fixture.DialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(
-                Arg.Any<SshUserActionRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(async _ =>
-            {
-                return UserDialogResult<SshUserActionResponse>.Completed(new SshUserActionResponse(true));
-            });
         byte[] data = "approved signing input"u8.ToArray();
-
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
             fixture.CreateRequest(data),
+            null,
+            true,
             CancellationToken.None);
 
         Assert.NotNull(signature);
         AssertSignature(fixture.Key, data, signature);
         _ = fixture.DialogService.Received(1).ShowAsync<SshUserActionResponse, SshUserActionRequest>(
-            new SshUserActionRequest("synthetic key", "SHA256:synthetic", false),
+            new SshUserActionRequest("synthetic key", true, null),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetSignature_uses_the_username_from_a_valid_authentication_payload()
+    {
+        var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
+        byte[] authPayload = SshAgentTestData.EncodeUserAuthRequest(
+            [0x01, 0x02], "alice"u8, "publickey", fixture.Key.PublicKeyBlob);
+
+        SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
+            fixture.CreateRequest(authPayload),
+            null,
+            false,
+            CancellationToken.None);
+
+        Assert.NotNull(signature);
+        AssertSignature(fixture.Key, authPayload, signature);
+        _ = fixture.DialogService.Received(1).ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+            new SshUserActionRequest("synthetic key", false, "alice"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetSignature_uses_verified_binding_and_in_memory_known_hosts_for_approval_and_signing()
+    {
+        var fixture = new ProviderFixture(SensitiveActionPolicy.RequireUserAction);
+        byte[] sessionId = [0x11, 0x22];
+        (byte[] bindingPayload, byte[] hostKeyBlob) = SshAgentTestData.EncodeSessionBinding(
+            sessionId, signingSeedByte: 0x72);
+        Assert.True(SshAgentSessionBinding.TryParseAndVerify(bindingPayload, out var binding));
+        byte[] authPayload = SshAgentTestData.EncodeUserAuthRequest(
+            sessionId,
+            "alice"u8,
+            "publickey-hostbound-v00@openssh.com",
+            fixture.Key.PublicKeyBlob,
+            hostKeyBlob);
+        var provider = new SshKeyProvider(
+            fixture.Accessor,
+            fixture.Operations,
+            fixture.DialogService,
+            fixture.SettingsStore,
+            key =>
+            {
+                using var knownHosts = new StringReader(
+                    $"build.example ssh-ed25519 {Convert.ToBase64String(hostKeyBlob)}");
+                return SshAgentKnownHostsResolver.Resolve(key, knownHosts);
+            });
+
+        SshAgentSignature? signature = await provider.GetSignatureAsync(
+            fixture.CreateRequest(authPayload), binding, false, CancellationToken.None);
+
+        Assert.NotNull(signature);
+        AssertSignature(fixture.Key, authPayload, signature);
+        _ = fixture.DialogService.Received(1).ShowAsync<SshUserActionResponse, SshUserActionRequest>(
+            new SshUserActionRequest("synthetic key", false, "alice@build.example"),
             Arg.Any<CancellationToken>());
     }
 
@@ -137,6 +191,8 @@ public sealed class SshKeyProviderTests
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
             fixture.CreateRequest(),
+            null,
+            false,
             CancellationToken.None);
 
         Assert.Null(signature);
@@ -151,7 +207,7 @@ public sealed class SshKeyProviderTests
             .Returns(Task.FromResult(UserDialogResult<SshUserActionResponse>.Cancelled));
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
-            fixture.CreateRequest(), TestContext.Current.CancellationToken);
+            fixture.CreateRequest(), null, false, TestContext.Current.CancellationToken);
 
         Assert.Null(signature);
     }
@@ -167,7 +223,7 @@ public sealed class SshKeyProviderTests
 
         try
         {
-            Assert.Null(await fixture.Provider.GetSignatureAsync(fixture.CreateRequest(), CancellationToken.None));
+            Assert.Null(await fixture.Provider.GetSignatureAsync(fixture.CreateRequest(), null, false, CancellationToken.None));
             _ = fixture.DialogService.DidNotReceive().ShowAsync<SshUserActionResponse, SshUserActionRequest>(
                 Arg.Any<SshUserActionRequest>(), Arg.Any<CancellationToken>());
         }
@@ -192,7 +248,7 @@ public sealed class SshKeyProviderTests
 
         try
         {
-            Assert.Null(await fixture.Provider.GetSignatureAsync(fixture.CreateRequest(), CancellationToken.None));
+            Assert.Null(await fixture.Provider.GetSignatureAsync(fixture.CreateRequest(), null, false, CancellationToken.None));
         }
         finally
         {
@@ -222,7 +278,7 @@ public sealed class SshKeyProviderTests
                 dialogStarted.SetResult(token);
                 return WaitForDialogCancellation(token);
             });
-        Task<SshAgentSignature?> signing = provider.GetSignatureAsync(fixture.CreateRequest(), CancellationToken.None).AsTask();
+        Task<SshAgentSignature?> signing = provider.GetSignatureAsync(fixture.CreateRequest(), null, false, CancellationToken.None).AsTask();
         CancellationToken dialogToken = await dialogStarted.Task.WaitAsync(TestContext.Current.CancellationToken);
 
         if (transition == "lock")
@@ -252,7 +308,7 @@ public sealed class SshKeyProviderTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => signing);
     }
 
-    private static async Task<UserDialogResult<SshUserActionResponse>> WaitForDialogCancellation(CancellationToken token)
+    private async Task<UserDialogResult<SshUserActionResponse>> WaitForDialogCancellation(CancellationToken token)
     {
         await Task.Delay(Timeout.Infinite, token);
         return UserDialogResult<SshUserActionResponse>.Cancelled;
@@ -274,6 +330,8 @@ public sealed class SshKeyProviderTests
 
         SshAgentSignature? signature = await fixture.Provider.GetSignatureAsync(
             fixture.CreateRequest(),
+            null,
+            false,
             CancellationToken.None);
 
         Assert.Null(signature);

@@ -16,6 +16,7 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.RequestIdentities, ReadOnlyMemory<byte>.Empty),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         byte[] expectedPayload = SshAgentTestData.Concat(
@@ -36,6 +37,7 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.RequestIdentities, ReadOnlyMemory<byte>.Empty),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessage.Failure, response);
@@ -52,6 +54,8 @@ public sealed class SshAgentMessagesHandlerTests
         SshAgentSignRequest? receivedRequest = null;
         keyProvider.GetSignatureAsync(
                 Arg.Do<SshAgentSignRequest>(request => receivedRequest = request),
+                Arg.Any<SshAgentSessionBinding?>(),
+                Arg.Any<bool>(),
                 Arg.Any<CancellationToken>())
             .Returns(new ValueTask<SshAgentSignature?>(signature));
         var handler = new SshAgentMessagesHandler(keyProvider);
@@ -59,6 +63,7 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.SignRequest, requestPayload),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         byte[] signatureBlob = SshAgentTestData.Concat(
@@ -75,7 +80,96 @@ public sealed class SshAgentMessagesHandlerTests
         Assert.Equal((SshAgentSignatureFlags)flags, receivedRequest?.Flags);
         _ = keyProvider.Received(1).GetSignatureAsync(
             Arg.Any<SshAgentSignRequest>(),
+            Arg.Any<SshAgentSessionBinding?>(),
+            Arg.Any<bool>(),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SessionBind_keeps_the_first_binding_after_a_rejected_rebind()
+    {
+        var keyProvider = Substitute.For<ISshKeyProvider>();
+        SshAgentSessionBinding? receivedBinding = null;
+        bool? observedForwarding = null;
+        keyProvider.GetSignatureAsync(
+                Arg.Any<SshAgentSignRequest>(),
+                Arg.Do<SshAgentSessionBinding?>(binding => receivedBinding = binding),
+                Arg.Do<bool>(isForwarded => observedForwarding = isForwarded),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValueTask<SshAgentSignature?>(new SshAgentSignature("ssh-ed25519", [0x01])));
+        var handler = new SshAgentMessagesHandler(keyProvider);
+        var connection = new SshAgentConnectionState();
+        byte[] firstSessionId = [0x11, 0x22];
+        byte[] secondSessionId = [0x33, 0x44];
+        (byte[] firstBindingData, byte[] firstHostKey) = SshAgentTestData.EncodeSessionBinding(
+            firstSessionId, signingSeedByte: 0x61);
+        (byte[] secondBindingData, byte[] secondHostKey) = SshAgentTestData.EncodeSessionBinding(
+            secondSessionId, signingSeedByte: 0x72);
+
+        SshAgentMessage firstBind = await handler.HandleAsync(
+            new SshAgentMessage(SshAgentMessageType.Extension,
+                SshAgentTestData.EncodeExtensionRequest("session-bind@openssh.com", firstBindingData)),
+            connection, CancellationToken.None);
+        SshAgentMessage secondBind = await handler.HandleAsync(
+            new SshAgentMessage(SshAgentMessageType.Extension,
+                SshAgentTestData.EncodeExtensionRequest("session-bind@openssh.com", secondBindingData)),
+            connection, CancellationToken.None);
+        SshAgentMessage signResponse = await handler.HandleAsync(
+            new SshAgentMessage(SshAgentMessageType.SignRequest,
+                SshAgentTestData.EncodeSignRequest([0xAA], [0xBB], 0)),
+            connection,
+            CancellationToken.None);
+
+        Assert.Equal(SshAgentMessageType.Success, firstBind.Type);
+        Assert.Equal(SshAgentMessageType.ExtensionFailure, secondBind.Type);
+        Assert.Equal(SshAgentMessageType.SignResponse, signResponse.Type);
+        Assert.False(firstHostKey.SequenceEqual(secondHostKey));
+        Assert.False(firstSessionId.SequenceEqual(secondSessionId));
+        Assert.NotNull(receivedBinding);
+        Assert.Equal(firstHostKey, receivedBinding?.HostKeyBlob.ToArray());
+        Assert.Equal(firstSessionId, receivedBinding?.SessionId.ToArray());
+        Assert.False(observedForwarding);
+    }
+
+    [Fact]
+    public async Task Forwarding_notification_clears_binding_and_rejects_later_direct_bind()
+    {
+        var keyProvider = Substitute.For<ISshKeyProvider>();
+        SshAgentSessionBinding? receivedBinding = new(new byte[] { 0x01 }, new byte[] { 0x02 });
+        bool? observedForwarding = null;
+        keyProvider.GetSignatureAsync(
+                Arg.Any<SshAgentSignRequest>(),
+                Arg.Do<SshAgentSessionBinding?>(binding => receivedBinding = binding),
+                Arg.Do<bool>(isForwarded => observedForwarding = isForwarded),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValueTask<SshAgentSignature?>(new SshAgentSignature("ssh-ed25519", [0x01])));
+        var handler = new SshAgentMessagesHandler(keyProvider);
+        var connection = new SshAgentConnectionState();
+        (byte[] bindingData, _) = SshAgentTestData.EncodeSessionBinding([0x11, 0x22]);
+        (byte[] rejectedBindingData, _) = SshAgentTestData.EncodeSessionBinding([0x33, 0x44]);
+        SshAgentMessage directBind = await handler.HandleAsync(
+            new SshAgentMessage(SshAgentMessageType.Extension,
+                SshAgentTestData.EncodeExtensionRequest("session-bind@openssh.com", bindingData)),
+            connection, CancellationToken.None);
+        SshAgentMessage forwardingNotification = await handler.HandleAsync(
+            SshAgentTestData.CreateForwardingNotification(),
+            connection, CancellationToken.None);
+        SshAgentMessage laterBind = await handler.HandleAsync(
+            new SshAgentMessage(SshAgentMessageType.Extension,
+                SshAgentTestData.EncodeExtensionRequest("session-bind@openssh.com", rejectedBindingData)),
+            connection, CancellationToken.None);
+        SshAgentMessage signResponse = await handler.HandleAsync(
+            new SshAgentMessage(SshAgentMessageType.SignRequest,
+                SshAgentTestData.EncodeSignRequest([0xAA], [0xBB], 0)),
+            connection,
+            CancellationToken.None);
+
+        Assert.Equal(SshAgentMessageType.Success, directBind.Type);
+        Assert.Equal(SshAgentMessageType.ExtensionFailure, forwardingNotification.Type);
+        Assert.Equal(SshAgentMessageType.ExtensionFailure, laterBind.Type);
+        Assert.Equal(SshAgentMessageType.SignResponse, signResponse.Type);
+        Assert.Null(receivedBinding);
+        Assert.True(observedForwarding);
     }
 
     [Theory]
@@ -87,11 +181,14 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.SignRequest, payload),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessage.Failure, response);
         _ = keyProvider.DidNotReceive().GetSignatureAsync(
             Arg.Any<SshAgentSignRequest>(),
+            Arg.Any<SshAgentSessionBinding?>(),
+            Arg.Any<bool>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -119,11 +216,14 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.SignRequest, payload),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessage.Failure, response);
         _ = keyProvider.DidNotReceive().GetSignatureAsync(
             Arg.Any<SshAgentSignRequest>(),
+            Arg.Any<SshAgentSessionBinding?>(),
+            Arg.Any<bool>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -137,6 +237,7 @@ public sealed class SshAgentMessagesHandlerTests
             new SshAgentMessage(
                 SshAgentMessageType.SignRequest,
                 SshAgentTestData.EncodeSignRequest([0xAA], [0xBB], 0)),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessage.Failure, response);
@@ -148,6 +249,8 @@ public sealed class SshAgentMessagesHandlerTests
         var keyProvider = Substitute.For<ISshKeyProvider>();
         keyProvider.GetSignatureAsync(
                 Arg.Any<SshAgentSignRequest>(),
+                Arg.Any<SshAgentSessionBinding?>(),
+                Arg.Any<bool>(),
                 Arg.Any<CancellationToken>())
             .Returns(new ValueTask<SshAgentSignature?>(
                 new SshAgentSignature("ssh-ed25519", new byte[SshAgentMessage.MaxLength])));
@@ -157,6 +260,7 @@ public sealed class SshAgentMessagesHandlerTests
             new SshAgentMessage(
                 SshAgentMessageType.SignRequest,
                 SshAgentTestData.EncodeSignRequest([0xAA], [0xBB], 0)),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessage.Failure, response);
@@ -170,6 +274,7 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.Extension, payload),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessageType.ExtensionFailure, response.Type);
@@ -190,6 +295,7 @@ public sealed class SshAgentMessagesHandlerTests
 
         SshAgentMessage response = await handler.HandleAsync(
             new SshAgentMessage(SshAgentMessageType.Success, ReadOnlyMemory<byte>.Empty),
+            new SshAgentConnectionState(),
             CancellationToken.None);
 
         Assert.Equal(SshAgentMessage.Failure, response);

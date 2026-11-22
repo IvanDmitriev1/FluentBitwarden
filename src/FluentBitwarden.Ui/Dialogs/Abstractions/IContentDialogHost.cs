@@ -2,7 +2,7 @@ namespace FluentBitwarden.Ui.Dialogs.Abstractions;
 
 public interface IContentDialogHost
 {
-    Task<ContentDialogResult> ShowDialogAsync(
+    Task ShowDialogAsync(
         ContentDialog dialog,
         CancellationToken cancellationToken);
 }

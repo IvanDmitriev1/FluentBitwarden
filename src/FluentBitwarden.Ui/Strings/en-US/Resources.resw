@@ -81,38 +81,8 @@
   <data name="VaultListSshKeys.Text" xml:space="preserve">
     <value>SSH Keys</value>
   </data>
-  <data name="VaultDetailsLoading.Text" xml:space="preserve">
-    <value>Loading item detailsРІР‚В¦</value>
-  </data>
-  <data name="VaultDetailsUnavailable.Text" xml:space="preserve">
-    <value>This item is unavailable.</value>
-  </data>
-  <data name="VaultDetailsFailed.Text" xml:space="preserve">
-    <value>CouldnРІР‚в„ўt load item details.</value>
-  </data>
-  <data name="VaultDetailsTypeLogin" xml:space="preserve">
-    <value>Login</value>
-  </data>
-  <data name="VaultDetailsTypeSecureNote" xml:space="preserve">
-    <value>Secure note</value>
-  </data>
-  <data name="VaultDetailsTypeCard" xml:space="preserve">
-    <value>Card</value>
-  </data>
-  <data name="VaultDetailsTypeIdentity" xml:space="preserve">
-    <value>Identity</value>
-  </data>
-  <data name="VaultDetailsTypeSshKey" xml:space="preserve">
-    <value>SSH key</value>
-  </data>
-  <data name="VaultScopePersonal.Text" xml:space="preserve">
-    <value>Personal vault</value>
-  </data>
   <data name="VaultScopePersonalVault" xml:space="preserve">
     <value>Personal vault</value>
-  </data>
-  <data name="VaultScopeOrganization" xml:space="preserve">
-    <value>Organization</value>
   </data>
   <data name="VaultUsernameField.Label" xml:space="preserve">
     <value>username</value>
@@ -308,5 +278,17 @@
   </data>
   <data name="FieldActionRowActionsButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>More actions</value>
+  </data>
+  <data name="SshKeyApprovalDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Allow</value>
+  </data>
+  <data name="SshKeyApprovalDialog.CloseButtonText" xml:space="preserve">
+    <value>Deny</value>
+  </data>
+  <data name="SshKeyApprovalDialog.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Approve SSH key</value>
+  </data>
+  <data name="SshKeyApprovalForwardingIndicator.Text" xml:space="preserve">
+    <value>Agent forwarding detected</value>
   </data>
 </root>

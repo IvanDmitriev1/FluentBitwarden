@@ -14,13 +14,25 @@ public sealed partial class MainWindow : WinUIEx.WindowEx, IThemeChangeable, ICo
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
     }
 
+    private readonly SemaphoreSlim _dialogGate = new(1, 1);
+
+
     public Frame RootFrame => RootNavigationFrame;
 
     public void ApplyTheme(ElementTheme themeMode) => RootElement.RequestedTheme = themeMode;
 
-    public Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken)
+    public async Task ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken)
     {
-        dialog.XamlRoot = RootElement.XamlRoot;
-        return dialog.ShowAsync(ContentDialogPlacement.Popup).AsTask(cancellationToken);
+        await _dialogGate.WaitAsync(cancellationToken);
+
+        try
+        {
+            dialog.XamlRoot = RootElement.XamlRoot;
+            await dialog.ShowAsync(ContentDialogPlacement.Popup).AsTask(cancellationToken);
+        }
+        finally
+        {
+            _dialogGate.Release();
+        }
     }
 }

@@ -1,7 +1,9 @@
 
 using System.Buffers.Binary;
 using System.Text;
+using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math.EC.Rfc8032;
 
 namespace FluentBitwarden.AppHost.IntegrationTests.Integrations.SshAgent;
 
@@ -27,6 +29,59 @@ internal static class SshAgentTestData
 
     public static byte[] EncodeExtensionRequest(string extensionName, ReadOnlySpan<byte> data) =>
         Concat(EncodeString(extensionName), data.ToArray());
+
+    public static SshAgentMessage CreateForwardingNotification() =>
+        new(SshAgentMessageType.Extension,
+            EncodeExtensionRequest("session-bind@openssh.com",
+                Concat(EncodeString([0x01]), EncodeString([0x02]), EncodeString([0x03]), [0x01])));
+
+    public static byte[] EncodeUserAuthRequest(
+        ReadOnlySpan<byte> sessionId,
+        ReadOnlySpan<byte> usernameBytes,
+        string method,
+        ReadOnlySpan<byte> requestedClientKeyBlob,
+        byte[]? hostKeyBlob = null) =>
+        Concat(
+            EncodeString(sessionId),
+            [50],
+            EncodeString(usernameBytes),
+            EncodeString("ssh-connection"),
+            EncodeString(method),
+            [1],
+            EncodeString("ssh-ed25519"),
+            EncodeString(requestedClientKeyBlob),
+            hostKeyBlob is null ? Array.Empty<byte>() : EncodeString(hostKeyBlob));
+
+    public static (byte[] Payload, byte[] HostKeyBlob) EncodeSessionBinding(
+        ReadOnlySpan<byte> sessionId,
+        string hostKeyAlgorithm = "ssh-ed25519",
+        byte signingSeedByte = 0xA7)
+    {
+        byte[] signingSeed = Enumerable.Range(0, Ed25519.SecretKeySize)
+            .Select(index => (byte)(signingSeedByte + index))
+            .ToArray();
+        byte[] publicKey = new byte[Ed25519.PublicKeySize];
+        Ed25519.GeneratePublicKey(signingSeed, 0, publicKey, 0);
+        byte[] hostKeyBlob = Concat(EncodeString(hostKeyAlgorithm), EncodeString(publicKey));
+        byte[] signature = new byte[Ed25519.SignatureSize];
+        byte[] session = sessionId.ToArray();
+        Ed25519.Sign(signingSeed, 0, session, 0, session.Length, signature, 0);
+        byte[] signatureBlob = Concat(EncodeString("ssh-ed25519"), EncodeString(signature));
+
+        return (
+            Concat(EncodeString(hostKeyBlob), EncodeString(session), EncodeString(signatureBlob), [0]),
+            hostKeyBlob);
+    }
+
+    public static byte[] CreateHostKeyBlob(byte seedByte = 0x61)
+    {
+        byte[] seed = Enumerable.Range(0, Ed25519.SecretKeySize)
+            .Select(index => (byte)(seedByte + index))
+            .ToArray();
+        byte[] publicKey = new byte[Ed25519.PublicKeySize];
+        Ed25519.GeneratePublicKey(seed, 0, publicKey, 0);
+        return Concat(EncodeString("ssh-ed25519"), EncodeString(publicKey));
+    }
 
     public static byte[] Concat(params byte[][] parts)
     {

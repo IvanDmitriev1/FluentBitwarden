@@ -19,7 +19,6 @@ internal sealed class WindowManager : IWindowManager, IContentDialogHost
         _uiSettings.ColorValuesChanged += OnUiSettingsOnColorValuesChanged;
     }
 
-    private readonly SemaphoreSlim _dialogGate = new(1, 1);
     private readonly ISettingsStore _settingsStore;
     private readonly UISettings _uiSettings = new();
     private WindowEx? _window;
@@ -72,25 +71,20 @@ internal sealed class WindowManager : IWindowManager, IContentDialogHost
         return true;
     }
 
-    public async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken)
+    public async Task ShowDialogAsync(ContentDialog dialog, CancellationToken cancellationToken)
     {
         if (_window is not IContentDialogHost host)
             throw new InvalidOperationException("Unknown window type.");
 
-        await _dialogGate.WaitAsync(cancellationToken);
+        using var ctr = cancellationToken.Register(static state => HideDialog((ContentDialog)state!), dialog);
+        await host.ShowDialogAsync(dialog, cancellationToken);
 
-        try
+        static void HideDialog(ContentDialog dialog)
         {
-            return await host.ShowDialogAsync(dialog, cancellationToken);
-        }
-        finally
-        {
-            _dialogGate.Release();
+            if (dialog.DispatcherQueue is null)
+                return;
 
-            if (_dialogGate.CurrentCount == 0 && Window is OverlayWindow)
-            {
-                _window.Close();
-            }
+            _ = dialog.DispatcherQueue.TryEnqueue(dialog.Hide);
         }
     }
 

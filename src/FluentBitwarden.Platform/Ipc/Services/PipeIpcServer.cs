@@ -70,7 +70,7 @@ internal sealed class PipeIpcServer(
         try
         {
             var authenticationLevel = ipcClientsVerifier.IsExpectedClient(pipe);
-            if (authenticationLevel == IpcAuthenticationLevel.Rejected)
+            if (authenticationLevel != IpcAuthenticationLevel.SamePackage)
             {
                 logger.UnauthorizedClientRejected();
                 return;
@@ -89,12 +89,6 @@ internal sealed class PipeIpcServer(
                 logger.UnknownMessageTypeRejected(header.MessageType);
                 return;
             }
-
-            /*if (authenticationLevel != endpoint.AuthenticationLevel)
-            {
-                Debug.WriteLine("Rejected IPC message with incorrect authentication level.");
-                return;
-            }*/
 
             byte[] payload = new byte[header.PayloadLength];
             int bytesRead = await pipe.ReadAtLeastAsync(

@@ -1,5 +1,3 @@
-using System.Buffers.Binary;
-using System.Text;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Abstractions;
 using FluentBitwarden.AppHost.Integrations.SshAgent.Protocol;
 
@@ -7,13 +5,16 @@ namespace FluentBitwarden.AppHost.Integrations.SshAgent.Services;
 
 internal sealed class SshAgentMessagesHandler(ISshKeyProvider keyProvider) : ISshAgentMessagesHandler
 {
-    public async Task<SshAgentMessage> HandleAsync(SshAgentMessage message, CancellationToken cancellationToken)
+    public async Task<SshAgentMessage> HandleAsync(
+        SshAgentMessage message,
+        SshAgentConnectionState connectionState,
+        CancellationToken cancellationToken)
     {
         SshAgentMessage response = message.Type switch
         {
             SshAgentMessageType.RequestIdentities => await HandleRequestIdentitiesAsync(cancellationToken),
-            SshAgentMessageType.SignRequest => await HandleSignRequestAsync(message.Payload, cancellationToken),
-            SshAgentMessageType.Extension => HandleExtensionRequest(message.Payload),
+            SshAgentMessageType.SignRequest => await HandleSignRequestAsync(message.Payload, connectionState, cancellationToken),
+            SshAgentMessageType.Extension => HandleExtensionRequest(message.Payload, connectionState),
             _ => SshAgentMessage.Failure
         };
 
@@ -33,18 +34,21 @@ internal sealed class SshAgentMessagesHandler(ISshKeyProvider keyProvider) : ISs
         byte[] payload = new byte[(int)payloadLength];
         int offset = 0;
 
-        WriteUInt32(payload, ref offset, (uint)identities.Count);
+        SshAgentPayloadWriter.WriteUInt32(payload, ref offset, (uint)identities.Count);
 
         foreach (var identity in identities)
         {
-            WriteString(payload, ref offset, identity.PublicKeyBlob.Span);
-            WriteUtf8String(payload, ref offset, identity.Comment);
+            SshAgentPayloadWriter.WriteString(payload, ref offset, identity.PublicKeyBlob.Span);
+            SshAgentPayloadWriter.WriteUtf8String(payload, ref offset, identity.Comment);
         }
 
         return new SshAgentMessage(SshAgentMessageType.IdentitiesAnswer, payload);
     }
 
-    private async Task<SshAgentMessage> HandleSignRequestAsync(ReadOnlyMemory<byte> messagePayload, CancellationToken cancellationToken)
+    private async Task<SshAgentMessage> HandleSignRequestAsync(
+        ReadOnlyMemory<byte> messagePayload,
+        SshAgentConnectionState connectionState,
+        CancellationToken cancellationToken)
     {
         if (!SshAgentSignRequest.TryParse(messagePayload, out var signRequest) ||
             signRequest.Flags is not (
@@ -55,7 +59,12 @@ internal sealed class SshAgentMessagesHandler(ISshKeyProvider keyProvider) : ISs
             return SshAgentMessage.Failure;
         }
 
-        var signature = await keyProvider.GetSignatureAsync(signRequest, cancellationToken);
+        var signature = await keyProvider.GetSignatureAsync(
+            signRequest,
+            connectionState.SessionBinding,
+            connectionState.IsForwardingConnection,
+            cancellationToken);
+
         if (signature is null)
             return SshAgentMessage.Failure;
 
@@ -67,49 +76,41 @@ internal sealed class SshAgentMessagesHandler(ISshKeyProvider keyProvider) : ISs
         int offset = 0;
 
         // Outer SSH string length.
-        WriteUInt32(payload, ref offset, (uint)signature.BlobLength);
+        SshAgentPayloadWriter.WriteUInt32(payload, ref offset, (uint)signature.BlobLength);
 
         // Inner SSH signature blob.
-        WriteUtf8String(payload, ref offset, signature.Algorithm);
+        SshAgentPayloadWriter.WriteUtf8String(payload, ref offset, signature.Algorithm);
 
-        WriteString(payload, ref offset, signature.Value);
+        SshAgentPayloadWriter.WriteString(payload, ref offset, signature.Value);
 
         return new SshAgentMessage(SshAgentMessageType.SignResponse, payload);
     }
-    private SshAgentMessage HandleExtensionRequest(ReadOnlyMemory<byte> messagePayload)
+    private SshAgentMessage HandleExtensionRequest(
+        ReadOnlyMemory<byte> messagePayload,
+        SshAgentConnectionState connectionState)
     {
-        if (!SshAgentExtensionRequest.TryParse(messagePayload, out var request) ||
-            !request.ExtensionName.Span.SequenceEqual("query"u8) ||
-            request.Data.IsEmpty)
+        if (!SshAgentExtensionRequest.TryParse(messagePayload, out var request))
         {
             return new SshAgentMessage(SshAgentMessageType.ExtensionFailure, Array.Empty<byte>());
         }
 
+        if (request.ExtensionName.Span.SequenceEqual("session-bind@openssh.com"u8))
+        {
+            if (SshAgentSessionBinding.IsForwardingBinding(request.Data))
+            {
+                connectionState.MarkForwardingConnection();
+                return new SshAgentMessage(SshAgentMessageType.ExtensionFailure, Array.Empty<byte>());
+            }
+
+            return SshAgentSessionBinding.TryParseAndVerify(request.Data, out var binding) && connectionState.TryBind(binding)
+                ? new SshAgentMessage(SshAgentMessageType.Success, Array.Empty<byte>())
+                : new SshAgentMessage(SshAgentMessageType.ExtensionFailure, Array.Empty<byte>());
+        }
+
+        if (!request.ExtensionName.Span.SequenceEqual("query"u8) || request.Data.IsEmpty)
+            return new SshAgentMessage(SshAgentMessageType.ExtensionFailure, Array.Empty<byte>());
+
         //TODO implement later
         return new SshAgentMessage(SshAgentMessageType.ExtensionFailure, Array.Empty<byte>());
-    }
-
-    private static void WriteUInt32(Span<byte> buffer, ref int offset, uint value)
-    {
-        BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(offset, sizeof(uint)), value);
-        offset += sizeof(uint);
-    }
-
-    private static void WriteString(Span<byte> buffer, ref int offset, ReadOnlySpan<byte> value)
-    {
-        WriteUInt32(buffer, ref offset, (uint)value.Length);
-
-        value.CopyTo(buffer.Slice(offset, value.Length));
-        offset += value.Length;
-    }
-
-    private static void WriteUtf8String(Span<byte> buffer, ref int offset, string value)
-    {
-        int lengthOffset = offset;
-        offset += sizeof(uint);
-
-        int bytesWritten = Encoding.UTF8.GetBytes(value.AsSpan(), buffer[offset..]);
-        BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(lengthOffset, sizeof(uint)), (uint)bytesWritten);
-        offset += bytesWritten;
     }
 }

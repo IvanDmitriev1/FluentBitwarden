@@ -15,7 +15,8 @@ internal sealed class SshKeyProvider(
     IAppSessionAccessor appSessionAccessor,
     IAppSessionOperations appSessionOperations,
     IUserDialogService userDialogService,
-    ISettingsStore settingsStore) : ISshKeyProvider
+    ISettingsStore settingsStore,
+    Func<ReadOnlyMemory<byte>, string?>? resolveHost = null) : ISshKeyProvider
 {
     private static readonly VaultCipherQuery SshCipherQuery = new() { CipherType = CipherType.SshKey };
 
@@ -30,7 +31,11 @@ internal sealed class SshKeyProvider(
         return identities;
     }
 
-    public async ValueTask<SshAgentSignature?> GetSignatureAsync(SshAgentSignRequest request, CancellationToken cancellationToken)
+    public async ValueTask<SshAgentSignature?> GetSignatureAsync(
+        SshAgentSignRequest request,
+        SshAgentSessionBinding? sessionBinding,
+        bool isForwarded,
+        CancellationToken cancellationToken)
     {
         var unlocked = appSessionAccessor.RequireUnlockedState();
         using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, unlocked.Revoked);
@@ -45,10 +50,12 @@ internal sealed class SshKeyProvider(
             return Ed25519SshSigner.Sign(request, cipher.PrivateKey);
         }
 
+        string? destination = SshAgentDestinationResolver.TryResolve(
+            request, sessionBinding, resolveHost ?? SshAgentKnownHostsResolver.ResolveFromUserFile);
         var actionRequest = new SshUserActionRequest(
             KeyName: cipher.Name,
-            KeyFingerprint: cipher.KeyFingerprint,
-            IsForwarded: false);
+            IsForwarded: isForwarded,
+            Destination: destination);
 
         UserDialogResult<SshUserActionResponse> result =
             await userDialogService.ShowAsync<SshUserActionResponse, SshUserActionRequest>(

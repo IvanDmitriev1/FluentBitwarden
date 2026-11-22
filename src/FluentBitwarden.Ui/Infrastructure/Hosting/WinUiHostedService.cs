@@ -58,39 +58,22 @@ internal sealed class WinUiHostedService<
 
     public Task RunOnUiThreadAsync(Action action)
     {
-        ArgumentNullException.ThrowIfNull(action);
         return GetDispatcher().EnqueueAsync(action);
     }
 
     public Task RunOnUiThreadAsync(Func<Task> action)
     {
-        ArgumentNullException.ThrowIfNull(action);
-        var dispatcher = GetDispatcher();
-        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        if (!dispatcher.TryEnqueue(async () =>
-        {
-            try
-            {
-                await action();
-                completion.TrySetResult();
-            }
-            catch (Exception exception)
-            {
-                completion.TrySetException(exception);
-            }
-        }))
-        {
-            completion.TrySetException(new InvalidOperationException("The UI dispatcher is shutting down."));
-        }
-
-        return completion.Task;
+        return GetDispatcher().EnqueueAsync(action);
     }
 
     public Task<T> RunOnUiThreadAsync<T>(Func<T> action)
     {
-        ArgumentNullException.ThrowIfNull(action);
         return GetDispatcher().EnqueueAsync(action);
+    }
+
+    public Task<T> RunOnUiThreadAsync<T>(Func<Task<T>> action)
+    {
+        return GetDispatcher().EnqueueAsync<T>(action);
     }
 
     private Microsoft.UI.Dispatching.DispatcherQueue GetDispatcher()
