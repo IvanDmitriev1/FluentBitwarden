@@ -54,6 +54,9 @@ public static class Program
         "IL3050",
         Justification =
             "IPC endpoint creation intentionally closes generic endpoint types at registration time.")]
-    private static void RegisterIpcHandlers(IpcRpcHandlerBuilder handlers) =>
+    private static void RegisterIpcHandlers(IpcRpcHandlerBuilder handlers)
+    {
         handlers.Add<SshKeyApprovalIpcHandler>();
+        handlers.Add<PasskeySignInIpcHandler>();
+    }
 }

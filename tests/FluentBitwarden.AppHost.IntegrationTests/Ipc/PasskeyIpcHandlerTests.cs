@@ -19,12 +19,12 @@ public sealed class PasskeyIpcHandlerTests
         var request = new PasskeyGetAssertionRequest("login.example.test", new byte[32], new byte[32]);
         using var cancellation = new CancellationTokenSource();
         var dialogRequest = new TaskCompletionSource<PasskeySelectCredentialRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
                 dialogRequest.TrySetResult(call.Arg<PasskeySelectCredentialRequest>());
-                return Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Completed(context.CreateCredential(request.RpId)));
+                return Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Completed(new(context.CandidateCipherId)));
             });
 
         Task<PasskeyAssertionResponse> selection = context.Handler.SelectCredentialAsync(request, cancellation.Token);
@@ -34,9 +34,12 @@ public sealed class PasskeyIpcHandlerTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.UnlockAsync(account, TestContext.Current.CancellationToken));
         await context.WaitForCompletionAsync(selection);
 
-        Assert.Equal(new PasskeySelectCredentialRequest(request.RpId), await dialogRequest.Task);
-        _ = await dialog.Received(1).ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
-            new PasskeySelectCredentialRequest(request.RpId), Arg.Any<CancellationToken>());
+        PasskeySelectCredentialRequest actualRequest = await dialogRequest.Task;
+        Assert.Equal(request.RpId, actualRequest.RpId);
+        Assert.Equal(context.CandidateCipherId, Assert.Single(actualRequest.Candidates).CipherId);
+        _ = await dialog.Received(1).ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
+            Arg.Is<PasskeySelectCredentialRequest>(actual => IsSelectionRequest(actual, request.RpId, context.CandidateCipherId)),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -50,12 +53,12 @@ public sealed class PasskeyIpcHandlerTests
         using var cancellation = new CancellationTokenSource();
         var request = new PasskeyGetAssertionRequest("login.example.test", new byte[32], new byte[32]);
         var dialogCalled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
             .Returns(_ =>
             {
                 dialogCalled.TrySetResult();
-                return Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Cancelled);
+                return Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Cancelled);
             });
 
         Task<PasskeyAssertionResponse> selection = context.Handler.SelectCredentialAsync(request, cancellation.Token);
@@ -99,10 +102,11 @@ public sealed class PasskeyIpcHandlerTests
             };
             FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService dialog =
                 Substitute.For<FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService>();
-            dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
-                    Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Completed(credential)));
             await using var context = new PasskeyIpcHandlerTestContext(dialog);
+            context.SetCandidateCredential(credential);
+            dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
+                    Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Completed(new(context.CandidateCipherId))));
             var account = AccountTestData.Profile(AccountTestData.FirstUserId, "ada@example.test", "passkey");
             Assert.IsType<SessionUnlockOutcome.Success>(
                 await context.UnlockAsync(account, TestContext.Current.CancellationToken));
@@ -137,8 +141,8 @@ public sealed class PasskeyIpcHandlerTests
                 response.Signature,
                 DSASignatureFormat.Rfc3279DerSequence));
 
-            await dialog.Received(1).ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
-                new PasskeySelectCredentialRequest(rpId),
+            await dialog.Received(1).ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
+                Arg.Is<PasskeySelectCredentialRequest>(actual => IsSelectionRequest(actual, rpId, context.CandidateCipherId)),
                 Arg.Any<CancellationToken>());
         }
         finally
@@ -152,10 +156,10 @@ public sealed class PasskeyIpcHandlerTests
     {
         FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService dialog =
             Substitute.For<FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService>();
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Cancelled));
+            .Returns(Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Cancelled));
         await using var context = new PasskeyIpcHandlerTestContext(dialog);
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "passkey");
         Assert.IsType<SessionUnlockOutcome.Success>(
@@ -167,8 +171,8 @@ public sealed class PasskeyIpcHandlerTests
             () => context.Handler.SelectCredentialAsync(request, cancellationToken));
 
         Assert.IsType<OperationCanceledException>(exception);
-        _ = dialog.Received(1).ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
-            new PasskeySelectCredentialRequest(request.RpId),
+        _ = dialog.Received(1).ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
+            Arg.Is<PasskeySelectCredentialRequest>(actual => IsSelectionRequest(actual, request.RpId, context.CandidateCipherId)),
             Arg.Any<CancellationToken>());
     }
 
@@ -187,7 +191,7 @@ public sealed class PasskeyIpcHandlerTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.UnlockAsync(account, TestContext.Current.CancellationToken));
         var request = new PasskeyGetAssertionRequest("login.example.test", new byte[32], new byte[32]);
         var dialogStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
@@ -213,13 +217,13 @@ public sealed class PasskeyIpcHandlerTests
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "ada@example.test", "passkey");
         Assert.IsType<SessionUnlockOutcome.Success>(await context.UnlockAsync(account, TestContext.Current.CancellationToken));
         var request = new PasskeyGetAssertionRequest("login.example.test", new byte[32], new byte[32]);
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
             .Returns(async call =>
             {
                 await context.Session.Operations.LockAsync(TestContext.Current.CancellationToken);
-                return FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Completed(
-                    context.CreateCredential(request.RpId));
+                return FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Completed(
+                    new(context.CandidateCipherId));
             });
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => context.Handler.SelectCredentialAsync(request, CancellationToken.None));
@@ -235,25 +239,30 @@ public sealed class PasskeyIpcHandlerTests
         Assert.IsType<SessionUnlockOutcome.Success>(await context.UnlockAsync(account, TestContext.Current.CancellationToken));
         var request = new PasskeyGetAssertionRequest("login.example.test", new byte[32], new byte[32]);
         using var cancellation = new CancellationTokenSource();
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(), Arg.Any<CancellationToken>())
             .Returns(call =>
             {
                 Assert.NotEqual(cancellation.Token, call.Arg<CancellationToken>());
                 cancellation.Cancel();
-                return Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Completed(
-                    context.CreateCredential(request.RpId)));
+                return Task.FromResult(FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Completed(
+                    new(context.CandidateCipherId)));
             });
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => context.Handler.SelectCredentialAsync(request, cancellation.Token));
     }
 
-    private static async Task<FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>> WaitForDialogCancellation(CancellationToken token)
+    private static async Task<FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>> WaitForDialogCancellation(CancellationToken token)
     {
         await Task.Delay(Timeout.Infinite, token);
-        return FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>.Cancelled;
+        return FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>.Cancelled;
     }
+
+    private static bool IsSelectionRequest(PasskeySelectCredentialRequest request, string rpId, CipherId cipherId) =>
+        request.RpId == rpId &&
+        request.Candidates.Length == 1 &&
+        request.Candidates[0].CipherId == cipherId;
 
     private static async Task ApplyTransitionAsync(
         PasskeyIpcHandlerTestContext context,
@@ -284,10 +293,10 @@ public sealed class PasskeyIpcHandlerTests
         var failure = new InvalidOperationException("Synthetic passkey dialog failure.");
         FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService dialog =
             Substitute.For<FluentBitwarden.Contracts.Infrastructure.UserDialog.IUserDialogService>();
-        dialog.ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
+        dialog.ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
                 Arg.Any<PasskeySelectCredentialRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<Fido2Credential>>(failure));
+            .Returns(Task.FromException<FluentBitwarden.Contracts.Infrastructure.UserDialog.UserDialogResult<PasskeySelectCredentialResponse>>(failure));
         await using var context = new PasskeyIpcHandlerTestContext(dialog);
         var account = AccountTestData.Profile(AccountTestData.FirstUserId, "user@example.test", "passkey");
         Assert.IsType<SessionUnlockOutcome.Success>(
@@ -299,8 +308,8 @@ public sealed class PasskeyIpcHandlerTests
             () => context.Handler.SelectCredentialAsync(request, cancellationToken));
 
         Assert.Same(failure, exception);
-        _ = dialog.Received(1).ShowAsync<Fido2Credential, PasskeySelectCredentialRequest>(
-            new PasskeySelectCredentialRequest(request.RpId),
+        _ = dialog.Received(1).ShowAsync<PasskeySelectCredentialResponse, PasskeySelectCredentialRequest>(
+            Arg.Is<PasskeySelectCredentialRequest>(actual => IsSelectionRequest(actual, request.RpId, context.CandidateCipherId)),
             Arg.Any<CancellationToken>());
     }
 }
